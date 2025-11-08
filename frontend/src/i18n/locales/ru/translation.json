@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Lenza ERP",
+    "welcome": "Добро пожаловать",
+    "operations": "Сегодняшние операции",
+    "logout": "Выйти",
+    "language": "Язык",
+    "darkMode": "Темная тема"
+  },
+  "auth": {
+    "signIn": "Войти",
+    "username": "Логин",
+    "password": "Пароль",
+    "otp": "Одноразовый код",
+    "setup2fa": "Настроить 2FA",
+    "verifyOtp": "Подтвердить код",
+    "qrInstructions": "Отсканируйте QR код приложением аутентификации",
+    "generateQr": "Сгенерировать QR",
+    "continue": "Продолжить",
+    "loginFailed": "Ошибка входа. Проверьте данные.",
+    "invalidCredentials": "Неверный логин или пароль.",
+    "unexpectedError": "Неожиданная ошибка. Попробуйте снова."
+  },
+  "nav": {
+    "dashboard": "Дашборд",
+    "orders": "Заказы",
+    "products": "Товары",
+    "dealers": "Дилеры",
+    "payments": "Платежи",
+    "currency": "Курс",
+    "reconciliation": "Акт сверки",
+    "kpi": "KPI",
+    "settings": "Настройки",
+    "users": "Пользователи",
+    "regions": "Регионы"
+  },
+  "actions": {
+    "create": "Создать",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "exportPdf": "Экспорт PDF",
+    "exportExcel": "Экспорт Excel"
+  },
+  "dashboard": {
+    "ownerKpi": "Общий обзор",
+    "salesManagerKpi": "Менеджер по продажам",
+    "accountantKpi": "Бухгалтер",
+    "topDealers": "Лучшие дилеры",
+    "currencyTrend": "Курс валют",
+    "salesTrend": "Продажи vs прибыль",
+    "balances": "Балансы"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Lenza ERP",
+    "welcome": "Xush kelibsiz",
+    "operations": "Bugungi operatsiyalar",
+    "logout": "Chiqish",
+    "language": "Til",
+    "darkMode": "Tungi rejim"
+  },
+  "auth": {
+    "signIn": "Kirish",
+    "username": "Login",
+    "password": "Parol",
+    "otp": "Bir martalik kod",
+    "setup2fa": "2FA sozlash",
+    "verifyOtp": "OTP tasdiqlash",
+    "qrInstructions": "QR kodni autentifikator ilovasi bilan skanerlang",
+    "generateQr": "QR yaratish",
+    "continue": "Davom etish",
+    "loginFailed": "Kirishda xatolik. Ma'lumotlarni tekshiring.",
+    "invalidCredentials": "Login yoki parol noto'g'ri.",
+    "unexpectedError": "Kutilmagan xato. Qayta urinib ko'ring."
+  },
+  "nav": {
+    "dashboard": "Bosh panel",
+    "orders": "Buyurtmalar",
+    "products": "Mahsulotlar",
+    "dealers": "Dilerlar",
+    "users": "Foydalanuvchilar",
+    "regions": "Hududlar",
+    "payments": "To'lovlar",
+    "currency": "Kurslar",
+    "reconciliation": "Akt sverka",
+    "kpi": "KPI",
+    "settings": "Sozlamalar"
+  },
+  "actions": {
+    "create": "Yaratish",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "exportPdf": "PDF eksport",
+    "exportExcel": "Excel eksport"
+  },
+  "dashboard": {
+    "ownerKpi": "Egalik paneli",
+    "salesManagerKpi": "Sotuv menejeri",
+    "accountantKpi": "Buxgalter",
+    "topDealers": "Top dilerlar",
+    "currencyTrend": "Valyuta kursi",
+    "salesTrend": "Savdo vs foyda",
+    "balances": "Balanslar"
+  }
+}

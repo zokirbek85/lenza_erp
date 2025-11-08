@@ -1,0 +1,277 @@
+{% load tz %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page {
+        size: A4;
+        margin: 32px;
+      }
+
+      :root {
+        --border: #e5e7eb;
+        --text-muted: #6b7280;
+        --primary: #0f172a;
+        --accent: #0d9488;
+        --bg: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--primary);
+        background: var(--bg);
+      }
+
+      .invoice {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 32px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 32px;
+        margin-bottom: 28px;
+      }
+
+      .brand {
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 0.04em;
+      }
+
+      .invoice-meta {
+        text-align: right;
+      }
+
+      .invoice-number {
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .meta-label {
+        color: var(--text-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 2px;
+        display: block;
+      }
+
+      .info-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .info-card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        background: #fdfefe;
+      }
+
+      .info-card strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 14px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 24px;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+
+      thead {
+        background: #eef2ff;
+      }
+
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        padding: 10px 14px;
+        text-align: left;
+      }
+
+      td {
+        padding: 12px 14px;
+        border-top: 1px solid var(--border);
+      }
+
+      tbody tr:nth-child(even) {
+        background: #fafafa;
+      }
+
+      .totals {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+
+      .totals table {
+        width: auto;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+      }
+
+      .totals td {
+        border: none;
+        padding: 8px 16px;
+        font-weight: 600;
+      }
+
+      .totals tr:last-child td {
+        font-size: 16px;
+        color: var(--accent);
+      }
+
+      .notes {
+        margin-top: 32px;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+        background: #fefce8;
+      }
+
+      .footer {
+        margin-top: 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .signature {
+        margin-top: 40px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .signature .line {
+        width: 240px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        padding-top: 6px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="invoice">
+      <header>
+        <div>
+          <div class="brand">LENZA ERP</div>
+          <div>Modern Wholesale Management Platform</div>
+        </div>
+        <div class="invoice-meta">
+          <span class="meta-label">Invoice</span>
+          <div class="invoice-number">{{ order.display_no }}</div>
+          <div>Issued: {{ order.created_at|date:"d.m.Y H:i" }}</div>
+          <div>Status: {{ order.get_status_display }}</div>
+        </div>
+      </header>
+
+      <section class="info-cards">
+        <div class="info-card">
+          <span class="meta-label">Dealer</span>
+          <strong>{{ order.dealer.name }}</strong>
+          <div>{{ order.dealer.phone|default:"—" }}</div>
+          <div>{{ order.dealer.address|default:"" }}</div>
+        </div>
+        <div class="info-card">
+          <span class="meta-label">Value date</span>
+          <strong>{{ order.value_date|date:"d.m.Y" }}</strong>
+          <div>
+            Created by:
+            {{ order.created_by.get_full_name|default:order.created_by|default:"System" }}
+          </div>
+        </div>
+        <div class="info-card">
+          <span class="meta-label">Order type</span>
+          <strong>{% if order.is_reserve %}Reserve{% else %}Regular{% endif %}</strong>
+          <div>Total Items: {{ items|length }}</div>
+        </div>
+      </section>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px">#</th>
+            <th>Product</th>
+            <th style="width: 90px">Qty</th>
+            <th style="width: 120px">Price (USD)</th>
+            <th style="width: 120px">Line total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              <strong>{{ item.product.name|default:"Unnamed product" }}</strong><br />
+              <span style="color: var(--text-muted); font-size: 12px;">SKU: {{ item.product.sku|default:"—" }}</span>
+            </td>
+            <td>{{ item.qty }}</td>
+            <td>${{ item.price_usd }}</td>
+            <td>${{ item.line_total_usd }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No items in this order.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tr>
+            <td>Subtotal</td>
+            <td>${{ order.total_usd }}</td>
+          </tr>
+          <tr>
+            <td>Total (USD)</td>
+            <td>${{ order.total_usd }}</td>
+          </tr>
+        </table>
+      </div>
+
+      {% if order.note %}
+      <div class="notes">
+        <span class="meta-label">Note</span>
+        {{ order.note }}
+      </div>
+      {% endif %}
+
+      <div class="signature">
+        <div class="line">Authorized signature</div>
+      </div>
+
+      <div class="footer">
+        <div>Generated by Lenza ERP</div>
+        <div>{% now "d.m.Y H:i" %}</div>
+      </div>
+    </main>
+  </body>
+</html>

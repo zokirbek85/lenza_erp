@@ -1,0 +1,254 @@
+import type { ChangeEvent, FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+
+import http from '../app/http';
+import Modal from '../components/Modal';
+import { toArray } from '../utils/api';
+import { useFetch } from '../hooks/useFetch';
+
+interface RegionRecord {
+  id: number;
+  name: string;
+  manager_user?: string | null;
+  manager_user_id?: number | null;
+}
+
+interface ManagerRecord {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+}
+
+const emptyRegion = {
+  name: '',
+  manager_user_id: '' as number | '',
+};
+
+const RegionsPage = () => {
+  const [regions, setRegions] = useState<RegionRecord[]>([]);
+  const [managers, setManagers] = useState<ManagerRecord[]>([]);
+  const [form, setForm] = useState(emptyRegion);
+  const [editing, setEditing] = useState<RegionRecord | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadRegions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await http.get('/api/regions/');
+      setRegions(toArray<RegionRecord>(response.data));
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load regions');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const { data: managerResponse } = useFetch<ManagerRecord[]>('/api/users/', { params: { role: 'sales' } });
+
+  useEffect(() => {
+    loadRegions();
+  }, [loadRegions]);
+
+  useEffect(() => {
+    if (managerResponse) {
+      setManagers(Array.isArray(managerResponse) ? managerResponse : toArray<ManagerRecord>(managerResponse));
+    }
+  }, [managerResponse]);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const openModal = (region?: RegionRecord) => {
+    if (region) {
+      setEditing(region);
+      setForm({
+        name: region.name,
+        manager_user_id: region.manager_user_id ?? '',
+      });
+    } else {
+      setEditing(null);
+      setForm(emptyRegion);
+    }
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    const payload = {
+      name: form.name,
+      manager_user_id: form.manager_user_id || null,
+    };
+    try {
+      if (editing) {
+        await http.put(`/api/regions/${editing.id}/`, payload);
+        toast.success('Region updated');
+      } else {
+        await http.post('/api/regions/', payload);
+        toast.success('Region created');
+      }
+      setModalOpen(false);
+      setForm(emptyRegion);
+      setEditing(null);
+      loadRegions();
+    } catch (error: unknown) {
+      console.error(error);
+      if (typeof error === 'object' && error && 'response' in error) {
+        const detail = (error as { response?: { data?: Record<string, string[]> } }).response?.data;
+        const message = detail?.name?.[0] || 'Save failed';
+        toast.error(message);
+      } else {
+        toast.error('Save failed');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (region: RegionRecord) => {
+    if (!window.confirm(`Delete region "${region.name}"?`)) return;
+    try {
+      await http.delete(`/api/regions/${region.id}/`);
+      toast.success('Region removed');
+      loadRegions();
+    } catch (error) {
+      console.error(error);
+      toast.error('Unable to delete region');
+    }
+  };
+
+  return (
+    <section className="space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Regions</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Assign regional managers for dealers.</p>
+        </div>
+        <button
+          onClick={() => openModal()}
+          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+        >
+          Add region
+        </button>
+      </header>
+
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-800/40">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Region name</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Manager</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
+            {loading && (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-sm text-slate-500">
+                  Loading regions...
+                </td>
+              </tr>
+            )}
+            {!loading &&
+              regions.map((region) => (
+                <tr key={region.id}>
+                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{region.name}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{region.manager_user || '—'}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(region)}>
+                        Edit
+                      </button>
+                      <button className="text-rose-600 hover:text-rose-800 dark:text-rose-300" onClick={() => handleDelete(region)}>
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            {!loading && regions.length === 0 && (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-sm text-slate-500">
+                  No regions registered
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal
+        open={modalOpen}
+        onClose={() => {
+          if (!saving) {
+            setModalOpen(false);
+            setForm(emptyRegion);
+            setEditing(null);
+          }
+        }}
+        title={editing ? 'Edit region' : 'Add region'}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setModalOpen(false);
+                setForm(emptyRegion);
+                setEditing(null);
+              }}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="region-form"
+              disabled={saving}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </>
+        }
+      >
+        <form id="region-form" onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Name</label>
+            <input
+              required
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Manager</label>
+            <select
+              name="manager_user_id"
+              value={form.manager_user_id}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="">Unassigned</option>
+              {managers.map((manager) => (
+                <option key={manager.id} value={manager.id}>
+                  {manager.first_name || manager.last_name ? `${manager.first_name} ${manager.last_name}`.trim() : manager.username}
+                </option>
+              ))}
+            </select>
+          </div>
+        </form>
+      </Modal>
+    </section>
+  );
+};
+
+export default RegionsPage;

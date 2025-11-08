@@ -1,0 +1,172 @@
+import axios from 'axios';
+import { create } from 'zustand';
+
+export type UserRole = 'admin' | 'accountant' | 'warehouse' | 'sales' | 'owner';
+
+interface Credentials {
+  username: string;
+  password: string;
+  otp?: string;
+}
+
+interface AuthState {
+  accessToken: string | null;
+  refreshToken: string | null;
+  role: UserRole | null;
+  userName: string | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+  needsOtp: boolean;
+  pendingCredentials: Credentials | null;
+  login: (credentials: Credentials) => Promise<void>;
+  clearOtpChallenge: () => void;
+  logout: () => void;
+}
+
+const ACCESS_KEY = 'lenza_access_token';
+const REFRESH_KEY = 'lenza_refresh_token';
+const ROLE_KEY = 'lenza_role';
+
+const getFromStorage = (key: string): string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn('localStorage read failed', error);
+    return null;
+  }
+};
+
+const setStorage = (key: string, value: string | null): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    if (value === null) {
+      window.localStorage.removeItem(key);
+    } else {
+      window.localStorage.setItem(key, value);
+    }
+  } catch (error) {
+    console.warn('localStorage write failed', error);
+  }
+};
+
+const decodePayload = (token: string | null): { role: UserRole | null; username: string | null } => {
+  if (!token || typeof window === 'undefined') {
+    return { role: null, username: null };
+  }
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) {
+      return { role: null, username: null };
+    }
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(window.atob(normalized));
+    return {
+      role: decoded.role ?? null,
+      username: decoded.username ?? decoded.sub ?? null,
+    };
+  } catch (error) {
+    console.warn('Unable to decode JWT payload', error);
+    return { role: null, username: null };
+  }
+};
+
+const persistTokens = (accessToken: string, refreshToken: string, role: UserRole | null) => {
+  setStorage(ACCESS_KEY, accessToken);
+  setStorage(REFRESH_KEY, refreshToken);
+  if (role) {
+    setStorage(ROLE_KEY, role);
+  }
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
+  accessToken: getFromStorage(ACCESS_KEY),
+  refreshToken: getFromStorage(REFRESH_KEY),
+  role: (getFromStorage(ROLE_KEY) as UserRole | null) ?? decodePayload(getFromStorage(ACCESS_KEY)).role,
+  userName: decodePayload(getFromStorage(ACCESS_KEY)).username,
+  isAuthenticated: Boolean(getFromStorage(ACCESS_KEY)),
+  loading: false,
+  error: null,
+  needsOtp: false,
+  pendingCredentials: null,
+  async login({ username, password, otp }) {
+    const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
+    const apiUrl = `${base}/api/token/`;
+    console.log('Login request sent to:', apiUrl);
+    set((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await axios.post(
+        apiUrl,
+        { username, password, otp },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const { access: accessToken, refresh: refreshToken } = response.data;
+      const { role, username: decodedName } = decodePayload(accessToken);
+      persistTokens(accessToken, refreshToken, role);
+      localStorage.setItem('token', accessToken);
+      set((prev) => ({
+        ...prev,
+        accessToken,
+        refreshToken,
+        role: role ?? 'sales',
+        userName: decodedName,
+        isAuthenticated: true,
+        error: null,
+        needsOtp: false,
+        pendingCredentials: null,
+      }));
+      return response.data;
+    } catch (error) {
+      console.error('Login error:', error);
+      if (axios.isAxiosError(error)) {
+        const detail = (error.response?.data as { detail?: string })?.detail || '';
+        if (detail.toLowerCase().includes('otp')) {
+          set((prev) => ({
+            ...prev,
+            needsOtp: true,
+            pendingCredentials: { username, password },
+            error: null,
+          }));
+          return;
+        }
+        let message = detail || 'Login failed. Please check your credentials.';
+        if (error.response?.status === 401) {
+          message = 'Invalid username or password.';
+        }
+        set((prev) => ({ ...prev, error: message }));
+      } else {
+        set((prev) => ({ ...prev, error: 'Unexpected error. Please try again.' }));
+      }
+      throw error;
+    } finally {
+      set((prev) => ({ ...prev, loading: false }));
+    }
+  },
+  clearOtpChallenge() {
+    set({ needsOtp: false, pendingCredentials: null });
+  },
+  logout() {
+    set({
+      accessToken: null,
+      refreshToken: null,
+      role: null,
+      userName: null,
+      isAuthenticated: false,
+      error: null,
+      needsOtp: false,
+      pendingCredentials: null,
+    });
+    setStorage(ACCESS_KEY, null);
+    setStorage(REFRESH_KEY, null);
+    setStorage(ROLE_KEY, null);
+  },
+}));

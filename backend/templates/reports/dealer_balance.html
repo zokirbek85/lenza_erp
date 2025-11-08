@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 12px; }
+      h1 { text-align: center; }
+      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+      th { background: #f4f4f4; }
+    </style>
+  </head>
+  <body>
+    <h1>Dealer Balances</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Dealer</th>
+          <th>Region</th>
+          <th>Balance (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dealer in dealers %}
+        <tr>
+          <td>{{ dealer.name }}</td>
+          <td>{{ dealer.region.name }}</td>
+          <td>{{ dealer.balance_usd }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">No dealers available.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

@@ -1,0 +1,279 @@
+import type { ChangeEvent, FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import http from '../app/http';
+import StatusBadge from '../components/StatusBadge';
+import { downloadFile } from '../utils/download';
+import { formatCurrency, formatDate } from '../utils/formatters';
+import { toArray } from '../utils/api';
+import { loadCache, saveCache } from '../utils/storage';
+
+interface DealerOption {
+  id: number;
+  name: string;
+}
+
+interface ProductOption {
+  id: number;
+  name: string;
+  sell_price_usd: number;
+}
+
+interface OrderItem {
+  id: number;
+  product: ProductOption;
+  qty: number;
+  price_usd: number;
+}
+
+interface Order {
+  id: number;
+  display_no: string;
+  dealer: DealerOption;
+  status: string;
+  total_usd: number;
+  value_date: string;
+  items: OrderItem[];
+}
+
+const ORDER_STATUSES = ['created', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled', 'returned'];
+
+const OrdersPage = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [dealers, setDealers] = useState<DealerOption[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [form, setForm] = useState({ dealer: '', product: '', quantity: '1' });
+  const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
+
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await http.get('/api/orders/');
+      const normalized = toArray<Order>(response.data);
+      setOrders(normalized);
+      saveCache('orders-data', normalized);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load orders');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadRefs = async () => {
+      const [dealersRes, productsRes] = await Promise.all([http.get('/api/dealers/'), http.get('/api/products/')]);
+      setDealers(toArray<DealerOption>(dealersRes.data));
+      setProducts(toArray<ProductOption>(productsRes.data));
+    };
+    loadRefs();
+    loadOrders().catch(() => {
+      const cached = loadCache<Order[]>('orders-data');
+      if (cached) setOrders(cached);
+    });
+  }, [loadOrders]);
+
+  useEffect(() => {
+    const handler = () => {
+      loadOrders().catch(() => null);
+    };
+    window.addEventListener('orders:refresh', handler);
+    return () => window.removeEventListener('orders:refresh', handler);
+  }, [loadOrders]);
+
+  const handleChange = (event: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const selectedProduct = products.find((product) => product.id === Number(form.product));
+    if (!selectedProduct) {
+      return;
+    }
+    await http.post('/api/orders/', {
+      dealer: Number(form.dealer),
+      status: 'created',
+      items: [
+        {
+          product: selectedProduct.id,
+          qty: Number(form.quantity || 1),
+          price_usd: selectedProduct.sell_price_usd,
+        },
+      ],
+    });
+    setForm({ dealer: '', product: '', quantity: '1' });
+    toast.success('Order created');
+    loadOrders().catch(() => null);
+  };
+
+  const handleStatusChange = async (orderId: number, status: string) => {
+    try {
+      await http.patch(`/api/orders/${orderId}/status/`, { status });
+      toast.success('Status updated');
+      loadOrders().catch(() => null);
+    } catch (error) {
+      console.error(error);
+      toast.error('Status change failed');
+    }
+  };
+
+  const handlePdf = (orderId?: number) => {
+    if (orderId) {
+      const base = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000';
+      window.open(`${base.replace(/\/$/, '')}/api/orders/${orderId}/pdf/`, '_blank');
+    } else {
+      downloadFile('/api/orders/report/pdf/', 'orders.pdf');
+    }
+  };
+
+  const handleExcel = () => downloadFile('/api/orders/export/excel/', 'orders.xlsx');
+
+  const orderRows = useMemo(
+    () =>
+      orders.map((order) => ({
+        ...order,
+        total: formatCurrency(order.total_usd),
+      })),
+    [orders]
+  );
+
+  return (
+    <section className="space-y-6">
+      <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Statusni kuzatish va eksport.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => handlePdf()}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+          >
+            {t('actions.exportPdf')}
+          </button>
+          <button
+            onClick={handleExcel}
+            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+          >
+            {t('actions.exportExcel')}
+          </button>
+        </div>
+      </header>
+
+      <form
+        onSubmit={handleSubmit}
+        className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-4"
+      >
+        <div className="md:col-span-1">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
+          <select
+            required
+            name="dealer"
+            value={form.dealer}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">Tanlang</option>
+            {dealers.map((dealer) => (
+              <option key={dealer.id} value={dealer.id}>
+                {dealer.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-1">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.products')}</label>
+          <select
+            required
+            name="product"
+            value={form.product}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">Tanlang</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-1">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Miqdor</label>
+          <input
+            name="quantity"
+            value={form.quantity}
+            onChange={handleChange}
+            type="number"
+            min="1"
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+        <div className="flex items-end md:col-span-1">
+          <button className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900" type="submit">
+            {t('actions.create')}
+          </button>
+        </div>
+      </form>
+
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
+          <thead className="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">ID</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('nav.dealers')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Status</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Qiymat</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('app.operations')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">PDF</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {orderRows.map((order) => (
+              <tr key={order.id}>
+                <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{order.display_no}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{order.dealer?.name ?? '—'}</td>
+                <td className="px-4 py-3">
+                  <StatusBadge status={order.status} />
+                  <select
+                    className="mt-2 w-full rounded-md border border-slate-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    value={order.status}
+                    onChange={(event) => handleStatusChange(order.id, event.target.value)}
+                  >
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{order.total}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(order.value_date)}</td>
+                <td className="px-4 py-3 text-right">
+                  <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" onClick={() => handlePdf(order.id)}>
+                    PDF
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {!loading && orderRows.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                  Buyurtmalar topilmadi
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+};
+
+export default OrdersPage;

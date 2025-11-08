@@ -1,0 +1,53 @@
+{
+  "app": {
+    "title": "Lenza ERP",
+    "welcome": "Welcome back",
+    "operations": "Today's operations",
+    "logout": "Logout",
+    "language": "Language",
+    "darkMode": "Dark mode"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "username": "Username",
+    "password": "Password",
+    "otp": "One-time password",
+    "setup2fa": "Set up 2FA",
+    "verifyOtp": "Verify OTP",
+    "qrInstructions": "Scan the QR code with your authenticator app",
+    "generateQr": "Generate QR",
+    "continue": "Continue",
+    "loginFailed": "Login failed. Please check your credentials.",
+    "invalidCredentials": "Invalid username or password.",
+    "unexpectedError": "Unexpected error. Please try again."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "products": "Products",
+    "dealers": "Dealers",
+    "users": "Users",
+    "regions": "Regions",
+    "payments": "Payments",
+    "currency": "Currency",
+    "reconciliation": "Reconciliation",
+    "kpi": "KPI",
+    "settings": "Settings"
+  },
+  "actions": {
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "exportPdf": "Export PDF",
+    "exportExcel": "Export Excel"
+  },
+  "dashboard": {
+    "ownerKpi": "Owner overview",
+    "salesManagerKpi": "Sales manager",
+    "accountantKpi": "Accountant",
+    "topDealers": "Top dealers",
+    "currencyTrend": "Currency trend",
+    "salesTrend": "Sales vs profit",
+    "balances": "Balances"
+  }
+}

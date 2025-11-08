@@ -1,0 +1,259 @@
+{% load tz %}
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page {
+        size: A4;
+        margin: 28mm 25mm 28mm 25mm;
+      }
+
+      :root {
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #d4af37;
+        --bg: #ffffff;
+      }
+
+      body {
+        font-family: 'Open Sans', 'Roboto', Arial, sans-serif;
+        font-size: 12px;
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+      }
+
+      .tagline {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .meta {
+        text-align: right;
+      }
+
+      .meta span {
+        display: block;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 18px;
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      .card strong {
+        display: block;
+        font-size: 16px;
+        margin-top: 6px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 18px;
+        border: 1px solid var(--border);
+      }
+
+      th, td {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+      }
+
+      thead {
+        background: #f9fafb;
+      }
+
+      th {
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      tbody tr:nth-child(even) {
+        background: #fcfcfc;
+      }
+
+      .section-title {
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .totals {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
+
+      .totals table {
+        width: auto;
+        border-radius: 10px;
+      }
+
+      .signature {
+        margin-top: 40px;
+        display: flex;
+        justify-content: space-between;
+        gap: 30px;
+      }
+
+      .signature .line {
+        flex: 1;
+        border-top: 1px solid var(--border);
+        text-align: center;
+        padding-top: 6px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="header">
+      <div>
+        <div class="logo">LENZA ERP</div>
+        <div class="tagline">Akt sverka hisobot</div>
+      </div>
+      <div class="meta">
+        <span><strong>Diler:</strong> {{ data.dealer }}</span>
+        <span>Kod: {{ data.dealer_code }}</span>
+        <span>Davr: {{ data.period }}</span>
+        <span>Yaratildi: {% now "d.m.Y H:i" %}</span>
+      </div>
+    </section>
+
+    <div class="card">
+      <h3>Balans ma&apos;lumotlari</h3>
+      <div style="display:flex; gap:28px; margin-top:8px;">
+        <div>
+          <span class="tagline">Boshlang'ich balans</span>
+          <strong>${{ data.opening_balance|floatformat:2 }}</strong>
+        </div>
+        <div>
+          <span class="tagline">Yakuniy balans</span>
+          <strong style="color: var(--accent);">${{ data.closing_balance|floatformat:2 }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="section-title">Buyurtmalar</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Sana</th>
+            <th>Raqam</th>
+            <th>Summa (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in data.orders %}
+          <tr>
+            <td>{{ order.date|date:"d.m.Y" }}</td>
+            <td>{{ order.order_no }}</td>
+            <td>${{ order.amount_usd|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center; color: var(--muted);">Ma&apos;lumot topilmadi</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <p class="section-title">To&apos;lovlar</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Sana</th>
+            <th>Metod</th>
+            <th>Summa (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in data.payments %}
+          <tr>
+            <td>{{ payment.date|date:"d.m.Y" }}</td>
+            <td>{{ payment.method|title }}</td>
+            <td>${{ payment.amount_usd|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center; color: var(--muted);">Ma&apos;lumot topilmadi</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <p class="section-title">Qaytarishlar</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Sana</th>
+            <th>Buyurtma</th>
+            <th>Summa (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in data.returns %}
+          <tr>
+            <td>{{ item.date|date:"d.m.Y" }}</td>
+            <td>{{ item.order_no }}</td>
+            <td>${{ item.amount_usd|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center; color: var(--muted);">Ma&apos;lumot topilmadi</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="totals">
+      <table>
+        <tr>
+          <th>Yakuniy balans</th>
+          <td>${{ data.closing_balance|floatformat:2 }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="signature">
+      <div class="line">Mas&apos;ul shaxs imzosi</div>
+      <div class="line">Diler imzosi</div>
+      <div class="line">Sana</div>
+    </div>
+  </body>
+</html>
