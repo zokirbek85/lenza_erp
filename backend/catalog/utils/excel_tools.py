@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from io import BytesIO
 import re
 
@@ -35,16 +35,16 @@ def _to_decimal(value) -> Decimal:
     return Decimal(str(value))
 
 
-def _to_int(value) -> int:
+def _to_quantity(value) -> Decimal:
     if pd.isna(value) or value in (None, ''):
-        return 0
+        return Decimal('0.00')
     try:
-        parsed = int(value)
-        if parsed < 0:
-            return 0
-        return parsed
-    except (TypeError, ValueError):
-        return 0
+        amount = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal('0.00')
+    if amount < 0:
+        return Decimal('0.00')
+    return amount.quantize(Decimal('0.01'))
 
 
 def _get_brand(name: str | None):
@@ -95,8 +95,8 @@ def export_products_to_excel() -> str:
                 'size': product.size or '',
                 'cost_usd': float(product.cost_usd or 0),
                 'sell_price_usd': float(product.sell_price_usd or 0),
-                'stock_ok': product.stock_ok,
-                'stock_defect': product.stock_defect,
+                'stock_ok': float(product.stock_ok or 0),
+                'stock_defect': float(product.stock_defect or 0),
             }
         )
 
@@ -127,8 +127,8 @@ def import_products_from_excel(file_obj) -> dict:
             'size': _to_str(row.get('size')),
             'cost_usd': _to_decimal(row.get('cost_usd')),
             'sell_price_usd': _to_decimal(row.get('sell_price_usd')),
-            'stock_ok': _to_int(row.get('stock_ok')),
-            'stock_defect': _to_int(row.get('stock_defect')),
+            'stock_ok': _to_quantity(row.get('stock_ok')),
+            'stock_defect': _to_quantity(row.get('stock_defect')),
         }
         _, was_created = Product.objects.update_or_create(sku=sku, defaults=defaults)
         if was_created:

@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import Modal from '../components/Modal';
+import PaginationControls from '../components/PaginationControls';
+import { usePersistedPageSize } from '../hooks/usePageSize';
 import { toArray } from '../utils/api';
 
 interface UserRecord {
@@ -44,6 +46,9 @@ const UsersPage = () => {
   const [editing, setEditing] = useState<UserRecord | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePersistedPageSize('users_page_size');
+  const [total, setTotal] = useState(0);
 
   const canManage = useMemo(() => role === 'admin' || role === 'owner', [role]);
 
@@ -51,23 +56,48 @@ const UsersPage = () => {
     setLoading(true);
     try {
       const response = await http.get('/api/users/', {
-        params: filters.role ? { role: filters.role } : undefined,
+        params: {
+          page,
+          page_size: pageSize,
+          ...(filters.role ? { role: filters.role } : {}),
+        },
       });
-      setUsers(toArray<UserRecord>(response.data));
+      const data = response.data;
+      let normalized: UserRecord[];
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        normalized = data.results as UserRecord[];
+        setTotal(Number(data.count) || 0);
+      } else {
+        normalized = toArray<UserRecord>(data);
+        setTotal(normalized.length);
+      }
+      setUsers(normalized);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, page, pageSize]);
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
 
+  useEffect(() => {
+    if (total === 0) {
+      if (page !== 1) setPage(1);
+      return;
+    }
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [total, pageSize, page]);
+
   const handleFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setFilters({ role: event.target.value });
+    setPage(1);
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -229,6 +259,16 @@ const UsersPage = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
       </div>
 
       <Modal

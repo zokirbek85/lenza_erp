@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import http from '../app/http';
-import { formatCurrency, formatNumber } from '../utils/formatters';
+import { formatCurrency, formatQuantity } from '../utils/formatters';
 
 interface OwnerKpi {
   total_sales_usd: number;
@@ -99,7 +99,7 @@ const KpiPage = () => {
                   <p className="font-semibold text-slate-900 dark:text-white">{item.name}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{item.sku}</p>
                 </div>
-                <span className="font-semibold text-amber-600">{formatNumber(item.stock_ok)} dona</span>
+                <span className="font-semibold text-amber-600">{formatQuantity(item.stock_ok)} dona</span>
               </div>
             )) ?? <p className="text-sm text-slate-500 dark:text-slate-400">Yuqori xavfli zaxira yo&apos;q</p>}
           </div>
@@ -113,7 +113,7 @@ const KpiPage = () => {
                   <p className="font-semibold text-slate-900 dark:text-white">{item.name}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{item.sku}</p>
                 </div>
-                <span className="font-semibold text-rose-600">{formatNumber(item.stock_defect)} dona</span>
+                <span className="font-semibold text-rose-600">{formatQuantity(item.stock_defect)} dona</span>
               </div>
             )) ?? <p className="text-sm text-slate-500 dark:text-slate-400">Defekt mahsulotlar yo&apos;q</p>}
           </div>

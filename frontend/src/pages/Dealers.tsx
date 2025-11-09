@@ -4,8 +4,11 @@ import toast from 'react-hot-toast';
 
 import http from '../app/http';
 import Modal from '../components/Modal';
+import PaginationControls from '../components/PaginationControls';
+import { usePersistedPageSize } from '../hooks/usePageSize';
 import { toArray } from '../utils/api';
 import { formatCurrency } from '../utils/formatters';
+import { downloadFile } from '../utils/download';
 
 interface Region {
   id: number;
@@ -72,21 +75,41 @@ const DealersPage = () => {
   const [payments, setPayments] = useState<PaymentSummary[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePersistedPageSize('dealers_page_size');
+  const [total, setTotal] = useState(0);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<{ created: number; updated: number; skipped?: number } | null>(null);
 
   const loadDealers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await http.get('/api/dealers/', {
-        params: filter.region_id ? { region_id: filter.region_id } : undefined,
+        params: {
+          page,
+          page_size: pageSize,
+          ...(filter.region_id ? { region_id: filter.region_id } : {}),
+        },
       });
-      setDealers(toArray<Dealer>(response.data));
+      const data = response.data;
+      let normalized: Dealer[];
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        normalized = data.results as Dealer[];
+        setTotal(Number(data.count) || 0);
+      } else {
+        normalized = toArray<Dealer>(data);
+        setTotal(normalized.length);
+      }
+      setDealers(normalized);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load dealers');
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, page, pageSize]);
 
   const loadRegions = useCallback(async () => {
     try {
@@ -115,8 +138,20 @@ const DealersPage = () => {
     loadDealers();
   }, [loadDealers]);
 
+  useEffect(() => {
+    if (total === 0) {
+      if (page !== 1) setPage(1);
+      return;
+    }
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [total, pageSize, page]);
+
   const handleFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setFilter({ region_id: event.target.value });
+    setPage(1);
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -206,6 +241,55 @@ const DealersPage = () => {
 
   const managerLabel = (manager?: Dealer['manager_user']) => manager ?? '—';
 
+  const handleExport = async () => {
+    try {
+      await downloadFile('/api/dealers/export/excel/', 'dealers.xlsx');
+    } catch (error) {
+      console.error(error);
+      toast.error('Export failed');
+    }
+  };
+
+  const handleTemplateDownload = async () => {
+    try {
+      await downloadFile('/api/dealers/import/template/', 'dealers_import_template.xlsx');
+    } catch (error) {
+      console.error(error);
+      toast.error('Template download failed');
+    }
+  };
+
+  const handleImportSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!importFile) {
+      toast.error('Select Excel file first');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', importFile);
+    setImporting(true);
+    try {
+      const response = await http.post('/api/dealers/import/excel/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setImportSummary(response.data);
+      toast.success('Import completed');
+      setImportFile(null);
+      loadDealers();
+    } catch (error) {
+      console.error(error);
+      toast.error('Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const closeImportModal = () => {
+    setImportModalOpen(false);
+    setImportFile(null);
+    setImportSummary(null);
+  };
+
   return (
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -226,6 +310,24 @@ const DealersPage = () => {
               </option>
             ))}
           </select>
+          <button
+            onClick={handleTemplateDownload}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Import template
+          </button>
+          <button
+            onClick={handleExport}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            Export Excel
+          </button>
+          <button
+            onClick={() => setImportModalOpen(true)}
+            className="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
+          >
+            Import Excel
+          </button>
           <button
             onClick={() => openModal()}
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
@@ -301,6 +403,59 @@ const DealersPage = () => {
           </tbody>
         </table>
       </div>
+
+      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
+      </div>
+      <Modal
+        open={importModalOpen}
+        onClose={closeImportModal}
+        title="Import dealers"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={closeImportModal}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="dealer-import-form"
+              disabled={importing}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {importing ? 'Importing...' : 'Start import'}
+            </button>
+          </>
+        }
+      >
+        <form id="dealer-import-form" onSubmit={handleImportSubmit} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Excel file</label>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          {importSummary && (
+            <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <p>Created: {importSummary.created}</p>
+              <p>Updated: {importSummary.updated}</p>
+              {typeof importSummary.skipped === 'number' && <p>Skipped: {importSummary.skipped}</p>}
+            </div>
+          )}
+        </form>
+      </Modal>
 
       <Modal
         open={modalOpen}

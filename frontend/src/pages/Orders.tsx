@@ -1,16 +1,22 @@
 import type { FormEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Collapse } from 'antd';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import http from '../app/http';
 import StatusBadge from '../components/StatusBadge';
+import PaginationControls from '../components/PaginationControls';
 import OrderItemTable from '../features/orders/OrderItemTable';
+import { usePersistedPageSize } from '../hooks/usePageSize';
 import { loadDraftOrder, saveDraftOrder, useOrderStore } from '../store/useOrderStore';
 import { downloadFile } from '../utils/download';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
 import { loadCache, saveCache } from '../utils/storage';
+
+const { Panel } = Collapse;
 
 interface DealerOption {
   id: number;
@@ -58,6 +64,37 @@ interface Order {
 }
 
 const ORDER_STATUSES = ['created', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled', 'returned'];
+const CREATE_FORM_PANEL_KEY = 'create-order';
+const DEFAULT_QTY = '1.00';
+
+const normalizeQuantityValue = (value: string | number): number => {
+  if (value === null || value === undefined) {
+    return NaN;
+  }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      return NaN;
+    }
+    return Math.round(value * 100) / 100;
+  }
+  const normalized = value.replace(',', '.').trim();
+  if (!normalized) {
+    return NaN;
+  }
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    return NaN;
+  }
+  return Math.round(parsed * 100) / 100;
+};
+
+const formatQuantityInputValue = (value: string | number, fallback = DEFAULT_QTY) => {
+  const normalized = normalizeQuantityValue(value);
+  if (!Number.isFinite(normalized) || normalized <= 0) {
+    return fallback;
+  }
+  return normalized.toFixed(2);
+};
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -69,11 +106,15 @@ const OrdersPage = () => {
   const [orderType, setOrderType] = useState<'regular' | 'reserve'>('regular');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePersistedPageSize('orders_page_size');
+  const [totalOrders, setTotalOrders] = useState(0);
   const [draftInitialized, setDraftInitialized] = useState(false);
   const [productSearch, setProductSearch] = useState('');
-  const [quantityInput, setQuantityInput] = useState('1');
+  const [quantityInput, setQuantityInput] = useState(DEFAULT_QTY);
   const [priceInput, setPriceInput] = useState('');
   const [productsLoading, setProductsLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const { t } = useTranslation();
 
   const {
@@ -93,6 +134,18 @@ const OrdersPage = () => {
 
   const { brandId, categoryId } = filters;
 
+  const handleToggleCreateForm = () => {
+    setShowCreateForm((previous) => !previous);
+  };
+
+  const handleCollapseChange = (keys: string | string[]) => {
+    if (Array.isArray(keys)) {
+      setShowCreateForm(keys.includes(CREATE_FORM_PANEL_KEY));
+    } else {
+      setShowCreateForm(keys === CREATE_FORM_PANEL_KEY);
+    }
+  };
+
   const fetchAllPages = useCallback(async <T,>(endpoint: string) => {
     const collected: T[] = [];
     let nextUrl: string | null = endpoint;
@@ -111,18 +164,33 @@ const OrdersPage = () => {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/orders/');
-      const normalized = toArray<Order>(response.data);
+      const response = await http.get('/api/orders/', { params: { page, page_size: pageSize } });
+      const data = response.data;
+      let normalized: Order[];
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        normalized = data.results as Order[];
+        setTotalOrders(Number(data.count) || 0);
+      } else {
+        normalized = toArray<Order>(data);
+        setTotalOrders(normalized.length);
+      }
       setOrders(normalized);
       saveCache('orders-data', normalized);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load orders');
-      throw error;
+      const cached = loadCache<Order[]>('orders-data');
+      if (cached) {
+        setOrders(cached);
+        setTotalOrders(cached.length);
+      } else {
+        setOrders([]);
+        setTotalOrders(0);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize]);
 
   const loadRefs = useCallback(async () => {
     const [dealersData, brandsData, categoriesData] = await Promise.all([
@@ -154,10 +222,21 @@ const OrdersPage = () => {
     return () => window.removeEventListener('orders:refresh', handler);
   }, [loadOrders]);
 
-  const loadProducts = useCallback(async () => {
+  useEffect(() => {
+    if (totalOrders === 0) {
+      if (page !== 1) setPage(1);
+      return;
+    }
+    const maxPage = Math.max(1, Math.ceil(totalOrders / pageSize));
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [totalOrders, pageSize, page]);
+
+  const loadProducts = useCallback(async (searchText = '') => {
     setProductsLoading(true);
     try {
-      await fetchProducts();
+      await fetchProducts(searchText);
     } catch (error) {
       console.error(error);
       toast.error('Mahsulotlarni yuklab bo\'lmadi');
@@ -167,8 +246,8 @@ const OrdersPage = () => {
   }, [fetchProducts]);
 
   useEffect(() => {
-    loadProducts().catch(() => null);
-  }, [loadProducts, brandId, categoryId]);
+    loadProducts(productSearch).catch(() => null);
+  }, [loadProducts, brandId, categoryId, productSearch]);
 
   useEffect(() => {
     if (draftInitialized) return;
@@ -190,29 +269,24 @@ const OrdersPage = () => {
     }
   }, [availableProducts, selectedProduct, setSelectedProduct]);
 
-  const filteredProducts = useMemo(() => {
-    const query = productSearch.trim().toLowerCase();
-    if (!query) {
-      return availableProducts;
+  useEffect(() => {
+    if (showCreateForm && typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    return availableProducts.filter((product) => {
-      const haystack = [product.name, product.brand?.name, product.category?.name]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [availableProducts, productSearch]);
+  }, [showCreateForm]);
+
+  const filteredProducts = useMemo(() => availableProducts, [availableProducts]);
 
   const resetProductInputs = useCallback(() => {
     setSelectedProduct(null);
     setProductSearch('');
-    setQuantityInput('1');
+    setQuantityInput(DEFAULT_QTY);
     setPriceInput('');
   }, [setSelectedProduct]);
 
   const handleFilterChange = (field: 'brandId' | 'categoryId', value: string) => {
     setFilters({ [field]: value || undefined });
+    setPage(1);
   };
 
   const handleSelectProduct = (value: string) => {
@@ -223,7 +297,7 @@ const OrdersPage = () => {
     const product = availableProducts.find((prod) => prod.id === Number(value));
     if (product) {
       setSelectedProduct(product);
-      setQuantityInput('1');
+      setQuantityInput(DEFAULT_QTY);
       setPriceInput(String(product.sell_price_usd ?? 0));
     }
   };
@@ -233,11 +307,12 @@ const OrdersPage = () => {
       toast.error('Mahsulot tanlang');
       return;
     }
-    const qtyValue = Number(quantityInput || 1);
-    if (!Number.isFinite(qtyValue) || qtyValue <= 0) {
-      toast.error('Miqdor 1 dan katta bo\'lishi kerak');
+    const normalizedQty = normalizeQuantityValue(quantityInput || DEFAULT_QTY);
+    if (!Number.isFinite(normalizedQty) || normalizedQty <= 0) {
+      toast.error('Miqdor 0 dan katta va decimal formatda bo\'lishi kerak');
       return;
     }
+    const qtyValue = Number(normalizedQty.toFixed(2));
     const priceValue = Number(priceInput || selectedProduct.sell_price_usd || 0);
     if (!Number.isFinite(priceValue) || priceValue < 0) {
       toast.error('Narx musbat bo\'lishi kerak');
@@ -250,16 +325,17 @@ const OrdersPage = () => {
       price_usd: priceValue,
     });
     toast.success('Mahsulot qo\'shildi');
-    setQuantityInput('1');
+    setQuantityInput(DEFAULT_QTY);
     setPriceInput(String(selectedProduct.sell_price_usd ?? 0));
   };
 
   const handleItemQtyChange = (productId: number, qty: number) => {
-    if (!Number.isFinite(qty) || qty <= 0) {
-      toast.error('Miqdor 1 dan katta bo\'lishi kerak');
+    const normalizedQty = normalizeQuantityValue(qty);
+    if (!Number.isFinite(normalizedQty) || normalizedQty <= 0) {
+      toast.error('Miqdor 0 dan katta va decimal formatda bo\'lishi kerak');
       return;
     }
-    updateItem(productId, { qty });
+    updateItem(productId, { qty: Number(normalizedQty.toFixed(2)) });
   };
 
   const handleItemPriceChange = (productId: number, price: number) => {
@@ -294,20 +370,26 @@ const OrdersPage = () => {
       price_usd: item.price_usd,
     }));
 
-    await http.post('/api/orders/', {
-      dealer: Number(dealerId),
-      status: 'created',
-      is_reserve: orderType === 'reserve',
-      note,
-      items: payloadItems,
-    });
-    setDealerId('');
-    setOrderType('regular');
-    setNote('');
-    clearOrder();
-    resetProductInputs();
-    toast.success('Order created');
-    loadOrders().catch(() => null);
+    try {
+      await http.post('/api/orders/', {
+        dealer: Number(dealerId),
+        status: 'created',
+        is_reserve: orderType === 'reserve',
+        note,
+        items: payloadItems,
+      });
+      setDealerId('');
+      setOrderType('regular');
+      setNote('');
+      clearOrder();
+      resetProductInputs();
+      toast.success('Order created');
+      setShowCreateForm(false);
+      loadOrders().catch(() => null);
+    } catch (error) {
+      console.error(error);
+      toast.error('Order yaratishda xatolik yuz berdi');
+    }
   };
 
   const handleStatusChange = async (orderId: number, status: string) => {
@@ -372,6 +454,29 @@ const OrdersPage = () => {
         </div>
       </header>
 
+      <div className="mb-4 flex justify-end">
+        <Button
+          type={showCreateForm ? 'default' : 'primary'}
+          icon={showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
+          onClick={handleToggleCreateForm}
+        >
+          {showCreateForm ? 'Formani yashirish' : 'Yangi buyurtma yaratish'}
+        </Button>
+      </div>
+
+      <Collapse
+        className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
+        activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
+        onChange={(key) => handleCollapseChange(key as string[] | string)}
+      >
+        <Panel header="➕ Yangi buyurtma yaratish" key={CREATE_FORM_PANEL_KEY}>
+          {showCreateForm && (
+            <Card
+              title="Yangi buyurtma yaratish"
+              className="mt-4 border border-slate-700 bg-slate-900"
+              headStyle={{ color: '#fff', backgroundColor: 'transparent' }}
+              bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
+            >
       <form
         onSubmit={handleSubmit}
         className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
@@ -467,15 +572,17 @@ const OrdersPage = () => {
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
                 <option value="">Mahsulot tanlang</option>
-                {filteredProducts.map((product) => {
-                  const stock = product.total_stock ?? product.stock_ok ?? 0;
-                  const isLow = (product.total_stock ?? product.stock_ok ?? 0) <= 0;
-                  return (
-                    <option key={product.id} value={product.id}>
-                      {product.name} · {product.brand?.name ?? '—'} · {product.category?.name ?? '—'}{' '}
-                      {isLow ? '(Zaxira tugagan)' : `(${stock ?? 0} dona)`}
-                    </option>
-                  );
+                {filteredProducts.map((product) => {
+                  const stock = product.total_stock ?? product.stock_ok ?? 0;
+                  const isLow = stock <= 0;
+                  const brandLabel = product.brand?.name ?? '-';
+                  const categoryLabel = product.category?.name ?? '-';
+                  return (
+                    <option key={product.id} value={product.id}>
+                      {product.name} · {brandLabel} · {categoryLabel}{' '}
+                      {isLow ? '(Zaxira tugagan)' : `(${formatQuantity(stock)} dona)`}
+                    </option>
+                  );
                 })}
               </select>
               {!filteredProducts.length && !productsLoading && (
@@ -486,9 +593,13 @@ const OrdersPage = () => {
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Miqdor</label>
               <input
                 type="number"
-                min={1}
+                min={0.01}
+                step="0.01"
+                inputMode="decimal"
+                placeholder="0.00"
                 value={quantityInput}
                 onChange={(event) => setQuantityInput(event.target.value)}
+                onBlur={() => setQuantityInput(formatQuantityInputValue(quantityInput || DEFAULT_QTY))}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -541,6 +652,10 @@ const OrdersPage = () => {
           </button>
         </div>
       </form>
+            </Card>
+          )}
+        </Panel>
+      </Collapse>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
@@ -556,6 +671,13 @@ const OrdersPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {loading && (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                  Yuklanmoqda...
+                </td>
+              </tr>
+            )}
             {orderRows.map((order) => {
               const isExpanded = expandedOrderId === order.id;
               return (
@@ -627,7 +749,7 @@ const OrdersPage = () => {
                                       {item.product_detail?.name ?? `Mahsulot #${item.product ?? '—'}`}
                                     </span>
                                     <span className="text-slate-600 dark:text-slate-300">
-                                      {item.qty} × {formatCurrency(price)} = {formatCurrency(lineTotal)}
+                                      {formatQuantity(item.qty)} × {formatCurrency(price)} = {formatCurrency(lineTotal)}
                                     </span>
                                   </li>
                                 );
@@ -645,13 +767,23 @@ const OrdersPage = () => {
             })}
             {!loading && orderRows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
                   Buyurtmalar topilmadi
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={totalOrders}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
       </div>
     </section>
   );

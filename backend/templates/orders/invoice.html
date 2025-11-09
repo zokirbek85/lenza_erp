@@ -232,7 +232,7 @@
               <strong>{{ item.product.name|default:"Unnamed product" }}</strong><br />
               <span style="color: var(--text-muted); font-size: 12px;">SKU: {{ item.product.sku|default:"—" }}</span>
             </td>
-            <td>{{ item.qty }}</td>
+            <td>{{ item.qty|floatformat:2 }}</td>
             <td>${{ item.price_usd }}</td>
             <td>${{ item.line_total_usd }}</td>
           </tr>

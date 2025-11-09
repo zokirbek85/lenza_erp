@@ -1,8 +1,18 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 import pandas as pd
 
 from catalog.models import Brand, Category, Product
+
+
+def _to_quantity(value) -> Decimal:
+    try:
+        amount = Decimal(str(value or 0))
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal('0.00')
+    if amount < 0:
+        return Decimal('0.00')
+    return amount.quantize(Decimal('0.01'))
 
 
 def _get_or_create_brand(name: str | None):
@@ -35,8 +45,8 @@ def import_products_from_excel(file_obj) -> dict:
         defaults['size'] = str(row.get('size', '') or '')
         defaults['cost_usd'] = Decimal(str(row.get('cost_usd', 0) or 0))
         defaults['sell_price_usd'] = Decimal(str(row.get('sell_price_usd', 0) or 0))
-        defaults['stock_ok'] = int(row.get('stock_ok', 0) or 0)
-        defaults['stock_defect'] = int(row.get('stock_defect', 0) or 0)
+        defaults['stock_ok'] = _to_quantity(row.get('stock_ok', 0))
+        defaults['stock_defect'] = _to_quantity(row.get('stock_defect', 0))
         product, was_created = Product.objects.update_or_create(
             name=name,
             defaults=defaults,

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from .models import Brand, Category, Product
@@ -24,6 +26,18 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     total_stock = serializers.SerializerMethodField()
     availability_status = serializers.SerializerMethodField()
+    stock_ok = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal('0'),
+        coerce_to_string=False,
+    )
+    stock_defect = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal('0'),
+        coerce_to_string=False,
+    )
 
     class Meta:
         model = Product
@@ -52,7 +66,8 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ('barcode', 'created_at', 'updated_at')
 
     def get_total_stock(self, obj):
-        return obj.stock_ok + obj.stock_defect
+        total = (obj.stock_ok or Decimal('0')) + (obj.stock_defect or Decimal('0'))
+        return float(total)
 
     def get_availability_status(self, obj):
         return 'Not available' if obj.stock_ok <= 0 else 'Available'

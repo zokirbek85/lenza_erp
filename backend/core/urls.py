@@ -17,6 +17,9 @@ from catalog.views import (
 from core.views import AuditLogViewSet, SearchView, SystemBackupView, SystemConfigView
 from dealers.views import (
     DealerBalancePDFView,
+    DealerExportExcelView,
+    DealerImportExcelView,
+    DealerImportTemplateView,
     DealerReconciliationPDFView,
     DealerReconciliationView,
     DealerViewSet,
@@ -74,6 +77,9 @@ urlpatterns = [
     path('api/payments/report/pdf/', PaymentReportPDFView.as_view(), name='payments-report-pdf'),
     path('api/payments/export/excel/', PaymentExportExcelView.as_view(), name='payments-export-excel'),
     path('api/dealers/balance/pdf/', DealerBalancePDFView.as_view(), name='dealer-balance-pdf'),
+    path('api/dealers/export/excel/', DealerExportExcelView.as_view(), name='dealers-export-excel'),
+    path('api/dealers/import/excel/', DealerImportExcelView.as_view(), name='dealers-import-excel'),
+    path('api/dealers/import/template/', DealerImportTemplateView.as_view(), name='dealers-import-template'),
     path('api/dealers/<int:pk>/reconciliation/', DealerReconciliationView.as_view(), name='dealer-reconciliation'),
     path('api/dealers/<int:pk>/reconciliation/pdf/', DealerReconciliationPDFView.as_view(), name='dealer-reconciliation-pdf'),
     path('api/payments/rates/history/', CurrencyRateHistoryView.as_view(), name='currency-rate-history'),

@@ -15,7 +15,7 @@ import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 
 import http from '../../app/http';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { loadCache, saveCache } from '../../utils/storage';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
@@ -278,7 +278,7 @@ const DashboardPage = () => {
                   className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-200"
                 >
                   <span>{product.name}</span>
-                  <span className="font-semibold">{product.quantity}</span>
+                  <span className="font-semibold">{formatQuantity(product.quantity)}</span>
                 </div>
               ))
             ) : (

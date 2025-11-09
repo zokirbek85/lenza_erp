@@ -7,7 +7,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import Modal from '../components/Modal';
 import { downloadFile } from '../utils/download';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
 
 interface Brand {
@@ -44,13 +44,43 @@ const emptyForm = {
   stock_defect: '',
 };
 
+const normalizeStockValue = (value: string | number) => {
+  if (value === null || value === undefined || value === '') {
+    return 0;
+  }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+    return Number(value.toFixed(2));
+  }
+  const normalized = value.replace(',', '.');
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Number(parsed.toFixed(2));
+};
+const PAGE_SIZE_STORAGE_KEY = 'products_page_size';
+
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string }>({});
   const [formState, setFormState] = useState<typeof emptyForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => {
+    if (typeof window === 'undefined') return 25;
+    const stored = Number(window.localStorage.getItem(PAGE_SIZE_STORAGE_KEY));
+    if (Number.isFinite(stored) && stored > 0 && stored <= 200) {
+      return stored;
+    }
+    return 25;
+  });
+  const [total, setTotal] = useState(0);
   const [importing, setImporting] = useState(false);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const [adjustForm, setAdjustForm] = useState({ stock_ok: '', stock_defect: '' });
@@ -61,25 +91,69 @@ const ProductsPage = () => {
   const canManageProducts = role === 'admin' || role === 'accountant';
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadLookups = useCallback(async () => {
     try {
-      const [productRes, brandRes, categoryRes] = await Promise.all([
-        http.get('/api/products/'),
-        http.get('/api/brands/'),
-        http.get('/api/categories/'),
-      ]);
-      setProducts(toArray<Product>(productRes.data));
+      const [brandRes, categoryRes] = await Promise.all([http.get('/api/brands/'), http.get('/api/categories/')]);
       setBrands(toArray<Brand>(brandRes.data));
       setCategories(toArray<Category>(categoryRes.data));
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load brand/category references');
     }
   }, []);
 
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, string | number> = {
+        page,
+        page_size: pageSize,
+      };
+      if (filters.brandId) params.brand = filters.brandId;
+      if (filters.categoryId) params.category = filters.categoryId;
+
+      const response = await http.get('/api/products/', { params });
+      const data = response.data;
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        setProducts(data.results as Product[]);
+        setTotal(Number(data.count) || 0);
+      } else {
+        const fallback = toArray<Product>(data);
+        setProducts(fallback);
+        setTotal(fallback.length);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, filters.brandId, filters.categoryId]);
+
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadLookups();
+  }, [loadLookups]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(PAGE_SIZE_STORAGE_KEY, String(pageSize));
+    } catch {
+      /* ignore */
+    }
+  }, [pageSize]);
+
+  useEffect(() => {
+    if (!total) return;
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [total, page, pageSize]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
@@ -95,17 +169,22 @@ const ProductsPage = () => {
       category_id: formState.category_id || null,
       sell_price_usd: Number(formState.sell_price_usd || 0),
       cost_usd: Number(formState.sell_price_usd || 0),
-      stock_ok: Number(formState.stock_ok || 0),
-      stock_defect: Number(formState.stock_defect || 0),
+      stock_ok: normalizeStockValue(formState.stock_ok),
+      stock_defect: normalizeStockValue(formState.stock_defect),
     };
-    if (editingId) {
-      await http.put(`/api/products/${editingId}/`, payload);
-    } else {
-      await http.post('/api/products/', payload);
+    try {
+      if (editingId) {
+        await http.put(`/api/products/${editingId}/`, payload);
+      } else {
+        await http.post('/api/products/', payload);
+      }
+      setFormState(emptyForm);
+      setEditingId(null);
+      fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save product');
     }
-    setFormState(emptyForm);
-    setEditingId(null);
-    loadData();
   };
 
   const handleEdit = (product: Product) => {
@@ -123,7 +202,7 @@ const ProductsPage = () => {
 
   const handleDelete = async (id: number) => {
     await http.delete(`/api/products/${id}/`);
-    loadData();
+    fetchProducts();
   };
 
   const openAdjustModal = (product: Product) => {
@@ -144,10 +223,10 @@ const ProductsPage = () => {
     if (!adjusting) return;
     const payload: Record<string, number> = {};
     if (adjustForm.stock_ok !== '') {
-      payload.stock_ok = Number(adjustForm.stock_ok);
+      payload.stock_ok = normalizeStockValue(adjustForm.stock_ok);
     }
     if (adjustForm.stock_defect !== '') {
-      payload.stock_defect = Number(adjustForm.stock_defect);
+      payload.stock_defect = normalizeStockValue(adjustForm.stock_defect);
     }
     if (!Object.keys(payload).length) {
       toast.error('Enter at least one value');
@@ -158,13 +237,31 @@ const ProductsPage = () => {
       await http.patch(`/api/products/${adjusting.id}/adjust/`, payload);
       toast.success('Stock levels updated');
       setAdjusting(null);
-      loadData();
+      fetchProducts();
     } catch (error) {
       console.error(error);
       toast.error('Failed to adjust stock');
     } finally {
       setAdjustSaving(false);
     }
+  };
+
+  const handleFilterChange = (field: 'brandId' | 'categoryId', value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value || undefined,
+    }));
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setPageSize(Number(event.target.value));
+    setPage(1);
   };
 
   const tableRows = useMemo(
@@ -176,6 +273,11 @@ const ProductsPage = () => {
       })),
     [products]
   );
+  const totalPages = Math.max(1, Math.ceil((total || 0) / pageSize) || 1);
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
+  const canGoPrev = page > 1;
+  const canGoNext = page * pageSize < total;
 
   const handleExportPdf = () => downloadFile('/api/catalog/report/pdf/', 'products.pdf');
   const handleExportExcel = async () => {
@@ -214,7 +316,7 @@ const ProductsPage = () => {
       const imported = response.data?.imported ?? 0;
       const updated = response.data?.updated ?? 0;
       toast.success(`✅ Imported: ${imported}, Updated: ${updated}`, { id: toastId });
-      await loadData();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
       toast.error('Import failed', { id: toastId });
@@ -275,6 +377,46 @@ const ProductsPage = () => {
           )}
         </div>
       </header>
+
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Brand filter</label>
+          <select
+            value={filters.brandId ?? ''}
+            onChange={(event) => handleFilterChange('brandId', event.target.value)}
+            className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">Barcha brandlar</option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Kategoriya</label>
+          <select
+            value={filters.categoryId ?? ''}
+            onChange={(event) => handleFilterChange('categoryId', event.target.value)}
+            className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">Barcha kategoriyalar</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          onClick={clearFilters}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Filtrlarni tozalash
+        </button>
+      </div>
 
       {canManageProducts && (
         <form
@@ -352,6 +494,9 @@ const ProductsPage = () => {
               value={formState.stock_ok}
               onChange={handleChange}
               type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
@@ -362,6 +507,9 @@ const ProductsPage = () => {
               value={formState.stock_defect}
               onChange={handleChange}
               type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
@@ -414,7 +562,7 @@ const ProductsPage = () => {
                 <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.sell_price_usd)}</td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Ok: {product.stock_ok} / Defect: {product.stock_defect}
+                    Ok: {formatQuantity(product.stock_ok)} / Defect: {formatQuantity(product.stock_defect)}
                   </div>
                   {!product.canSell && (
                     <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">
@@ -474,6 +622,49 @@ const ProductsPage = () => {
         </table>
       </div>
 
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+          <span>Ko&apos;rsat:</span>
+          <select
+            value={pageSize}
+            onChange={handlePageSizeChange}
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            {[10, 25, 50, 100].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <span>ta mahsulot / sahifa</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">
+            {rangeStart} - {rangeEnd} / {total}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-300">
+          <button
+            type="button"
+            disabled={!canGoPrev}
+            onClick={() => canGoPrev && setPage((prev) => Math.max(1, prev - 1))}
+            className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
+          >
+            ← Oldingi
+          </button>
+          <span className="text-xs text-slate-400 dark:text-slate-500">
+            Sahifa {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={!canGoNext}
+            onClick={() => canGoNext && setPage((prev) => prev + 1)}
+            className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
+          >
+            Keyingi →
+          </button>
+        </div>
+      </div>
+
       <Modal
         open={Boolean(adjusting)}
         onClose={() => {
@@ -516,6 +707,8 @@ const ProductsPage = () => {
                 onChange={handleAdjustChange}
                 type="number"
                 min="0"
+                step="0.01"
+                inputMode="decimal"
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -527,6 +720,8 @@ const ProductsPage = () => {
                 onChange={handleAdjustChange}
                 type="number"
                 min="0"
+                step="0.01"
+                inputMode="decimal"
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>

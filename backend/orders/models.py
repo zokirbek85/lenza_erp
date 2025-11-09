@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import DecimalField, F, Sum
 from django.utils import timezone
@@ -52,8 +53,21 @@ class Order(models.Model):
         if isinstance(self.value_date, datetime):
             self.value_date = self.value_date.date()
         if not self.display_no:
-            today_count = Order.objects.filter(created_at__date=timezone.now().date()).count() + 1
-            self.display_no = generate_order_number(sequence=today_count, order_date=self.value_date)
+            prefix = f"ORD-{self.value_date:%d.%m.%Y}-"
+            last_display = (
+                Order.objects.filter(value_date=self.value_date, display_no__startswith=prefix)
+                .order_by('-display_no')
+                .values_list('display_no', flat=True)
+                .first()
+            )
+            last_sequence = int(last_display.split('-')[-1]) if last_display else 0
+            next_sequence = last_sequence + 1
+            candidate = generate_order_number(next_sequence, self.value_date)
+            # Safeguard against race conditions by bumping sequence until unused.
+            while Order.objects.filter(display_no=candidate).exists():
+                next_sequence += 1
+                candidate = generate_order_number(next_sequence, self.value_date)
+            self.display_no = candidate
         super().save(*args, **kwargs)
 
     def recalculate_totals(self):
@@ -81,7 +95,11 @@ class OrderItem(models.Model):
 
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey('catalog.Product', on_delete=models.PROTECT, related_name='order_items')
-    qty = models.PositiveIntegerField()
+    qty = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+    )
     price_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=ItemStatus.choices, default=ItemStatus.RESERVED)
 
@@ -89,11 +107,12 @@ class OrderItem(models.Model):
         ordering = ('id',)
 
     def __str__(self) -> str:
-        return f"{self.product} x{self.qty}"
+        return f"{self.product} x{self.qty:.2f}"
 
     @property
     def line_total_usd(self) -> Decimal:
-        return (self.price_usd or Decimal('0')) * Decimal(self.qty)
+        qty = self.qty or Decimal('0')
+        return (self.price_usd or Decimal('0')) * qty
 
 
 class OrderStatusLog(models.Model):
@@ -110,7 +129,11 @@ class OrderStatusLog(models.Model):
 class OrderReturn(models.Model):
     order = models.ForeignKey(Order, related_name='returns', on_delete=models.CASCADE)
     item = models.ForeignKey(OrderItem, related_name='returns', on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+    )
     is_defect = models.BooleanField(default=False)
     processed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='processed_returns'
@@ -123,5 +146,6 @@ class OrderReturn(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.amount_usd:
-            self.amount_usd = (self.item.price_usd * Decimal(self.quantity)).quantize(Decimal('0.01'))
+            quantity = self.quantity or Decimal('0.00')
+            self.amount_usd = (self.item.price_usd * quantity).quantize(Decimal('0.01'))
         super().save(*args, **kwargs)

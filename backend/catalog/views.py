@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from django.db import models
@@ -46,7 +47,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         query = self.request.query_params.get('q')
         if query:
             queryset = queryset.filter(models.Q(name__icontains=query) | models.Q(barcode__icontains=query))
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        limit = request.query_params.get('limit')
+        queryset = self.filter_queryset(self.get_queryset())
+        if limit == 'all':
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
 
     def _ensure_manager(self):
         user = self.request.user
@@ -77,11 +90,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         updates = {}
         try:
             if stock_ok is not None:
-                updates['stock_ok'] = max(0, int(stock_ok))
+                value = Decimal(str(stock_ok))
+                updates['stock_ok'] = value.quantize(Decimal('0.01')) if value >= 0 else Decimal('0.00')
             if stock_defect is not None:
-                updates['stock_defect'] = max(0, int(stock_defect))
-        except (TypeError, ValueError):
-            return Response({'detail': 'Stock values must be integers.'}, status=400)
+                value = Decimal(str(stock_defect))
+                updates['stock_defect'] = value.quantize(Decimal('0.01')) if value >= 0 else Decimal('0.00')
+        except (InvalidOperation, TypeError, ValueError):
+            return Response({'detail': 'Stock values must be decimals.'}, status=400)
         if not updates:
             return Response({'detail': 'Provide stock_ok or stock_defect values.'}, status=400)
         Product.objects.filter(pk=product.pk).update(**updates)

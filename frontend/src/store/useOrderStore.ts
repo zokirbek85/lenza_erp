@@ -21,6 +21,13 @@ export interface OrderItem {
   price_usd: number;
 }
 
+const clampQty = (qty: number): number => {
+  if (!Number.isFinite(qty)) {
+    return 0;
+  }
+  return Number(qty.toFixed(2));
+};
+
 interface FiltersState {
   brandId?: string;
   categoryId?: string;
@@ -34,7 +41,7 @@ export interface OrderState {
   setFilters: (filters: Partial<FiltersState>) => void;
   setSelectedItems: (items: OrderItem[]) => void;
   setSelectedProduct: (product: OrderProduct | null) => void;
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (searchText?: string) => Promise<void>;
   addItem: (item: OrderItem) => void;
   updateItem: (productId: number, payload: Partial<Pick<OrderItem, 'qty' | 'price_usd'>>) => void;
   removeItem: (productId: number) => void;
@@ -57,32 +64,40 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     })),
   setSelectedItems: (items) => set({ selectedItems: items }),
   setSelectedProduct: (product) => set({ selectedProduct: product }),
-  fetchProducts: async () => {
+  fetchProducts: async (searchText = '') => {
     const { filters } = get();
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = { limit: 'all' };
     if (filters.brandId) params.brand = filters.brandId;
     if (filters.categoryId) params.category = filters.categoryId;
+    if (searchText.trim()) params.search = searchText.trim();
     const response = await http.get('/api/products/', { params });
     set({ products: toArray<OrderProduct>(response.data) });
   },
   addItem: (item) =>
     set((state) => {
+      const incomingQty = clampQty(item.qty);
       const existing = state.selectedItems.find((entry) => entry.product === item.product);
       if (existing) {
         return {
           selectedItems: state.selectedItems.map((entry) =>
             entry.product === item.product
-              ? { ...entry, qty: entry.qty + item.qty, price_usd: item.price_usd }
+              ? { ...entry, qty: clampQty(entry.qty + incomingQty), price_usd: item.price_usd }
               : entry
           ),
         };
       }
-      return { selectedItems: [...state.selectedItems, item] };
+      return { selectedItems: [...state.selectedItems, { ...item, qty: incomingQty }] };
     }),
   updateItem: (productId, payload) =>
     set((state) => ({
       selectedItems: state.selectedItems.map((entry) =>
-        entry.product === productId ? { ...entry, ...payload } : entry
+        entry.product === productId
+          ? {
+              ...entry,
+              ...payload,
+              ...(payload.qty !== undefined ? { qty: clampQty(payload.qty) } : {}),
+            }
+          : entry
       ),
     })),
   removeItem: (productId) =>
@@ -120,7 +135,7 @@ export const loadDraftOrder = (): OrderItem[] => {
         .filter((item) => Number.isFinite(item?.product) && Number.isFinite(item?.qty))
         .map((item) => ({
           ...item,
-          qty: Number(item.qty) || 1,
+          qty: clampQty(Number(item.qty) || 1),
           price_usd: Number(item.price_usd) || 0,
         }));
     }

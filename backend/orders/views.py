@@ -62,10 +62,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def register_return(self, request, pk=None):
         order = self.get_object()
         item_id = request.data.get('item')
-        try:
-            quantity = int(request.data.get('quantity', 0))
-        except (TypeError, ValueError):
-            return Response({'detail': 'Quantity must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+        quantity = request.data.get('quantity')
         is_defect = bool(request.data.get('is_defect', False))
         try:
             item = order.items.get(pk=item_id)

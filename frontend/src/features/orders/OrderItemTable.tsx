@@ -37,9 +37,14 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
               <td className="px-4 py-3">
                 <input
                   type="number"
-                  min={1}
-                  value={item.qty}
-                  onChange={(event) => onQtyChange(item.product, Number(event.target.value) || 1)}
+                  min={0.01}
+                  step="0.01"
+                  inputMode="decimal"
+                  value={item.qty.toFixed(2)}
+                  onChange={(event) => {
+                    const nextValue = Number(event.target.value);
+                    onQtyChange(item.product, Number.isFinite(nextValue) ? nextValue : 0);
+                  }}
                   className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </td>

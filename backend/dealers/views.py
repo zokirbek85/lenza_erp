@@ -1,8 +1,11 @@
-from django.http import HttpResponse
+from pathlib import Path
+
+from django.http import FileResponse, HttpResponse
 from django.utils.text import slugify
 from django_filters import rest_framework as filters
-from rest_framework import filters as drf_filters
+from rest_framework import filters as drf_filters, status
 from rest_framework import viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +15,11 @@ from services.reconciliation import get_reconciliation_data
 
 from .models import Dealer, Region
 from .serializers import DealerSerializer, RegionSerializer
+from .utils.excel_tools import (
+    export_dealers_to_excel,
+    generate_dealer_import_template,
+    import_dealers_from_excel,
+)
 
 
 class DealerFilter(filters.FilterSet):
@@ -39,6 +47,38 @@ class DealerViewSet(viewsets.ModelViewSet):
     search_fields = ('name', 'code', 'contact')
     ordering_fields = ('name', 'created_at')
     filter_backends = (filters.DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter)
+
+
+class DealerExportExcelView(APIView):
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        file_path = Path(export_dealers_to_excel())
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        return response
+
+
+class DealerImportTemplateView(APIView):
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        file_path = Path(generate_dealer_import_template())
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        return response
+
+
+class DealerImportExcelView(APIView):
+    permission_classes = [IsAdmin]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        excel_file = request.FILES.get('file')
+        if not excel_file:
+            return Response({'detail': 'Excel file is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        result = import_dealers_from_excel(excel_file)
+        return Response(result, status=status.HTTP_201_CREATED)
 
 
 class DealerBalancePDFView(APIView):

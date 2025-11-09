@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 
 import http from '../app/http';
 import Modal from '../components/Modal';
+import PaginationControls from '../components/PaginationControls';
+import { usePersistedPageSize } from '../hooks/usePageSize';
 import { toArray } from '../utils/api';
 import { useFetch } from '../hooks/useFetch';
 
@@ -34,25 +36,48 @@ const RegionsPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePersistedPageSize('regions_page_size');
+  const [total, setTotal] = useState(0);
 
   const loadRegions = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/regions/');
-      setRegions(toArray<RegionRecord>(response.data));
+      const response = await http.get('/api/regions/', { params: { page, page_size: pageSize } });
+      const data = response.data;
+      let normalized: RegionRecord[];
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        normalized = data.results as RegionRecord[];
+        setTotal(Number(data.count) || 0);
+      } else {
+        normalized = toArray<RegionRecord>(data);
+        setTotal(normalized.length);
+      }
+      setRegions(normalized);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load regions');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize]);
 
   const { data: managerResponse } = useFetch<ManagerRecord[]>('/api/users/', { params: { role: 'sales' } });
 
   useEffect(() => {
     loadRegions();
   }, [loadRegions]);
+
+  useEffect(() => {
+    if (total === 0) {
+      if (page !== 1) setPage(1);
+      return;
+    }
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [total, pageSize, page]);
 
   useEffect(() => {
     if (managerResponse) {
@@ -182,6 +207,16 @@ const RegionsPage = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
       </div>
 
       <Modal

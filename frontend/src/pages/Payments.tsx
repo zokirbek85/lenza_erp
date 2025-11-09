@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import http from '../app/http';
+import PaginationControls from '../components/PaginationControls';
+import { usePersistedPageSize } from '../hooks/usePageSize';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { toArray } from '../utils/api';
@@ -48,6 +50,9 @@ const PaymentsPage = () => {
   const [filtersState, setFiltersState] = useState({ dealer: '', from: '', to: '' });
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePersistedPageSize('payments_page_size');
+  const [total, setTotal] = useState(0);
   const { t } = useTranslation();
 
   const loadPayments = useCallback(async () => {
@@ -55,20 +60,31 @@ const PaymentsPage = () => {
     try {
       const response = await http.get('/api/payments/', {
         params: {
+          page,
+          page_size: pageSize,
           dealer: filtersState.dealer || undefined,
           pay_date__gte: filtersState.from || undefined,
           pay_date__lte: filtersState.to || undefined,
           ordering: '-pay_date',
         },
       });
-      setPayments(toArray<Payment>(response.data));
+      const data = response.data;
+      let normalized: Payment[];
+      if (data && typeof data === 'object' && Array.isArray(data.results)) {
+        normalized = data.results as Payment[];
+        setTotal(Number(data.count) || 0);
+      } else {
+        normalized = toArray<Payment>(data);
+        setTotal(normalized.length);
+      }
+      setPayments(normalized);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load payments');
     } finally {
       setLoading(false);
     }
-  }, [filtersState]);
+  }, [filtersState, page, pageSize]);
 
   useEffect(() => {
     const loadRefs = async () => {
@@ -82,6 +98,17 @@ const PaymentsPage = () => {
   useEffect(() => {
     loadPayments();
   }, [loadPayments]);
+
+  useEffect(() => {
+    if (total === 0) {
+      if (page !== 1) setPage(1);
+      return;
+    }
+    const maxPage = Math.max(1, Math.ceil(total / pageSize));
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [total, pageSize, page]);
 
   useEffect(() => {
     const handler = () => {
@@ -99,10 +126,12 @@ const PaymentsPage = () => {
   const handleFilterInput = (event: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = event.target;
     setFiltersState((prev) => ({ ...prev, [name]: value }));
+    setPage(1);
   };
 
   const clearFilters = () => {
     setFiltersState({ dealer: '', from: '', to: '' });
+    setPage(1);
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -360,6 +389,16 @@ const PaymentsPage = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
       </div>
     </section>
   );

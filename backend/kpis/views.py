@@ -59,8 +59,16 @@ class WarehouseKPIView(APIView):
     permission_classes = [IsAdmin | IsWarehouse]
 
     def get(self, request):
-        low_stock = Product.objects.filter(stock_ok__lt=10).values('sku', 'name', 'stock_ok')[:20]
-        defect_stock = Product.objects.filter(stock_defect__gt=0).values('sku', 'name', 'stock_defect')
+        low_stock_queryset = Product.objects.filter(stock_ok__lt=10).values('sku', 'name', 'stock_ok')[:20]
+        defect_stock_queryset = Product.objects.filter(stock_defect__gt=0).values('sku', 'name', 'stock_defect')
+        low_stock = [
+            {'sku': row['sku'], 'name': row['name'], 'stock_ok': float(row['stock_ok'])}
+            for row in low_stock_queryset
+        ]
+        defect_stock = [
+            {'sku': row['sku'], 'name': row['name'], 'stock_defect': float(row['stock_defect'])}
+            for row in defect_stock_queryset
+        ]
         data = {
             'low_stock': list(low_stock),
             'defect_stock': list(defect_stock),
@@ -102,7 +110,9 @@ class SalesManagerKPIView(APIView):
             'current_month_sales_usd': float(current_month_total),
             'previous_month_sales_usd': float(previous_month_total),
             'average_order_value_usd': float(avg_order),
-            'top_products': [{'name': item['product__name'], 'quantity': item['total_qty']} for item in top_products],
+            'top_products': [
+                {'name': item['product__name'], 'quantity': float(item['total_qty'] or 0)} for item in top_products
+            ],
         }
         return Response(data)
 

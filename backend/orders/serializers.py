@@ -1,13 +1,22 @@
+from decimal import Decimal
+
 from django.db import transaction
 from rest_framework import serializers
 
 from catalog.serializers import ProductSerializer
+from dealers.models import Dealer
 
 from .models import Order, OrderItem, OrderReturn, OrderStatusLog
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_detail = ProductSerializer(source='product', read_only=True)
+    qty = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        coerce_to_string=False,
+    )
 
     class Meta:
         model = OrderItem
@@ -24,16 +33,38 @@ class OrderStatusLogSerializer(serializers.ModelSerializer):
 
 
 class OrderReturnSerializer(serializers.ModelSerializer):
+    quantity = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        coerce_to_string=False,
+    )
+
     class Meta:
         model = OrderReturn
         fields = ('id', 'item', 'quantity', 'is_defect', 'amount_usd', 'created_at')
         read_only_fields = ('amount_usd', 'created_at')
+
+class DealerShortSerializer(serializers.ModelSerializer):
+    region = serializers.CharField(source='region.name', read_only=True)
+
+    class Meta:
+        model = Dealer
+        fields = ('id', 'name', 'region')
 
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
     status_logs = OrderStatusLogSerializer(many=True, read_only=True)
     returns = OrderReturnSerializer(many=True, read_only=True)
+    dealer = DealerShortSerializer(read_only=True)
+    dealer_id = serializers.PrimaryKeyRelatedField(
+        queryset=Dealer.objects.all(),
+        source='dealer',
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = Order
@@ -41,6 +72,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'id',
             'display_no',
             'dealer',
+            'dealer_id',
             'created_by',
             'status',
             'note',
@@ -55,6 +87,16 @@ class OrderSerializer(serializers.ModelSerializer):
             'returns',
         )
         read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs')
+
+    def to_internal_value(self, data):
+        if hasattr(data, 'copy'):
+            mutable = data.copy()
+        else:
+            mutable = dict(data)
+        if 'dealer' in mutable and 'dealer_id' not in mutable:
+            mutable['dealer_id'] = mutable['dealer']
+        mutable.pop('dealer', None)
+        return super().to_internal_value(mutable)
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])

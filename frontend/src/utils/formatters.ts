@@ -12,6 +12,14 @@ export const formatNumber = (value: number | string | null | undefined) => {
   return new Intl.NumberFormat('uz-UZ').format(amount);
 };
 
+export const formatQuantity = (value: number | string | null | undefined) => {
+  const amount = typeof value === 'number' ? value : Number(value ?? 0);
+  return new Intl.NumberFormat('uz-UZ', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
 export const formatDate = (value: string | Date | null | undefined) => {
   if (!value) {
     return '—';
@@ -19,4 +27,3 @@ export const formatDate = (value: string | Date | null | undefined) => {
   const date = value instanceof Date ? value : new Date(value);
   return new Intl.DateTimeFormat('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
 };
-

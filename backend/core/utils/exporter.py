@@ -44,8 +44,8 @@ def export_products_to_excel(products):
                 getattr(product.brand, 'name', ''),
                 getattr(product.category, 'name', ''),
                 float(product.sell_price_usd),
-                product.stock_ok,
-                product.stock_defect,
+                float(product.stock_ok or 0),
+                float(product.stock_defect or 0),
             ]
         )
     return _workbook_to_file(workbook, 'products')

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -13,7 +15,9 @@ def _adjust_inventory(order: Order, multiplier: int):
     with transaction.atomic():
         for item in order.items.select_related('product'):
             product = Product.objects.select_for_update().get(pk=item.product_id)
-            product.stock_ok = max(0, product.stock_ok + multiplier * item.qty)
+            delta = (item.qty or Decimal('0.00')) * multiplier
+            new_stock = product.stock_ok + delta
+            product.stock_ok = max(Decimal('0.00'), new_stock)
             product.save(update_fields=['stock_ok'])
 
 

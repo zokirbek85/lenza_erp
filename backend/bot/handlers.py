@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from asgiref.sync import sync_to_async
 from django.db.models import Count
 from django.utils import timezone
@@ -9,6 +11,13 @@ from core.config import get_config_value
 from dealers.models import Dealer
 from orders.models import Order
 from .utils import resolve_user_from_update
+
+
+def _format_qty(value) -> str:
+    try:
+        return f"{Decimal(value):.2f}"
+    except (InvalidOperation, TypeError, ValueError):
+        return "0.00"
 
 def _low_stock_threshold():
     return int(get_config_value('LOW_STOCK_THRESHOLD') or 5)
@@ -49,7 +58,7 @@ async def stock_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     lines = ['Kam zaxiradagi mahsulotlar:']
     for name, qty, sku in products:
-        lines.append(f"{name} ({sku}) — {qty} dona")
+        lines.append(f"{name} ({sku}) — {_format_qty(qty)} dona")
     await update.message.reply_text('\n'.join(lines))
 
 
