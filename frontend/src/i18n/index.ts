@@ -20,13 +20,15 @@ const storedLanguage = (() => {
   }
 })();
 
+const initialLanguage = storedLanguage ?? 'uz';
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: 'uz',
-    lng: storedLanguage,
+    lng: initialLanguage,
     interpolation: {
       escapeValue: false,
     },

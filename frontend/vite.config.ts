@@ -7,9 +7,20 @@ export default defineConfig({
   server: {
     port: 5173,
     host: '0.0.0.0',
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+    },
   },
   preview: {
     port: 4173,
     host: '0.0.0.0',
+  },
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
 });

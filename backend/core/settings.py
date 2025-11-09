@@ -122,6 +122,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+DEFAULT_CHARSET = 'utf-8'
+DEFAULT_CONTENT_TYPE = 'text/html'
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -139,11 +142,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE_QUERY_PARAM': 'page_size',
     'MAX_PAGE_SIZE': 200,
     'DEFAULT_THROTTLE_CLASSES': (
-        'rest_framework.throttling.UserRateThrottle',
         'rest_framework.throttling.AnonRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'user': os.getenv('DRF_USER_THROTTLE', '2000/day'),
         'anon': os.getenv('DRF_ANON_THROTTLE', '200/day'),
     },
 }
