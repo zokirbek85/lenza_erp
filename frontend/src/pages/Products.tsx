@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import Modal from '../components/Modal';
+import CollapsibleForm from '../components/CollapsibleForm';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
@@ -70,6 +71,7 @@ const ProductsPage = () => {
   const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string }>({});
   const [formState, setFormState] = useState<typeof emptyForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
@@ -180,6 +182,7 @@ const ProductsPage = () => {
       }
       setFormState(emptyForm);
       setEditingId(null);
+      setShowForm(false);
       fetchProducts();
     } catch (error) {
       console.error(error);
@@ -419,10 +422,39 @@ const ProductsPage = () => {
       </div>
 
       {canManageProducts && (
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-2"
-        >
+        <>
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                if (showForm) {
+                  // closing -> clear after animation via collapsible callback
+                  setShowForm(false);
+                } else {
+                  setShowForm(true);
+                }
+              }}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+              aria-expanded={showForm}
+              aria-controls="product-create-form"
+            >
+              {showForm ? '− Formani yopish' : '+ Yangi mahsulot yaratish'}
+            </button>
+          </div>
+          <div className="mt-3">
+            <CollapsibleForm
+              open={showForm}
+              onAfterClose={() => {
+                setFormState(emptyForm);
+                setEditingId(null);
+              }}
+              className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            >
+              <form
+                id="product-create-form"
+                onSubmit={handleSubmit}
+                className="grid gap-4 p-4 md:grid-cols-2"
+              >
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">SKU</label>
           <input
@@ -534,7 +566,10 @@ const ProductsPage = () => {
             </button>
           )}
         </div>
-        </form>
+              </form>
+            </CollapsibleForm>
+          </div>
+        </>
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">

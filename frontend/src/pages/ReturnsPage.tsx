@@ -59,11 +59,16 @@ const ReturnsPage = () => {
   const fetchReturns = async () => {
     setLoading(true);
     try {
-      const response = await http.get<ReturnRecord[]>('/api/returns/');
-      setReturns(Array.isArray(response.data) ? response.data : []);
+      const response = await http.get('/api/returns/');
+      const payload = response.data;
+      // Backend may return paginated { results: [...] } or direct array
+      const list: ReturnRecord[] = Array.isArray(payload) ? payload : (payload.results || []);
+      console.log('Returns API response:', payload);
+      console.log('Extracted returns list:', list);
+      setReturns(list);
       fetchStats();
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching returns:', error);
       message.error('Qaytishlarni yuklab bo\'lmadi');
     } finally {
       setLoading(false);

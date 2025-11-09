@@ -3,7 +3,9 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-REQUIRED_2FA_ROLES = {'accountant'}
+# Disable 2FA requirement for all roles (including 'accountant').
+# If you want to re-enable for specific roles, set e.g. {"accountant"}.
+REQUIRED_2FA_ROLES = set()
 
 
 class RoleAwareTokenSerializer(TokenObtainPairSerializer):

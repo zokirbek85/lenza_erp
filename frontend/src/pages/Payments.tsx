@@ -9,6 +9,7 @@ import { usePersistedPageSize } from '../hooks/usePageSize';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { toArray } from '../utils/api';
+import CollapsibleForm from '../components/CollapsibleForm';
 
 interface Dealer {
   id: number;
@@ -48,6 +49,7 @@ const PaymentsPage = () => {
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [form, setForm] = useState(defaultForm);
   const [filtersState, setFiltersState] = useState({ dealer: '', from: '', to: '' });
+  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
@@ -150,6 +152,7 @@ const PaymentsPage = () => {
       await http.post('/api/payments/', payload);
       toast.success('Payment recorded');
       setForm(defaultForm);
+      setShowForm(false);
       loadPayments();
     } catch (error) {
       console.error(error);
@@ -240,10 +243,27 @@ const PaymentsPage = () => {
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3"
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setShowForm((prev) => !prev)}
+          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+          aria-expanded={showForm}
+          aria-controls="payment-create-form"
+        >
+          {showForm ? '− Formani yopish' : '+ Yangi to\'lov yaratish'}
+        </button>
+      </div>
+      <CollapsibleForm
+        open={showForm}
+        onAfterClose={() => setForm(defaultForm)}
+        className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
+        <form
+          id="payment-create-form"
+          onSubmit={handleSubmit}
+          className="grid gap-4 p-4 md:grid-cols-3"
+        >
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
           <select
@@ -344,7 +364,8 @@ const PaymentsPage = () => {
             {submitting ? 'Saving…' : t('actions.save')}
           </button>
         </div>
-      </form>
+        </form>
+      </CollapsibleForm>
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">

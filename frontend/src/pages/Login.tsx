@@ -42,6 +42,9 @@ const Login = () => {
   const resolveStoreErrorKey = () => {
     if (!error) return null;
     const lower = error.toLowerCase();
+    if (lower.includes('otp code is required')) return 'auth.otpRequired';
+    if (lower.includes('invalid otp')) return 'auth.invalidOtp';
+  if (lower.includes('2fa setup')) return 'auth.setup2faRequired';
     if (lower.includes('invalid username') || lower.includes('parol')) {
       return 'auth.invalidCredentials';
     }

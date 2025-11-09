@@ -129,17 +129,40 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('Login error:', error);
       if (axios.isAxiosError(error)) {
         const detail = (error.response?.data as { detail?: string })?.detail || '';
-        if (detail.toLowerCase().includes('otp')) {
+        const lower = detail.toLowerCase();
+        // 2FA setup needed
+        if (lower.includes('2fa setup')) {
           set((prev) => ({
             ...prev,
             needsOtp: true,
             pendingCredentials: { username, password },
-            error: null,
+            error: '2FA setup required for this role.',
+          }));
+          return;
+        }
+        // OTP required (first time providing)
+        if (lower.includes('otp code is required') || (lower.includes('otp') && lower.includes('required'))) {
+            set((prev) => ({
+              ...prev,
+              needsOtp: true,
+              pendingCredentials: { username, password },
+              error: 'OTP code is required.'
+            }));
+            return;
+        }
+        // Invalid OTP (when user already tried)
+        if (lower.includes('invalid otp')) {
+          set((prev) => ({
+            ...prev,
+            needsOtp: true,
+            pendingCredentials: { username, password },
+            error: 'Invalid OTP code.'
           }));
           return;
         }
         let message = detail || 'Login failed. Please check your credentials.';
-        if (error.response?.status === 401) {
+        // Only override for generic credential failures, not OTP-related
+        if (error.response?.status === 401 && !lower.includes('otp')) {
           message = 'Invalid username or password.';
         }
         set((prev) => ({ ...prev, error: message }));

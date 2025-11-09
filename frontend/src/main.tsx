@@ -18,3 +18,12 @@ createRoot(rootEl).render(
     </ErrorBoundary>
   </StrictMode>
 );
+
+// Translation strings
+const translations = {
+  "otpRequired": "OTP kod talab qilinadi",
+  "invalidOtp": "OTP noto'g'ri",
+  "setup2fa": "Accountant rol uchun 2FA sozlash talab qilinadi"
+};
+
+export default translations;

@@ -19,7 +19,10 @@
     "continue": "Продолжить",
   "loginFailed": "Ошибка входа. Проверьте данные.",
     "invalidCredentials": "Неверный логин или пароль.",
-    "unexpectedError": "Неожиданная ошибка. Попробуйте снова."
+    "unexpectedError": "Неожиданная ошибка. Попробуйте снова.",
+    "otpRequired": "Требуется OTP код.",
+    "invalidOtp": "Неверный OTP код.",
+  "setup2faRequired": "Для этой роли требуется настройка 2FA."
   },
   "nav": {
     "dashboard": "Дашборд",

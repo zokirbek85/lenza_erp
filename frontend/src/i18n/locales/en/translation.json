@@ -19,7 +19,10 @@
     "continue": "Continue",
     "loginFailed": "Login failed. Please check your credentials.",
     "invalidCredentials": "Invalid username or password.",
-    "unexpectedError": "Unexpected error. Please try again."
+    "unexpectedError": "Unexpected error. Please try again.",
+    "otpRequired": "OTP code is required.",
+    "invalidOtp": "Invalid OTP code.",
+  "setup2faRequired": "Two-factor setup required for this role."
   },
   "nav": {
     "dashboard": "Dashboard",

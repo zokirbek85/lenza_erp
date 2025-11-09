@@ -19,7 +19,10 @@
     "continue": "Davom etish",
     "loginFailed": "Kirishda xatolik. Ma'lumotlarni tekshiring.",
     "invalidCredentials": "Login yoki parol noto'g'ri.",
-    "unexpectedError": "Kutilmagan xato. Qayta urinib ko'ring."
+    "unexpectedError": "Kutilmagan xato. Qayta urinib ko'ring.",
+    "otpRequired": "OTP kod talab qilinadi.",
+    "invalidOtp": "OTP noto'g'ri.",
+  "setup2faRequired": "Bu rol uchun 2FA sozlash talab qilinadi."
   },
   "nav": {
     "dashboard": "Bosh panel",
