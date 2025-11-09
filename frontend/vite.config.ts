@@ -1,15 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+// Vite config: ensure base '/', UTF-8 charset handled by index.html meta tag.
+// Removed custom server headers (not needed and can interfere with proper content-type negotiation).
 export default defineConfig({
+  base: '/',
   plugins: [react()],
   server: {
     port: 5173,
     host: '0.0.0.0',
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-    },
   },
   preview: {
     port: 4173,

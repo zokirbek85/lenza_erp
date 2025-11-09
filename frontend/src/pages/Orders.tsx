@@ -150,8 +150,9 @@ const OrdersPage = () => {
     const collected: T[] = [];
     let nextUrl: string | null = endpoint;
     while (nextUrl) {
-      const response = await http.get(nextUrl);
-      const payload = response.data;
+      const url = nextUrl;
+      const response = await http.get<unknown>(url);
+      const payload: unknown = response.data;
       collected.push(...toArray<T>(payload));
       nextUrl =
         payload && typeof payload === 'object' && payload !== null && 'next' in payload
