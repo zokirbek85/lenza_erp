@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from weasyprint import HTML
 
 from core.permissions import IsAdmin, IsOwner, IsSales
+from core.utils.company_info import get_company_info
 
 from .models import Order
 
@@ -19,6 +20,7 @@ class OrderInvoiceView(APIView):
             {
                 'order': order,
                 'items': order.items.all(),
+                'company': get_company_info(),
             },
         )
         pdf = HTML(string=html).write_pdf()

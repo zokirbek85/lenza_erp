@@ -14,7 +14,7 @@ from catalog.views import (
     ProductReportPDFView,
     ProductViewSet,
 )
-from core.views import AuditLogViewSet, SearchView, SystemBackupView, SystemConfigView
+from core.views import AuditLogViewSet, CompanyInfoViewSet, SearchView, SystemBackupView, SystemConfigView
 from dealers.views import (
     DealerBalancePDFView,
     DealerExportExcelView,
@@ -24,6 +24,12 @@ from dealers.views import (
     DealerReconciliationView,
     DealerViewSet,
     RegionViewSet,
+)
+from inventory.views import (
+    ReturnedProductStatsView,
+    ReturnedProductViewSet,
+    ReturnsExportExcelView,
+    ReturnsReportPDFView,
 )
 from kpis.views import (
     AccountantKPIView,
@@ -59,6 +65,8 @@ router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
+router.register('company-info', CompanyInfoViewSet, basename='company-info')
+router.register('returns', ReturnedProductViewSet, basename='return')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -89,6 +97,9 @@ urlpatterns = [
     path('api/kpis/warehouse/', WarehouseKPIView.as_view(), name='kpi-warehouse'),
     path('api/kpis/sales-manager/', SalesManagerKPIView.as_view(), name='kpi-sales-manager'),
     path('api/kpis/accountant/', AccountantKPIView.as_view(), name='kpi-accountant'),
+    path('api/returns/export/pdf/', ReturnsReportPDFView.as_view(), name='returns-export-pdf'),
+    path('api/returns/export/excel/', ReturnsExportExcelView.as_view(), name='returns-export-excel'),
+    path('api/returns/stats/', ReturnedProductStatsView.as_view(), name='returns-stats'),
     path('api/2fa/setup/', TwoFactorSetupView.as_view(), name='two-factor-setup'),
     path('api/2fa/verify/', TwoFactorVerifyView.as_view(), name='two-factor-verify'),
     path('api/search/', SearchView.as_view(), name='global-search'),

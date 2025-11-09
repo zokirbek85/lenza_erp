@@ -44,6 +44,13 @@
         color: var(--muted);
       }
 
+      .logo-img {
+        height: 50px;
+        object-fit: contain;
+        display: block;
+        margin-bottom: 6px;
+      }
+
       .meta {
         text-align: right;
       }
@@ -138,8 +145,18 @@
   <body>
     <section class="header">
       <div>
-        <div class="logo">LENZA ERP</div>
-        <div class="tagline">Akt sverka hisobot</div>
+        {% if company.logo %}
+        <img src="{{ company.logo }}" alt="{{ company.name|default:'Company logo' }}" class="logo-img" />
+        {% endif %}
+        <div class="logo">{{ company.name|default:"LENZA ERP" }}</div>
+        <div class="tagline">
+          {{ company.slogan|default:"Akt sverka hisobot" }}
+        </div>
+        <div class="tagline">
+          {% if company.address %}<div>{{ company.address }}</div>{% endif %}
+          {% if company.phone %}<div>{{ company.phone }}</div>{% endif %}
+          {% if company.email %}<div>{{ company.email }}</div>{% endif %}
+        </div>
       </div>
       <div class="meta">
         <span><strong>Diler:</strong> {{ data.dealer }}</span>

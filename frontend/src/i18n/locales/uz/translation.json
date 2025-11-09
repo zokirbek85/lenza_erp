@@ -32,7 +32,8 @@
     "currency": "Kurslar",
     "reconciliation": "Akt sverka",
     "kpi": "KPI",
-    "settings": "Sozlamalar"
+    "settings": "Sozlamalar",
+    "returns": "Qaytishlar"
   },
   "actions": {
     "create": "Yaratish",
@@ -49,5 +50,16 @@
     "currencyTrend": "Valyuta kursi",
     "salesTrend": "Savdo vs foyda",
     "balances": "Balanslar"
+  },
+  "notifications": {
+    "title": "Bildirishnomalar",
+    "empty": "Bildirishnoma yo'q",
+    "markAll": "Barchasini o'qilgan deyish"
+  },
+  "layout": {
+    "collapseSidebar": "Panelni yopish",
+    "expandSidebar": "Panelni ochish",
+    "pinSidebar": "Panelni mahkamlash",
+    "unpinSidebar": "Panelni ajratish"
   }
 }

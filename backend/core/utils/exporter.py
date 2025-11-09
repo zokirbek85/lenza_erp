@@ -69,6 +69,25 @@ def export_payments_to_excel(payments):
     return _workbook_to_file(workbook, 'payments')
 
 
+def export_returns_to_excel(returns):
+    workbook, worksheet = _prepare_workbook(
+        'Returns',
+        ['Dealer', 'Product', 'Quantity', 'Return Type', 'Reason', 'Created At'],
+    )
+    for entry in returns:
+        worksheet.append(
+            [
+                getattr(entry.dealer, 'name', ''),
+                getattr(entry.product, 'name', ''),
+                float(entry.quantity or 0),
+                entry.get_return_type_display() if hasattr(entry, 'get_return_type_display') else entry.return_type,
+                entry.reason or '',
+                entry.created_at.isoformat() if entry.created_at else '',
+            ]
+        )
+    return _workbook_to_file(workbook, 'returns')
+
+
 def _workbook_to_file(workbook: Workbook, prefix: str):
     stream = BytesIO()
     workbook.save(stream)

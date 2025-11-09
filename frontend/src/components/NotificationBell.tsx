@@ -1,89 +1,91 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
+import { Badge, Button, Dropdown, List, notification as antNotification } from 'antd';
+import { BellOutlined } from '@ant-design/icons';
 
 import http from '../app/http';
-
-type SystemNotification = {
-  id: number;
-  title: string;
-  message: string;
-  level: string;
-  created_at: string;
-};
+import { formatDate } from '../utils/formatters';
+import { useNotificationStore } from '../store/useNotificationStore';
 
 const NotificationBell = () => {
   const { t } = useTranslation();
-  const [notifications, setNotifications] = useState<SystemNotification[]>([]);
-  const [open, setOpen] = useState(false);
+  const { notifications, unreadCount, setNotifications, clearNotifications } = useNotificationStore();
 
-  const loadNotifications = async () => {
-    const response = await http.get<SystemNotification[]>('/notifications/');
-    setNotifications(response.data);
-  };
+  const loadNotifications = useCallback(async () => {
+    try {
+      const response = await http.get('/api/notifications/');
+      const items = Array.isArray(response.data) ? response.data : [];
+      setNotifications(items);
+    } catch (error) {
+      console.error('Failed to load notifications', error);
+    }
+  }, [setNotifications]);
 
   useEffect(() => {
     loadNotifications();
-    const refresh = () => loadNotifications();
-    window.addEventListener('notifications:refresh', refresh);
-    return () => window.removeEventListener('notifications:refresh', refresh);
-  }, []);
+  }, [loadNotifications]);
 
-  const unreadCount = notifications.length;
+  useEffect(() => {
+    const handleRefresh = (event: Event) => {
+      loadNotifications();
+      const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
+      const title = typeof detail.title === 'string' ? detail.title : undefined;
+      const message = typeof detail.message === 'string' ? detail.message : undefined;
+      if (title) {
+        antNotification.info({ message: title, description: message });
+      }
+    };
+    window.addEventListener('notifications:refresh', handleRefresh as EventListener);
+    return () => window.removeEventListener('notifications:refresh', handleRefresh as EventListener);
+  }, [loadNotifications]);
 
   const markAll = async () => {
-    await http.post('/notifications/mark_all/');
-    setNotifications([]);
+    try {
+      await http.post('/api/notifications/mark_all/');
+      clearNotifications();
+    } catch (error) {
+      console.error('Failed to mark notifications as read', error);
+    }
   };
 
-  const modal = open ? (
-    createPortal(
-      <div className="fixed inset-0 z-50 flex items-start justify-end p-4">
-        <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-        <div className="relative z-10 w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('app.operations')}</h2>
-            <button className="text-sm text-emerald-500" onClick={markAll}>
-              Mark all
-            </button>
-          </div>
-          <div className="max-h-80 space-y-3 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No notifications</p>
-            ) : (
-              notifications.map((notification) => (
-                <article key={notification.id} className="rounded-xl border border-slate-100 px-3 py-2 dark:border-slate-800">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{notification.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{notification.message}</p>
-                </article>
-              ))
-            )}
-          </div>
-        </div>
-      </div>,
-      document.body
-    )
-  ) : null;
+  const dropdownContent = (
+    <div className="w-80 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-semibold text-slate-900 dark:text-white">{t('notifications.title')}</span>
+        {notifications.length > 0 && (
+          <Button type="link" size="small" onClick={markAll}>
+            {t('notifications.markAll')}
+          </Button>
+        )}
+      </div>
+      <List
+        dataSource={notifications}
+        locale={{ emptyText: t('notifications.empty') }}
+        renderItem={(item) => (
+          <List.Item className="px-0">
+            <List.Item.Meta
+              title={<span className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</span>}
+              description={
+                <div className="text-xs text-slate-500 dark:text-slate-300">
+                  <p className="mb-1">{item.message}</p>
+                  <span className="text-[10px] uppercase tracking-widest text-slate-400">
+                    {formatDate(item.created_at)}
+                  </span>
+                </div>
+              }
+            />
+          </List.Item>
+        )}
+      />
+    </div>
+  );
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="relative rounded-full border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-        aria-label="Notifications"
-      >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6 6 0 0 0-9.33-4.928" />
-          <path d="M6.67 6.07A6 6 0 0 0 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 1 1-6 0" />
-        </svg>
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-xs font-bold text-white">
-            {unreadCount}
-          </span>
-        )}
-      </button>
-      {modal}
-    </>
+    <Dropdown trigger={['click']} placement="bottomRight" dropdownRender={() => dropdownContent}>
+      <Badge count={unreadCount} size="small" offset={[-4, 4]}>
+        <BellOutlined className="cursor-pointer text-lg text-slate-600 transition hover:text-slate-900 dark:text-slate-200" />
+      </Badge>
+    </Dropdown>
   );
 };
 

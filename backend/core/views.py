@@ -1,5 +1,5 @@
 from django.http import FileResponse
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,7 +15,8 @@ from orders.serializers import OrderSerializer
 from .config import load_config, update_config
 from .middleware import AuditLog
 from .utils.backup import create_backup, get_latest_backup
-from .serializers import AuditLogSerializer
+from .models import CompanyInfo
+from .serializers import AuditLogSerializer, CompanyInfoSerializer
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -66,3 +67,21 @@ class SearchView(APIView):
                 'orders': OrderSerializer(orders, many=True, context=context).data,
             }
         )
+
+
+class CompanyInfoViewSet(viewsets.ModelViewSet):
+    queryset = CompanyInfo.objects.all()
+    serializer_class = CompanyInfoSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return CompanyInfo.objects.all()[:1]
+
+    def create(self, request, *args, **kwargs):
+        instance = CompanyInfo.objects.first()
+        if instance:
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return super().create(request, *args, **kwargs)

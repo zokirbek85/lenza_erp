@@ -7,6 +7,7 @@ import DealersPage from '../pages/Dealers';
 import KpiPage from '../pages/KpiPage';
 import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
+import ReturnsPage from '../pages/ReturnsPage';
 import PaymentsPage from '../pages/Payments';
 import ProductsPage from '../pages/Products';
 import TwoFactor from '../pages/TwoFactor';
@@ -100,6 +101,14 @@ const router = createBrowserRouter([
             element: (
               <Guard roles={['admin', 'owner', 'sales', 'accountant']}>
                 <ReconciliationPage />
+              </Guard>
+            ),
+          },
+          {
+            path: 'returns',
+            element: (
+              <Guard roles={['admin', 'owner', 'sales', 'warehouse']}>
+                <ReturnsPage />
               </Guard>
             ),
           },

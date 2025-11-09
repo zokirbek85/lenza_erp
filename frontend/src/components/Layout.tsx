@@ -6,6 +6,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../auth/useAuthStore';
 import { useGlobalSocket } from '../hooks/useGlobalSocket';
 import { usePwa } from '../hooks/usePwa';
+import { useSidebarStore } from '../store/useSidebarStore';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './NotificationBell';
 
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { label: 'nav.dealers', to: '/dealers', roles: ['admin', 'owner', 'sales', 'accountant'] },
   { label: 'nav.payments', to: '/payments', roles: ['admin', 'owner', 'accountant'] },
   { label: 'nav.currency', to: '/currency', roles: ['admin', 'owner', 'accountant'] },
+  { label: 'nav.returns', to: '/returns', roles: ['admin', 'owner', 'sales', 'warehouse'] },
   { label: 'nav.reconciliation', to: '/reconciliation', roles: ['admin', 'owner', 'sales', 'accountant'] },
   { label: 'nav.kpi', to: '/kpi', roles: ['admin', 'owner'] },
   { label: 'nav.settings', to: '/settings', roles: ['admin'] },
@@ -28,6 +30,7 @@ const Layout = () => {
   const { t } = useTranslation();
   const { logout, role, userName } = useAuthStore();
   const { offline, canInstall, promptInstall } = usePwa();
+  const { collapsed, setCollapsed, pinned, setPinned } = useSidebarStore();
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('lenza_theme') === 'dark';
@@ -49,6 +52,35 @@ const Layout = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (pinned) {
+      setCollapsed(false);
+      return;
+    }
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      setCollapsed(window.innerWidth < 1200);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, [pinned, setCollapsed]);
+
+  useEffect(() => {
+    if (pinned) return;
+    if (typeof window === 'undefined') return;
+    const handleMouseMove = (event: MouseEvent) => {
+      if (window.innerWidth < 1200) return;
+      if (event.clientX < 100) {
+        setCollapsed(false);
+      } else if (event.clientX > 240) {
+        setCollapsed(true);
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [pinned, setCollapsed]);
+
   const visibleItems = useMemo(() => {
     if (!role) {
       return NAV_ITEMS;
@@ -61,11 +93,21 @@ const Layout = () => {
     navigate('/login', { replace: true });
   };
 
+  const sidebarVisibleWidth = collapsed ? 0 : 256;
+
   return (
     <div className={clsx('relative flex min-h-screen text-slate-900 dark:bg-slate-950 dark:text-slate-100')}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#e2e8f0_0%,transparent_60%)] opacity-40 dark:bg-[radial-gradient(circle_at_top,#1e293b_0%,transparent_60%)]" />
-      <aside className="relative hidden w-64 flex-shrink-0 border-r border-slate-200/60 bg-white/90 px-4 py-6 dark:border-slate-800/80 dark:bg-slate-900/70 md:flex md:flex-col">
-        <div className="mb-8 px-2">
+      <aside
+        className={clsx(
+          'relative hidden flex-shrink-0 border-r border-slate-200/60 bg-white/90 px-4 py-6 transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-900/70 md:flex md:flex-col'
+        )}
+        style={{
+          width: 256,
+          transform: collapsed ? 'translateX(-100%)' : 'translateX(0)',
+        }}
+      >
+        <div className={clsx('mb-8 px-2 transition-opacity', collapsed ? 'opacity-0' : 'opacity-100')}>
           <p className="text-xl font-semibold">{t('app.title')}</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">B2B platform</p>
         </div>
@@ -76,22 +118,33 @@ const Layout = () => {
               to={item.to}
               className={({ isActive }) =>
                 clsx(
-                  'flex items-center rounded-lg px-3 py-2 transition',
+                  'flex items-center rounded-lg px-3 py-2 transition-all duration-300',
+                  collapsed ? 'justify-center' : 'justify-start',
                   isActive
                     ? 'bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900'
                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                 )
               }
             >
-              {t(item.label)}
+              <span className={clsx('truncate', collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto')}>
+                {t(item.label)}
+              </span>
             </NavLink>
           ))}
         </nav>
-        <div className="mt-6 rounded-lg bg-slate-100 px-3 py-2 text-xs uppercase tracking-widest text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-          Rol: <span className="font-semibold capitalize text-slate-900 dark:text-white">{role ?? '–'}</span>
+        <div
+          className={clsx(
+            'mt-6 rounded-lg bg-slate-100 px-3 py-2 text-xs uppercase tracking-widest text-slate-500 transition-opacity dark:bg-slate-800 dark:text-slate-300',
+            collapsed ? 'opacity-0' : 'opacity-100'
+          )}
+        >
+          Rol: <span className="font-semibold capitalize text-slate-900 dark:text-white">{role ?? '—'}</span>
         </div>
       </aside>
-      <div className="relative flex flex-1 flex-col">
+      <div
+        className="relative flex flex-1 flex-col transition-all duration-300"
+        style={{ marginLeft: sidebarVisibleWidth }}
+      >
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/60">
           <div className="flex flex-col">
             <p className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -105,6 +158,27 @@ const Layout = () => {
             )}
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                className="rounded-full border border-slate-200 px-3 py-1 text-lg font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                title={collapsed ? t('layout.expandSidebar') : t('layout.collapseSidebar')}
+              >
+                ☰
+              </button>
+              <button
+                onClick={() => setPinned(!pinned)}
+                className={clsx(
+                  'rounded-full border px-3 py-1 text-xs font-semibold transition',
+                  pinned
+                    ? 'border-emerald-500 text-emerald-600 dark:border-emerald-400 dark:text-emerald-300'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+                )}
+                title={pinned ? t('layout.unpinSidebar') : t('layout.pinSidebar')}
+              >
+                {pinned ? '📌' : '📍'}
+              </button>
+            </div>
             <NotificationBell />
             <LanguageSwitcher />
             <button

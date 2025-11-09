@@ -30,6 +30,7 @@
     "regions": "Regions",
     "payments": "Payments",
     "currency": "Currency",
+    "returns": "Returns",
     "reconciliation": "Reconciliation",
     "kpi": "KPI",
     "settings": "Settings"
@@ -49,5 +50,16 @@
     "currencyTrend": "Currency trend",
     "salesTrend": "Sales vs profit",
     "balances": "Balances"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "All caught up",
+    "markAll": "Mark all as read"
+  },
+  "layout": {
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "pinSidebar": "Pin sidebar",
+    "unpinSidebar": "Unpin sidebar"
   }
 }

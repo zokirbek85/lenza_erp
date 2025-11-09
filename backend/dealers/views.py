@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
+from core.utils.company_info import get_company_info
 from core.utils.pdf import render_pdf
 from services.reconciliation import get_reconciliation_data
 
@@ -142,7 +143,10 @@ class DealerReconciliationPDFView(APIView):
         )
         pdf_bytes = render_pdf(
             'reports/reconciliation.html',
-            {'data': data},
+            {
+                'data': data,
+                'company': get_company_info(),
+            },
         )
         dealer_slug = slugify(data['dealer']) or f'dealer-{pk}'
         statement_date = data['to_date'].strftime('%Y%m%d')
