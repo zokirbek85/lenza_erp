@@ -11,8 +11,13 @@ class NotificationViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, viewse
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        return SystemNotification.objects.exclude(read_by=user)
+        # Return all notifications, newest first; serializer computes is_read per user
+        return SystemNotification.objects.all().order_by('-created_at')
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -22,7 +27,13 @@ class NotificationViewSet(mixins.ListModelMixin, mixins.UpdateModelMixin, viewse
 
     @action(detail=False, methods=['post'])
     def mark_all(self, request):
-        unread = self.get_queryset()
+        # Mark all unread as read for the current user
+        unread = SystemNotification.objects.exclude(read_by=request.user)
         for notification in unread:
             notification.read_by.add(request.user)
         return Response({'detail': 'All notifications marked as read.'})
+
+    @action(detail=False, methods=['post'], url_path='mark-all-read')
+    def mark_all_read(self, request):
+        # Alias endpoint as required by frontend
+        return self.mark_all(request)

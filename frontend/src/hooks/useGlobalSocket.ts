@@ -68,44 +68,66 @@ export const useGlobalSocket = () => {
       return;
     }
 
+    const token = localStorage.getItem('lenza_access_token');
+    if (!token) {
+      console.warn('[WS] No access token found');
+      return;
+    }
+
     const base = resolveWsBase().replace(/\/$/, '');
-    const url = `${base}/ws/global/`;
-    const socket = new WebSocket(url);
+  const url = `${base}/ws/notifications/?token=${token}`;
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    socket.onopen = () => {
-      console.info('[WS] Connected to', url);
-    };
+    const connect = () => {
+      socket = new WebSocket(url);
 
-    socket.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload?.event) {
-          const eventData = (payload.data ?? {}) as Record<string, unknown>;
-          const message = prettyMessage(String(payload.event), eventData);
-          toast.success(message);
-          const mapped = EVENT_MAP[payload.event];
-          if (mapped) {
-            window.dispatchEvent(new CustomEvent(mapped, { detail: eventData }));
+      socket.onopen = () => {
+        console.info('[WS] Connected to', url);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload?.event) {
+            const eventData = (payload.data ?? {}) as Record<string, unknown>;
+            const message = prettyMessage(String(payload.event), eventData);
+            toast.success(message);
+            const mapped = EVENT_MAP[payload.event];
+            if (mapped) {
+              window.dispatchEvent(new CustomEvent(mapped, { detail: eventData }));
+            }
           }
+        } catch (error) {
+          console.error('WS parse error', error);
         }
-      } catch (error) {
-        console.error('WS parse error', error);
-      }
+      };
+
+      socket.onerror = (event) => {
+        console.error('[WS] connection error', event);
+      };
+
+      socket.onclose = (event) => {
+        if (!event.wasClean) {
+          console.warn('[WS] closed unexpectedly', event.code, event.reason);
+          // Reconnect after 3 seconds
+          reconnectTimeout = setTimeout(() => {
+            console.info('[WS] Attempting reconnect...');
+            connect();
+          }, 3000);
+        }
+      };
     };
 
-    socket.onerror = (event) => {
-      console.error('[WS] connection error', event);
-      toast.error('WebSocket connection error');
-    };
-
-    socket.onclose = (event) => {
-      if (!event.wasClean) {
-        console.warn('[WS] closed unexpectedly', event.code, event.reason);
-      }
-    };
+    connect();
 
     return () => {
-      socket.close();
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (socket) {
+        socket.close();
+      }
     };
   }, [isAuthenticated]);
 };

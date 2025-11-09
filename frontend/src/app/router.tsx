@@ -15,6 +15,7 @@ import SettingsPage from '../pages/SettingsPage';
 import UsersPage from '../pages/Users';
 import RegionsPage from '../pages/Regions';
 import ReconciliationPage from '../features/reconciliation/ReconciliationPage';
+import NotificationCenterPage from '../pages/NotificationCenter';
 
 const router = createBrowserRouter([
   {
@@ -117,6 +118,14 @@ const router = createBrowserRouter([
             element: (
               <Guard roles={['admin']}>
                 <SettingsPage />
+              </Guard>
+            ),
+          },
+          {
+            path: 'notifications',
+            element: (
+              <Guard roles={['admin', 'owner', 'sales', 'warehouse', 'accountant']}>
+                <NotificationCenterPage />
               </Guard>
             ),
           },

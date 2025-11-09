@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { label: 'nav.reconciliation', to: '/reconciliation', roles: ['admin', 'owner', 'sales', 'accountant'] },
   { label: 'nav.kpi', to: '/kpi', roles: ['admin', 'owner'] },
   { label: 'nav.settings', to: '/settings', roles: ['admin'] },
+  { label: 'nav.notifications', to: '/notifications', roles: ['admin', 'owner', 'sales', 'warehouse', 'accountant'] },
 ];
 
 const Layout = () => {
