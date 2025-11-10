@@ -36,7 +36,9 @@
     "returns": "Returns",
     "reconciliation": "Reconciliation",
     "kpi": "KPI",
-    "settings": "Settings"
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "userManual": "User Manual"
   },
   "actions": {
     "create": "Create",
@@ -52,7 +54,34 @@
     "topDealers": "Top dealers",
     "currencyTrend": "Currency trend",
     "salesTrend": "Sales vs profit",
-    "balances": "Balances"
+    "balances": "Balances",
+    "totalRevenue": "Total Revenue",
+    "netProfit": "Net Profit",
+    "cashBalance": "Cash Balance",
+    "openOrders": "Open Orders",
+    "satisfactionScore": "Customer Satisfaction",
+    "revenueTrend": "Revenue Trend",
+    "revenueShare": "Revenue Share",
+    "inventoryTrend": "Inventory Trend",
+    "expensesBudget": "Expenses vs Budget",
+    "overdueReceivables": "Overdue Receivables",
+    "dealerName": "Dealer",
+    "daysOverdue": "Days Overdue",
+    "amountUsd": "Amount (USD)",
+    "totalDebt": "Total Debt",
+    "filters": {
+      "title": "Filters",
+      "dealers": "Dealers",
+      "region": "Region",
+      "manager": "Manager",
+      "dateRange": "Date range",
+      "apply": "Apply",
+      "reset": "Reset",
+      "dealerTooltip": "Select one or more dealers",
+      "regionTooltip": "Filter by region",
+      "managerTooltip": "Filter by sales manager",
+      "dateRangeTooltip": "Select start and end date"
+    }
   },
   "notifications": {
     "title": "Notifications",

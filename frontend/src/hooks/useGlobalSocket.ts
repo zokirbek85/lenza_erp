@@ -75,7 +75,7 @@ export const useGlobalSocket = () => {
     }
 
     const base = resolveWsBase().replace(/\/$/, '');
-  const url = `${base}/ws/notifications/?token=${token}`;
+    const url = `${base}/ws/notifications/?token=${token}`;
     let socket: WebSocket | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -90,6 +90,7 @@ export const useGlobalSocket = () => {
         try {
           const payload = JSON.parse(event.data);
           if (payload?.event) {
+            // Legacy broadcast shape: { event, data }
             const eventData = (payload.data ?? {}) as Record<string, unknown>;
             const message = prettyMessage(String(payload.event), eventData);
             toast.success(message);
@@ -97,6 +98,13 @@ export const useGlobalSocket = () => {
             if (mapped) {
               window.dispatchEvent(new CustomEvent(mapped, { detail: eventData }));
             }
+          } else {
+            // Direct notification payload
+            const eventData = payload as Record<string, unknown>;
+            const message = prettyMessage('notification', eventData);
+            toast.success(message);
+            const mapped = EVENT_MAP['notification'];
+            window.dispatchEvent(new CustomEvent(mapped, { detail: eventData }));
           }
         } catch (error) {
           console.error('WS parse error', error);

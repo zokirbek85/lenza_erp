@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
@@ -7,6 +7,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 import { useGlobalSocket } from '../hooks/useGlobalSocket';
 import { usePwa } from '../hooks/usePwa';
 import { useSidebarStore } from '../store/useSidebarStore';
+import { useTheme } from '../context/ThemeContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './NotificationBell';
 
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { label: 'nav.kpi', to: '/kpi', roles: ['admin', 'owner'] },
   { label: 'nav.settings', to: '/settings', roles: ['admin'] },
   { label: 'nav.notifications', to: '/notifications', roles: ['admin', 'owner', 'sales', 'warehouse', 'accountant'] },
+  { label: 'nav.userManual', to: '/manuals', roles: ['admin', 'owner', 'sales', 'warehouse', 'accountant'] },
 ];
 
 const Layout = () => {
@@ -32,26 +34,8 @@ const Layout = () => {
   const { logout, role, userName } = useAuthStore();
   const { offline, canInstall, promptInstall } = usePwa();
   const { collapsed, setCollapsed, pinned, setPinned } = useSidebarStore();
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('lenza_theme') === 'dark';
-  });
+  const { mode, toggleTheme } = useTheme();
   useGlobalSocket();
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    if (darkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    try {
-      localStorage.setItem('lenza_theme', darkMode ? 'dark' : 'light');
-    } catch {
-      // ignore
-    }
-  }, [darkMode]);
 
   useEffect(() => {
     if (pinned) {
@@ -183,10 +167,11 @@ const Layout = () => {
             <NotificationBell />
             <LanguageSwitcher />
             <button
-              onClick={() => setDarkMode((prev) => !prev)}
+              onClick={toggleTheme}
               className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {t('app.darkMode')}
+              {mode === 'dark' ? '☀️' : '🌙'} {t('app.darkMode')}
             </button>
             {canInstall && (
               <button

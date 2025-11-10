@@ -36,7 +36,9 @@
     "reconciliation": "Akt sverka",
     "kpi": "KPI",
     "settings": "Sozlamalar",
-    "returns": "Qaytishlar"
+    "returns": "Qaytishlar",
+    "notifications": "Bildirishnomalar",
+    "userManual": "Qo'llanma"
   },
   "actions": {
     "create": "Yaratish",
@@ -49,10 +51,37 @@
     "ownerKpi": "Egalik paneli",
     "salesManagerKpi": "Sotuv menejeri",
     "accountantKpi": "Buxgalter",
-    "topDealers": "Top dilerlar",
+    "topDeallers": "Top dilerlar",
     "currencyTrend": "Valyuta kursi",
     "salesTrend": "Savdo vs foyda",
-    "balances": "Balanslar"
+    "balances": "Balanslar",
+    "totalRevenue": "Umumiy daromad",
+    "netProfit": "Sof foyda",
+    "cashBalance": "Kassa qoldig'i",
+    "openOrders": "Ochiq buyurtmalar",
+    "satisfactionScore": "Mijozlar baholashi",
+    "revenueTrend": "Daromad tendentsiyasi",
+    "revenueShare": "Daromad taqsimoti",
+    "inventoryTrend": "Ombor tendentsiyasi",
+    "expensesBudget": "Xarajatlar va byudjet",
+    "overdueReceivables": "Muddati o'tgan qarzlar",
+    "dealerName": "Diller",
+    "daysOverdue": "Kechikish (Kun)",
+    "amountUsd": "Qarz (USD)",
+    "totalDebt": "Jami qarz",
+    "filters": {
+      "title": "Filtrlar",
+      "dealers": "Dilerlar",
+      "region": "Hudud",
+      "manager": "Menejer",
+      "dateRange": "Sana oralig'i",
+      "apply": "Qo'llash",
+      "reset": "Tozalash",
+      "dealerTooltip": "Bir yoki bir nechta dilerni tanlang",
+      "regionTooltip": "Hudud bo'yicha filtrlash",
+      "managerTooltip": "Sotuv menejeri bo'yicha filtrlash",
+      "dateRangeTooltip": "Boshlanish va tugash sanasini tanlang"
+    }
   },
   "notifications": {
     "title": "Bildirishnomalar",

@@ -573,17 +573,17 @@ const OrdersPage = () => {
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
                 <option value="">Mahsulot tanlang</option>
-                {filteredProducts.map((product) => {
-                  const stock = product.total_stock ?? product.stock_ok ?? 0;
-                  const isLow = stock <= 0;
-                  const brandLabel = product.brand?.name ?? '-';
-                  const categoryLabel = product.category?.name ?? '-';
-                  return (
-                    <option key={product.id} value={product.id}>
+                {filteredProducts.map((product) => {
+                  const stock = product.total_stock ?? product.stock_ok ?? 0;
+                  const isLow = stock <= 0;
+                  const brandLabel = product.brand?.name ?? '-';
+                  const categoryLabel = product.category?.name ?? '-';
+                  return (
+                    <option key={product.id} value={product.id}>
                       {product.name} · {brandLabel} · {categoryLabel}{' '}
                       {isLow ? '(Zaxira tugagan)' : `(${formatQuantity(stock)} dona)`}
-                    </option>
-                  );
+                    </option>
+                  );
                 })}
               </select>
               {!filteredProducts.length && !productsLoading && (

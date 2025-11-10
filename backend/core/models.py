@@ -22,3 +22,24 @@ class CompanyInfo(models.Model):
 
     def __str__(self) -> str:
         return self.name or 'Company Info'
+
+
+class UserManual(models.Model):
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('director', 'Director'),
+        ('accountant', 'Accountant'),
+        ('warehouse', 'Warehouse'),
+        ('sales', 'Sales Manager'),
+    ]
+
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self) -> str:
+        return f"{self.title} ({self.role})"

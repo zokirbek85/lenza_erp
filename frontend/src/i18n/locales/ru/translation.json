@@ -36,7 +36,9 @@
     "settings": "Настройки",
     "users": "Пользователи",
     "regions": "Регионы",
-    "returns": "Возвраты"
+    "returns": "Возвраты",
+    "notifications": "Уведомления",
+    "userManual": "Руководство"
   },
   "actions": {
     "create": "Создать",
@@ -52,7 +54,34 @@
     "topDealers": "Лучшие дилеры",
     "currencyTrend": "Курс валют",
     "salesTrend": "Продажи vs прибыль",
-    "balances": "Балансы"
+    "balances": "Балансы",
+    "totalRevenue": "Общий доход",
+    "netProfit": "Чистая прибыль",
+    "cashBalance": "Остаток в кассе",
+    "openOrders": "Открытые заказы",
+    "satisfactionScore": "Удовлетворённость клиентов",
+    "revenueTrend": "Тренд доходов",
+    "revenueShare": "Распределение доходов",
+    "inventoryTrend": "Тренд склада",
+    "expensesBudget": "Расходы vs бюджет",
+    "overdueReceivables": "Просроченная дебиторка",
+    "dealerName": "Дилер",
+    "daysOverdue": "Дней просрочки",
+    "amountUsd": "Сумма (USD)",
+    "totalDebt": "Всего долг",
+    "filters": {
+      "title": "Фильтры",
+      "dealers": "Дилеры",
+      "region": "Регион",
+      "manager": "Менеджер",
+      "dateRange": "Период",
+      "apply": "Применить",
+      "reset": "Сбросить",
+      "dealerTooltip": "Выберите одного или нескольких дилеров",
+      "regionTooltip": "Фильтр по региону",
+      "managerTooltip": "Фильтр по менеджеру продаж",
+      "dateRangeTooltip": "Выберите начальную и конечную дату"
+    }
   },
   "notifications": {
     "title": "Уведомления",

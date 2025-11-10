@@ -15,8 +15,8 @@ from orders.serializers import OrderSerializer
 from .config import load_config, update_config
 from .middleware import AuditLog
 from .utils.backup import create_backup, get_latest_backup
-from .models import CompanyInfo
-from .serializers import AuditLogSerializer, CompanyInfoSerializer
+from .models import CompanyInfo, UserManual
+from .serializers import AuditLogSerializer, CompanyInfoSerializer, UserManualSerializer
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -85,3 +85,19 @@ class CompanyInfoViewSet(viewsets.ModelViewSet):
             self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return super().create(request, *args, **kwargs)
+
+
+class UserManualViewSet(viewsets.ModelViewSet):
+    queryset = UserManual.objects.all()
+    serializer_class = UserManualSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        # 'admin' or superuser can see all
+        if getattr(user, 'is_superuser', False) or getattr(user, 'role', None) == 'admin':
+            return UserManual.objects.all()
+        role = getattr(user, 'role', None)
+        if role:
+            return UserManual.objects.filter(role=role)
+        return UserManual.objects.none()

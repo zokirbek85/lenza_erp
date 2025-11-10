@@ -14,7 +14,7 @@ from catalog.views import (
     ProductReportPDFView,
     ProductViewSet,
 )
-from core.views import AuditLogViewSet, CompanyInfoViewSet, SearchView, SystemBackupView, SystemConfigView
+from core.views import AuditLogViewSet, CompanyInfoViewSet, SearchView, SystemBackupView, SystemConfigView, UserManualViewSet
 from dealers.views import (
     DealerBalancePDFView,
     DealerExportExcelView,
@@ -67,6 +67,7 @@ router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
 router.register('company-info', CompanyInfoViewSet, basename='company-info')
 router.register('returns', ReturnedProductViewSet, basename='return')
+router.register('user-manuals', UserManualViewSet, basename='user-manual')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
