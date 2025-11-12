@@ -33,6 +33,8 @@
     "regions": "Regions",
     "payments": "Payments",
     "expenses": "Expenses",
+  "expenseReport": "📊 Monthly Expense Report",
+  "expenseCategories": "⚙️ Expense Categories",
     "ledger": "Cash Ledger",
     "currency": "Currency",
     "returns": "Returns",

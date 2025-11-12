@@ -5,13 +5,15 @@ from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner
 from core.utils.exporter import export_payments_to_excel
-from core.utils.pdf import render_pdf
+from core.mixins.report_mixin import BaseReportMixin
+from core.mixins.export_mixins import ExportMixin
 
 from .models import CurrencyRate, Payment, PaymentCard
 from .serializers import CurrencyRateSerializer, PaymentSerializer, PaymentCardSerializer
@@ -26,7 +28,7 @@ class CurrencyRateViewSet(viewsets.ModelViewSet):
     ordering = ('-rate_date',)
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
     queryset = Payment.objects.select_related('dealer', 'rate', 'card').all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
@@ -39,6 +41,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
     }
     search_fields = ('dealer__name', 'note')
     ordering_fields = ('pay_date', 'amount_usd', 'created_at')
+    
+    # BaseReportMixin configuration
+    date_field = "pay_date"
+    filename_prefix = "payments"
+    title_prefix = "To'lovlar hisoboti"
+    report_template = "payments/report.html"
 
     def _ensure_writer(self):
         user = self.request.user
@@ -58,6 +66,53 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         self._ensure_writer()
         instance.delete()
+    
+    def get_report_rows(self, queryset):
+        """Generate rows for payment report."""
+        from decimal import Decimal
+        rows = []
+        for p in queryset.order_by('pay_date', 'id'):
+            rows.append({
+                'Sana': p.pay_date.strftime('%d.%m.%Y') if p.pay_date else '',
+                'Diler': p.dealer.name if p.dealer else '',
+                'Miqdor': f"{float(p.amount):,.2f}",
+                'Valyuta': p.currency,
+                'Usul': p.method,
+                'Karta': p.card.name if p.card else '',
+                'USD': f"{float(p.amount_usd):,.2f}",
+                'Izoh': p.note or '',
+            })
+        return rows
+    
+    def get_report_total(self, queryset):
+        """Calculate total amount in USD."""
+        total = queryset.aggregate(models.Sum('amount_usd'))['amount_usd__sum'] or 0
+        return total
+
+    @action(detail=False, methods=['get'])
+    def export(self, request):
+        """Unified export for payments: ?format=pdf|xlsx"""
+        fmt = request.query_params.get('format', 'xlsx')
+        qs = self.filter_queryset(self.get_queryset())
+        rows = [{
+            'Sana': (p.pay_date.isoformat() if p.pay_date else ''),
+            'Diler': (p.dealer.name if p.dealer else ''),
+            'Miqdor': float(p.amount),
+            'Valyuta': p.currency,
+            'Usul': p.method,
+            'Karta': (p.card.name if p.card else ''),
+            'Izoh': (p.note or ''),
+        } for p in qs.order_by('pay_date', 'id')]
+        if fmt == 'pdf':
+            return self.render_pdf_with_qr(
+                'payments/export.html',
+                {'rows': rows, 'title': 'To‘lovlar hisobot'},
+                'tolovlar',
+                request=request,
+                doc_type='payment-export',
+                doc_id=None,
+            )
+        return self.render_xlsx(rows, 'tolovlar')
 
 
 class PaymentCardViewSet(viewsets.ModelViewSet):
@@ -102,7 +157,7 @@ class CurrencyRateHistoryView(APIView):
         return Response(data)
 
 
-class PaymentReportPDFView(APIView):
+class PaymentReportPDFView(APIView, ExportMixin):
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
@@ -115,23 +170,32 @@ class PaymentReportPDFView(APIView):
         else:
             report_date = timezone.now().date()
         payments = Payment.objects.select_related('dealer').filter(pay_date=report_date)
-        pdf_bytes = render_pdf(
+        return self.render_pdf_with_qr(
             'reports/payments_report.html',
             {
                 'payments': payments,
                 'report_date': report_date,
                 'total': payments.aggregate(total_amount=models.Sum('amount_usd'))['total_amount'] or 0,
             },
+            filename_prefix=f'payments_{report_date}',
+            request=request,
+            doc_type='payments-report',
+            doc_id=str(report_date),
         )
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename=payments_{report_date}.pdf'
-        return response
 
 
-class PaymentExportExcelView(APIView):
+class PaymentExportExcelView(APIView, ExportMixin):
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
-        payments = Payment.objects.select_related('dealer').all()
-        file_path = export_payments_to_excel(payments)
-        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+        qs = Payment.objects.select_related('dealer', 'card').all().order_by('pay_date', 'id')
+        rows = [{
+            'Sana': (p.pay_date.isoformat() if p.pay_date else ''),
+            'Diler': (p.dealer.name if p.dealer else ''),
+            'Miqdor': float(p.amount),
+            'Valyuta': p.currency,
+            'Usul': p.method,
+            'Karta': (p.card.name if p.card else ''),
+            'Izoh': (p.note or ''),
+        } for p in qs]
+        return self.render_xlsx(rows, 'payments')

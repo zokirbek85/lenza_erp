@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8"/>
+  <title>Hujjatni tekshirish</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 50px; color: #111; }
+    .ok { color: #0c7a0c; }
+    .bad { color: #c1121f; }
+    .muted { color: #777; font-size: 12px; }
+  </style>
+</head>
+<body>
+  {% if valid %}
+    <h2 class="ok">✅ Hujjat haqiqiy!</h2>
+    {% if object %}
+      <p>Turi: {{ doc_type|capfirst }}</p>
+      <p>ID: {{ object.id }}</p>
+      <p>Sana: {{ object.created_at|default:object.date }}</p>
+    {% else %}
+      <p>Turi: {{ doc_type|capfirst }}</p>
+      <p>Bu umumiy eksport hujjati (preview/bulk).</p>
+    {% endif %}
+  {% else %}
+    <h2 class="bad">❌ Hujjat topilmadi yoki haqiqiy emas.</h2>
+    <p>Tur: {{ doc_type }}</p>
+  {% endif %}
+  <hr/>
+  <p class="muted">Lenza ERP tizimi orqali tekshirilgan</p>
+</body>
+</html>

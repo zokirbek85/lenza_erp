@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.utils.company_info import get_company_info
-from core.utils.pdf import render_pdf
+from core.mixins.export_mixins import ExportMixin
 from core.utils.exporter import export_reconciliation_to_excel
 from services.reconciliation import get_reconciliation_data
 
@@ -83,18 +83,19 @@ class DealerImportExcelView(APIView):
         return Response(result, status=status.HTTP_201_CREATED)
 
 
-class DealerBalancePDFView(APIView):
+class DealerBalancePDFView(APIView, ExportMixin):
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
         dealers = Dealer.objects.select_related('region').all()
-        pdf_bytes = render_pdf(
+        return self.render_pdf_with_qr(
             'reports/dealer_balance.html',
             {'dealers': dealers},
+            filename_prefix='dealer_balances',
+            request=request,
+            doc_type='dealer-balances',
+            doc_id='bulk',
         )
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename=dealer_balances.pdf'
-        return response
 
 
 class DealerReconciliationView(APIView):
@@ -144,7 +145,7 @@ class DealerReconciliationView(APIView):
         return Response(payload)
 
 
-class DealerReconciliationPDFView(APIView):
+class DealerReconciliationPDFView(APIView, ExportMixin):
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
     def get(self, request, pk: int):
@@ -156,19 +157,22 @@ class DealerReconciliationPDFView(APIView):
             user=request.user,
             detailed=detailed,
         )
-        pdf_bytes = render_pdf(
+        pdf_response = self.render_pdf_with_qr(
             'reports/reconciliation.html',
             {
                 'data': data,
                 'company': get_company_info(),
             },
+            filename_prefix='reconciliation',
+            request=request,
+            doc_type='reconciliation',
+            doc_id=pk,
         )
         dealer_slug = slugify(data['dealer']) or f'dealer-{pk}'
         statement_date = data['to_date'].strftime('%Y%m%d')
         filename = f'reconciliation_{dealer_slug}_{statement_date}.pdf'
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename=\"{filename}\"'
-        return response
+        pdf_response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return pdf_response
 
 
 class DealerReconciliationExcelView(APIView):

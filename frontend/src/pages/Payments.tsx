@@ -168,8 +168,8 @@ const PaymentsPage = () => {
     }
   };
 
-  const handleExportPdf = () => downloadFile('/api/payments/report/pdf/', 'payments.pdf');
-  const handleExportExcel = () => downloadFile('/api/payments/export/excel/', 'payments.xlsx');
+  const handleExportPdf = () => downloadFile('/api/payments/export/?format=pdf', 'payments.pdf');
+  const handleExportExcel = () => downloadFile('/api/payments/export/?format=xlsx', 'payments.xlsx');
 
   useEffect(() => {
     const loadCards = async () => {

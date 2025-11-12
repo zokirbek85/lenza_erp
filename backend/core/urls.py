@@ -57,6 +57,7 @@ from users.auth import RoleAwareTokenObtainPairView
 from users.views import UserViewSet
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
 from reports.views_cards_pdf import cards_pdf_report
+from core.views_verify import verify_document
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
@@ -97,10 +98,35 @@ urlpatterns = [
     path('api/payments/report/pdf/', PaymentReportPDFView.as_view(), name='payments-report-pdf'),
     path('api/reports/cards/pdf/', cards_pdf_report, name='cards-pdf-report'),
     path('api/payments/export/excel/', PaymentExportExcelView.as_view(), name='payments-export-excel'),
+    # Explicit mapping for payments export action (PDF/XLSX via ?format=)
+    path('api/payments/export/', PaymentViewSet.as_view({'get': 'export'}), name='payments-export'),
+    path('api/payments/export', PaymentViewSet.as_view({'get': 'export'})),
+    # Explicit mapping for payments report action (monthly report PDF/XLSX/JSON via ?format=)
+    path('api/payments/report/', PaymentViewSet.as_view({'get': 'report'}), name='payments-report'),
+    path('api/payments/report', PaymentViewSet.as_view({'get': 'report'})),
     path('api/expenses/report/pdf/', ExpenseReportPDFView.as_view({'get': 'list'}), name='expenses-report-pdf'),
     path('api/expenses/export/excel/', ExpenseExportExcelView.as_view({'get': 'list'}), name='expenses-export-excel'),
+    # Explicit mapping for expenses export action (PDF/XLSX via ?format=)
+    path('api/expenses/export/', ExpenseViewSet.as_view({'get': 'export'}), name='expenses-export'),
+    path('api/expenses/export', ExpenseViewSet.as_view({'get': 'export'})),
+    # Explicit mapping for expenses report action (monthly report PDF/XLSX via ?format=)
+    path('api/expenses/report/', ExpenseViewSet.as_view({'get': 'report'}), name='expenses-report'),
+    path('api/expenses/report', ExpenseViewSet.as_view({'get': 'report'})),
     path('api/ledger/report/pdf/', LedgerReportPDFView.as_view({'get': 'list'}), name='ledger-report-pdf'),
     path('api/ledger/export/excel/', LedgerExportExcelView.as_view({'get': 'list'}), name='ledger-export-excel'),
+    # Explicit routes for ledger entries export action (with and without trailing slash)
+    path('api/ledger-entries/export/', LedgerEntryViewSet.as_view({'get': 'export'}), name='ledger-entries-export'),
+    path('api/ledger-entries/export', LedgerEntryViewSet.as_view({'get': 'export'})),
+    # Friendly alias under /api/ledger/export/ for consistency with other endpoints
+    path('api/ledger/export/', LedgerEntryViewSet.as_view({'get': 'export'}), name='ledger-export'),
+    # Explicit mapping for ledger report action (monthly report PDF/XLSX/JSON via ?format=)
+    path('api/ledger-entries/report/', LedgerEntryViewSet.as_view({'get': 'report'}), name='ledger-entries-report'),
+    path('api/ledger-entries/report', LedgerEntryViewSet.as_view({'get': 'report'})),
+    path('api/ledger/report/', LedgerEntryViewSet.as_view({'get': 'report'}), name='ledger-report'),
+    path('api/ledger/report', LedgerEntryViewSet.as_view({'get': 'report'})),
+    # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
+    path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
+    path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
     path('api/dealers/balance/pdf/', DealerBalancePDFView.as_view(), name='dealer-balance-pdf'),
     path('api/dealers/export/excel/', DealerExportExcelView.as_view(), name='dealers-export-excel'),
     path('api/dealers/import/excel/', DealerImportExcelView.as_view(), name='dealers-import-excel'),
@@ -123,6 +149,8 @@ urlpatterns = [
     path('api/2fa/verify/', TwoFactorVerifyView.as_view(), name='two-factor-verify'),
     path('api/search/', SearchView.as_view(), name='global-search'),
     path('api/', include(router.urls)),
+    # QR verification endpoint
+    path('verify/<str:doc_type>/<slug:doc_id>/', verify_document, name='verify-document'),
 ]
 
 if settings.DEBUG:

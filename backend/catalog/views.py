@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
-from core.utils.pdf import render_pdf
+from core.mixins.export_mixins import ExportMixin
 
 from .models import Brand, Category, Product
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer
@@ -136,12 +136,16 @@ class ProductImportTemplateView(APIView):
         return response
 
 
-class ProductReportPDFView(APIView):
+class ProductReportPDFView(APIView, ExportMixin):
     permission_classes = [IsAdmin | IsAccountant | IsSales | IsWarehouse]
 
     def get(self, request):
         products = Product.objects.select_related('brand', 'category').all()
-        pdf_bytes = render_pdf('reports/products_report.html', {'products': products})
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename=products_report.pdf'
-        return response
+        return self.render_pdf_with_qr(
+            'reports/products_report.html',
+            {'products': products},
+            filename_prefix='products_report',
+            request=request,
+            doc_type='products-report',
+            doc_id='bulk',
+        )

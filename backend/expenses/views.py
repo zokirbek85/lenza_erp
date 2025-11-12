@@ -1,4 +1,5 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from calendar import month_abbr
 from decimal import Decimal
 
 from django.db.models import Sum
@@ -13,22 +14,24 @@ from core.permissions import IsAdmin, IsAccountant, IsOwner
 from core.utils.exporter import _prepare_workbook, _workbook_to_file
 from payments.models import CurrencyRate
 from .models import Expense, ExpenseType
+from core.mixins.report_mixin import BaseReportMixin
+from core.mixins.export_mixins import ExportMixin
 from .serializers import ExpenseSerializer, ExpenseTypeSerializer
 
 
 class ExpenseTypeViewSet(viewsets.ModelViewSet):
-    queryset = ExpenseType.objects.all()
+    queryset = ExpenseType.objects.all().order_by('name')
     serializer_class = ExpenseTypeSerializer
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        # Only admins can modify expense types; others can read
-        if self.request.method in permissions.SAFE_METHODS:
-            return [permissions.IsAuthenticated()]
-        return [IsAdmin()]
+        """Only admins can create/update/delete expense types; others can read."""
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdmin()]
+        return [permissions.IsAuthenticated()]
 
 
-class ExpenseViewSet(viewsets.ModelViewSet):
+class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin):
     queryset = Expense.objects.select_related('type', 'card', 'created_by', 'approved_by').all()
     serializer_class = ExpenseSerializer
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
@@ -40,6 +43,12 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         'status': ['exact'],
     }
     ordering = ('-date', '-created_at')
+    
+    # BaseReportMixin configuration
+    date_field = "date"
+    filename_prefix = "expenses"
+    title_prefix = "Chiqimlar hisoboti"
+    report_template = "expenses/report.html"
 
     def _ensure_writer(self):
         user = self.request.user
@@ -208,12 +217,151 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             }
             for type_name, amount in sorted(summary.items(), key=lambda x: x[1], reverse=True)
         ]
-        
         return Response({
             'data': data,
             'total_usd': float(total),
             'period_days': days
         })
+
+    @action(detail=False, methods=['get'])
+    def report(self, request):
+        """Monthly expense report by type with USD/UZS totals. Optional PDF via ?format=pdf."""
+        # Parse month param YYYY-MM; default current month
+        month_str = request.query_params.get('month')
+        if not month_str:
+            month_str = datetime.now().strftime('%Y-%m')
+        try:
+            year, month = map(int, month_str.split('-'))
+        except Exception:
+            return Response({'error': 'Invalid month format. Use YYYY-MM.'}, status=400)
+
+        # Latest currency rate
+        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
+        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
+
+        # Base queryset for the month (confirmed expenses only)
+        qs = (
+            Expense.objects.select_related('type')
+            .filter(status='tasdiqlangan', date__year=year, date__month=month)
+        )
+
+        data = []
+        total_usd = Decimal('0')
+        total_uzs = Decimal('0')
+
+        for t in ExpenseType.objects.filter(is_active=True).order_by('name'):
+            items = qs.filter(type=t)
+            usd = Decimal('0')
+            uzs = Decimal('0')
+            for e in items:
+                amt = Decimal(str(e.amount))
+                if e.currency == 'UZS':
+                    uzs += amt
+                    usd += (amt / usd_to_uzs)
+                else:
+                    usd += amt
+                    uzs += (amt * usd_to_uzs)
+            data.append({
+                'type': t.name,
+                'usd': float(usd.quantize(Decimal('0.01'))),
+                'uzs': float(uzs.quantize(Decimal('1'))),
+            })
+            total_usd += usd
+            total_uzs += uzs
+
+        # Sort by USD amount descending for better readability
+        data.sort(key=lambda x: x['usd'], reverse=True)
+
+        fmt = request.query_params.get('format', 'json').lower()
+        
+        if fmt == 'pdf':
+            context = {
+                'month': month_str,
+                'rows': data,
+                'total_usd': float(total_usd.quantize(Decimal('0.01'))),
+                'total_uzs': float(total_uzs.quantize(Decimal('1'))),
+                'rate': float(usd_to_uzs)
+            }
+            return self.render_pdf_with_qr(
+                'expenses/report.html',
+                context,
+                f'Expense_Report_{month_str}',
+                request=request,
+                doc_type='expense-report',
+                doc_id=month_str,
+            )
+        
+        elif fmt == 'xlsx':
+            # Convert to Excel-friendly format
+            excel_rows = []
+            for row in data:
+                excel_rows.append({
+                    'Turi': row['type'],
+                    'USD': f"{row['usd']:,.2f}",
+                    'UZS': f"{row['uzs']:,.0f}",
+                })
+            return self.render_xlsx(excel_rows, f'Chiqimlar_hisoboti_{month_str}.xlsx')
+
+        return Response({
+            'month': month_str,
+            'rate': float(usd_to_uzs),
+            'rows': data,
+            'total_usd': float(total_usd.quantize(Decimal('0.01'))),
+            'total_uzs': float(total_uzs.quantize(Decimal('1'))),
+        })
+
+    @action(detail=False, methods=['get'])
+    def compare(self, request):
+        """Compare last 6 months expenses by type (in USD), stacked bar friendly."""
+        today = date.today()
+
+        # Latest rate for conversion
+        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
+        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
+
+        # Helper to get year, month going back i months (i=0 current month)
+        def shift_months(base_year: int, base_month: int, back: int):
+            m = base_month - back
+            y = base_year
+            while m <= 0:
+                m += 12
+                y -= 1
+            return y, m
+
+        # Build data per month
+        month_data = []  # list of (label, {type: amount_usd}) oldest -> newest
+        type_names_set = set()
+
+        # Collect from oldest to newest for chart left->right
+        for i in range(5, -1, -1):
+            y, m = shift_months(today.year, today.month, i)
+            label = f"{month_abbr[m]} {y}"
+            qs = Expense.objects.select_related('type').filter(
+                status='tasdiqlangan',
+                date__year=y,
+                date__month=m,
+            )
+            type_totals = {}
+            for e in qs:
+                # convert to USD
+                amt = Decimal(str(e.amount))
+                if e.currency == 'UZS':
+                    amt = (amt / usd_to_uzs)
+                type_name = e.type.name if e.type else 'Boshqa'
+                type_totals[type_name] = type_totals.get(type_name, Decimal('0')) + amt
+                type_names_set.add(type_name)
+
+            month_data.append((label, type_totals))
+
+        types = sorted(type_names_set)
+        chart = []
+        for label, totals in month_data:
+            row = { 'month': label }
+            for t in types:
+                row[t] = float(totals.get(t, Decimal('0')).quantize(Decimal('0.01')))
+            chart.append(row)
+
+        return Response({ 'types': types, 'chart': chart })
 
     @action(detail=True, methods=['post'], url_path='update-status')
     def update_status(self, request, pk=None):
@@ -239,86 +387,109 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(expense)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def export(self, request):
+        """Unified export endpoint: ?format=pdf|xlsx"""
+        fmt = request.query_params.get('format', 'xlsx')
+        qs = self.filter_queryset(self.get_queryset().select_related('type', 'card'))
 
-class ExpenseReportPDFView(permissions.IsAuthenticated, viewsets.ViewSet):
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+        rows = [{
+            'Sana': (e.date.isoformat() if e.date else ''),
+            'Turi': (e.type.name if e.type else ''),
+            'Miqdor': float(e.amount),
+            'Valyuta': e.currency,
+            'To‘lov turi': e.method,
+            'Karta': (e.card.name if e.card else ''),
+            'Izoh': (e.comment or ''),
+            'Holat': e.status,
+        } for e in qs.order_by('date', 'id')]
 
-    def list(self, request):
-        from_date = request.query_params.get('from')
-        to_date = request.query_params.get('to')
-        type_id = request.query_params.get('type')
-        method = request.query_params.get('method')
-        qs = Expense.objects.select_related('type', 'card').all()
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if type_id:
-            qs = qs.filter(type_id=type_id)
-        if method:
-            qs = qs.filter(method=method)
-
-        # Render PDF
-        from django.template.loader import render_to_string
-        from weasyprint import HTML
-        from core.models import CompanyInfo
-
-        company = CompanyInfo.objects.first()
-        logo_url = company.logo.url if company and company.logo else None
-        html = render_to_string(
-            'reports/expenses_report.html',
-            {
-                'items': qs,
-                'company': company,
-                'logo_url': request.build_absolute_uri(logo_url) if logo_url else None,
-                'from_date': from_date,
-                'to_date': to_date,
-                'generated_at': timezone.now(),
-                'total_usd': float(qs.filter(currency='USD').aggregate(s=Sum('amount'))['s'] or 0),
-                'total_uzs': float(qs.filter(currency='UZS').aggregate(s=Sum('amount'))['s'] or 0),
-            },
-        )
-        pdf = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
-        resp = HttpResponse(pdf, content_type='application/pdf')
-        resp['Content-Disposition'] = 'inline; filename="expenses_report.pdf"'
-        return resp
-
-
-class ExpenseExportExcelView(permissions.IsAuthenticated, viewsets.ViewSet):
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
-
-    def list(self, request):
-        from_date = request.query_params.get('from')
-        to_date = request.query_params.get('to')
-        type_id = request.query_params.get('type')
-        method = request.query_params.get('method')
-        qs = Expense.objects.select_related('type', 'card').all()
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if type_id:
-            qs = qs.filter(type_id=type_id)
-        if method:
-            qs = qs.filter(method=method)
-
-        # Build simple Excel via exporter helpers
-        workbook, worksheet = _prepare_workbook(
-            'Expenses',
-            ['Date', 'Type', 'Method', 'Card', 'Currency', 'Amount', 'Status', 'Comment'],
-        )
-        for e in qs:
-            worksheet.append(
-                [
-                    e.date.isoformat() if e.date else '',
-                    e.type.name,
-                    e.method,
-                    e.card.name if e.card else '',
-                    e.currency,
-                    float(e.amount),
-                    e.status,
-                    e.comment or '',
-                ]
+        context = {'rows': rows, 'title': 'Chiqimlar hisobot'}
+        if fmt == 'pdf':
+            return self.render_pdf_with_qr(
+                'expenses/export.html',
+                context,
+                'chiqimlar',
+                request=request,
+                doc_type='expense-export',
+                doc_id=None,
             )
-        file_path = _workbook_to_file(workbook, 'expenses')
-        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+        return self.render_xlsx(rows, 'chiqimlar')
+
+
+class ExpenseReportPDFView(viewsets.ViewSet, ExportMixin):
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def list(self, request):
+        from_date = request.query_params.get('from')
+        to_date = request.query_params.get('to')
+        type_id = request.query_params.get('type')
+        method = request.query_params.get('method')
+        qs = Expense.objects.select_related('type', 'card').all()
+        if from_date:
+            qs = qs.filter(date__gte=from_date)
+        if to_date:
+            qs = qs.filter(date__lte=to_date)
+        if type_id:
+            qs = qs.filter(type_id=type_id)
+        if method:
+            qs = qs.filter(method=method)
+
+        context = {
+            'items': qs,
+            'from_date': from_date,
+            'to_date': to_date,
+            'generated_at': timezone.now(),
+            'total_usd': float(qs.filter(currency='USD').aggregate(s=Sum('amount'))['s'] or 0),
+            'total_uzs': float(qs.filter(currency='UZS').aggregate(s=Sum('amount'))['s'] or 0),
+        }
+
+        # Create a stable doc_id from date filters if provided
+        doc_id = 'bulk'
+        if from_date or to_date:
+            f = from_date.replace('-', '') if from_date else 'start'
+            t = to_date.replace('-', '') if to_date else 'end'
+            doc_id = f'{f}_{t}'
+
+        return self.render_pdf_with_qr(
+            'reports/expenses_report.html',
+            context,
+            filename_prefix='expenses_report',
+            request=request,
+            doc_type='expenses-report',
+            doc_id=doc_id,
+        )
+
+
+class ExpenseExportExcelView(permissions.IsAuthenticated, viewsets.ViewSet, ExportMixin):
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def list(self, request):
+        from_date = request.query_params.get('from')
+        to_date = request.query_params.get('to')
+        type_id = request.query_params.get('type')
+        method = request.query_params.get('method')
+        qs = Expense.objects.select_related('type', 'card').all()
+        if from_date:
+            qs = qs.filter(date__gte=from_date)
+        if to_date:
+            qs = qs.filter(date__lte=to_date)
+        if type_id:
+            qs = qs.filter(type_id=type_id)
+        if method:
+            qs = qs.filter(method=method)
+
+        # Build rows and render via ExportMixin
+        rows = []
+        for e in qs.order_by('date', 'id'):
+            rows.append({
+                'Date': (e.date.isoformat() if e.date else ''),
+                'Type': (e.type.name if e.type else ''),
+                'Method': e.method,
+                'Card': (e.card.name if e.card else ''),
+                'Currency': e.currency,
+                'Amount': float(e.amount),
+                'Status': e.status,
+                'Comment': (e.comment or ''),
+            })
+        return self.render_xlsx(rows, 'expenses')

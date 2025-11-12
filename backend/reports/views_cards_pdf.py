@@ -6,6 +6,7 @@ from django.db.models import Sum, Count, Max
 
 from payments.models import Payment
 from core.models import CompanyInfo
+from core.mixins.export_mixins import ExportMixin
 
 
 def cards_pdf_report(request):
@@ -45,24 +46,24 @@ def cards_pdf_report(request):
         except Exception:
             logo_url = None
 
-    html = render_to_string(
+    context = {
+        'data': data,
+        'company': company,
+        'logo_url': logo_url,
+        'total_sum': float(total_sum or 0),
+        'from_date': from_date,
+        'to_date': to_date,
+        'generated_at': now,
+    }
+
+    # Use ExportMixin to include QR verification
+    mixin = ExportMixin()
+    resp = mixin.render_pdf_with_qr(
         'reports/cards_report.html',
-        {
-            'data': data,
-            'company': company,
-            'logo_url': logo_url,
-            'total_sum': float(total_sum or 0),
-            'from_date': from_date,
-            'to_date': to_date,
-            'generated_at': now,
-        },
+        context,
+        filename_prefix=f'karta_statistika_{now}',
+        request=request,
+        doc_type='cards-report',
+        doc_id='bulk',
     )
-
-    # Generate PDF via WeasyPrint
-    from weasyprint import HTML
-
-    pdf = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
-
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="karta_statistika_{now}.pdf"'
-    return response
+    return resp

@@ -6,7 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 
 from core.utils.exporter import export_returns_to_excel
-from core.utils.pdf import render_pdf
+from core.mixins.export_mixins import ExportMixin
 
 from .models import ReturnedProduct
 from .serializers import ReturnedProductSerializer
@@ -63,12 +63,16 @@ class ReturnsExportExcelView(APIView):
         return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
 
 
-class ReturnsReportPDFView(APIView):
+class ReturnsReportPDFView(APIView, ExportMixin):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         returns = ReturnedProduct.objects.select_related('dealer', 'product').order_by('-created_at')
-        pdf_bytes = render_pdf('reports/returns_report.html', {'returns': returns})
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename=returns_report.pdf'
-        return response
+        return self.render_pdf_with_qr(
+            'reports/returns_report.html',
+            {'returns': returns},
+            filename_prefix='returns_report',
+            request=request,
+            doc_type='returns-report',
+            doc_id='bulk',
+        )

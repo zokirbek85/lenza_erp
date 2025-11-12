@@ -6,7 +6,7 @@ from .models import Expense, ExpenseType
 class ExpenseTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExpenseType
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'is_active']
 
 
 class ExpenseSerializer(serializers.ModelSerializer):

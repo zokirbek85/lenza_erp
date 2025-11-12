@@ -14,6 +14,7 @@ import {
   Filler
 } from 'chart.js';
 import http from '../app/http';
+import { downloadFile } from '../utils/download';
 import dayjs, { Dayjs } from 'dayjs';
 import { useAuthStore } from '../auth/useAuthStore';
 
@@ -429,24 +430,26 @@ export default function LedgerPage() {
               <Space>
                 <Button
                   icon={<FilePdfOutlined />}
-                  onClick={() => {
+                  onClick={async () => {
                     const params = new URLSearchParams();
                     if (filters.account) params.append('account', filters.account.toString());
                     if (filters.range?.[0]) params.append('from', filters.range[0].format('YYYY-MM-DD'));
                     if (filters.range?.[1]) params.append('to', filters.range[1].format('YYYY-MM-DD'));
-                    window.open(`/api/ledger/report/pdf/?${params.toString()}`, '_blank');
+                    const qs = params.toString();
+                    await downloadFile(`/api/ledger-entries/export/?${qs}${qs ? '&' : ''}format=pdf`, 'kassa_balans.pdf');
                   }}
                 >
                   PDF
                 </Button>
                 <Button
                   icon={<FileExcelOutlined />}
-                  onClick={() => {
+                  onClick={async () => {
                     const params = new URLSearchParams();
                     if (filters.account) params.append('account', filters.account.toString());
                     if (filters.range?.[0]) params.append('from', filters.range[0].format('YYYY-MM-DD'));
                     if (filters.range?.[1]) params.append('to', filters.range[1].format('YYYY-MM-DD'));
-                    window.open(`/api/ledger/export/excel/?${params.toString()}`, '_blank');
+                    const qs = params.toString();
+                    await downloadFile(`/api/ledger-entries/export/?${qs}${qs ? '&' : ''}format=xlsx`, 'kassa_balans.xlsx');
                   }}
                 >
                   Excel

@@ -174,6 +174,12 @@
         color: var(--text-muted);
       }
 
+      .qr-box {
+        text-align: right;
+        font-size: 11px;
+      }
+      .qr-img { height: 80px; }
+
       .signature {
         margin-top: 40px;
         display: flex;
@@ -293,7 +299,12 @@
 
       <div class="footer">
         <div>{{ company.name|default:"Lenza ERP" }} &middot; {{ company.website|default:"" }}</div>
-        <div>{% now "d.m.Y H:i" %}</div>
+        <div class="qr-box">
+          <div>Imzolangan: {{ company.name|default:"Lenza ERP" }} tizimi orqali</div>
+          <div>QR orqali haqiqiylikni tekshiring:</div>
+          <img src="{{ qr_code }}" alt="QR" class="qr-img"/>
+          <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
+        </div>
       </div>
     </main>
   </body>

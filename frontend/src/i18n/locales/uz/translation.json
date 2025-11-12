@@ -33,6 +33,8 @@
     "regions": "Hududlar",
     "payments": "To'lovlar",
     "expenses": "Chiqimlar",
+  "expenseReport": "📊 Oylik chiqimlar",
+  "expenseCategories": "⚙️ Chiqim turlari",
     "ledger": "Kassa balans",
     "currency": "Kurslar",
     "reconciliation": "Akt sverka",

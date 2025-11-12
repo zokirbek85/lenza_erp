@@ -7,24 +7,30 @@
       @page { size: A4; margin: 2cm; }
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; font-size: 11pt; color: #111827; }
       h1 { text-align: center; margin: 10px 0 16px; color: #0f172a; font-size: 18pt; }
-      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-      .company-name { font-weight: bold; font-size: 14pt; color: #0f172a; }
+      .header { display: flex; align-items: center; gap: 12px; justify-content: flex-start; margin-bottom: 10px; }
+      .logo { height: 40px; }
+      .company-block { display:flex; flex-direction:column; }
+      .company-name { font-weight: 700; font-size: 14pt; color: #0f172a; }
+      .company-slogan { font-size: 10pt; color: #6b7280; }
+      .company-contact { font-size: 9pt; color: #6b7280; }
       .meta { font-size: 10pt; color: #374151; }
       table { width: 100%; border-collapse: collapse; margin-top: 10px; }
       th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
       th { background: #f3f4f6; color: #111827; }
       tfoot td { font-weight: bold; border-top: 2px solid #111827; }
       .muted { color: #6b7280; }
+      .footer { margin-top: 16px; text-align: center; font-size: 10px; color: #777; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+      .qr { width: 80px; }
     </style>
   </head>
   <body>
     <div class="header">
-      <div class="company-name">
-        {{ company.name|default:"LENZA ERP" }}
+      <img src="{{ company_logo }}" class="logo"/>
+      <div class="company-block">
+        <div class="company-name">{{ company_name }}</div>
+        <div class="company-slogan">{{ company_slogan }}</div>
+        <div class="company-contact">{{ company_address }}{% if company_phone %} | {{ company_phone }}{% endif %}</div>
       </div>
-      {% if logo_url %}
-        <img src="{{ logo_url }}" alt="logo" height="40" />
-      {% endif %}
     </div>
 
     <h1>💸 Chiqimlar hisobot</h1>
@@ -74,6 +80,11 @@
       </tfoot>
     </table>
 
-    <p class="meta" style="margin-top: 24px;">Hisobot yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}</p>
+    <div class="footer">
+      <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
+      <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+      <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
+      <a href="{{ verify_url }}">{{ verify_url }}</a>
+    </div>
   </body>
 </html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"/>
+<style>
+body { font-family: Arial, sans-serif; font-size: 11px; margin: 25px; }
+.header { display: flex; align-items: center; margin-bottom: 20px; }
+.logo { height: 50px; margin-right: 12px; }
+h1 { margin: 0; font-size: 16px; }
+.slogan { font-size: 11px; color: #666; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th, td { border: 1px solid #ddd; padding: 5px; text-align: left; }
+th { background-color: #f3f3f3; }
+tfoot td { font-weight: bold; background: #fafafa; }
+.footer { margin-top: 30px; text-align: center; font-size: 10px; color: #777; }
+.qr { width: 80px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <img src="{{ company_logo }}" class="logo" />
+  <div>
+    <h1>{{ company_name }}</h1>
+    <div class="slogan">{{ company_slogan }}</div>
+    <div style="font-size: 10px;">{{ company_address }} | Tel: {{ company_phone }}</div>
+  </div>
+</div>
+
+<h2>{{ title }}</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Sana</th>
+      <th>Diler</th>
+      <th>Miqdor</th>
+      <th>Valyuta</th>
+      <th>Usul</th>
+      <th>Karta</th>
+      <th>Izoh</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.Sana }}</td>
+      <td>{{ r.Diler }}</td>
+      <td>{{ r.Miqdor }}</td>
+      <td>{{ r.Valyuta }}</td>
+      <td>{{ r.Usul }}</td>
+      <td>{{ r.Karta }}</td>
+      <td>{{ r.Izoh }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<div class="footer">
+  <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
+  <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+  <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
+  <a href="{{ verify_url }}">{{ verify_url }}</a>
+</div>
+</body>
+</html>

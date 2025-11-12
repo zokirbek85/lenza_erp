@@ -570,4 +570,10 @@
       </div>
     </div>
   </body>
+  <footer style="margin-top: 24px; text-align: center; font-size: 10px; color: #777;">
+    <div>Imzolangan: <strong>{{ company.name|default:"Lenza ERP" }}</strong> tizimi orqali</div>
+    <div>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</div>
+    <img src="{{ qr_code }}" alt="QR" style="height:80px;"/>
+    <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
+  </footer>
 </html>

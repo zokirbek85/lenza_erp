@@ -74,5 +74,12 @@
     </table>
 
     <p class="meta" style="margin-top: 24px;">Hisobot yaratilgan: {{ generated_at }}</p>
+
+    <div style="margin-top: 24px; text-align: center; font-size: 10px; color: #777;">
+      <p>Imzolangan: <strong>{{ company.name|default:"Lenza ERP" }}</strong> tizimi orqali</p>
+      <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+      <img src="{{ qr_code }}" alt="QR" style="height:80px;"/>
+      <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
+    </div>
   </body>
 </html>

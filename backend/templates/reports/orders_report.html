@@ -1,16 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="uz">
   <head>
     <meta charset="utf-8" />
     <style>
-      body { font-family: Arial, sans-serif; font-size: 12px; }
+      body { font-family: Arial, sans-serif; font-size: 12px; margin: 25px; }
+      .header { display:flex; align-items:center; margin-bottom: 12px; }
+      .logo { height: 48px; margin-right: 10px; }
       h1 { text-align: center; }
       table { width: 100%; border-collapse: collapse; margin-top: 20px; }
       th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
       th { background: #f4f4f4; }
+      .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #777; }
+      .qr { width: 80px; }
     </style>
   </head>
   <body>
+    <div class="header">
+      <img src="{{ company_logo }}" class="logo"/>
+      <div>
+        <div style="font-weight:700; font-size:16px;">{{ company_name }}</div>
+        <div style="font-size:11px; color:#666;">{{ company_slogan }}</div>
+        <div style="font-size:10px;">{{ company_address }}{% if company_phone %} | {{ company_phone }}{% endif %}</div>
+      </div>
+    </div>
     <h1>Orders Summary</h1>
     <table>
       <thead>
@@ -36,5 +48,11 @@
         {% endfor %}
       </tbody>
     </table>
+    <div class="footer">
+      <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
+      <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+      <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
+      <a href="{{ verify_url }}">{{ verify_url }}</a>
+    </div>
   </body>
 </html>

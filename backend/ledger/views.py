@@ -7,6 +7,8 @@ from django.http import HttpResponse, FileResponse
 from django.utils import timezone
 from datetime import timedelta, date
 from .models import LedgerAccount, LedgerEntry
+from core.mixins.report_mixin import BaseReportMixin
+from core.mixins.export_mixins import ExportMixin
 from .serializers import LedgerAccountSerializer, LedgerEntrySerializer
 from .services import LedgerService
 from decimal import Decimal
@@ -78,11 +80,17 @@ class LedgerAccountViewSet(viewsets.ModelViewSet):
         })
 
 
-class LedgerEntryViewSet(viewsets.ModelViewSet):
+class LedgerEntryViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
     queryset = LedgerEntry.objects.select_related('account', 'created_by').all()
     serializer_class = LedgerEntrySerializer
     permission_classes = [IsOwnerOrAccountantOrAdmin]
     http_method_names = ['get', 'post', 'delete']
+    
+    # BaseReportMixin configuration
+    date_field = "date"
+    filename_prefix = "ledger"
+    title_prefix = "Kassa hisoboti"
+    report_template = "ledger/report.html"
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -158,6 +166,26 @@ class LedgerEntryViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(entry)
         return Response(serializer.data)
 
+    def get_report_rows(self, queryset):
+        """Generate rows for ledger entries with account, type, amount."""
+        rows = []
+        for entry in queryset.order_by('date', 'id'):
+            rows.append({
+                'Sana': entry.date.strftime('%d.%m.%Y') if entry.date else '',
+                'Hisob': entry.account.name,
+                'Turi': entry.kind,
+                'Valyuta': entry.currency,
+                'Miqdor': f"{float(entry.amount):,.2f}",
+                'USD': f"{float(entry.amount_usd):,.2f}",
+                'Izoh': entry.note or '',
+            })
+        return rows
+    
+    def get_report_total(self, queryset):
+        """Calculate total amount in USD."""
+        total = queryset.aggregate(Sum('amount_usd'))['amount_usd__sum'] or 0
+        return total
+
     @action(detail=False, methods=['get'])
     def flow(self, request):
         """Get cash flow trend for the last 30 days."""
@@ -185,16 +213,44 @@ class LedgerEntryViewSet(viewsets.ModelViewSet):
         
         return Response(data)
 
+    @action(detail=False, methods=['get'])
+    def export(self, request):
+        """Unified export: ?format=pdf|xlsx for ledger entries."""
+        fmt = request.query_params.get('format', 'xlsx')
+        qs = self.get_queryset()
 
-class LedgerReportPDFView(viewsets.ViewSet):
+        rows = [{
+            'Sana': (e.date.isoformat() if e.date else ''),
+            'Hisob': e.account.name,
+            'Turi': e.kind,
+            'Ref': (f"{e.ref_app} #{e.ref_id}" if e.ref_app and e.ref_id else ''),
+            'Valyuta': e.currency,
+            'Miqdor': float(e.amount),
+            'USD': float(e.amount_usd),
+            'Izoh': (e.note or ''),
+        } for e in qs.order_by('date', 'id')]
+
+        if fmt == 'pdf':
+            return self.render_pdf_with_qr(
+                'ledger/export.html',
+                {'rows': rows, 'title': 'Kassa balans'},
+                'kassa_balans',
+                request=request,
+                doc_type='ledger-export',
+                doc_id=None,
+            )
+        return self.render_xlsx(rows, 'kassa_balans')
+
+
+class LedgerReportPDFView(viewsets.ViewSet, ExportMixin):
     permission_classes = [IsOwnerOrAccountantOrAdmin]
 
     def list(self, request):
-        """Generate PDF report for ledger entries."""
+        """Generate branded, QR-enabled PDF report for ledger entries."""
         account = request.query_params.get('account')
         d1 = request.query_params.get('from')
         d2 = request.query_params.get('to')
-        
+
         qs = LedgerEntry.objects.select_related('account', 'created_by').all()
         if account:
             qs = qs.filter(account_id=account)
@@ -207,20 +263,12 @@ class LedgerReportPDFView(viewsets.ViewSet):
             if date_to:
                 qs = qs.filter(date__lte=date_to)
         qs = qs.order_by('date', 'id')
-        
+
         # Calculate totals
         total_usd_in = float(qs.filter(amount_usd__gt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
         total_usd_out = float(qs.filter(amount_usd__lt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
         net_balance = total_usd_in + total_usd_out
-        
-        # Render PDF
-        from django.template.loader import render_to_string
-        from weasyprint import HTML
-        from core.models import CompanyInfo
-        
-        company = CompanyInfo.objects.first()
-        logo_url = company.logo.url if company and company.logo else None
-        
+
         account_name = None
         if account:
             try:
@@ -228,33 +276,33 @@ class LedgerReportPDFView(viewsets.ViewSet):
                 account_name = acc.name
             except LedgerAccount.DoesNotExist:
                 pass
-        
-        html = render_to_string(
+
+        context = {
+            'entries': qs,
+            'from_date': d1,
+            'to_date': d2,
+            'account_name': account_name,
+            'generated_at': timezone.now(),
+            'total_in': total_usd_in,
+            'total_out': abs(total_usd_out),
+            'net_balance': net_balance,
+        }
+
+        return self.render_pdf_with_qr(
             'reports/ledger_report.html',
-            {
-                'entries': qs,
-                'company': company,
-                'logo_url': request.build_absolute_uri(logo_url) if logo_url else None,
-                'from_date': d1,
-                'to_date': d2,
-                'account_name': account_name,
-                'generated_at': timezone.now(),
-                'total_in': total_usd_in,
-                'total_out': abs(total_usd_out),
-                'net_balance': net_balance,
-            },
+            context,
+            filename_prefix='ledger_report',
+            request=request,
+            doc_type='ledger-report',
+            doc_id='bulk',
         )
-        pdf = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
-        resp = HttpResponse(pdf, content_type='application/pdf')
-        resp['Content-Disposition'] = 'inline; filename="ledger_report.pdf"'
-        return resp
 
 
-class LedgerExportExcelView(viewsets.ViewSet):
+class LedgerExportExcelView(viewsets.ViewSet, ExportMixin):
     permission_classes = [IsOwnerOrAccountantOrAdmin]
 
     def list(self, request):
-        """Export ledger entries to Excel."""
+        """Export ledger entries to Excel using render_xlsx."""
         account = request.query_params.get('account')
         d1 = request.query_params.get('from')
         d2 = request.query_params.get('to')
@@ -272,31 +320,24 @@ class LedgerExportExcelView(viewsets.ViewSet):
                 qs = qs.filter(date__lte=date_to)
         qs = qs.order_by('date', 'id')
         
-        # Build Excel
-        from core.utils.exporter import _prepare_workbook, _workbook_to_file
-        
-        workbook, worksheet = _prepare_workbook(
-            'Ledger Entries',
-            ['Date', 'Account', 'Kind', 'Ref', 'Currency', 'Amount', 'USD Amount', 'Note', 'Created By'],
-        )
+        rows = []
         for e in qs:
-            worksheet.append([
-                e.date.isoformat() if e.date else '',
-                e.account.name,
-                e.kind,
-                f"{e.ref_app} #{e.ref_id}" if e.ref_app and e.ref_id else '',
-                e.currency,
-                float(e.amount),
-                float(e.amount_usd),
-                e.note or '',
-                e.created_by.full_name if e.created_by else '',
-            ])
-        
-        # Add totals row
+            rows.append({
+                'Date': (e.date.isoformat() if e.date else ''),
+                'Account': e.account.name,
+                'Kind': e.kind,
+                'Ref': (f"{e.ref_app} #{e.ref_id}" if e.ref_app and e.ref_id else ''),
+                'Currency': e.currency,
+                'Amount': float(e.amount),
+                'USD Amount': float(e.amount_usd),
+                'Note': (e.note or ''),
+                'Created By': (e.created_by.full_name if e.created_by else ''),
+            })
+
+        # Totals row for convenience
         total_usd_in = float(qs.filter(amount_usd__gt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
         total_usd_out = float(qs.filter(amount_usd__lt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
-        worksheet.append(['', '', '', '', '', '', '', '', ''])
-        worksheet.append(['', '', '', '', 'TOTALS:', f'{total_usd_in:.2f}', f'{total_usd_out:.2f}', f'Net: {total_usd_in + total_usd_out:.2f}', ''])
-        
-        file_path = _workbook_to_file(workbook, 'ledger_entries')
-        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+        rows.append({})
+        rows.append({'Currency': 'TOTALS', 'Amount': f'{total_usd_in:.2f}', 'USD Amount': f'{total_usd_out:.2f}', 'Note': f'Net: {total_usd_in + total_usd_out:.2f}'})
+
+        return self.render_xlsx(rows, 'ledger_entries')

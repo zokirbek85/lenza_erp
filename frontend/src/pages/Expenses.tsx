@@ -17,6 +17,7 @@ import {
 import http from '../app/http';
 import dayjs from 'dayjs';
 import { useAuthStore } from '../auth/useAuthStore';
+import { downloadFile } from '../utils/download';
 
 // Register Chart.js components
 ChartJS.register(
@@ -299,8 +300,12 @@ export default function ExpensesPage() {
     }
     return q.length ? `?${q.join('&')}` : '';
   };
-  const handleExportPdf = () => window.open(`/api/expenses/report/pdf/${buildExportQuery()}`, '_blank');
-  const handleExportExcel = () => window.open(`/api/expenses/export/excel/${buildExportQuery()}`, '_blank');
+  const handleExportPdf = async () => {
+    await downloadFile(`/api/expenses/export/${buildExportQuery()}${buildExportQuery() ? '&' : '?'}format=pdf`, 'chiqimlar.pdf');
+  };
+  const handleExportExcel = async () => {
+    await downloadFile(`/api/expenses/export/${buildExportQuery()}${buildExportQuery() ? '&' : '?'}format=xlsx`, 'chiqimlar.xlsx');
+  };
 
   const handleStatusChange = async (expenseId: number, newStatus: 'yaratilgan' | 'tasdiqlangan') => {
     try {

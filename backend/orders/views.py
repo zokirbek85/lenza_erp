@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.utils.exporter import export_orders_to_excel
+from core.mixins.report_mixin import BaseReportMixin
 
 from .models import Order, OrderItem, OrderStatusLog
 from .returns import process_return
@@ -22,7 +23,7 @@ STATUS_FLOW = {
 }
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     queryset = Order.objects.prefetch_related('items__product', 'status_logs', 'returns').select_related('dealer')
     serializer_class = OrderSerializer
     permission_classes = [IsAdmin | IsSales | IsOwner | IsWarehouse]
@@ -30,9 +31,35 @@ class OrderViewSet(viewsets.ModelViewSet):
     filterset_fields = ('status', 'dealer', 'is_reserve')
     search_fields = ('display_no', 'dealer__name')
     ordering_fields = ('created_at', 'value_date', 'total_usd')
+    
+    # BaseReportMixin configuration
+    date_field = "value_date"
+    filename_prefix = "orders"
+    title_prefix = "Buyurtmalar hisoboti"
+    report_template = "orders/report.html"
 
     def perform_create(self, serializer):
         serializer.save()
+    
+    def get_report_rows(self, queryset):
+        """Generate rows for order report."""
+        rows = []
+        for order in queryset.order_by('value_date', 'id'):
+            rows.append({
+                'Raqam': order.display_no or f"#{order.id}",
+                'Sana': order.value_date.strftime('%d.%m.%Y') if order.value_date else '',
+                'Diler': order.dealer.name if order.dealer else '',
+                'Holat': order.get_status_display(),
+                'USD': f"{float(order.total_usd):,.2f}",
+                'UZS': f"{float(order.total_uzs):,.0f}",
+            })
+        return rows
+    
+    def get_report_total(self, queryset):
+        """Calculate total amount in USD."""
+        from django.db.models import Sum
+        total = queryset.aggregate(Sum('total_usd'))['total_usd__sum'] or 0
+        return total
 
     def _set_status(self, order: Order, new_status: str | None):
         if not new_status:

@@ -12,6 +12,8 @@ import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
 import PaymentsPage from '../pages/Payments';
 import ExpensesPage from '../pages/Expenses';
+import ExpenseReportPage from '../pages/ExpenseReport';
+import ExpenseTypesPage from '../pages/ExpenseTypes';
 import LedgerPage from '../pages/Ledger';
 import ProductsPage from '../pages/Products';
 import TwoFactor from '../pages/TwoFactor';
@@ -94,6 +96,22 @@ const router = createBrowserRouter([
             element: (
               <Guard roles={['admin', 'owner', 'accountant']}>
                 <ExpensesPage />
+              </Guard>
+            ),
+          },
+          {
+            path: 'expenses/report',
+            element: (
+              <Guard roles={['admin', 'accountant']}>
+                <ExpenseReportPage />
+              </Guard>
+            ),
+          },
+          {
+            path: 'expenses/categories',
+            element: (
+              <Guard roles={['admin']}>
+                <ExpenseTypesPage />
               </Guard>
             ),
           },
