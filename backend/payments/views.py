@@ -13,8 +13,8 @@ from core.permissions import IsAccountant, IsAdmin, IsOwner
 from core.utils.exporter import export_payments_to_excel
 from core.utils.pdf import render_pdf
 
-from .models import CurrencyRate, Payment
-from .serializers import CurrencyRateSerializer, PaymentSerializer
+from .models import CurrencyRate, Payment, PaymentCard
+from .serializers import CurrencyRateSerializer, PaymentSerializer, PaymentCardSerializer
 
 
 class CurrencyRateViewSet(viewsets.ModelViewSet):
@@ -27,7 +27,7 @@ class CurrencyRateViewSet(viewsets.ModelViewSet):
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.select_related('dealer', 'rate').all()
+    queryset = Payment.objects.select_related('dealer', 'rate', 'card').all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
@@ -46,6 +46,38 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return
         if getattr(user, 'role', None) not in {'admin', 'accountant'}:
             raise PermissionDenied('Only accountant or admin may modify payments.')
+
+    def perform_create(self, serializer):
+        self._ensure_writer()
+        serializer.save()
+
+    def perform_update(self, serializer):
+        self._ensure_writer()
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._ensure_writer()
+        instance.delete()
+
+
+class PaymentCardViewSet(viewsets.ModelViewSet):
+    queryset = PaymentCard.objects.all()
+    serializer_class = PaymentCardSerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = {
+        'is_active': ['exact'],
+    }
+    search_fields = ('name', 'number', 'holder_name')
+    ordering = ('-created_at',)
+
+    def _ensure_writer(self):
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin may modify company cards.')
 
     def perform_create(self, serializer):
         self._ensure_writer()

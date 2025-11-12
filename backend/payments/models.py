@@ -2,6 +2,24 @@ from decimal import Decimal
 
 from django.db import models
 from django.utils import timezone
+class PaymentCard(models.Model):
+    name = models.CharField(max_length=100)
+    number = models.CharField(max_length=32)
+    holder_name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self) -> str:
+        return f"{self.name} — {self.masked_number()}"
+
+    def masked_number(self) -> str:
+        if self.number and len(self.number) >= 4:
+            return f"{self.number[:4]} **** {self.number[-4:]}"
+        return self.number or ''
+
 
 
 class CurrencyRate(models.Model):
@@ -35,6 +53,10 @@ class Payment(models.Model):
     amount_usd = models.DecimalField(max_digits=14, decimal_places=2, editable=False, default=0)
     rate = models.ForeignKey(CurrencyRate, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
     method = models.CharField(max_length=20, choices=Method.choices)
+    # Optional company card used for card payments
+    card = models.ForeignKey(
+        'payments.PaymentCard', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments'
+    )
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

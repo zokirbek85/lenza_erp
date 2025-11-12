@@ -32,6 +32,8 @@
     "users": "Foydalanuvchilar",
     "regions": "Hududlar",
     "payments": "To'lovlar",
+    "expenses": "Chiqimlar",
+    "ledger": "Kassa balans",
     "currency": "Kurslar",
     "reconciliation": "Akt sverka",
     "kpi": "KPI",
@@ -93,5 +95,36 @@
     "expandSidebar": "Panelni ochish",
     "pinSidebar": "Panelni mahkamlash",
     "unpinSidebar": "Panelni ajratish"
+  },
+  "order": {
+    "status": {
+      "created": "Yaratildi",
+      "confirmed": "Tasdiqlandi",
+      "packed": "Yig'ildi",
+      "shipped": "Jo'natildi",
+      "delivered": "Yetkazildi",
+      "cancelled": "Bekor qilindi",
+      "returned": "Qaytarildi"
+    },
+    "confirm_change_title": "Statusni o'zgartirishni tasdiqlang",
+    "confirm_change_message": "Siz buyurtma statusini '{{oldStatus}}' dan '{{newStatus}}' ga o'zgartirmoqchimisiz?",
+    "status_updated_success": "Buyurtma statusi muvaffaqiyatli o'zgartirildi",
+    "status_update_failed": "Statusni o'zgartirishda xatolik yuz berdi",
+    "status_not_allowed": "Sizga bu statusni o'zgartirishga ruxsat berilmagan",
+    "status_history": "Status o'zgarishlari tarixi",
+    "old_status": "Eski status",
+    "new_status": "Yangi status",
+    "changed_by": "O'zgartirgan",
+    "changed_at": "O'zgartirilgan sana",
+    "system": "Tizim",
+    "initial_creation": "Boshlang'ich holat",
+    "loading_history": "Tarix yuklanmoqda...",
+    "no_history": "Hali o'zgarishlar yo'q",
+    "history_fetch_failed": "Tarixni yuklashda xatolik",
+    "error": "Xatolik"
+  },
+  "common": {
+    "confirm": "Ha, o'zgartirilsin",
+    "cancel": "Bekor qilish"
   }
 }

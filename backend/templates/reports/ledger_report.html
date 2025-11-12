@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ledger Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: #ffffff; }
+        .header { text-align: center; margin-bottom: 30px; padding: 20px; border-bottom: 3px solid #1890ff; }
+        .logo { max-width: 180px; max-height: 60px; margin-bottom: 10px; }
+        .company-name { font-size: 22px; font-weight: 700; color: #1890ff; margin: 8px 0; }
+        .report-title { font-size: 16px; font-weight: 600; color: #333; margin-top: 12px; }
+        .meta { text-align: center; margin-bottom: 20px; font-size: 10px; color: #666; }
+        .meta span { margin: 0 12px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e8e8e8; }
+        th { background: #fafafa; font-weight: 600; color: #262626; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; }
+        tr:hover { background: #f5f5f5; }
+        .amount-positive { color: #52c41a; font-weight: 600; }
+        .amount-negative { color: #ff4d4f; font-weight: 600; }
+        .kind-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+        .kind-payment { background: #d4f4dd; color: #237804; }
+        .kind-expense { background: #ffe6e6; color: #a8071a; }
+        .kind-adjustment { background: #e6f7ff; color: #0050b3; }
+        .summary { margin-top: 30px; padding: 20px; background: #fafafa; border-radius: 8px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px; }
+        .summary-row.total { font-size: 14px; font-weight: 700; border-top: 2px solid #d9d9d9; padding-top: 12px; margin-top: 8px; }
+        .footer { margin-top: 40px; text-align: center; font-size: 9px; color: #999; border-top: 1px solid #e8e8e8; padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_url %}
+        <img src="{{ logo_url }}" class="logo" alt="Logo" />
+        {% endif %}
+        {% if company %}
+        <div class="company-name">{{ company.name }}</div>
+        {% endif %}
+        <div class="report-title">📊 Kassa Balans Hisoboti</div>
+    </div>
+
+    <div class="meta">
+        {% if account_name %}
+        <span><strong>Hisob:</strong> {{ account_name }}</span>
+        {% endif %}
+        {% if from_date %}
+        <span><strong>Dan:</strong> {{ from_date }}</span>
+        {% endif %}
+        {% if to_date %}
+        <span><strong>Gacha:</strong> {{ to_date }}</span>
+        {% endif %}
+        <span><strong>Yaratildi:</strong> {{ generated_at|date:"d.m.Y H:i" }}</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">Sana</th>
+                <th style="width: 15%;">Hisob</th>
+                <th style="width: 12%;">Tur</th>
+                <th style="width: 10%;">Ref</th>
+                <th style="width: 8%;">Valyuta</th>
+                <th style="width: 12%; text-align: right;">Miqdor</th>
+                <th style="width: 12%; text-align: right;">USD</th>
+                <th style="width: 21%;">Izoh</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.date|date:"d.m.Y" }}</td>
+                <td>{{ entry.account.name }}</td>
+                <td>
+                    {% if entry.kind == 'payment_in' %}
+                    <span class="kind-badge kind-payment">Kirim</span>
+                    {% elif entry.kind == 'expense_out' %}
+                    <span class="kind-badge kind-expense">Chiqim</span>
+                    {% else %}
+                    <span class="kind-badge kind-adjustment">Sozlash</span>
+                    {% endif %}
+                </td>
+                <td style="font-size: 9px;">
+                    {% if entry.ref_app and entry.ref_id %}
+                    {{ entry.ref_app }} #{{ entry.ref_id }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td>{{ entry.currency }}</td>
+                <td style="text-align: right;">
+                    {% if entry.amount >= 0 %}
+                    <span class="amount-positive">+{{ entry.amount }}</span>
+                    {% else %}
+                    <span class="amount-negative">{{ entry.amount }}</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    {% if entry.amount_usd >= 0 %}
+                    <span class="amount-positive">+{{ entry.amount_usd|floatformat:2 }}</span>
+                    {% else %}
+                    <span class="amount-negative">{{ entry.amount_usd|floatformat:2 }}</span>
+                    {% endif %}
+                </td>
+                <td style="font-size: 10px;">{{ entry.note|truncatechars:50 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <div class="summary-row">
+            <span>💰 Jami kirimlar (USD):</span>
+            <span class="amount-positive">+{{ total_in|floatformat:2 }}</span>
+        </div>
+        <div class="summary-row">
+            <span>💸 Jami chiqimlar (USD):</span>
+            <span class="amount-negative">-{{ total_out|floatformat:2 }}</span>
+        </div>
+        <div class="summary-row total">
+            <span>Sof balans (USD):</span>
+            <span {% if net_balance >= 0 %}class="amount-positive"{% else %}class="amount-negative"{% endif %}>
+                {{ net_balance|floatformat:2 }}
+            </span>
+        </div>
+    </div>
+
+    <div class="footer">
+        Generated by Lenza ERP | {{ generated_at|date:"d.m.Y H:i" }}
+    </div>
+</body>
+</html>

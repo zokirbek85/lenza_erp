@@ -32,6 +32,8 @@
     "users": "Users",
     "regions": "Regions",
     "payments": "Payments",
+    "expenses": "Expenses",
+    "ledger": "Cash Ledger",
     "currency": "Currency",
     "returns": "Returns",
     "reconciliation": "Reconciliation",
@@ -93,5 +95,37 @@
     "expandSidebar": "Expand sidebar",
     "pinSidebar": "Pin sidebar",
     "unpinSidebar": "Unpin sidebar"
+  },
+  "order": {
+    "status": {
+      "created": "Created",
+      "confirmed": "Confirmed",
+      "packed": "Packed",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "returned": "Returned"
+    },
+    "confirm_change_title": "Confirm Status Change",
+    "confirm_change_message": "Are you sure you want to change the status from '{{oldStatus}}' to '{{newStatus}}'?",
+    "status_updated_success": "Order status updated successfully",
+    "status_update_failed": "Failed to update status",
+    "status_not_allowed": "You don't have permission to change this status",
+    "status_history": "Status Change History",
+    "old_status": "Old Status",
+    "new_status": "New Status",
+    "changed_by": "Changed By",
+    "changed_at": "Changed At",
+    "system": "System",
+    "initial_creation": "Initial Creation",
+    "loading_history": "Loading history...",
+    "no_history": "No changes yet",
+    "history_fetch_failed": "Failed to load history",
+    "error": "Error"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }
+

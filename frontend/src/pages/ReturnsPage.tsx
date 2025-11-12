@@ -6,7 +6,7 @@ import { Doughnut } from 'react-chartjs-2';
 
 import http from '../app/http';
 import { downloadFile } from '../utils/download';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatQuantity } from '../utils/formatters';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -182,7 +182,7 @@ const ReturnsPage = () => {
     {
       title: 'Miqdor',
       dataIndex: 'quantity',
-      render: (value: string) => Number(value).toFixed(2),
+      render: (value: string) => formatQuantity(value),
     },
     {
       title: 'Turi',

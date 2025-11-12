@@ -20,6 +20,7 @@
           <th>Currency</th>
           <th>USD Equivalent</th>
           <th>Method</th>
+          <th>Card</th>
         </tr>
       </thead>
       <tbody>
@@ -29,10 +30,18 @@
           <td>{{ payment.amount }}</td>
           <td>{{ payment.currency }}</td>
           <td>{{ payment.amount_usd }}</td>
-          <td>{{ payment.method }}</td>
+          <td>{{ payment.get_method_display|default:payment.method }}</td>
+          <td>
+            {% if payment.card %}
+              {{ payment.card.name }} — {% if payment.card.masked_number %}{{ payment.card.masked_number }}{% else %}{{ payment.card.number|slice:":4" }} **** {{ payment.card.number|slice:"-4:" }}{% endif %}
+              {% if payment.card.holder_name %} ({{ payment.card.holder_name }}){% endif %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5">No payments on this date.</td></tr>
+  <tr><td colspan="6">No payments on this date.</td></tr>
         {% endfor %}
       </tbody>
     </table>

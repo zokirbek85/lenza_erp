@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
@@ -23,6 +24,7 @@ interface Payment {
   currency: string;
   amount_usd: number;
   method: string;
+  card?: { id: number; name: string; number: string; holder_name: string; masked_number: string } | null;
   pay_date: string;
   note: string;
 }
@@ -40,13 +42,16 @@ const defaultForm = {
   currency: 'USD',
   rate_id: '',
   method: 'cash',
+  card_id: '',
   note: '',
 };
 
 const PaymentsPage = () => {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [rates, setRates] = useState<CurrencyRate[]>([]);
+  const [cards, setCards] = useState<any[]>([]);
   const [form, setForm] = useState(defaultForm);
   const [filtersState, setFiltersState] = useState({ dealer: '', from: '', to: '' });
   const [showForm, setShowForm] = useState(false);
@@ -146,6 +151,7 @@ const PaymentsPage = () => {
       currency: form.currency,
       rate_id: form.currency === 'UZS' ? Number(form.rate_id) : null,
       method: form.method,
+      card_id: form.method === 'card' ? Number(form.card_id) : null,
       note: form.note,
     };
     try {
@@ -165,9 +171,23 @@ const PaymentsPage = () => {
   const handleExportPdf = () => downloadFile('/api/payments/report/pdf/', 'payments.pdf');
   const handleExportExcel = () => downloadFile('/api/payments/export/excel/', 'payments.xlsx');
 
+  useEffect(() => {
+    const loadCards = async () => {
+      try {
+  const res = await http.get('/api/payment-cards/', { params: { is_active: true } });
+        setCards(toArray(res.data));
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    if (form.method === 'card') {
+      loadCards();
+    }
+  }, [form.method]);
+
   return (
     <section className="space-y-6">
-      <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
+  <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.payments')}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">To&apos;lovlar va valyuta konvertatsiyasi.</p>
@@ -184,6 +204,12 @@ const PaymentsPage = () => {
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
           >
             {t('actions.exportExcel')}
+          </button>
+          <button
+            onClick={() => navigate('/settings/cards')}
+            className="rounded-lg border border-emerald-500 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+          >
+            + Karta qo'shish
           </button>
         </div>
       </header>
@@ -345,6 +371,25 @@ const PaymentsPage = () => {
             <option value="transfer">Bank</option>
           </select>
         </div>
+        {form.method === 'card' && (
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Karta</label>
+            <select
+              required
+              name="card_id"
+              value={form.card_id}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value="">Tanlang</option>
+              {cards.map((c: any) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} — {(c.masked_number) || `${String(c.number).slice(0,4)} **** ${String(c.number).slice(-4)}`} ({c.holder_name})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="md:col-span-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Izoh</label>
           <textarea
@@ -376,6 +421,7 @@ const PaymentsPage = () => {
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Valyuta</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">USD</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Usul</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Karta</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -399,11 +445,22 @@ const PaymentsPage = () => {
                 </td>
                 <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(payment.amount_usd)}</td>
                 <td className="px-4 py-3 capitalize text-slate-700 dark:text-slate-200">{payment.method}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                  {payment.card ? (
+                    <span>
+                      {payment.card.name ? `${payment.card.name} — ` : ''}
+                      {payment.card.masked_number || (payment.card.number ? `${String(payment.card.number).slice(0,4)} **** ${String(payment.card.number).slice(-4)}` : '')}
+                      {payment.card.holder_name ? ` (${payment.card.holder_name})` : ''}
+                    </span>
+                  ) : (
+                    '—'
+                  )}
+                </td>
               </tr>
             ))}
             {!loading && payments.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
                   To&apos;lovlar topilmadi
                 </td>
               </tr>

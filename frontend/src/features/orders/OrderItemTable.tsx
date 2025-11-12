@@ -1,4 +1,5 @@
 import type { OrderItem } from '../../store/useOrderStore';
+import { formatCurrency } from '../../utils/formatters';
 
 interface OrderItemTableProps {
   items: OrderItem[];
@@ -40,7 +41,7 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
                   min={0.01}
                   step="0.01"
                   inputMode="decimal"
-                  value={item.qty.toFixed(2)}
+                  value={Number(item.qty ?? 0).toFixed(2)}
                   onChange={(event) => {
                     const nextValue = Number(event.target.value);
                     onQtyChange(item.product, Number.isFinite(nextValue) ? nextValue : 0);
@@ -59,7 +60,7 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
                 />
               </td>
               <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
-                ${(item.qty * item.price_usd).toFixed(2)}
+                {formatCurrency(Number(item.qty) * Number(item.price_usd), 'USD')}
               </td>
               <td className="px-4 py-3 text-right">
                 <button

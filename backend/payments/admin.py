@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CurrencyRate, Payment
+from .models import CurrencyRate, Payment, PaymentCard
 
 
 @admin.register(CurrencyRate)
@@ -12,7 +12,14 @@ class CurrencyRateAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('dealer', 'amount', 'currency', 'amount_usd', 'method', 'pay_date')
+    list_display = ('dealer', 'amount', 'currency', 'amount_usd', 'method', 'card', 'pay_date')
     list_filter = ('method', 'currency')
     search_fields = ('dealer__name',)
-    autocomplete_fields = ('dealer', 'rate')
+    autocomplete_fields = ('dealer', 'rate', 'card')
+
+
+@admin.register(PaymentCard)
+class PaymentCardAdmin(admin.ModelAdmin):
+    list_display = ('name', 'masked_number', 'holder_name', 'is_active', 'created_at')
+    search_fields = ('name', 'number', 'holder_name')
+    list_filter = ('is_active',)

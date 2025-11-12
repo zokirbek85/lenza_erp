@@ -1,7 +1,7 @@
 from decimal import Decimal
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from django.db.models import Avg, Sum
+from django.db.models import Avg, Sum, Count, Max, Q
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from dealers.models import Dealer
 from catalog.models import Product
 from orders.models import Order, OrderItem, OrderReturn
-from payments.models import Payment
+from payments.models import Payment, PaymentCard
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
 
 from .models import KPIRecord
@@ -135,4 +135,58 @@ class AccountantKPIView(APIView):
             'returns_total_usd': float(returns_total),
             'net_profit_usd': float(net_profit),
         }
+        return Response(data)
+
+
+class CardKPIView(APIView):
+    """KPI per active PaymentCard for card payments only, with optional date range filters.
+
+    Returns list of dicts with:
+    - card_id, card_name, holder_name
+    - total_amount (USD), payments_count, last_payment_date
+    """
+    permission_classes = [IsAccountant | IsOwner]
+
+    def get(self, request):
+        from_param = request.query_params.get('from')
+        to_param = request.query_params.get('to')
+
+        date_filters = Q(payments__method=Payment.Method.CARD)
+        # Parse ISO dates if provided; fall back to raw strings if parsing fails (Django can coerce YYYY-MM-DD)
+        if from_param:
+            try:
+                from_date = datetime.fromisoformat(from_param).date()
+                date_filters &= Q(payments__pay_date__gte=from_date)
+            except ValueError:
+                date_filters &= Q(payments__pay_date__gte=from_param)
+        if to_param:
+            try:
+                to_date = datetime.fromisoformat(to_param).date()
+                date_filters &= Q(payments__pay_date__lte=to_date)
+            except ValueError:
+                date_filters &= Q(payments__pay_date__lte=to_param)
+
+        cards = (
+            PaymentCard.objects.filter(is_active=True)
+            .annotate(
+                total_amount=Sum('payments__amount_usd', filter=date_filters),
+                payments_count=Count('payments__id', filter=date_filters),
+                last_payment_date=Max('payments__pay_date', filter=date_filters),
+            )
+            .order_by('-total_amount')
+        )
+
+        # Coerce None to zeros for totals and counts; DRF will serialize date
+        data = [
+            {
+                'card_id': card.id,
+                'card_name': card.name,
+                'holder_name': card.holder_name,
+                'total_amount': float(card.total_amount or 0),
+                'payments_count': int(card.payments_count or 0),
+                'last_payment_date': card.last_payment_date,
+            }
+            for card in cards
+        ]
+
         return Response(data)

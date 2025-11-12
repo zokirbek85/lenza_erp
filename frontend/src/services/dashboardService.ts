@@ -134,3 +134,26 @@ export const fetchCurrencyHistory = async (filters: DashboardFilters) => {
 
   return http.get(url);
 };
+
+/**
+ * Fetch card payments KPI per active company card
+ */
+export interface CardKPIItem {
+  card_id: number;
+  card_name: string;
+  holder_name: string;
+  total_amount: number;
+  payments_count: number;
+  last_payment_date?: string | null;
+}
+
+export const fetchCardsKpi = async (filters: DashboardFilters) => {
+  const params = new URLSearchParams();
+  if (filters.dateRange && filters.dateRange.length === 2) {
+    params.append('from', filters.dateRange[0]);
+    params.append('to', filters.dateRange[1]);
+  }
+  const queryString = params.toString();
+  const url = queryString ? `/api/kpi/cards/?${queryString}` : '/api/kpi/cards/';
+  return http.get<CardKPIItem[]>(url);
+};

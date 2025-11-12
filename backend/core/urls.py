@@ -20,6 +20,7 @@ from dealers.views import (
     DealerExportExcelView,
     DealerImportExcelView,
     DealerImportTemplateView,
+    DealerReconciliationExcelView,
     DealerReconciliationPDFView,
     DealerReconciliationView,
     DealerViewSet,
@@ -33,6 +34,7 @@ from inventory.views import (
 )
 from kpis.views import (
     AccountantKPIView,
+    CardKPIView,
     KPIRecordViewSet,
     OwnerKPIView,
     SalesManagerKPIView,
@@ -44,13 +46,17 @@ from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from payments.views import (
     CurrencyRateHistoryView,
     CurrencyRateViewSet,
+    PaymentCardViewSet,
     PaymentExportExcelView,
     PaymentReportPDFView,
     PaymentViewSet,
 )
+from expenses.views import ExpenseViewSet, ExpenseTypeViewSet, ExpenseReportPDFView, ExpenseExportExcelView
+from ledger.views import LedgerAccountViewSet, LedgerEntryViewSet, LedgerReportPDFView, LedgerExportExcelView
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import UserViewSet
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
+from reports.views_cards_pdf import cards_pdf_report
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
@@ -61,6 +67,11 @@ router.register('categories', CategoryViewSet, basename='category')
 router.register('products', ProductViewSet, basename='product')
 router.register('orders', OrderViewSet, basename='order')
 router.register('payments', PaymentViewSet, basename='payment')
+router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
+router.register('expenses', ExpenseViewSet, basename='expense')
+router.register('expense-types', ExpenseTypeViewSet, basename='expense-type')
+router.register('ledger-accounts', LedgerAccountViewSet, basename='ledger-account')
+router.register('ledger-entries', LedgerEntryViewSet, basename='ledger-entry')
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
@@ -84,13 +95,19 @@ urlpatterns = [
     path('api/catalog/import/excel/', ProductImportExcelView.as_view(), name='catalog-import-excel'),
     path('api/catalog/report/pdf/', ProductReportPDFView.as_view(), name='catalog-report-pdf'),
     path('api/payments/report/pdf/', PaymentReportPDFView.as_view(), name='payments-report-pdf'),
+    path('api/reports/cards/pdf/', cards_pdf_report, name='cards-pdf-report'),
     path('api/payments/export/excel/', PaymentExportExcelView.as_view(), name='payments-export-excel'),
+    path('api/expenses/report/pdf/', ExpenseReportPDFView.as_view({'get': 'list'}), name='expenses-report-pdf'),
+    path('api/expenses/export/excel/', ExpenseExportExcelView.as_view({'get': 'list'}), name='expenses-export-excel'),
+    path('api/ledger/report/pdf/', LedgerReportPDFView.as_view({'get': 'list'}), name='ledger-report-pdf'),
+    path('api/ledger/export/excel/', LedgerExportExcelView.as_view({'get': 'list'}), name='ledger-export-excel'),
     path('api/dealers/balance/pdf/', DealerBalancePDFView.as_view(), name='dealer-balance-pdf'),
     path('api/dealers/export/excel/', DealerExportExcelView.as_view(), name='dealers-export-excel'),
     path('api/dealers/import/excel/', DealerImportExcelView.as_view(), name='dealers-import-excel'),
     path('api/dealers/import/template/', DealerImportTemplateView.as_view(), name='dealers-import-template'),
     path('api/dealers/<int:pk>/reconciliation/', DealerReconciliationView.as_view(), name='dealer-reconciliation'),
     path('api/dealers/<int:pk>/reconciliation/pdf/', DealerReconciliationPDFView.as_view(), name='dealer-reconciliation-pdf'),
+    path('api/dealers/<int:pk>/reconciliation/excel/', DealerReconciliationExcelView.as_view(), name='dealer-reconciliation-excel'),
     path('api/payments/rates/history/', CurrencyRateHistoryView.as_view(), name='currency-rate-history'),
     path('api/system/config/', SystemConfigView.as_view(), name='system-config'),
     path('api/system/backup/', SystemBackupView.as_view(), name='system-backup'),
@@ -98,6 +115,7 @@ urlpatterns = [
     path('api/kpis/warehouse/', WarehouseKPIView.as_view(), name='kpi-warehouse'),
     path('api/kpis/sales-manager/', SalesManagerKPIView.as_view(), name='kpi-sales-manager'),
     path('api/kpis/accountant/', AccountantKPIView.as_view(), name='kpi-accountant'),
+    path('api/kpi/cards/', CardKPIView.as_view(), name='kpi-cards'),
     path('api/returns/export/pdf/', ReturnsReportPDFView.as_view(), name='returns-export-pdf'),
     path('api/returns/export/excel/', ReturnsExportExcelView.as_view(), name='returns-export-excel'),
     path('api/returns/stats/', ReturnedProductStatsView.as_view(), name='returns-stats'),

@@ -6,271 +6,568 @@
     <style>
       @page {
         size: A4;
-        margin: 28mm 25mm 28mm 25mm;
+        margin: 20mm 18mm 22mm 18mm;
+        @bottom-center {
+          content: "LENZA ERP — Sahifa " counter(page);
+          font-size: 9px;
+          color: #94a3b8;
+          font-family: 'DejaVu Sans', Arial, sans-serif;
+        }
       }
 
       :root {
-        --text: #1f2937;
-        --muted: #6b7280;
-        --border: #e5e7eb;
+        --primary: #0f172a;
+        --secondary: #475569;
         --accent: #d4af37;
-        --bg: #ffffff;
+        --border: #e2e8f0;
+        --bg-light: #f8fafc;
+        --bg-white: #ffffff;
+        --success: #10b981;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
       body {
-        font-family: 'Open Sans', 'Roboto', Arial, sans-serif;
-        font-size: 12px;
-        color: var(--text);
-        background: var(--bg);
-        line-height: 1.5;
+        font-family: 'DejaVu Sans', 'Arial', sans-serif;
+        font-size: 11px;
+        color: var(--text-dark);
+        background: var(--bg-white);
+        line-height: 1.6;
       }
 
+      /* Header Section */
       .header {
+        border-bottom: 3px solid var(--accent);
+        padding-bottom: 16px;
+        margin-bottom: 24px;
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 20px;
       }
 
-      .logo {
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        color: var(--accent);
-      }
-
-      .tagline {
-        font-size: 11px;
-        color: var(--muted);
+      .header-left {
+        flex: 1;
       }
 
       .logo-img {
-        height: 50px;
+        max-height: 55px;
+        max-width: 160px;
         object-fit: contain;
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
       }
 
-      .meta {
+      .company-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+      }
+
+      .company-slogan {
+        font-size: 10px;
+        color: var(--accent);
+        font-style: italic;
+        margin-bottom: 8px;
+      }
+
+      .company-details {
+        font-size: 9.5px;
+        color: var(--secondary);
+        line-height: 1.5;
+      }
+
+      .company-details div {
+        margin-bottom: 2px;
+      }
+
+      .header-right {
         text-align: right;
+        min-width: 200px;
       }
 
-      .meta span {
-        display: block;
-      }
-
-      .card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 16px 18px;
-        margin-bottom: 18px;
-      }
-
-      .card h3 {
-        margin: 0;
-        font-size: 13px;
+      .doc-title-small {
+        font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 0.1em;
-        color: var(--muted);
+        color: var(--text-muted);
+        margin-bottom: 4px;
       }
 
-      .card strong {
+      .dealer-info {
+        font-size: 11px;
+        color: var(--text-dark);
+        line-height: 1.6;
+      }
+
+      .dealer-info strong {
+        font-size: 14px;
+        color: var(--primary);
         display: block;
-        font-size: 16px;
-        margin-top: 6px;
+        margin-bottom: 4px;
       }
 
+      /* Document Title */
+      .doc-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--primary);
+        margin: 20px 0 24px 0;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+        border-left: 4px solid var(--accent);
+        border-right: 4px solid var(--accent);
+      }
+
+      /* Balance Summary Card */
+      .balance-summary {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 2px solid var(--accent);
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin-bottom: 22px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .balance-item {
+        text-align: center;
+      }
+
+      .balance-label {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--secondary);
+        margin-bottom: 4px;
+      }
+
+      .balance-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .balance-value.highlight {
+        color: var(--accent);
+        font-size: 22px;
+      }
+
+      /* Section Headers */
+      .section-header {
+        background: var(--primary);
+        color: var(--bg-white);
+        padding: 8px 14px;
+        margin: 24px 0 12px 0;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border-radius: 4px;
+      }
+
+      /* Order Block for Detailed View */
+      .order-block {
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 16px;
+        background: var(--bg-white);
+        page-break-inside: avoid;
+      }
+
+      .order-block-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 2px dotted var(--border);
+      }
+
+      .order-number {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .order-date {
+        font-size: 10px;
+        color: var(--text-muted);
+      }
+
+      .order-total {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--success);
+      }
+
+      /* Tables */
       table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
         border: 1px solid var(--border);
-      }
-
-      th, td {
-        padding: 10px 12px;
-        border: 1px solid var(--border);
+        background: var(--bg-white);
       }
 
       thead {
-        background: #f9fafb;
+        background: linear-gradient(135deg, var(--primary) 0%, #334155 100%);
+        color: var(--bg-white);
       }
 
       th {
+        padding: 10px 12px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
         text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.1em;
-        color: var(--muted);
+        letter-spacing: 0.06em;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      th.text-right {
+        text-align: right;
+      }
+
+      td {
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        font-size: 10.5px;
+        color: var(--text-dark);
+      }
+
+      td.text-right {
+        text-align: right;
+        font-weight: 600;
       }
 
       tbody tr:nth-child(even) {
-        background: #fcfcfc;
+        background: var(--bg-light);
       }
 
-      .section-title {
-        margin-bottom: 6px;
-        font-size: 13px;
+      tbody tr:hover {
+        background: #e0f2fe;
+      }
+
+      .item-number {
         font-weight: 600;
-        color: var(--text);
+        color: var(--text-muted);
+        width: 40px;
       }
 
-      .totals {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 10px;
+      .empty-state {
+        text-align: center;
+        padding: 16px;
+        color: var(--text-muted);
+        font-style: italic;
+        background: var(--bg-light);
       }
 
-      .totals table {
-        width: auto;
-        border-radius: 10px;
+      /* Summary Totals */
+      .summary-section {
+        margin-top: 24px;
+        padding: 16px;
+        background: var(--bg-light);
+        border-radius: 8px;
+        border: 1px solid var(--border);
       }
 
-      .signature {
-        margin-top: 40px;
+      .summary-row {
         display: flex;
         justify-content: space-between;
-        gap: 30px;
+        padding: 8px 0;
+        font-size: 12px;
+        border-bottom: 1px solid var(--border);
       }
 
-      .signature .line {
+      .summary-row:last-child {
+        border-bottom: none;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+        padding-top: 12px;
+      }
+
+      .summary-label {
+        color: var(--secondary);
+      }
+
+      .summary-value {
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      /* Signature Section */
+      .signature-section {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 2px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        gap: 40px;
+      }
+
+      .signature-box {
         flex: 1;
-        border-top: 1px solid var(--border);
         text-align: center;
+      }
+
+      .signature-title {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 30px;
+        letter-spacing: 0.05em;
+      }
+
+      .signature-line {
+        border-top: 2px solid var(--primary);
         padding-top: 6px;
-        color: var(--muted);
-        font-size: 11px;
+        font-size: 9px;
+        color: var(--text-muted);
+      }
+
+      .signature-role {
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 4px;
+      }
+
+      /* Utility Classes */
+      .text-center {
+        text-align: center;
+      }
+
+      .text-right {
+        text-align: right;
+      }
+
+      .font-bold {
+        font-weight: 700;
+      }
+
+      .mb-2 {
+        margin-bottom: 8px;
+      }
+
+      .mt-2 {
+        margin-top: 8px;
       }
     </style>
   </head>
   <body>
+    <!-- Header with Company Info -->
     <section class="header">
-      <div>
+      <div class="header-left">
         {% if company.logo %}
         <img src="{{ company.logo }}" alt="{{ company.name|default:'Company logo' }}" class="logo-img" />
         {% endif %}
-        <div class="logo">{{ company.name|default:"LENZA ERP" }}</div>
-        <div class="tagline">
-          {{ company.slogan|default:"Akt sverka hisobot" }}
-        </div>
-        <div class="tagline">
-          {% if company.address %}<div>{{ company.address }}</div>{% endif %}
-          {% if company.phone %}<div>{{ company.phone }}</div>{% endif %}
-          {% if company.email %}<div>{{ company.email }}</div>{% endif %}
+        <div class="company-name">{{ company.name|default:"LENZA ERP" }}</div>
+        <div class="company-slogan">{{ company.slogan|default:"Akt sverka hisobot" }}</div>
+        <div class="company-details">
+          {% if company.address %}<div>📍 {{ company.address }}</div>{% endif %}
+          {% if company.phone %}<div>📞 {{ company.phone }}</div>{% endif %}
+          {% if company.email %}<div>✉️ {{ company.email }}</div>{% endif %}
+          {% if company.inn %}<div>🏢 INN: {{ company.inn }}</div>{% endif %}
+          {% if company.bank %}<div>🏦 {{ company.bank }}</div>{% endif %}
         </div>
       </div>
-      <div class="meta">
-        <span><strong>Diler:</strong> {{ data.dealer }}</span>
-        <span>Kod: {{ data.dealer_code }}</span>
-        <span>Davr: {{ data.period }}</span>
-        <span>Yaratildi: {% now "d.m.Y H:i" %}</span>
+      <div class="header-right">
+        <div class="doc-title-small">Akt Sverka</div>
+        <div class="dealer-info">
+          <strong>{{ data.dealer }}</strong>
+          <div>Kod: {{ data.dealer_code }}</div>
+          <div>Davr: {{ data.period }}</div>
+          <div>Sana: {% now "d.m.Y H:i" %}</div>
+        </div>
       </div>
     </section>
 
-    <div class="card">
-      <h3>Balans ma&apos;lumotlari</h3>
-      <div style="display:flex; gap:28px; margin-top:8px;">
-        <div>
-          <span class="tagline">Boshlang'ich balans</span>
-          <strong>${{ data.opening_balance|floatformat:2 }}</strong>
-        </div>
-        <div>
-          <span class="tagline">Yakuniy balans</span>
-          <strong style="color: var(--accent);">${{ data.closing_balance|floatformat:2 }}</strong>
-        </div>
+    <!-- Document Title -->
+    <h1 class="doc-title">Акт сверка взаиморасчетов</h1>
+
+    <!-- Balance Summary -->
+    <div class="balance-summary">
+      <div class="balance-item">
+        <div class="balance-label">Boshlang'ich balans</div>
+        <div class="balance-value">${{ data.opening_balance|floatformat:2 }}</div>
+      </div>
+      <div class="balance-item">
+        <div class="balance-label">Yakuniy balans</div>
+        <div class="balance-value highlight">${{ data.closing_balance|floatformat:2 }}</div>
       </div>
     </div>
 
-    <div>
-      <p class="section-title">Buyurtmalar</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Sana</th>
-            <th>Raqam</th>
-            <th>Summa (USD)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for order in data.orders %}
-          <tr>
-            <td>{{ order.date|date:"d.m.Y" }}</td>
-            <td>{{ order.order_no }}</td>
-            <td>${{ order.amount_usd|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="3" style="text-align:center; color: var(--muted);">Ma&apos;lumot topilmadi</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <!-- Orders Section -->
+    <div class="section-header">📦 Buyurtmalar</div>
 
     <div>
-      <p class="section-title">To&apos;lovlar</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Sana</th>
-            <th>Metod</th>
-            <th>Summa (USD)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for payment in data.payments %}
-          <tr>
-            <td>{{ payment.date|date:"d.m.Y" }}</td>
-            <td>{{ payment.method|title }}</td>
-            <td>${{ payment.amount_usd|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="3" style="text-align:center; color: var(--muted);">Ma&apos;lumot topilmadi</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      {% if data.detailed %}
+        <!-- Detailed View: Each order with items -->
+        {% for o in data.orders_detailed %}
+          <div class="order-block">
+            <div class="order-block-header">
+              <div>
+                <span class="order-number">{{ o.order_number }}</span>
+                <span class="order-date">{{ o.date|date:"d.m.Y" }}</span>
+              </div>
+              <div class="order-total">${{ o.total_amount|floatformat:2 }}</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 50px;">№</th>
+                  <th>Mahsulot nomi</th>
+                  <th class="text-right" style="width: 100px;">Miqdor</th>
+                  <th class="text-right" style="width: 100px;">Narx (USD)</th>
+                  <th class="text-right" style="width: 120px;">Jami (USD)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for it in o.items %}
+                <tr>
+                  <td class="item-number text-center">{{ forloop.counter }}</td>
+                  <td>{{ it.product_name }}</td>
+                  <td class="text-right">{{ it.quantity|floatformat:2 }}</td>
+                  <td class="text-right">${{ it.price|floatformat:2 }}</td>
+                  <td class="text-right">${{ it.total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="empty-state">Itemlar mavjud emas</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% empty %}
+          <div class="empty-state">Ma&apos;lumot topilmadi</div>
+        {% endfor %}
+      {% else %}
+        <!-- Summary View: Orders list -->
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 150px;">Sana</th>
+              <th>Buyurtma raqami</th>
+              <th class="text-right" style="width: 150px;">Summa (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in data.orders %}
+            <tr>
+              <td>{{ order.date|date:"d.m.Y" }}</td>
+              <td class="font-bold">{{ order.order_no }}</td>
+              <td class="text-right">${{ order.amount_usd|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="empty-state">Ma&apos;lumot topilmadi</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
     </div>
 
-    <div>
-      <p class="section-title">Qaytarishlar</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Sana</th>
-            <th>Buyurtma</th>
-            <th>Summa (USD)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in data.returns %}
-          <tr>
-            <td>{{ item.date|date:"d.m.Y" }}</td>
-            <td>{{ item.order_no }}</td>
-            <td>${{ item.amount_usd|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="3" style="text-align:center; color: var(--muted);">Ma&apos;lumot topilmadi</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="totals">
-      <table>
+    <!-- Payments Section -->
+    <div class="section-header">💵 To&apos;lovlar</div>
+    <table>
+      <thead>
         <tr>
-          <th>Yakuniy balans</th>
-          <td>${{ data.closing_balance|floatformat:2 }}</td>
+          <th style="width: 150px;">Sana</th>
+          <th>Usul / Karta</th>
+          <th class="text-right" style="width: 150px;">Summa (USD)</th>
         </tr>
-      </table>
+      </thead>
+      <tbody>
+        {% for payment in data.payments %}
+        <tr>
+          <td>{{ payment.date|date:"d.m.Y" }}</td>
+          <td>
+            {% if payment.method %}
+              {{ payment.method|title }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="text-right">${{ payment.amount_usd|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="empty-state">Ma&apos;lumot topilmadi</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Returns Section -->
+    <div class="section-header">↩️ Qaytarishlar</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 150px;">Sana</th>
+          <th>Buyurtma</th>
+          <th class="text-right" style="width: 150px;">Summa (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data.returns %}
+        <tr>
+          <td>{{ item.date|date:"d.m.Y" }}</td>
+          <td>{{ item.order_no }}</td>
+          <td class="text-right">${{ item.amount_usd|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="empty-state">Ma&apos;lumot topilmadi</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Summary Section -->
+    <div class="summary-section">
+      <div class="summary-row">
+        <span class="summary-label">Umumiy balans:</span>
+        <span class="summary-value">${{ data.closing_balance|floatformat:2 }}</span>
+      </div>
     </div>
 
-    <div class="signature">
-      <div class="line">Mas&apos;ul shaxs imzosi</div>
-      <div class="line">Diler imzosi</div>
-      <div class="line">Sana</div>
+    <!-- Signature Section -->
+    <div class="signature-section">
+      <div class="signature-box">
+        <div class="signature-title">Moliyachi / Accountant</div>
+        <div class="signature-line">
+          <div class="signature-role">Imzo</div>
+          <div>_____________________</div>
+        </div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Diler / Dealer</div>
+        <div class="signature-line">
+          <div class="signature-role">Imzo</div>
+          <div>_____________________</div>
+        </div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Sana / Date</div>
+        <div class="signature-line">
+          <div class="signature-role">___/___/______</div>
+        </div>
+      </div>
     </div>
   </body>
 </html>

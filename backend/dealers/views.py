@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.utils.company_info import get_company_info
 from core.utils.pdf import render_pdf
+from core.utils.exporter import export_reconciliation_to_excel
 from services.reconciliation import get_reconciliation_data
 
 from .models import Dealer, Region
@@ -100,11 +101,13 @@ class DealerReconciliationView(APIView):
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
     def get(self, request, pk: int):
+        detailed = request.query_params.get('detailed') == 'true'
         data = get_reconciliation_data(
             dealer_id=pk,
             from_date=request.query_params.get('from_date'),
             to_date=request.query_params.get('to_date'),
             user=request.user,
+            detailed=detailed,
         )
 
         def _serialize_entry(entry):
@@ -128,6 +131,16 @@ class DealerReconciliationView(APIView):
             'from_date': data['from_date'].isoformat(),
             'to_date': data['to_date'].isoformat(),
         }
+        if data.get('detailed'):
+            def _serialize_order_detail(entry):
+                formatted = entry.copy()
+                value = formatted.get('date')
+                if hasattr(value, 'isoformat'):
+                    formatted['date'] = value.isoformat()
+                return formatted
+
+            payload['detailed'] = True
+            payload['orders_detailed'] = [_serialize_order_detail(o) for o in data.get('orders_detailed', [])]
         return Response(payload)
 
 
@@ -135,11 +148,13 @@ class DealerReconciliationPDFView(APIView):
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
     def get(self, request, pk: int):
+        detailed = request.query_params.get('detailed') == 'true'
         data = get_reconciliation_data(
             dealer_id=pk,
             from_date=request.query_params.get('from_date'),
             to_date=request.query_params.get('to_date'),
             user=request.user,
+            detailed=detailed,
         )
         pdf_bytes = render_pdf(
             'reports/reconciliation.html',
@@ -153,4 +168,24 @@ class DealerReconciliationPDFView(APIView):
         filename = f'reconciliation_{dealer_slug}_{statement_date}.pdf'
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename=\"{filename}\"'
+        return response
+
+
+class DealerReconciliationExcelView(APIView):
+    permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
+
+    def get(self, request, pk: int):
+        detailed = request.query_params.get('detailed') == 'true'
+        data = get_reconciliation_data(
+            dealer_id=pk,
+            from_date=request.query_params.get('from_date'),
+            to_date=request.query_params.get('to_date'),
+            user=request.user,
+            detailed=detailed,
+        )
+        file_path = Path(export_reconciliation_to_excel(data, detailed=detailed))
+        dealer_slug = slugify(data['dealer']) or f'dealer-{pk}'
+        filename = f"reconciliation_{dealer_slug}.xlsx"
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=filename)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         return response

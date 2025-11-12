@@ -19,6 +19,8 @@ const NAV_ITEMS = [
   { label: 'nav.products', to: '/products', roles: ['admin', 'sales', 'warehouse'] },
   { label: 'nav.dealers', to: '/dealers', roles: ['admin', 'owner', 'sales', 'accountant'] },
   { label: 'nav.payments', to: '/payments', roles: ['admin', 'owner', 'accountant'] },
+  { label: 'nav.expenses', to: '/expenses', roles: ['admin', 'owner', 'accountant'] },
+  { label: 'nav.ledger', to: '/ledger', roles: ['admin', 'owner', 'accountant'] },
   { label: 'nav.currency', to: '/currency', roles: ['admin', 'owner', 'accountant'] },
   { label: 'nav.returns', to: '/returns', roles: ['admin', 'owner', 'sales', 'warehouse'] },
   { label: 'nav.reconciliation', to: '/reconciliation', roles: ['admin', 'owner', 'sales', 'accountant'] },

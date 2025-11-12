@@ -1,4 +1,3 @@
-import { PDFViewer, Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -34,78 +33,21 @@ interface ReconciliationResponse {
   generated_at: string;
   from_date: string;
   to_date: string;
+  detailed?: boolean;
+  orders_detailed?: Array<{
+    id: number;
+    order_number: string;
+    date: string;
+    total_amount: number;
+    items: Array<{
+      id: number;
+      product_name: string;
+      quantity: number;
+      price: number;
+      total: number;
+    }>;
+  }>;
 }
-
-const pdfStyles = StyleSheet.create({
-  page: {
-    padding: 32,
-    fontSize: 11,
-    fontFamily: 'Helvetica',
-    color: '#0f172a',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 700,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: 600,
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  cell: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#cbd5f5',
-    padding: 6,
-  },
-  tableHeader: {
-    backgroundColor: '#f1f5f9',
-    fontWeight: 600,
-  },
-});
-
-const ReconciliationDocument = ({ report }: { report: ReconciliationResponse }) => (
-  <Document>
-    <Page size="A4" style={pdfStyles.page}>
-      <View style={pdfStyles.header}>
-        <View>
-          <Text style={pdfStyles.logo}>Lenza ERP</Text>
-          <Text>Akt sverka (Reconciliation)</Text>
-        </View>
-        <View>
-          <Text>Dealer: {report.dealer}</Text>
-          <Text>Period: {report.period}</Text>
-          <Text>Generated: {new Date(report.generated_at).toLocaleString()}</Text>
-        </View>
-      </View>
-
-      <Text style={pdfStyles.sectionTitle}>Movements</Text>
-      <View style={[pdfStyles.row]}>
-        <Text style={[pdfStyles.cell, pdfStyles.tableHeader]}>Date</Text>
-        <Text style={[pdfStyles.cell, pdfStyles.tableHeader]}>Label</Text>
-        <Text style={[pdfStyles.cell, pdfStyles.tableHeader]}>Direction</Text>
-        <Text style={[pdfStyles.cell, pdfStyles.tableHeader]}>Amount</Text>
-      </View>
-      {report.movements.map((entry, index) => (
-        <View key={`${entry.label}-${index}`} style={pdfStyles.row}>
-          <Text style={pdfStyles.cell}>{new Date(entry.date).toLocaleDateString()}</Text>
-          <Text style={pdfStyles.cell}>{entry.label}</Text>
-          <Text style={pdfStyles.cell}>{entry.direction === 'debit' ? 'Debit' : 'Credit'}</Text>
-          <Text style={pdfStyles.cell}>{formatCurrency(entry.amount_usd)}</Text>
-        </View>
-      ))}
-    </Page>
-  </Document>
-);
 
 const defaultToDate = () => {
   const today = new Date();
@@ -126,6 +68,8 @@ const ReconciliationPage = () => {
   const [report, setReport] = useState<ReconciliationResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [detailed, setDetailed] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   const loadDealers = useCallback(async () => {
     try {
@@ -145,7 +89,7 @@ const ReconciliationPage = () => {
     setLoading(true);
     try {
       const response = await http.get<ReconciliationResponse>(`/api/dealers/${selectedDealer}/reconciliation/`, {
-        params: { from_date: fromDate, to_date: toDate },
+        params: { from_date: fromDate, to_date: toDate, detailed },
       });
       setReport(response.data);
     } catch (error) {
@@ -156,6 +100,33 @@ const ReconciliationPage = () => {
     }
   }, [selectedDealer, fromDate, toDate]);
 
+  const loadPdfPreview = useCallback(async () => {
+    if (!selectedDealer) {
+      toast.error('Avval diler tanlang');
+      return;
+    }
+
+    try {
+      // Revoke previous blob URL if exists
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
+
+      const response = await http.get(
+        `/api/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
+        { responseType: 'blob' }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setPdfBlobUrl(url);
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error(error);
+      toast.error('PDF yuklanmadi');
+    }
+  }, [selectedDealer, fromDate, toDate, detailed, pdfBlobUrl]);
+
   const handlePdfDownload = async () => {
     if (!selectedDealer) {
       toast.error('Avval diler tanlang');
@@ -165,7 +136,7 @@ const ReconciliationPage = () => {
     try {
       const filename = report ? `Akt_sverka_${report.dealer}.pdf` : 'Akt_sverka.pdf';
       await downloadFile(
-        `/api/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}`,
+        `/api/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
         filename
       );
       toast.success('PDF yuklab olindi', { id: 'reconciliation-pdf' });
@@ -180,6 +151,23 @@ const ReconciliationPage = () => {
   useEffect(() => {
     loadDealers();
   }, [loadDealers]);
+
+  // Auto refresh when toggling detailed option, if a dealer is selected
+  useEffect(() => {
+    if (selectedDealer) {
+      fetchReport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailed]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
+    };
+  }, [pdfBlobUrl]);
 
   const totalDebit = movementRows
     .filter((row) => row.direction === 'debit')
@@ -278,19 +266,49 @@ const ReconciliationPage = () => {
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={detailed}
+                onChange={(e) => setDetailed(e.target.checked)}
+              />
+              Batafsil hisobot
+            </label>
+            <button
+              type="button"
+              onClick={loadPdfPreview}
+              className="rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
+            >
+              👁️ Ko&apos;rish
+            </button>
             <button
               type="button"
               onClick={handlePdfDownload}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
             >
-              📄 PDF
+              📄 PDF eksport
             </button>
             <button
               type="button"
-              onClick={() => setPreviewOpen(true)}
-              className="rounded-lg border border-yellow-400 px-4 py-2 text-sm font-semibold text-yellow-600 transition hover:bg-yellow-50 dark:border-yellow-500 dark:text-yellow-400 dark:hover:bg-slate-800"
+              onClick={async () => {
+                if (!selectedDealer) {
+                  toast.error('Avval diler tanlang');
+                  return;
+                }
+                try {
+                  await downloadFile(
+                    `/api/dealers/${selectedDealer}/reconciliation/excel/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
+                    'reconciliation.xlsx'
+                  );
+                  toast.success('Excel yuklab olindi');
+                } catch (error) {
+                  console.error(error);
+                  toast.error('Excel eksportda xatolik');
+                }
+              }}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
             >
-              Print preview
+              📊 Excel eksport
             </button>
           </div>
 
@@ -384,6 +402,49 @@ const ReconciliationPage = () => {
               <p>Sana: ___ / ___ / ____</p>
             </div>
           </div>
+
+          {report?.detailed && (report.orders_detailed?.length ?? 0) > 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Buyurtmalar (batafsil)</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Har bir buyurtma uchun itemlar roʻyxati.</p>
+              </div>
+              <div className="space-y-4">
+                {report.orders_detailed!.map((o) => (
+                  <div key={o.id} className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                      <div className="font-semibold text-slate-900 dark:text-white">{o.order_number}</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {new Date(o.date).toLocaleDateString()} • Jami: {formatCurrency(o.total_amount)}
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border border-gray-300 bg-white text-sm shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900">
+                        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                          <tr>
+                            <th className="px-4 py-3">Mahsulot</th>
+                            <th className="px-4 py-3 text-right">Miqdor</th>
+                            <th className="px-4 py-3 text-right">Narx</th>
+                            <th className="px-4 py-3 text-right">Jami</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {o.items.map((it) => (
+                            <tr key={it.id} className="border-t border-slate-100 dark:border-slate-800">
+                              <td className="px-4 py-3 text-slate-900 dark:text-white">{it.product_name}</td>
+                              <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-200">{Number(it.quantity ?? 0).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-200">{formatCurrency(it.price)}</td>
+                              <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">{formatCurrency(it.total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
@@ -393,25 +454,28 @@ const ReconciliationPage = () => {
 
       <Modal
         open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        title="Print preview"
-        widthClass="max-w-5xl"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-amber-500 dark:text-slate-900"
-            >
-              Chop etish
-            </button>
-          </>
-        }
+        onClose={() => {
+          setPreviewOpen(false);
+          // Clean up blob URL when modal closes
+          if (pdfBlobUrl) {
+            URL.revokeObjectURL(pdfBlobUrl);
+            setPdfBlobUrl(null);
+          }
+        }}
+        title="PDF ko'rish"
+        widthClass="max-w-7xl"
       >
-        {report ? (
-          <PDFViewer style={{ width: '100%', height: '70vh' }}>
-            <ReconciliationDocument report={report} />
-          </PDFViewer>
+        {pdfBlobUrl ? (
+          <iframe
+            src={pdfBlobUrl}
+            style={{
+              width: '100%',
+              height: '80vh',
+              border: 'none',
+              borderRadius: '0.5rem',
+            }}
+            title="PDF Preview"
+          />
         ) : (
           <p className="text-sm text-slate-500">Preview mavjud emas</p>
         )}

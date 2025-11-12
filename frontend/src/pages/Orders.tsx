@@ -7,6 +7,9 @@ import { useTranslation } from 'react-i18next';
 
 import http from '../app/http';
 import StatusBadge from '../components/StatusBadge';
+import OrderStatus from '../components/OrderStatus';
+import Money from '../components/Money';
+import OrderHistory from '../components/OrderHistory';
 import PaginationControls from '../components/PaginationControls';
 import OrderItemTable from '../features/orders/OrderItemTable';
 import { usePersistedPageSize } from '../hooks/usePageSize';
@@ -63,7 +66,6 @@ interface Order {
   items: OrderItem[];
 }
 
-const ORDER_STATUSES = ['created', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled', 'returned'];
 const CREATE_FORM_PANEL_KEY = 'create-order';
 const DEFAULT_QTY = '1.00';
 
@@ -393,15 +395,13 @@ const OrdersPage = () => {
     }
   };
 
-  const handleStatusChange = async (orderId: number, status: string) => {
-    try {
-      await http.patch(`/api/orders/${orderId}/status/`, { status });
-      toast.success('Status updated');
-      loadOrders().catch(() => null);
-    } catch (error) {
-      console.error(error);
-      toast.error('Status change failed');
-    }
+  const handleStatusUpdated = (orderId: number, newStatus: string) => {
+    // OrderStatus komponenti muvaffaqiyatli yangilanganda chaqiriladi
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    );
   };
 
   const handlePdf = async (orderId?: number, displayNo?: string) => {
@@ -704,20 +704,17 @@ const OrdersPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={order.status} />
-                      <select
-                        className="mt-2 w-full rounded-md border border-slate-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        value={order.status}
-                        onClick={(event) => event.stopPropagation()}
-                        onChange={(event) => handleStatusChange(order.id, event.target.value)}
-                      >
-                        {ORDER_STATUSES.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="mt-2">
+                        <OrderStatus
+                          value={order.status}
+                          orderId={order.id}
+                          onStatusUpdated={handleStatusUpdated}
+                        />
+                      </div>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{order.total}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                      <Money value={order.total_usd} currency="USD" />
+                    </td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(order.value_date)}</td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -760,6 +757,11 @@ const OrdersPage = () => {
                         ) : (
                           <div className="text-center text-slate-500 dark:text-slate-300">Tarkib mavjud emas</div>
                         )}
+                        
+                        {/* Status o'zgarishlari tarixi */}
+                        <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+                          <OrderHistory orderId={order.id} />
+                        </div>
                       </td>
                     </tr>
                   )}

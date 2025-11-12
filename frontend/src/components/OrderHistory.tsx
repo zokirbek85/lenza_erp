@@ -1,0 +1,148 @@
+import { useEffect, useState } from 'react';
+import { Table, Tag, Typography, Spin, Alert } from 'antd';
+import { ClockCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import http from '../app/http';
+
+interface StatusLog {
+  id: number;
+  old_status: string | null;
+  new_status: string;
+  by_user: string | null;
+  at: string;
+}
+
+interface OrderHistoryProps {
+  orderId: number;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  created: 'default',
+  confirmed: 'blue',
+  packed: 'orange',
+  shipped: 'purple',
+  delivered: 'green',
+  cancelled: 'red',
+  returned: 'magenta',
+};
+
+export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
+  const { t } = useTranslation();
+  const [logs, setLogs] = useState<StatusLog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    const fetchHistory = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await http.get(`/api/orders/${orderId}/history/`);
+        setLogs(response.data);
+      } catch (err) {
+        console.error('Failed to fetch order history:', err);
+        setError(t('order.history_fetch_failed'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [orderId, t]);
+
+  const columns = [
+    {
+      title: t('order.old_status'),
+      dataIndex: 'old_status',
+      key: 'old_status',
+      width: '25%',
+      render: (status: string | null) => {
+        if (!status) {
+          return <Tag color="default">{t('order.initial_creation')}</Tag>;
+        }
+        return (
+          <Tag color={STATUS_COLORS[status] || 'default'}>
+            {t(`order.status.${status}`, { defaultValue: status })}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: t('order.new_status'),
+      dataIndex: 'new_status',
+      key: 'new_status',
+      width: '25%',
+      render: (status: string) => (
+        <Tag color={STATUS_COLORS[status] || 'blue'}>
+          {t(`order.status.${status}`, { defaultValue: status })}
+        </Tag>
+      ),
+    },
+    {
+      title: t('order.changed_by'),
+      dataIndex: 'by_user',
+      key: 'by_user',
+      width: '25%',
+      render: (user: string | null) => (
+        <Typography.Text>{user || t('order.system')}</Typography.Text>
+      ),
+    },
+    {
+      title: t('order.changed_at'),
+      dataIndex: 'at',
+      key: 'at',
+      width: '25%',
+      render: (date: string) => {
+        const d = new Date(date);
+        return (
+          <Typography.Text>
+            <ClockCircleOutlined style={{ marginRight: 8 }} />
+            {d.toLocaleString()}
+          </Typography.Text>
+        );
+      },
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '24px' }}>
+        <Spin tip={t('order.loading_history')} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        message={t('order.error')}
+        description={error}
+        type="error"
+        showIcon
+        style={{ marginTop: 16 }}
+      />
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <Typography.Title level={5}>
+        {t('order.status_history')}
+      </Typography.Title>
+      <Table
+        size="small"
+        columns={columns}
+        dataSource={logs}
+        rowKey="id"
+        pagination={false}
+        locale={{
+          emptyText: t('order.no_history'),
+        }}
+      />
+    </div>
+  );
+};
+
+export default OrderHistory;

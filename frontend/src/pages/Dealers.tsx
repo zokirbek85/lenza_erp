@@ -9,6 +9,7 @@ import { usePersistedPageSize } from '../hooks/usePageSize';
 import { toArray } from '../utils/api';
 import { formatCurrency } from '../utils/formatters';
 import { downloadFile } from '../utils/download';
+import Money from '../components/Money';
 
 interface Region {
   id: number;
@@ -613,7 +614,7 @@ const DealersPage = () => {
                     <li key={payment.id} className="flex items-center justify-between px-4 py-2 text-sm">
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-white">
-                          {payment.amount.toFixed(2)} {payment.currency}
+                    <Money value={payment.amount} currency={payment.currency || 'USD'} />
                         </p>
                         <p className="text-xs uppercase tracking-widest text-slate-500">{payment.method}</p>
                       </div>

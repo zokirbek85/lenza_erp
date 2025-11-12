@@ -22,13 +22,15 @@ def _asset_path(filename: str) -> str:
 def _cache_previous_status(sender, instance: Order, **kwargs):
     if not instance.pk:
         instance._previous_status = None
+        print(f'[Telegram Signal] New order being created (no previous status)')
         return
     try:
         previous = sender.objects.get(pk=instance.pk)
+        instance._previous_status = previous.status
+        print(f'[Telegram Signal] Cached previous status for order {instance.pk}: {previous.status}')
     except sender.DoesNotExist:
         instance._previous_status = None
-    else:
-        instance._previous_status = previous.status
+        print(f'[Telegram Signal] Order {instance.pk} not found in DB (should not happen)')
 
 
 @receiver(post_save, sender=Order)
@@ -36,6 +38,15 @@ def notify_order(sender, instance: Order, created: bool, **kwargs):
     status_changed = not created and getattr(instance, '_previous_status', None) != instance.status
     if not created and not status_changed:
         return
+    
+    print(f'[Telegram Signal] Order notification triggered:')
+    print(f'  - Order ID: {instance.id}')
+    print(f'  - Created: {created}')
+    print(f'  - Status changed: {status_changed}')
+    if status_changed:
+        print(f'  - Previous status: {getattr(instance, "_previous_status", None)}')
+        print(f'  - New status: {instance.status}')
+    
     text = order_message.format_order(instance, created, getattr(instance, '_previous_status', None))
     send_telegram_message(text, image_path=_asset_path('order.png'))
 

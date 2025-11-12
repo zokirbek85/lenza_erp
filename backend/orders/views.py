@@ -9,9 +9,9 @@ from rest_framework.views import APIView
 from core.permissions import IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.utils.exporter import export_orders_to_excel
 
-from .models import Order, OrderItem
+from .models import Order, OrderItem, OrderStatusLog
 from .returns import process_return
-from .serializers import OrderItemSerializer, OrderSerializer
+from .serializers import OrderItemSerializer, OrderSerializer, OrderStatusLogSerializer
 
 
 STATUS_FLOW = {
@@ -42,9 +42,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         allowed = STATUS_FLOW.get(order.status, set())
         if allowed and new_status not in allowed:
             raise ValidationError({'status': f'{order.status} -> {new_status} is not permitted.'})
+        
+        print(f'[Order Status Change] Changing order {order.id} status from {order.status} to {new_status}')
+        
         order._status_actor = self.request.user
         order.status = new_status
-        order.save(update_fields=['status'])
+        # update_fields ni olib tashladik, shunda signal to'liq ishlaydi
+        order.save()
 
     @action(detail=True, methods=['post'], url_path='change-status')
     def change_status(self, request, pk=None):
@@ -54,8 +58,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'], url_path='status')
     def patch_status(self, request, pk=None):
+        print(f'[API] patch_status called for order {pk}')
+        print(f'[API] Request data: {request.data}')
+        print(f'[API] User: {request.user}')
+        
         order = self.get_object()
+        print(f'[API] Current order status: {order.status}')
+        
         self._set_status(order, request.data.get('status'))
+        
+        print(f'[API] Order status after change: {order.status}')
+        
         return Response(self.get_serializer(order).data)
 
     @action(detail=True, methods=['post'], url_path='returns')
@@ -79,6 +92,14 @@ class OrderViewSet(viewsets.ModelViewSet):
     def list_items(self, request, pk=None):
         order = self.get_object()
         serializer = OrderItemSerializer(order.items.all(), many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='history')
+    def status_history(self, request, pk=None):
+        """Get status change history for an order"""
+        order = self.get_object()
+        logs = order.status_logs.select_related('by_user').all()
+        serializer = OrderStatusLogSerializer(logs, many=True)
         return Response(serializer.data)
 
 

@@ -30,6 +30,8 @@
     "products": "Товары",
     "dealers": "Дилеры",
     "payments": "Платежи",
+    "expenses": "Расходы",
+    "ledger": "Касса баланс",
     "currency": "Курс",
     "reconciliation": "Акт сверки",
     "kpi": "KPI",
@@ -93,5 +95,36 @@
     "expandSidebar": "Развернуть меню",
     "pinSidebar": "Закрепить меню",
     "unpinSidebar": "Открепить меню"
+  },
+  "order": {
+    "status": {
+      "created": "Создан",
+      "confirmed": "Подтвержден",
+      "packed": "Упакован",
+      "shipped": "Отправлен",
+      "delivered": "Доставлен",
+      "cancelled": "Отменен",
+      "returned": "Возвращен"
+    },
+    "confirm_change_title": "Подтвердите изменение статуса",
+    "confirm_change_message": "Вы хотите изменить статус заказа с '{{oldStatus}}' на '{{newStatus}}'?",
+    "status_updated_success": "Статус успешно изменён",
+    "status_update_failed": "Ошибка при изменении статуса",
+    "status_not_allowed": "У вас нет прав для изменения этого статуса",
+    "status_history": "История изменения статусов",
+    "old_status": "Старый статус",
+    "new_status": "Новый статус",
+    "changed_by": "Изменил",
+    "changed_at": "Дата изменения",
+    "system": "Система",
+    "initial_creation": "Начальное состояние",
+    "loading_history": "Загрузка истории...",
+    "no_history": "Пока нет изменений",
+    "history_fetch_failed": "Ошибка загрузки истории",
+    "error": "Ошибка"
+  },
+  "common": {
+    "confirm": "Да, изменить",
+    "cancel": "Отмена"
   }
 }

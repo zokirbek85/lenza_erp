@@ -78,7 +78,14 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
     return StatementTotals(orders=orders_total, payments=payments_total, returns=returns_total)
 
 
-def get_reconciliation_data(dealer_id: int, from_date: str | None, to_date: str | None, *, user):
+def get_reconciliation_data(
+    dealer_id: int,
+    from_date: str | None,
+    to_date: str | None,
+    *,
+    user,
+    detailed: bool = False,
+):
     """
     Build reconciliation data for a dealer within given period.
     """
@@ -113,8 +120,9 @@ def get_reconciliation_data(dealer_id: int, from_date: str | None, to_date: str 
             pay_date__gte=start,
             pay_date__lte=end,
         )
+        .select_related('card')
         .order_by('pay_date', '-created_at')
-        .values('pay_date', 'method', 'amount_usd')
+        .values('pay_date', 'method', 'amount_usd', 'card__name', 'card__number', 'card__holder_name')
     )
 
     returns = list(
@@ -142,9 +150,29 @@ def get_reconciliation_data(dealer_id: int, from_date: str | None, to_date: str 
 
     def _format_payments():
         for row in payments:
+            masked = ''
+            number = row.get('card__number')
+            if number:
+                masked = f"{number[:4]} **** {number[-4:]}"
+            card_label = None
+            if row.get('card__name'):
+                card_label = row['card__name']
+            label = row['method']
+            # Build method label with card short if present
+            if row['method'] == 'card' and (masked or card_label):
+                parts = []
+                if card_label:
+                    parts.append(card_label)
+                if masked:
+                    parts.append(masked)
+                holder = row.get('card__holder_name')
+                if holder:
+                    parts.append(f"({holder})")
+                label = ' '.join(parts) or 'card'
             yield {
                 'date': row['pay_date'],
-                'method': row['method'],
+                'method': label,
+                'card_masked': masked,
                 'amount_usd': float(row['amount_usd'] or 0),
             }
 
@@ -194,7 +222,7 @@ def get_reconciliation_data(dealer_id: int, from_date: str | None, to_date: str 
 
     period_label = f"{start.strftime('%d.%m.%Y')} – {end.strftime('%d.%m.%Y')}"
 
-    return {
+    payload = {
         'dealer': dealer.name,
         'dealer_code': dealer.code,
         'period': period_label,
@@ -208,3 +236,44 @@ def get_reconciliation_data(dealer_id: int, from_date: str | None, to_date: str 
         'movements': movements,
         'generated_at': timezone.now(),
     }
+
+    if detailed:
+        # Build per-order items breakdown
+        detailed_orders_qs = (
+            Order.objects.filter(
+                dealer=dealer,
+                value_date__gte=start,
+                value_date__lte=end,
+                status__in=Order.Status.active_statuses(),
+            )
+            .order_by('value_date', 'display_no')
+            .prefetch_related('items__product')
+        )
+
+        detailed_orders: list[dict] = []
+        for o in detailed_orders_qs:
+            items = []
+            for it in o.items.all():
+                items.append(
+                    {
+                        'id': it.id,
+                        'product_name': getattr(it.product, 'name', ''),
+                        'quantity': float(it.qty or 0),
+                        'price': float(it.price_usd or 0),
+                        'total': float(it.line_total_usd or 0),
+                    }
+                )
+            detailed_orders.append(
+                {
+                    'id': o.id,
+                    'order_number': o.display_no,
+                    'date': o.value_date,
+                    'total_amount': float(o.total_usd or 0),
+                    'items': items,
+                }
+            )
+
+        payload['detailed'] = True
+        payload['orders_detailed'] = detailed_orders
+
+    return payload

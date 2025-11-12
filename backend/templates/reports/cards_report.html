@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Karta bo‘yicha to‘lovlar statistikasi</title>
+    <style>
+      @page { size: A4; margin: 2cm; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; font-size: 11pt; color: #111827; }
+      h1 { text-align: center; margin: 10px 0 16px; color: #0f172a; font-size: 18pt; }
+      .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+      .company-name { font-weight: bold; font-size: 14pt; color: #0f172a; }
+      .meta { font-size: 10pt; color: #374151; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; }
+      th { background: #f3f4f6; color: #111827; }
+      tfoot td { font-weight: bold; border-top: 2px solid #111827; }
+      .muted { color: #6b7280; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="company-name">
+        {{ company.name|default:"LENZA ERP" }}
+      </div>
+      {% if logo_url %}
+        <img src="{{ logo_url }}" alt="logo" height="40" />
+      {% endif %}
+    </div>
+
+    <h1>Karta bo‘yicha to‘lovlar statistikasi</h1>
+    <p class="meta">Sana oralig‘i: {{ from_date|default:"-" }} — {{ to_date|default:"-" }}</p>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Karta nomi</th>
+          <th>Raqam</th>
+          <th>Foydalanuvchi</th>
+          <th>To‘lovlar soni</th>
+          <th>Umumiy summa (USD)</th>
+          <th>Oxirgi to‘lov</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ row.card__name|default:"—" }}</td>
+          <td>
+            {% if row.card__number %}
+              {{ row.card__number|slice:":4" }} **** {{ row.card__number|slice:"-4:" }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>{{ row.card__holder_name|default:"—" }}</td>
+          <td>{{ row.payments_count|default:0 }}</td>
+          <td>${{ row.total_amount|default:0|floatformat:2 }}</td>
+          <td>{% if row.last_payment %}{{ row.last_payment|date:"d.m.Y" }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="muted">Ma'lumot topilmadi</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5">Jami</td>
+          <td>${{ total_sum|floatformat:2 }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <p class="meta" style="margin-top: 24px;">Hisobot yaratilgan: {{ generated_at }}</p>
+  </body>
+</html>

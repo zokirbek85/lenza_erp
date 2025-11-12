@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 
 interface StatusBadgeProps {
   status: string;
@@ -17,10 +18,15 @@ const COLORS: Record<string, string> = {
 };
 
 export const StatusBadge = ({ status }: StatusBadgeProps) => {
+  const { t } = useTranslation();
   const color = COLORS[status] ?? 'bg-slate-100 text-slate-700';
+  
+  // Try to translate, fallback to raw status if no translation exists
+  const label = t(`order.status.${status}`, { defaultValue: status });
+  
   return (
     <span className={clsx('rounded-full px-3 py-1 text-xs font-semibold capitalize', color)}>
-      {status}
+      {label}
     </span>
   );
 };

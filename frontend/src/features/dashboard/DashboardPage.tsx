@@ -13,7 +13,9 @@ import {
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { Col, Row, Card, theme } from 'antd';
+import { Col, Row, Card, theme, Button } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
+import { BarChart as RBarChart, Bar as RBar, XAxis as RXAxis, YAxis as RYAxis, Tooltip as RTooltip, ResponsiveContainer as RResponsiveContainer, Legend as RLegend, CartesianGrid } from 'recharts';
 import {
   DollarOutlined,
   RiseOutlined,
@@ -26,9 +28,11 @@ import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { loadCache, saveCache } from '../../utils/storage';
 import DashboardFilterBar from '../../components/DashboardFilterBar';
 import KpiCard from '../../components/KpiCard';
+import LedgerBalanceWidget from '../../components/LedgerBalanceWidget';
 import { RevenueTrendChart, RevenueSharePie, InventoryTrendLine, ExpensesGauge } from '../../components/DashboardCharts';
 import DashboardTable from '../../components/DashboardTable';
 import { useDashboardStore } from '../../store/useDashboardStore';
+import { useAuthStore } from '../../auth/useAuthStore';
 import type { DashboardSummary } from '../../services/dashboardService';
 import {
   fetchDashboardData,
@@ -36,6 +40,7 @@ import {
   fetchAccountantData,
   fetchCurrencyHistory,
   fetchDashboardSummary,
+  fetchCardsKpi,
 } from '../../services/dashboardService';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
@@ -72,17 +77,19 @@ const DashboardPage = () => {
   const { t } = useTranslation();
   const { token } = theme.useToken();
   const { filters } = useDashboardStore();
+  const { role } = useAuthStore();
   const [ownerData, setOwnerData] = useState<OwnerKpiResponse | null>(null);
   const [salesData, setSalesData] = useState<SalesManagerKPI | null>(null);
   const [accountantData, setAccountantData] = useState<AccountantKPI | null>(null);
   const [currencyHistory, setCurrencyHistory] = useState<CurrencyHistory[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [cardKpi, setCardKpi] = useState<Array<{ card_id: number; card_name: string; holder_name: string; total_amount: number; payments_count: number; last_payment_date?: string | null }>>([]);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [owner, sales, accountant, currency, summary] = await Promise.all([
+      const [owner, sales, accountant, currency, summary, cards] = await Promise.all([
         fetchDashboardData(filters),
         fetchSalesManagerData(filters),
         fetchAccountantData(filters),
@@ -99,18 +106,21 @@ const DashboardPage = () => {
           inventory_trend: [],
           expenses_vs_budget: { expenses: 0, budget: 100000 },
         })),
+        fetchCardsKpi(filters).catch(() => ({ data: [] as any[] })),
       ]);
       setOwnerData(owner.data);
       setSalesData(sales.data);
       setAccountantData(accountant.data);
       setCurrencyHistory(currency.data);
       setDashboardData(summary);
+      setCardKpi(cards.data as any);
       saveCache('dashboard-data', {
         owner: owner.data,
         sales: sales.data,
         accountant: accountant.data,
         currency: currency.data,
         summary,
+        cardKpi: cards.data,
       });
     } finally {
       setLoading(false);
@@ -124,12 +134,14 @@ const DashboardPage = () => {
         sales: SalesManagerKPI;
         accountant: AccountantKPI;
         currency: CurrencyHistory[];
+        cardKpi: any[];
       }>('dashboard-data');
       if (cached) {
         setOwnerData(cached.owner);
         setSalesData(cached.sales);
         setAccountantData(cached.accountant);
         setCurrencyHistory(cached.currency);
+        setCardKpi(cached.cardKpi || []);
       }
     });
   }, []);
@@ -159,6 +171,8 @@ const DashboardPage = () => {
     }),
     [ownerData, t]
   );
+
+  const showCardKpi = role === 'accountant' || role === 'owner';
 
   const salesTrendChart = useMemo<ChartData<'bar'>>(
     () => ({
@@ -306,6 +320,79 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {showCardKpi && (
+          <article style={{ 
+            borderRadius: '16px', 
+            padding: '24px',
+            background: token.colorBgContainer,
+            border: `1px solid ${token.colorBorder}`,
+            boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)'
+          }}>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 style={{ fontSize: '18px', fontWeight: 600, color: token.colorText }}>💳 Karta bo‘yicha to‘lovlar statistikasi</h2>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={() => {
+                  const params = filters.dateRange && filters.dateRange.length === 2
+                    ? `?from=${filters.dateRange[0]}&to=${filters.dateRange[1]}`
+                    : '';
+                  window.open(`/api/reports/cards/pdf/${params}`, '_blank');
+                }}
+              >
+                PDF eksport
+              </Button>
+            </div>
+            <div style={{ width: '100%', height: 320 }}>
+              {cardKpi && cardKpi.length > 0 ? (
+                <RResponsiveContainer width="100%" height="100%">
+                  <RBarChart data={cardKpi} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={token.colorBorder} />
+                    <RXAxis
+                      dataKey="card_name"
+                      angle={-25}
+                      textAnchor="end"
+                      interval={0}
+                      tick={{ fill: token.colorTextSecondary }}
+                    />
+                    <RYAxis tick={{ fill: token.colorTextSecondary }} />
+                    <RTooltip
+                      contentStyle={{
+                        background: token.colorBgElevated,
+                        borderRadius: 8,
+                        border: `1px solid ${token.colorBorder}`,
+                        color: token.colorText,
+                      }}
+                      formatter={(value: any, name: any) => {
+                        if (name === 'total_amount') return [`$${Number(value).toLocaleString()}`, 'Summa'];
+                        if (name === 'payments_count') return [value, "To‘lovlar soni"];
+                        return [value, name];
+                      }}
+                      labelFormatter={(label: string, payload: any) => {
+                        const p = Array.isArray(payload) && payload[0] ? payload[0].payload : null;
+                        return p ? `${p.card_name} — ${p.holder_name}` : label;
+                      }}
+                    />
+                    <RLegend />
+                    <defs>
+                      <linearGradient id="kpiUsd" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#00C49F" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#0088FE" stopOpacity={0.6} />
+                      </linearGradient>
+                      <linearGradient id="kpiCount" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ff7300" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#ffbb28" stopOpacity={0.6} />
+                      </linearGradient>
+                    </defs>
+                    <RBar dataKey="total_amount" fill="url(#kpiUsd)" name="To‘lov summasi (USD)" radius={[6,6,0,0]} />
+                    <RBar dataKey="payments_count" fill="url(#kpiCount)" name="To‘lovlar soni" radius={[6,6,0,0]} yAxisId={1 as any} />
+                  </RBarChart>
+                </RResponsiveContainer>
+              ) : (
+                <p style={{ fontSize: '14px', color: token.colorTextSecondary }}>—</p>
+              )}
+            </div>
+          </article>
+        )}
         <article style={{ 
           borderRadius: '16px', 
           padding: '24px',
@@ -347,6 +434,9 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        {(role === 'accountant' || role === 'owner') && (
+          <LedgerBalanceWidget />
+        )}
         <article style={{ 
           borderRadius: '16px', 
           padding: '24px',
