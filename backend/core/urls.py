@@ -14,7 +14,7 @@ from catalog.views import (
     ProductReportPDFView,
     ProductViewSet,
 )
-from core.views import AuditLogViewSet, CompanyInfoViewSet, SearchView, SystemBackupView, SystemConfigView, UserManualViewSet
+from core.views import AuditLogViewSet, CompanyInfoViewSet, DashboardSummaryView, SearchView, SystemBackupView, SystemConfigView, UserManualViewSet
 from dealers.views import (
     DealerBalancePDFView,
     DealerExportExcelView,
@@ -51,8 +51,17 @@ from payments.views import (
     PaymentReportPDFView,
     PaymentViewSet,
 )
-from expenses.views import ExpenseViewSet, ExpenseTypeViewSet, ExpenseReportPDFView, ExpenseExportExcelView
-from ledger.views import LedgerAccountViewSet, LedgerEntryViewSet, LedgerReportPDFView, LedgerExportExcelView
+from expenses.views import ExpenseViewSet, ExpenseTypeViewSet
+from expenses.report_view import MonthlyExpenseReportView
+from expenses.views_export import (
+    ExpenseListExcelExportView,
+    ExpenseListPDFExportView,
+    LegacyExpenseExportView,
+    MonthlyExpenseExcelExportView,
+    MonthlyExpensePDFExportView,
+)
+from ledger.views import LedgerSummaryView, CardBalanceView, LedgerByCardView, LedgerByCategoryView
+from ledger.views_export import ledger_export_view
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import UserViewSet
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
@@ -71,8 +80,7 @@ router.register('payments', PaymentViewSet, basename='payment')
 router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
 router.register('expenses', ExpenseViewSet, basename='expense')
 router.register('expense-types', ExpenseTypeViewSet, basename='expense-type')
-router.register('ledger-accounts', LedgerAccountViewSet, basename='ledger-account')
-router.register('ledger-entries', LedgerEntryViewSet, basename='ledger-entry')
+# Ledger - dynamic API (no model, no ViewSet)
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
@@ -85,6 +93,13 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', RoleAwareTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Dashboard summary
+    path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
+    path('api/expenses/export/pdf/', ExpenseListPDFExportView.as_view(), name='expense-export-pdf'),
+    path('api/expenses/export/pdf', ExpenseListPDFExportView.as_view()),
+    path('api/expenses/export/excel/', ExpenseListExcelExportView.as_view(), name='expense-export-excel'),
+    path('api/expenses/export/excel', ExpenseListExcelExportView.as_view()),
+    path('api/expenses/export/', LegacyExpenseExportView.as_view(), name='expense-export'),
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),
     path('api/orders/export/excel/', OrderExportExcelView.as_view(), name='orders-export-excel'),
@@ -104,26 +119,13 @@ urlpatterns = [
     # Explicit mapping for payments report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/payments/report/', PaymentViewSet.as_view({'get': 'report'}), name='payments-report'),
     path('api/payments/report', PaymentViewSet.as_view({'get': 'report'})),
-    path('api/expenses/report/pdf/', ExpenseReportPDFView.as_view({'get': 'list'}), name='expenses-report-pdf'),
-    path('api/expenses/export/excel/', ExpenseExportExcelView.as_view({'get': 'list'}), name='expenses-export-excel'),
-    # Explicit mapping for expenses export action (PDF/XLSX via ?format=)
-    path('api/expenses/export/', ExpenseViewSet.as_view({'get': 'export'}), name='expenses-export'),
-    path('api/expenses/export', ExpenseViewSet.as_view({'get': 'export'})),
-    # Explicit mapping for expenses report action (monthly report PDF/XLSX via ?format=)
-    path('api/expenses/report/', ExpenseViewSet.as_view({'get': 'report'}), name='expenses-report'),
-    path('api/expenses/report', ExpenseViewSet.as_view({'get': 'report'})),
-    path('api/ledger/report/pdf/', LedgerReportPDFView.as_view({'get': 'list'}), name='ledger-report-pdf'),
-    path('api/ledger/export/excel/', LedgerExportExcelView.as_view({'get': 'list'}), name='ledger-export-excel'),
-    # Explicit routes for ledger entries export action (with and without trailing slash)
-    path('api/ledger-entries/export/', LedgerEntryViewSet.as_view({'get': 'export'}), name='ledger-entries-export'),
-    path('api/ledger-entries/export', LedgerEntryViewSet.as_view({'get': 'export'})),
-    # Friendly alias under /api/ledger/export/ for consistency with other endpoints
-    path('api/ledger/export/', LedgerEntryViewSet.as_view({'get': 'export'}), name='ledger-export'),
-    # Explicit mapping for ledger report action (monthly report PDF/XLSX/JSON via ?format=)
-    path('api/ledger-entries/report/', LedgerEntryViewSet.as_view({'get': 'report'}), name='ledger-entries-report'),
-    path('api/ledger-entries/report', LedgerEntryViewSet.as_view({'get': 'report'})),
-    path('api/ledger/report/', LedgerEntryViewSet.as_view({'get': 'report'}), name='ledger-report'),
-    path('api/ledger/report', LedgerEntryViewSet.as_view({'get': 'report'})),
+    # Ledger export - standalone function-based view
+    path('api/ledger/export/', ledger_export_view, name='ledger-export'),
+    # Ledger - dynamic balance calculator (no model, no ViewSet)
+    path('api/ledger/', LedgerSummaryView.as_view(), name='ledger-summary'),
+    path('api/ledger/by-card/', LedgerByCardView.as_view(), name='ledger-by-card'),
+    path('api/ledger/by-category/', LedgerByCategoryView.as_view(), name='ledger-by-category'),
+    path('api/cards/<int:card_id>/balance/', CardBalanceView.as_view(), name='card-balance'),
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
@@ -135,6 +137,12 @@ urlpatterns = [
     path('api/dealers/<int:pk>/reconciliation/pdf/', DealerReconciliationPDFView.as_view(), name='dealer-reconciliation-pdf'),
     path('api/dealers/<int:pk>/reconciliation/excel/', DealerReconciliationExcelView.as_view(), name='dealer-reconciliation-excel'),
     path('api/payments/rates/history/', CurrencyRateHistoryView.as_view(), name='currency-rate-history'),
+    path('api/expenses/report/', MonthlyExpenseReportView.as_view(), name='expenses-report'),
+    path('api/expenses/report', MonthlyExpenseReportView.as_view()),
+    path('api/expenses/monthly/export/pdf/', MonthlyExpensePDFExportView.as_view(), name='expense-monthly-export-pdf'),
+    path('api/expenses/monthly/export/pdf', MonthlyExpensePDFExportView.as_view()),
+    path('api/expenses/monthly/export/excel/', MonthlyExpenseExcelExportView.as_view(), name='expense-monthly-export-excel'),
+    path('api/expenses/monthly/export/excel', MonthlyExpenseExcelExportView.as_view()),
     path('api/system/config/', SystemConfigView.as_view(), name='system-config'),
     path('api/system/backup/', SystemBackupView.as_view(), name='system-backup'),
     path('api/kpis/owner/', OwnerKPIView.as_view(), name='kpi-owner'),

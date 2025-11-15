@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'rest_framework.authtoken',
     'django_filters',
-    'channels',
     'users',
     'dealers',
     'catalog',
@@ -158,12 +157,6 @@ SIMPLE_JWT = {
 }
 
 AUTH_USER_MODEL = 'users.User'
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    }
-}
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

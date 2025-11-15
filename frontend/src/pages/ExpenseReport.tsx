@@ -1,107 +1,347 @@
-import { useState, useEffect } from 'react';
-import { Card, DatePicker, Table, Button, Typography, Divider } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
-import http from '../app/http';
-import { Bar } from 'react-chartjs-2';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Card,
+  DatePicker,
+  Table,
+  Button,
+  Typography,
+  Divider,
+  Row,
+  Col,
+  Statistic,
+  Space,
+  Empty,
+  Spin,
+  message,
+} from 'antd';
+import { FilePdfOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Tooltip,
   Legend,
+  ArcElement,
 } from 'chart.js';
+import dayjs, { Dayjs } from 'dayjs';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+import http from '../app/http';
+import { downloadFile } from '../utils/download';
 
-interface RowItem { type: string; usd: number; uzs: number }
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend);
+
+const palette = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#a855f7', '#0ea5e9', '#f97316', '#10b981'];
+
+const { Title, Paragraph } = Typography;
+
+interface ExpenseRow {
+  type: string;
+  usd: number;
+  uzs: number;
+  percentage: number;
+}
+
+interface DailyTrend {
+  date: string;
+  usd: number;
+  uzs: number;
+}
+
+interface ExpenseReportPayload {
+  month: string;
+  from_date: string;
+  to_date: string;
+  count: number;
+  rows: ExpenseRow[];
+  trend: DailyTrend[];
+  total_usd: number;
+  total_uzs: number;
+  usd_rate: number;
+  rate_date?: string | null;
+}
 
 export default function ExpenseReportPage() {
   const [month, setMonth] = useState<Dayjs>(dayjs());
-  const [rows, setRows] = useState<RowItem[]>([]);
-  const [totalUsd, setTotalUsd] = useState<number>(0);
-  const [totalUzs, setTotalUzs] = useState<number>(0);
-  const [compare, setCompare] = useState<{ types: string[]; chart: Array<Record<string, any>> }>({ types: [], chart: [] });
-
-  const fetchReport = async () => {
-    const monthParam = month.format('YYYY-MM');
-    const res: any = await http.get('/api/expenses/report/', { params: { month: monthParam } });
-    setRows(res.data.rows || []);
-    setTotalUsd(res.data.total_usd || 0);
-    setTotalUzs(res.data.total_uzs || 0);
-  };
-
-  const exportPDF = () => {
-    const monthParam = month.format('YYYY-MM');
-    const url = `/api/expenses/report/?month=${monthParam}&format=pdf`;
-    window.open(url, '_blank');
-  };
+  const [report, setReport] = useState<ExpenseReportPayload | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [exporting, setExporting] = useState({ pdf: false, xlsx: false });
 
   useEffect(() => {
-    fetchReport();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const loadReport = async () => {
+      setLoading(true);
+      try {
+        const params = { month: month.format('YYYY-MM') };
+        const response = await http.get<ExpenseReportPayload>('/api/expenses/report/', { params });
+        setReport(response.data);
+      } catch (err) {
+        console.error('Monthly expenses load failed', err);
+        message.error('Oylik chiqimlar maʼlumotini yuklashda xatolik yuz berdi');
+        setReport(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReport();
   }, [month]);
 
-  useEffect(() => {
-    // Load 6-month comparison once on mount
-    (async () => {
-      const res: any = await http.get('/api/expenses/compare/');
-      setCompare(res.data || { types: [], chart: [] });
-    })();
-  }, []);
+  const reportRows = report?.rows ?? [];
+  const trendData = report?.trend ?? [];
 
-  const palette = ['#22c55e', '#3b82f6', '#f97316', '#a855f7', '#ef4444', '#06b6d4', '#eab308', '#14b8a6'];
-  const barData = {
-    labels: compare.chart.map((c) => c.month),
-    datasets: compare.types.map((t, i) => ({
-      label: t,
-      data: compare.chart.map((c) => Number(c[t] || 0)),
-      backgroundColor: palette[i % palette.length],
-      stack: 'expenses',
-      borderWidth: 0,
-    })),
-  } as const;
+  const pieData = useMemo(
+    () => ({
+      labels: reportRows.map((row) => row.type),
+      datasets: [
+        {
+          data: reportRows.map((row) => Number(row.usd)),
+          backgroundColor: reportRows.map((_, index) => palette[index % palette.length]),
+        },
+      ],
+    }),
+    [reportRows]
+  );
 
-  const barOptions = {
+  const lineData = useMemo(
+    () => ({
+      labels: trendData.map((row) => dayjs(row.date).format('DD MMM')),
+      datasets: [
+        {
+          label: 'USD',
+          data: trendData.map((row) => Number(row.usd)),
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+          tension: 0.25,
+          pointRadius: 3,
+          yAxisID: 'y',
+        },
+        {
+          label: 'UZS',
+          data: trendData.map((row) => Number(row.uzs)),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, 0.2)',
+          tension: 0.25,
+          pointRadius: 3,
+          yAxisID: 'y1',
+        },
+      ],
+    }),
+    [trendData]
+  );
+
+  const pieOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom' as const },
       tooltip: {
         callbacks: {
-          label: (ctx: any) => `${ctx.dataset.label}: $${Number(ctx.parsed.y || 0).toFixed(2)}`,
+          label: (context: any) => {
+            const value = context.parsed;
+            return `${context.label}: $${Number(value || 0).toFixed(2)}`;
+          },
+        },
+      },
+      legend: { position: 'bottom' as const },
+    },
+  };
+
+  const lineOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        callbacks: {
+          label: (context: any) => {
+            const formatted = context.dataset.label === 'USD'
+              ? `$${Number(context.parsed.y || 0).toFixed(2)}`
+              : `${Math.round(context.parsed.y || 0).toLocaleString('en-US')} so'm`;
+            return `${context.dataset.label}: ${formatted}`;
+          },
+        },
+      },
+      legend: { position: 'bottom' as const },
+    },
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
+    scales: {
+      y: {
+        type: 'linear' as const,
+        position: 'left' as const,
+        title: { display: true, text: 'USD' },
+        ticks: {
+          callback: (value: number | string) => `$${Number(value || 0).toFixed(2)}`,
+        },
+      },
+      y1: {
+        type: 'linear' as const,
+        position: 'right' as const,
+        title: { display: true, text: 'UZS' },
+        grid: { drawOnChartArea: false },
+        ticks: {
+          callback: (value: number | string) => `${Math.round(Number(value || 0)).toLocaleString('en-US')} so'm`,
         },
       },
     },
-    scales: {
-      x: { stacked: true, grid: { display: false } },
-      y: { stacked: true, title: { display: true, text: 'USD' }, grid: { color: 'rgba(0,0,0,0.06)' } },
+  };
+
+  const handleExport = async (format: 'pdf' | 'xlsx') => {
+    setExporting((prev) => ({ ...prev, [format]: true }));
+    try {
+      const monthParam = month.format('YYYY-MM');
+      const suffix = monthParam.replace(/-/g, '_');
+      const endpoint = format === 'pdf' ? 'pdf' : 'excel';
+      const filename = `chiqimlar_${suffix}.${format}`;
+      const url = `/api/expenses/monthly/export/${endpoint}/?month=${monthParam}`;
+      await downloadFile(url, filename);
+      message.success(`${format === 'pdf' ? 'PDF' : 'Excel'} yuklab olindi`);
+    } catch (err) {
+      console.error('Expense report export failed', err);
+      message.error('Eksportni yuklab olishda xatolik yuz berdi');
+    } finally {
+      setExporting((prev) => ({ ...prev, [format]: false }));
+    }
+  };
+
+  const columns = [
+    { title: 'Chiqim turi', dataIndex: 'type', key: 'type' },
+    {
+      title: 'USD',
+      dataIndex: 'usd',
+      key: 'usd',
+      align: 'right' as const,
+      render: (value: number) => `$${(value || 0).toFixed(2)}`,
     },
-  } as const;
+    {
+      title: 'UZS',
+      dataIndex: 'uzs',
+      key: 'uzs',
+      align: 'right' as const,
+      render: (value: number) => `${Math.round(value || 0).toLocaleString('en-US')} so'm`,
+    },
+    {
+      title: 'Ulush (%)',
+      dataIndex: 'percentage',
+      key: 'percentage',
+      align: 'right' as const,
+      render: (value: number) => `${(value || 0).toFixed(2)}%`,
+    },
+  ];
 
   return (
     <Card
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span role="img" aria-label="chart">📊</span> Oylik chiqimlar hisobot
+          <span role="img" aria-label="chart">
+            📊
+          </span>
+          Oylik chiqimlar hisobot
         </div>
       }
       extra={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <DatePicker picker="month" value={month} onChange={(v) => v && setMonth(v)} allowClear={false} />
-          <Button type="primary" onClick={exportPDF}>PDF eksport</Button>
-        </div>
+        <Space>
+          <DatePicker
+            picker="month"
+            value={month}
+            onChange={(value) => value && setMonth(value)}
+            allowClear={false}
+          />
+          <Button
+            icon={<FilePdfOutlined />}
+            onClick={() => handleExport('pdf')}
+            loading={exporting.pdf}
+          >
+            PDF
+          </Button>
+          <Button
+            icon={<FileExcelOutlined />}
+            onClick={() => handleExport('xlsx')}
+            loading={exporting.xlsx}
+          >
+            Excel
+          </Button>
+        </Space>
       }
     >
+      <Row gutter={16}>
+        <Col xs={24} sm={8}>
+          <Statistic
+            title="Jami USD"
+            value={report?.total_usd ?? 0}
+            precision={2}
+            formatter={(value) => `$${Number(value).toFixed(2)}`}
+          />
+        </Col>
+        <Col xs={24} sm={8}>
+          <Statistic
+            title="Jami UZS"
+            value={report?.total_uzs ?? 0}
+            precision={0}
+            formatter={(value) => `${Math.round(Number(value || 0)).toLocaleString('en-US')} so'm`}
+          />
+        </Col>
+        <Col xs={24} sm={8}>
+          <Statistic
+            title="Chiqimlar soni"
+            value={report?.count ?? 0}
+            precision={0}
+          />
+        </Col>
+      </Row>
+
+      <Paragraph style={{ marginTop: 12 }}>
+        {report
+          ? `Buyurtma oraligʻi: ${dayjs(report.from_date).format('DD.MM.YYYY')} — ${dayjs(report.to_date).format(
+              'DD.MM.YYYY'
+            )}`
+          : 'Maʼlumotlar yuklanmoqda...'}
+      </Paragraph>
+
+      <Row gutter={24} style={{ marginBottom: 24 }}>
+        <Col xs={24} lg={12}>
+          <Title level={5}>Chiqim turlari bo‘yicha ulush (USD)</Title>
+          <div style={{ minHeight: 280, position: 'relative' }}>
+            {loading && !report ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <Spin />
+              </div>
+            ) : reportRows.length === 0 ? (
+              <Empty description="Maʼlumot yoʻq" />
+            ) : (
+              <Pie data={pieData} options={pieOptions} />
+            )}
+          </div>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Title level={5}>Oy bo‘yicha trend (USD / UZS)</Title>
+          <div style={{ minHeight: 280, position: 'relative' }}>
+            {loading && !report ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <Spin />
+              </div>
+            ) : trendData.length === 0 ? (
+              <Empty description="Maʼlumot yoʻq" />
+            ) : (
+              <Line data={lineData} options={lineOptions} />
+            )}
+          </div>
+        </Col>
+      </Row>
+
+      <Divider />
+
       <Table
-        dataSource={rows}
-        rowKey={(r) => r.type}
+        dataSource={reportRows}
+        rowKey={(row) => row.type}
+        columns={columns}
         pagination={false}
-        columns={[
-          { title: 'Chiqim turi', dataIndex: 'type' },
-          { title: 'USD', dataIndex: 'usd', align: 'right' as const, render: (v: number) => `$${(v || 0).toFixed(2)}` },
-          { title: 'UZS', dataIndex: 'uzs', align: 'right' as const, render: (v: number) => `${Math.round(v || 0).toLocaleString('en-US')} so‘m` },
-        ]}
+        loading={loading && !report}
+        locale={{ emptyText: 'Tanlangan oy uchun chiqimlar topilmadi' }}
         summary={() => (
           <Table.Summary.Row>
             <Table.Summary.Cell index={0}>
@@ -109,22 +349,20 @@ export default function ExpenseReportPage() {
             </Table.Summary.Cell>
             <Table.Summary.Cell index={1} align="right">
               <Typography.Text strong>
-                ${totalUsd.toFixed(2)}
+                ${((report?.total_usd ?? 0)).toFixed(2)}
               </Typography.Text>
             </Table.Summary.Cell>
             <Table.Summary.Cell index={2} align="right">
               <Typography.Text strong>
-                {Math.round(totalUzs).toLocaleString('en-US')} so‘m
+                {Math.round(report?.total_uzs ?? 0).toLocaleString('en-US')} so'm
               </Typography.Text>
+            </Table.Summary.Cell>
+            <Table.Summary.Cell index={3} align="right">
+              <Typography.Text strong>100%</Typography.Text>
             </Table.Summary.Cell>
           </Table.Summary.Row>
         )}
       />
-      <Divider />
-      <Typography.Title level={5} style={{ marginBottom: 8 }}>Oylik chiqimlar taqqoslanishi (USD)</Typography.Title>
-      <div style={{ height: 320 }}>
-        <Bar data={barData} options={barOptions} />
-      </div>
     </Card>
   );
 }

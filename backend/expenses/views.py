@@ -1,495 +1,297 @@
+"""
+Expenses Views - Professional ViewSet with Advanced Features
+"""
 from datetime import date, timedelta, datetime
-from calendar import month_abbr
 from decimal import Decimal
 
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q, F
 from django.utils import timezone
-from django.utils.dateparse import parse_date
-from django.http import HttpResponse, FileResponse
-from rest_framework import permissions, viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from core.permissions import IsAdmin, IsAccountant, IsOwner
-from core.utils.exporter import _prepare_workbook, _workbook_to_file
 from payments.models import CurrencyRate
 from .models import Expense, ExpenseType
-from core.mixins.report_mixin import BaseReportMixin
-from core.mixins.export_mixins import ExportMixin
-from .serializers import ExpenseSerializer, ExpenseTypeSerializer
+from .serializers import (
+    ExpenseSerializer,
+    ExpenseTypeSerializer,
+    ExpenseStatsSerializer,
+    ExpenseTrendSerializer,
+    ExpenseDistributionSerializer
+)
 
 
 class ExpenseTypeViewSet(viewsets.ModelViewSet):
-    queryset = ExpenseType.objects.all().order_by('name')
+    """Chiqim turlari CRUD"""
+    queryset = ExpenseType.objects.all()
     serializer_class = ExpenseTypeSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_permissions(self):
-        """Only admins can create/update/delete expense types; others can read."""
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAdmin()]
-        return [permissions.IsAuthenticated()]
-
-
-class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin):
-    queryset = Expense.objects.select_related('type', 'card', 'created_by', 'approved_by').all()
-    serializer_class = ExpenseSerializer
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
-    filterset_fields = {
-        'date': ['exact', 'gte', 'lte'],
-        'type': ['exact'],
-        'method': ['exact'],
-        'currency': ['exact'],
-        'status': ['exact'],
-    }
-    ordering = ('-date', '-created_at')
+    permission_classes = [IsAuthenticated]
+    pagination_class = None  # Pagination o'chirish - barcha turlarni bir vaqtda ko'rsatish
     
-    # BaseReportMixin configuration
-    date_field = "date"
-    filename_prefix = "expenses"
-    title_prefix = "Chiqimlar hisoboti"
-    report_template = "expenses/report.html"
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Faqat faol turlarni ko'rsatish (admin bundan mustasno)
+        if not self.request.user.role in ['admin', 'owner']:
+            queryset = queryset.filter(is_active=True)
+        return queryset
 
-    def _ensure_writer(self):
-        user = self.request.user
-        if user.is_superuser:
-            return
-        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
-            raise permissions.PermissionDenied('Only accountant or admin may modify expenses.')
 
+class ExpenseViewSet(viewsets.ModelViewSet):
+    """
+    Chiqimlar ViewSet - To'liq funksional
+    
+    Features:
+    - CRUD operations
+    - Advanced filtering
+    - Statistics (daily, weekly, monthly)
+    - Trend analysis
+    - Distribution by type
+    - Approval workflow
+    """
+    queryset = Expense.objects.select_related(
+        'type',
+        'card',
+        'created_by',
+        'approved_by'
+    ).all()
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['status', 'method', 'currency', 'type']
+    search_fields = ['description', 'type__name']
+    ordering_fields = ['date', 'amount', 'created_at']
+    ordering = ['-date', '-created_at']
+    
+    def get_permissions(self):
+        """Ruxsatlar - admin va accountant yozish mumkin"""
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'approve']:
+            return [(IsAdmin | IsAccountant)()]
+        return [IsAuthenticated()]
+    
+    def get_queryset(self):
+        """Filtering - date range, type, method, card, status"""
+        queryset = super().get_queryset()
+        
+        # Date range filtering
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        
+        # Type filtering
+        type_id = self.request.query_params.get('type')
+        if type_id:
+            queryset = queryset.filter(type_id=type_id)
+        
+        # Method filtering
+        method = self.request.query_params.get('method')
+        if method:
+            queryset = queryset.filter(method=method)
+        
+        # Card filtering
+        card_id = self.request.query_params.get('card')
+        if card_id:
+            queryset = queryset.filter(card_id=card_id)
+        
+        # Status filtering
+        stat = self.request.query_params.get('status')
+        if stat:
+            queryset = queryset.filter(status=stat)
+        
+        return queryset
+    
     def perform_create(self, serializer):
-        self._ensure_writer()
+        """Yaratishda created_by ni avtomatik qo'shish"""
         serializer.save(created_by=self.request.user)
-
-    def perform_update(self, serializer):
-        self._ensure_writer()
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        self._ensure_writer()
-        instance.delete()
-
+    
     @action(detail=False, methods=['get'])
     def stats(self, request):
+        """
+        Statistika - bugun, hafta, oy, jami
+        GET /api/expenses/stats/?currency=USD
+        """
+        currency = request.query_params.get('currency', 'USD')
+        
         today = date.today()
         week_ago = today - timedelta(days=7)
         month_ago = today - timedelta(days=30)
         
-        # Eng so'nggi valyuta kursini olamiz
-        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
-        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
+        # Base queryset - faqat tasdiqlangan chiqimlar
+        qs = Expense.objects.filter(status=Expense.STATUS_APPROVED)
         
-        def convert_to_usd(expense):
-            """Chiqimni USDga konvertatsiya qilish"""
-            if expense.currency == 'USD':
-                return Decimal(str(expense.amount))
-            elif expense.currency == 'UZS':
-                return (Decimal(str(expense.amount)) / usd_to_uzs).quantize(Decimal('0.01'))
-            return Decimal(str(expense.amount))
+        # Aggregations - USD va UZS alohida
+        today_usd = qs.filter(date=today, currency='USD').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
         
-        base = Expense.objects.filter(status='tasdiqlangan')
+        today_uzs = qs.filter(date=today, currency='UZS').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
         
-        # Har bir davr uchun chiqimlarni olib, USDga konvertatsiya qilamiz
-        today_expenses = base.filter(date=today)
-        week_expenses = base.filter(date__gte=week_ago)
-        month_expenses = base.filter(date__gte=month_ago)
+        week_usd = qs.filter(date__gte=week_ago, currency='USD').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
         
-        today_total = sum(convert_to_usd(e) for e in today_expenses)
-        week_total = sum(convert_to_usd(e) for e in week_expenses)
-        month_total = sum(convert_to_usd(e) for e in month_expenses)
+        week_uzs = qs.filter(date__gte=week_ago, currency='UZS').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
         
-        stats = {
-            'today': float(today_total),
-            'week': float(week_total),
-            'month': float(month_total),
-            'rate': float(usd_to_uzs),
+        month_usd = qs.filter(date__gte=month_ago, currency='USD').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        
+        month_uzs = qs.filter(date__gte=month_ago, currency='UZS').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        
+        total_usd = qs.filter(currency='USD').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        
+        total_uzs = qs.filter(currency='UZS').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0.00')
+        
+        # Frontend kutgan format
+        data = {
+            'today': {
+                'count': qs.filter(date=today).count(),
+                'total_usd': float(today_usd),
+                'total_uzs': float(today_uzs),
+            },
+            'week': {
+                'count': qs.filter(date__gte=week_ago).count(),
+                'total_usd': float(week_usd),
+                'total_uzs': float(week_uzs),
+            },
+            'month': {
+                'count': qs.filter(date__gte=month_ago).count(),
+                'total_usd': float(month_usd),
+                'total_uzs': float(month_uzs),
+            },
+            'total': {
+                'count': qs.count(),
+                'total_usd': float(total_usd),
+                'total_uzs': float(total_uzs),
+            },
         }
-        return Response(stats)
-
+        
+        return Response(data)
+    
     @action(detail=False, methods=['get'])
     def trend(self, request):
-        """Get expense trend with filters (date range, type, method, currency)."""
-        # Query parameters
-        start_param = request.query_params.get('start_date')
-        end_param = request.query_params.get('end_date')
-        method = request.query_params.get('method')
-        type_id = request.query_params.get('type')
-        currency = request.query_params.get('currency')
+        """
+        Trend tahlili - kunlik chiqimlar (oxirgi 30 kun)
+        GET /api/expenses/trend/?days=30
+        """
+        days = int(request.query_params.get('days', 30))
         
-        # Default date range: last 30 days
-        today = date.today()
-        start_date = parse_date(start_param) if start_param else today - timedelta(days=29)
-        end_date = parse_date(end_param) if end_param else today
+        start_date = date.today() - timedelta(days=days)
         
-        # Eng so'nggi valyuta kursini olamiz
-        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
-        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
-        
-        def convert_to_usd(expense):
-            """Chiqimni USDga konvertatsiya qilish"""
-            if expense.currency == 'USD':
-                return Decimal(str(expense.amount))
-            elif expense.currency == 'UZS':
-                return (Decimal(str(expense.amount)) / usd_to_uzs).quantize(Decimal('0.01'))
-            return Decimal(str(expense.amount))
-        
-        # Build queryset with filters
-        base_qs = Expense.objects.filter(
-            status='tasdiqlangan',
+        # Python-based grouping (SQLite TruncDate muammosi uchun)
+        expenses = Expense.objects.filter(
             date__gte=start_date,
-            date__lte=end_date
-        )
+            status=Expense.STATUS_APPROVED
+        ).values('date', 'currency', 'amount')
         
-        if method:
-            base_qs = base_qs.filter(method=method)
-        if type_id:
-            base_qs = base_qs.filter(type_id=type_id)
-        if currency:
-            base_qs = base_qs.filter(currency=currency)
-        
-        # Calculate daily expenses (non-cumulative for trend chart)
-        data = []
-        total_period_usd = Decimal('0')
-        num_days = (end_date - start_date).days + 1
-        
-        for i in range(num_days):
-            d = start_date + timedelta(days=i)
-            daily_expenses = base_qs.filter(date=d)
-            daily_usd = sum(convert_to_usd(e) for e in daily_expenses)
-            total_period_usd += daily_usd
+        # Kunlik guruh
+        daily_dict = {}
+        for exp in expenses:
+            day = exp['date']
+            if day not in daily_dict:
+                daily_dict[day] = {'total_usd': 0, 'total_uzs': 0}
             
-            data.append({
-                'date': d.strftime('%d.%m'),
-                'full_date': d.isoformat(),
-                'total_usd': float(daily_usd)
+            if exp['currency'] == 'USD':
+                daily_dict[day]['total_usd'] += float(exp['amount'] or 0)
+            else:
+                daily_dict[day]['total_uzs'] += float(exp['amount'] or 0)
+        
+        # Natija
+        results = []
+        for day in sorted(daily_dict.keys()):
+            results.append({
+                'date': day,
+                'total_usd': daily_dict[day]['total_usd'],
+                'total_uzs': daily_dict[day]['total_uzs'],
             })
         
-        return Response({
-            'data': data,
-            'total_usd': float(total_period_usd),
-            'period': {
-                'start': start_date.isoformat(),
-                'end': end_date.isoformat(),
-                'days': num_days
-            }
-        })
-
+        return Response(results)
+    
     @action(detail=False, methods=['get'])
     def distribution(self, request):
-        """Get expense distribution by type for the last 30 days."""
+        """
+        Tur bo'yicha taqsimot - pie chart uchun
+        GET /api/expenses/distribution/?period=month
+        """
+        period = request.query_params.get('period', 'month')  # day, week, month, all
+        
         today = date.today()
-        days = int(request.query_params.get('days', 30))
-        start = today - timedelta(days=days - 1)
+        if period == 'day':
+            start_date = today
+        elif period == 'week':
+            start_date = today - timedelta(days=7)
+        elif period == 'month':
+            start_date = today - timedelta(days=30)
+        else:
+            start_date = None
         
-        # Eng so'nggi valyuta kursini olamiz
-        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
-        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
+        # Tur bo'yicha guruh - Python-based (SQLite muammosi yo'q)
+        qs = Expense.objects.filter(status=Expense.STATUS_APPROVED).select_related('type')
+        if start_date:
+            qs = qs.filter(date__gte=start_date)
         
-        def convert_to_usd(expense):
-            """Chiqimni USDga konvertatsiya qilish"""
-            if expense.currency == 'USD':
-                return Decimal(str(expense.amount))
-            elif expense.currency == 'UZS':
-                return (Decimal(str(expense.amount)) / usd_to_uzs).quantize(Decimal('0.01'))
-            return Decimal(str(expense.amount))
-        
-        # Filter expenses by date range and status
-        qs = Expense.objects.filter(
-            status='tasdiqlangan',
-            date__gte=start,
-            date__lte=today
-        ).select_related('type')
-        
-        # Group by expense type
-        summary = {}
+        # Python'da guruhlaymiz
+        type_dict = {}
         for exp in qs:
-            type_name = exp.type.name if exp.type else 'Boshqa'
-            amount_usd = convert_to_usd(exp)
-            summary[type_name] = summary.get(type_name, Decimal('0')) + amount_usd
+            type_name = exp.type.name
+            if type_name not in type_dict:
+                type_dict[type_name] = {'total_usd': 0, 'total_uzs': 0, 'count': 0}
+            
+            type_dict[type_name]['count'] += 1
+            if exp.currency == 'USD':
+                type_dict[type_name]['total_usd'] += float(exp.amount)
+            else:
+                type_dict[type_name]['total_uzs'] += float(exp.amount)
         
-        # Calculate total and percentages
-        total = sum(summary.values())
-        data = [
-            {
-                'type': type_name,
-                'amount_usd': float(amount),
-                'percent': float((amount / total * 100).quantize(Decimal('0.01'))) if total > 0 else 0
-            }
-            for type_name, amount in sorted(summary.items(), key=lambda x: x[1], reverse=True)
-        ]
-        return Response({
-            'data': data,
-            'total_usd': float(total),
-            'period_days': days
-        })
-
-    @action(detail=False, methods=['get'])
-    def report(self, request):
-        """Monthly expense report by type with USD/UZS totals. Optional PDF via ?format=pdf."""
-        # Parse month param YYYY-MM; default current month
-        month_str = request.query_params.get('month')
-        if not month_str:
-            month_str = datetime.now().strftime('%Y-%m')
-        try:
-            year, month = map(int, month_str.split('-'))
-        except Exception:
-            return Response({'error': 'Invalid month format. Use YYYY-MM.'}, status=400)
-
-        # Latest currency rate
-        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
-        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
-
-        # Base queryset for the month (confirmed expenses only)
-        qs = (
-            Expense.objects.select_related('type')
-            .filter(status='tasdiqlangan', date__year=year, date__month=month)
-        )
-
-        data = []
-        total_usd = Decimal('0')
-        total_uzs = Decimal('0')
-
-        for t in ExpenseType.objects.filter(is_active=True).order_by('name'):
-            items = qs.filter(type=t)
-            usd = Decimal('0')
-            uzs = Decimal('0')
-            for e in items:
-                amt = Decimal(str(e.amount))
-                if e.currency == 'UZS':
-                    uzs += amt
-                    usd += (amt / usd_to_uzs)
-                else:
-                    usd += amt
-                    uzs += (amt * usd_to_uzs)
-            data.append({
-                'type': t.name,
-                'usd': float(usd.quantize(Decimal('0.01'))),
-                'uzs': float(uzs.quantize(Decimal('1'))),
+        # Jami summa (foiz hisoblash uchun)
+        grand_total_usd = sum(item['total_usd'] for item in type_dict.values())
+        grand_total_uzs = sum(item['total_uzs'] for item in type_dict.values())
+        
+        results = []
+        for type_name, data in sorted(type_dict.items(), key=lambda x: x[1]['total_usd'], reverse=True):
+            percent = round((data['total_usd'] / grand_total_usd * 100), 2) if grand_total_usd else 0
+            
+            results.append({
+                'type_name': type_name,
+                'total_usd': data['total_usd'],
+                'total_uzs': data['total_uzs'],
+                'percentage': percent,
             })
-            total_usd += usd
-            total_uzs += uzs
-
-        # Sort by USD amount descending for better readability
-        data.sort(key=lambda x: x['usd'], reverse=True)
-
-        fmt = request.query_params.get('format', 'json').lower()
         
-        if fmt == 'pdf':
-            context = {
-                'month': month_str,
-                'rows': data,
-                'total_usd': float(total_usd.quantize(Decimal('0.01'))),
-                'total_uzs': float(total_uzs.quantize(Decimal('1'))),
-                'rate': float(usd_to_uzs)
-            }
-            return self.render_pdf_with_qr(
-                'expenses/report.html',
-                context,
-                f'Expense_Report_{month_str}',
-                request=request,
-                doc_type='expense-report',
-                doc_id=month_str,
-            )
-        
-        elif fmt == 'xlsx':
-            # Convert to Excel-friendly format
-            excel_rows = []
-            for row in data:
-                excel_rows.append({
-                    'Turi': row['type'],
-                    'USD': f"{row['usd']:,.2f}",
-                    'UZS': f"{row['uzs']:,.0f}",
-                })
-            return self.render_xlsx(excel_rows, f'Chiqimlar_hisoboti_{month_str}.xlsx')
-
-        return Response({
-            'month': month_str,
-            'rate': float(usd_to_uzs),
-            'rows': data,
-            'total_usd': float(total_usd.quantize(Decimal('0.01'))),
-            'total_uzs': float(total_uzs.quantize(Decimal('1'))),
-        })
-
-    @action(detail=False, methods=['get'])
-    def compare(self, request):
-        """Compare last 6 months expenses by type (in USD), stacked bar friendly."""
-        today = date.today()
-
-        # Latest rate for conversion
-        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
-        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
-
-        # Helper to get year, month going back i months (i=0 current month)
-        def shift_months(base_year: int, base_month: int, back: int):
-            m = base_month - back
-            y = base_year
-            while m <= 0:
-                m += 12
-                y -= 1
-            return y, m
-
-        # Build data per month
-        month_data = []  # list of (label, {type: amount_usd}) oldest -> newest
-        type_names_set = set()
-
-        # Collect from oldest to newest for chart left->right
-        for i in range(5, -1, -1):
-            y, m = shift_months(today.year, today.month, i)
-            label = f"{month_abbr[m]} {y}"
-            qs = Expense.objects.select_related('type').filter(
-                status='tasdiqlangan',
-                date__year=y,
-                date__month=m,
-            )
-            type_totals = {}
-            for e in qs:
-                # convert to USD
-                amt = Decimal(str(e.amount))
-                if e.currency == 'UZS':
-                    amt = (amt / usd_to_uzs)
-                type_name = e.type.name if e.type else 'Boshqa'
-                type_totals[type_name] = type_totals.get(type_name, Decimal('0')) + amt
-                type_names_set.add(type_name)
-
-            month_data.append((label, type_totals))
-
-        types = sorted(type_names_set)
-        chart = []
-        for label, totals in month_data:
-            row = { 'month': label }
-            for t in types:
-                row[t] = float(totals.get(t, Decimal('0')).quantize(Decimal('0.01')))
-            chart.append(row)
-
-        return Response({ 'types': types, 'chart': chart })
-
-    @action(detail=True, methods=['post'], url_path='update-status')
-    def update_status(self, request, pk=None):
-        """Update expense status. Only admin/accountant can change status."""
-        self._ensure_writer()
+        return Response(results)
+    
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """
+        Chiqimni tasdiqlash
+        POST /api/expenses/{id}/approve/
+        """
         expense = self.get_object()
-        old_status = expense.status
-        new_status = request.data.get('status')
-        if new_status not in dict(Expense.STATUS_CHOICES):
-            return Response({'error': 'Invalid status'}, status=400)
         
-        expense.status = new_status
-        if new_status == 'tasdiqlangan' and not expense.approved_by:
-            expense.approved_by = request.user
-            expense.approved_at = timezone.now()
+        if expense.status == Expense.STATUS_APPROVED:
+            return Response(
+                {'detail': 'Bu chiqim allaqachon tasdiqlangan'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        expense.status = Expense.STATUS_APPROVED
+        expense.approved_by = request.user
+        expense.approved_at = timezone.now()
         expense.save()
-        
-        # Post to ledger if status changed to tasdiqlangan
-        if old_status != 'tasdiqlangan' and new_status == 'tasdiqlangan':
-            from ledger.services import LedgerService
-            LedgerService.post_expense(expense, actor=request.user)
         
         serializer = self.get_serializer(expense)
         return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def export(self, request):
-        """Unified export endpoint: ?format=pdf|xlsx"""
-        fmt = request.query_params.get('format', 'xlsx')
-        qs = self.filter_queryset(self.get_queryset().select_related('type', 'card'))
-
-        rows = [{
-            'Sana': (e.date.isoformat() if e.date else ''),
-            'Turi': (e.type.name if e.type else ''),
-            'Miqdor': float(e.amount),
-            'Valyuta': e.currency,
-            'To‘lov turi': e.method,
-            'Karta': (e.card.name if e.card else ''),
-            'Izoh': (e.comment or ''),
-            'Holat': e.status,
-        } for e in qs.order_by('date', 'id')]
-
-        context = {'rows': rows, 'title': 'Chiqimlar hisobot'}
-        if fmt == 'pdf':
-            return self.render_pdf_with_qr(
-                'expenses/export.html',
-                context,
-                'chiqimlar',
-                request=request,
-                doc_type='expense-export',
-                doc_id=None,
-            )
-        return self.render_xlsx(rows, 'chiqimlar')
-
-
-class ExpenseReportPDFView(viewsets.ViewSet, ExportMixin):
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
-
-    def list(self, request):
-        from_date = request.query_params.get('from')
-        to_date = request.query_params.get('to')
-        type_id = request.query_params.get('type')
-        method = request.query_params.get('method')
-        qs = Expense.objects.select_related('type', 'card').all()
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if type_id:
-            qs = qs.filter(type_id=type_id)
-        if method:
-            qs = qs.filter(method=method)
-
-        context = {
-            'items': qs,
-            'from_date': from_date,
-            'to_date': to_date,
-            'generated_at': timezone.now(),
-            'total_usd': float(qs.filter(currency='USD').aggregate(s=Sum('amount'))['s'] or 0),
-            'total_uzs': float(qs.filter(currency='UZS').aggregate(s=Sum('amount'))['s'] or 0),
-        }
-
-        # Create a stable doc_id from date filters if provided
-        doc_id = 'bulk'
-        if from_date or to_date:
-            f = from_date.replace('-', '') if from_date else 'start'
-            t = to_date.replace('-', '') if to_date else 'end'
-            doc_id = f'{f}_{t}'
-
-        return self.render_pdf_with_qr(
-            'reports/expenses_report.html',
-            context,
-            filename_prefix='expenses_report',
-            request=request,
-            doc_type='expenses-report',
-            doc_id=doc_id,
-        )
-
-
-class ExpenseExportExcelView(permissions.IsAuthenticated, viewsets.ViewSet, ExportMixin):
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
-
-    def list(self, request):
-        from_date = request.query_params.get('from')
-        to_date = request.query_params.get('to')
-        type_id = request.query_params.get('type')
-        method = request.query_params.get('method')
-        qs = Expense.objects.select_related('type', 'card').all()
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
-        if type_id:
-            qs = qs.filter(type_id=type_id)
-        if method:
-            qs = qs.filter(method=method)
-
-        # Build rows and render via ExportMixin
-        rows = []
-        for e in qs.order_by('date', 'id'):
-            rows.append({
-                'Date': (e.date.isoformat() if e.date else ''),
-                'Type': (e.type.name if e.type else ''),
-                'Method': e.method,
-                'Card': (e.card.name if e.card else ''),
-                'Currency': e.currency,
-                'Amount': float(e.amount),
-                'Status': e.status,
-                'Comment': (e.comment or ''),
-            })
-        return self.render_xlsx(rows, 'expenses')

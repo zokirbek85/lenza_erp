@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <title>Chiqimlar eksport</title>
+  <style>
+    body { font-family: "Inter", "Helvetica Neue", sans-serif; margin: 24px; color: #1f2937; }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .company { font-weight:700; }
+    .filters { margin: 8px 0 16px; font-size: 0.9rem; color: #4b5563; }
+    .filters span { display:inline-block; margin-right:12px; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; font-size: 0.85rem; }
+    th, td { border:1px solid #e5e7eb; padding:6px 8px; }
+    th { background:#f3f4f6; text-align:left; }
+    tfoot td { font-weight:700; background:#f9fafb; border-top:2px solid #111827; }
+    .totals { margin-top:16px; display:flex; gap:24px; }
+    .totals div { border:1px solid #e5e7eb; padding:12px; border-radius:4px; background:#fff; flex:1; }
+    .totals span { display:block; font-size:0.75rem; color:#6b7280; }
+    .logo img { max-height:50px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="company">{{ company.name|default:"Lenza ERP" }}</div>
+      <div>{{ company.address }}</div>
+      <div>{{ company.phone }}</div>
+    </div>
+    {% if company_logo %}
+    <div class="logo">
+      <img src="{{ company_logo }}" alt="Logo" />
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="filters">
+    <span>Yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}</span>
+    {% for filter in filters %}
+      <span>{{ filter }}</span>
+    {% endfor %}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Sana</th>
+        <th class="text-left">Turi</th>
+        <th>USD</th>
+        <th>UZS</th>
+        <th>Usul</th>
+        <th>Holat</th>
+        <th>Izoh</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.date|date:"Y-m-d" }}</td>
+          <td>{{ row.category }}</td>
+          <td>${{ row.amount_usd|floatformat:2 }}</td>
+          <td>{{ row.amount_uzs|floatformat:2 }} so'm</td>
+          <td>{{ row.method }}</td>
+          <td>{{ row.status }}</td>
+          <td>{{ row.description }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;">Ma'lumot mavjud emas</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Jami USD</td>
+        <td>${{ totals.usd|floatformat:2 }}</td>
+        <td colspan="4"></td>
+      </tr>
+      <tr>
+        <td colspan="2">Jami UZS</td>
+        <td></td>
+        <td>{{ totals.uzs|floatformat:2 }} so'm</td>
+        <td colspan="3"></td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>

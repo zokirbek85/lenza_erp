@@ -151,42 +151,38 @@ class CardKPIView(APIView):
         from_param = request.query_params.get('from')
         to_param = request.query_params.get('to')
 
-        date_filters = Q(payments__method=Payment.Method.CARD)
-        # Parse ISO dates if provided; fall back to raw strings if parsing fails (Django can coerce YYYY-MM-DD)
+        payment_filters = Q(method=Payment.Method.CARD)
         if from_param:
             try:
                 from_date = datetime.fromisoformat(from_param).date()
-                date_filters &= Q(payments__pay_date__gte=from_date)
+                payment_filters &= Q(pay_date__gte=from_date)
             except ValueError:
-                date_filters &= Q(payments__pay_date__gte=from_param)
+                payment_filters &= Q(pay_date__gte=from_param)
         if to_param:
             try:
                 to_date = datetime.fromisoformat(to_param).date()
-                date_filters &= Q(payments__pay_date__lte=to_date)
+                payment_filters &= Q(pay_date__lte=to_date)
             except ValueError:
-                date_filters &= Q(payments__pay_date__lte=to_param)
+                payment_filters &= Q(pay_date__lte=to_param)
 
-        cards = (
-            PaymentCard.objects.filter(is_active=True)
-            .annotate(
-                total_amount=Sum('payments__amount_usd', filter=date_filters),
-                payments_count=Count('payments__id', filter=date_filters),
-                last_payment_date=Max('payments__pay_date', filter=date_filters),
-            )
-            .order_by('-total_amount')
-        )
+        data = []
+        for card in PaymentCard.objects.filter(is_active=True):
+            card_payments = card.payments.filter(payment_filters)
 
-        # Coerce None to zeros for totals and counts; DRF will serialize date
-        data = [
-            {
+            total = card_payments.aggregate(total=Sum('amount_usd'))['total'] or 0
+            count = card_payments.count()
+            last_date = card_payments.aggregate(last=Max('pay_date'))['last']
+            
+            data.append({
                 'card_id': card.id,
                 'card_name': card.name,
                 'holder_name': card.holder_name,
-                'total_amount': float(card.total_amount or 0),
-                'payments_count': int(card.payments_count or 0),
-                'last_payment_date': card.last_payment_date,
-            }
-            for card in cards
-        ]
+                'total_amount': float(total),
+                'payments_count': count,
+                'last_payment_date': last_date,
+            })
+        
+        # Sort by total_amount descending
+        data.sort(key=lambda x: x['total_amount'], reverse=True)
 
         return Response(data)

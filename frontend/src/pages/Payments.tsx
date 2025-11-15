@@ -23,10 +23,12 @@ interface Payment {
   amount: number;
   currency: string;
   amount_usd: number;
+  amount_uzs: number;
   method: string;
   card?: { id: number; name: string; number: string; holder_name: string; masked_number: string } | null;
   pay_date: string;
   note: string;
+  status: 'pending' | 'confirmed';
 }
 
 interface CurrencyRate {
@@ -189,8 +191,8 @@ const PaymentsPage = () => {
     <section className="space-y-6">
   <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.payments')}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">To&apos;lovlar va valyuta konvertatsiyasi.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('payments.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('payments.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -209,21 +211,21 @@ const PaymentsPage = () => {
             onClick={() => navigate('/settings/cards')}
             className="rounded-lg border border-emerald-500 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
           >
-            + Karta qo'shish
+            + {t('payments.addCard')}
           </button>
         </div>
       </header>
 
       <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-4">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.dealer')}</label>
           <select
             name="dealer"
             value={filtersState.dealer}
             onChange={handleFilterInput}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">All dealers</option>
+            <option value="">{t('payments.allDealers')}</option>
             {dealers.map((dealer) => (
               <option key={dealer.id} value={dealer.id}>
                 {dealer.name}
@@ -232,7 +234,7 @@ const PaymentsPage = () => {
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">From</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.from')}</label>
           <input
             type="date"
             name="from"
@@ -242,7 +244,7 @@ const PaymentsPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">To</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.to')}</label>
           <input
             type="date"
             name="to"
@@ -257,14 +259,14 @@ const PaymentsPage = () => {
             onClick={() => loadPayments()}
             className="flex-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
           >
-            Refresh
+            {t('payments.refresh')}
           </button>
           <button
             type="button"
             onClick={clearFilters}
             className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Reset
+            {t('payments.reset')}
           </button>
         </div>
       </div>
@@ -277,7 +279,7 @@ const PaymentsPage = () => {
           aria-expanded={showForm}
           aria-controls="payment-create-form"
         >
-          {showForm ? '− Formani yopish' : '+ Yangi to\'lov yaratish'}
+          {showForm ? `− ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
         </button>
       </div>
       <CollapsibleForm
@@ -291,7 +293,7 @@ const PaymentsPage = () => {
           className="grid gap-4 p-4 md:grid-cols-3"
         >
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.dealer')}</label>
           <select
             required
             name="dealer"
@@ -299,7 +301,7 @@ const PaymentsPage = () => {
             onChange={handleChange}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">Tanlang</option>
+            <option value="">{t('payments.select')}</option>
             {dealers.map((dealer) => (
               <option key={dealer.id} value={dealer.id}>
                 {dealer.name}
@@ -308,7 +310,7 @@ const PaymentsPage = () => {
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('app.operations')}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.date')}</label>
           <input
             type="date"
             name="pay_date"
@@ -318,7 +320,7 @@ const PaymentsPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Summasi</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.amount')}</label>
           <input
             name="amount"
             value={form.amount}
@@ -329,27 +331,27 @@ const PaymentsPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Valyuta</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.currency')}</label>
           <select
             name="currency"
             value={form.currency}
             onChange={handleChange}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="USD">USD</option>
-            <option value="UZS">UZS</option>
+            <option value="USD">{t('payments.usd')}</option>
+            <option value="UZS">{t('payments.uzs')}</option>
           </select>
         </div>
         {form.currency === 'UZS' && (
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Valyuta kursi</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.currencyRate')}</label>
             <select
               name="rate_id"
               value={form.rate_id}
               onChange={handleChange}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             >
-              <option value="">Tanlang</option>
+              <option value="">{t('payments.select')}</option>
               {rates.map((rate) => (
                 <option key={rate.id} value={rate.id}>
                   {rate.rate_date} → {rate.usd_to_uzs}
@@ -359,21 +361,21 @@ const PaymentsPage = () => {
           </div>
         )}
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Usul</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.method')}</label>
           <select
             name="method"
             value={form.method}
             onChange={handleChange}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="cash">Naqd</option>
-            <option value="card">Karta</option>
-            <option value="transfer">Bank</option>
+            <option value="cash">{t('payments.cash')}</option>
+            <option value="card">{t('payments.card')}</option>
+            <option value="transfer">{t('payments.transfer')}</option>
           </select>
         </div>
         {form.method === 'card' && (
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Karta</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.card')}</label>
             <select
               required
               name="card_id"
@@ -381,7 +383,7 @@ const PaymentsPage = () => {
               onChange={handleChange}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             >
-              <option value="">Tanlang</option>
+              <option value="">{t('payments.select')}</option>
               {cards.map((c: any) => (
                 <option key={c.id} value={c.id}>
                   {c.name} — {(c.masked_number) || `${String(c.number).slice(0,4)} **** ${String(c.number).slice(-4)}`} ({c.holder_name})
@@ -391,7 +393,7 @@ const PaymentsPage = () => {
           </div>
         )}
         <div className="md:col-span-3">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Izoh</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.note')}</label>
           <textarea
             name="note"
             value={form.note}
@@ -416,19 +418,20 @@ const PaymentsPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('nav.dealers')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('app.operations')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Valyuta</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">USD</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Usul</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Karta</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.dealer')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.date')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.amount')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.usd')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.uzs')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.method')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.card')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                  Loading payments...
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                  {t('payments.loading')}
                 </td>
               </tr>
             )}
@@ -441,9 +444,10 @@ const PaymentsPage = () => {
                 </td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(payment.pay_date)}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
-                  {formatCurrency(payment.amount, payment.currency)} ({payment.currency})
+                  {formatCurrency(payment.amount, payment.currency)} {payment.currency}
                 </td>
-                <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(payment.amount_usd)}</td>
+                <td className="px-4 py-3 font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(payment.amount_usd)}</td>
+                <td className="px-4 py-3 font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(payment.amount_uzs, 'UZS')}</td>
                 <td className="px-4 py-3 capitalize text-slate-700 dark:text-slate-200">{payment.method}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                   {payment.card ? (
@@ -460,8 +464,8 @@ const PaymentsPage = () => {
             ))}
             {!loading && payments.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                  To&apos;lovlar topilmadi
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                  {t('payments.noPayments')}
                 </td>
               </tr>
             )}

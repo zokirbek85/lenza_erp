@@ -1,4 +1,7 @@
 from django.http import FileResponse
+from django.db.models import Sum, Count, Q
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework import permissions, status, viewsets
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
@@ -11,6 +14,8 @@ from dealers.models import Dealer
 from dealers.serializers import DealerSerializer
 from orders.models import Order
 from orders.serializers import OrderSerializer
+from payments.models import Payment
+from expenses.models import Expense
 
 from .config import load_config, update_config
 from .middleware import AuditLog
@@ -85,6 +90,108 @@ class CompanyInfoViewSet(viewsets.ModelViewSet):
             self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return super().create(request, *args, **kwargs)
+
+
+class DashboardSummaryView(APIView):
+    """Dashboard summary statistics"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.now().date()
+        week_ago = today - timedelta(days=7)
+        month_ago = today - timedelta(days=30)
+
+        # Orders statistics
+        orders_today = Order.objects.filter(created_at__date=today).count()
+        orders_week = Order.objects.filter(created_at__date__gte=week_ago).count()
+        orders_month = Order.objects.filter(created_at__date__gte=month_ago).count()
+        orders_total = Order.objects.count()
+
+        # Payments statistics
+        payments_today = Payment.objects.filter(pay_date=today).aggregate(
+            total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
+        )
+        payments_week = Payment.objects.filter(pay_date__gte=week_ago).aggregate(
+            total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
+        )
+        payments_month = Payment.objects.filter(pay_date__gte=month_ago).aggregate(
+            total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
+        )
+
+        # Expenses statistics
+        from django.db.models import Case, When, DecimalField
+        
+        expenses_today = Expense.objects.filter(date=today, status='approved').aggregate(
+            total_usd=Sum(
+                Case(
+                    When(currency='USD', then='amount'),
+                    default=0,
+                    output_field=DecimalField()
+                )
+            ),
+            total_uzs=Sum(
+                Case(
+                    When(currency='UZS', then='amount'),
+                    default=0,
+                    output_field=DecimalField()
+                )
+            )
+        )
+        expenses_month = Expense.objects.filter(date__gte=month_ago, status='approved').aggregate(
+            total_usd=Sum(
+                Case(
+                    When(currency='USD', then='amount'),
+                    default=0,
+                    output_field=DecimalField()
+                )
+            ),
+            total_uzs=Sum(
+                Case(
+                    When(currency='UZS', then='amount'),
+                    default=0,
+                    output_field=DecimalField()
+                )
+            )
+        )
+
+        # Products and Dealers
+        total_products = Product.objects.count()
+        total_dealers = Dealer.objects.count()
+
+        return Response({
+            'orders': {
+                'today': orders_today,
+                'week': orders_week,
+                'month': orders_month,
+                'total': orders_total,
+            },
+            'payments': {
+                'today': {
+                    'usd': payments_today.get('total_usd') or 0,
+                    'uzs': payments_today.get('total_uzs') or 0,
+                },
+                'week': {
+                    'usd': payments_week.get('total_usd') or 0,
+                    'uzs': payments_week.get('total_uzs') or 0,
+                },
+                'month': {
+                    'usd': payments_month.get('total_usd') or 0,
+                    'uzs': payments_month.get('total_uzs') or 0,
+                },
+            },
+            'expenses': {
+                'today': {
+                    'usd': expenses_today.get('total_usd') or 0,
+                    'uzs': expenses_today.get('total_uzs') or 0,
+                },
+                'month': {
+                    'usd': expenses_month.get('total_usd') or 0,
+                    'uzs': expenses_month.get('total_uzs') or 0,
+                },
+            },
+            'products': total_products,
+            'dealers': total_dealers,
+        })
 
 
 class UserManualViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Table, Card, Button, Modal, Form, Input, Switch, Space, message, Divider } from "antd"
+import { Table, Card, Button, Modal, Form, Input, Switch, Space, message, Divider, Empty } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons"
 import http from '../app/http'
 
@@ -22,10 +22,17 @@ export default function ExpenseTypes() {
     http
       .get("/api/expense-types/")
       .then((res) => {
-        setData(res.data)
+        // Array tekshiruvi - DRF paginated bo'lsa results dan olish
+        const rawData = res.data
+        const dataArray = Array.isArray(rawData) 
+          ? rawData 
+          : (Array.isArray(rawData?.results) ? rawData.results : [])
+        setData(dataArray)
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Fetch expense types error:', error)
         message.error("Ma'lumotlarni yuklashda xatolik")
+        setData([]) // Xatolik bo'lsa bo'sh array
       })
       .finally(() => {
         setLoading(false)
@@ -108,6 +115,18 @@ export default function ExpenseTypes() {
           dataSource={data}
           rowKey="id"
           style={{ marginTop: 16 }}
+          locale={{
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Hozircha chiqim turlari yo'q"
+              >
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
+                  Birinchi turni qo'shish
+                </Button>
+              </Empty>
+            )
+          }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

@@ -1,52 +1,77 @@
+"""
+Ledger Serializers - Professional DRF
+"""
 from rest_framework import serializers
-from .models import LedgerAccount, LedgerEntry
+from .models import LedgerRecord
+from decimal import Decimal
 
 
-class LedgerAccountSerializer(serializers.ModelSerializer):
-    card_name = serializers.CharField(source='payment_card.name', read_only=True, allow_null=True)
+class LedgerRecordSerializer(serializers.ModelSerializer):
+    """Ledger record serializer - to'liq funksional"""
     
-    class Meta:
-        model = LedgerAccount
-        fields = ['id', 'name', 'type', 'currency', 'is_active', 'payment_card', 'card_name', 'created_at']
-        read_only_fields = ['created_at']
-
-
-class LedgerEntrySerializer(serializers.ModelSerializer):
-    account_name = serializers.CharField(source='account.name', read_only=True)
+    # Read-only fields
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
-    reconciled_by_name = serializers.CharField(source='reconciled_by.full_name', read_only=True, allow_null=True)
-    amount = serializers.SerializerMethodField()
-    amount_usd = serializers.SerializerMethodField()
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    source_display = serializers.CharField(source='get_source_display', read_only=True)
     
     class Meta:
-        model = LedgerEntry
+        model = LedgerRecord
         fields = [
-            'id', 'account', 'account_name', 'kind', 'ref_app', 'ref_id',
-            'date', 'currency', 'amount', 'amount_usd', 'note',
-            'reconciled', 'reconciled_at', 'reconciled_by', 'reconciled_by_name',
-            'created_by', 'created_by_name', 'created_at'
+            'id',
+            'date',
+            'type',
+            'type_display',
+            'source',
+            'source_display',
+            'currency',
+            'amount',
+            'amount_usd',
+            'amount_uzs',
+            'description',
+            'ref_model',
+            'ref_id',
+            'created_by',
+            'created_by_name',
+            'created_at',
+            'updated_at',
         ]
-        read_only_fields = ['created_at', 'amount_usd', 'reconciled_at', 'reconciled_by']
-
-    def get_amount(self, obj):
-        """Return amount as float to ensure compatibility with frontend."""
-        try:
-            return float(obj.amount) if obj.amount is not None else 0.0
-        except (ValueError, TypeError):
-            return 0.0
-
-    def get_amount_usd(self, obj):
-        """Return amount_usd as float to ensure compatibility with frontend."""
-        try:
-            return float(obj.amount_usd) if obj.amount_usd is not None else 0.0
-        except (ValueError, TypeError):
-            return 0.0
-
+        read_only_fields = ['amount_usd', 'amount_uzs', 'created_by', 'created_at', 'updated_at']
+    
     def create(self, validated_data):
-        # Calculate amount_usd on create
-        from .models import LedgerEntry
-        amount = validated_data.get('amount')
-        currency = validated_data.get('currency', 'USD')
-        date = validated_data.get('date')
-        validated_data['amount_usd'] = LedgerEntry.to_usd(amount, currency, date)
+        """Yaratishda created_by ni avtomatik qo'shish"""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['created_by'] = request.user
         return super().create(validated_data)
+
+
+class LedgerBalanceSerializer(serializers.Serializer):
+    """Balans serializer"""
+    total_income = serializers.DecimalField(max_digits=14, decimal_places=2)
+    total_expense = serializers.DecimalField(max_digits=14, decimal_places=2)
+    balance = serializers.DecimalField(max_digits=14, decimal_places=2)
+    income_usd = serializers.DecimalField(max_digits=14, decimal_places=2)
+    expense_usd = serializers.DecimalField(max_digits=14, decimal_places=2)
+    balance_usd = serializers.DecimalField(max_digits=14, decimal_places=2)
+    currency = serializers.CharField()
+    usd_rate = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+
+
+class LedgerTrendSerializer(serializers.Serializer):
+    """Trend ma'lumotlari serializer"""
+    date = serializers.DateField()
+    income = serializers.DecimalField(max_digits=14, decimal_places=2)
+    expense = serializers.DecimalField(max_digits=14, decimal_places=2)
+    balance = serializers.DecimalField(max_digits=14, decimal_places=2)
+    income_usd = serializers.DecimalField(max_digits=14, decimal_places=2)
+    expense_usd = serializers.DecimalField(max_digits=14, decimal_places=2)
+    balance_usd = serializers.DecimalField(max_digits=14, decimal_places=2)
+
+
+class LedgerSourceDistributionSerializer(serializers.Serializer):
+    """Manba bo'yicha taqsimot serializer"""
+    source = serializers.CharField()
+    source_display = serializers.CharField()
+    count = serializers.IntegerField()
+    total = serializers.DecimalField(max_digits=14, decimal_places=2)
+    total_usd = serializers.DecimalField(max_digits=14, decimal_places=2)

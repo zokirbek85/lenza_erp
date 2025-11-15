@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chiqimlar ro'yxati</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 11pt;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .report-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .period {
+            font-size: 10pt;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #366092;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e6f2ff !important;
+            border-top: 2px solid #366092;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if company %}
+        <div class="company-name">{{ company.firm_name }}</div>
+        {% endif %}
+        <div class="report-title">CHIQIMLAR RO'YXATI</div>
+        <div class="period">
+            Davr: {% if date_from %}{{ date_from }}{% else %}Boshidan{% endif %} - {% if date_to %}{{ date_to }}{% else %}Hozirgacha{% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%">№</th>
+                <th style="width: 12%">Sana</th>
+                <th style="width: 20%">Turi</th>
+                <th style="width: 13%">To'lov usuli</th>
+                <th style="width: 15%">Karta</th>
+                <th style="width: 12%" class="text-right">Summa</th>
+                <th style="width: 23%">Tavsif</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for expense in expenses %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ expense.date|date:"d.m.Y" }}</td>
+                <td>{{ expense.type.name }}</td>
+                <td>{{ expense.get_method_display }}</td>
+                <td>{% if expense.card %}{{ expense.card.name }}{% else %}-{% endif %}</td>
+                <td class="text-right">{{ expense.amount|floatformat:2 }}</td>
+                <td>{% if expense.description %}{{ expense.description }}{% else %}-{% endif %}</td>
+            </tr>
+            {% endfor %}
+            
+            <tr class="total-row">
+                <td colspan="5" class="text-right">JAMI:</td>
+                <td class="text-right">{{ total|floatformat:2 }}</td>
+                <td>{{ currency }}</td>
+            </tr>
+            
+            {% if currency == 'UZS' %}
+            <tr class="total-row">
+                <td colspan="5" class="text-right">USD kursi bo'yicha:</td>
+                <td class="text-right">{{ total_usd|floatformat:2 }}</td>
+                <td>USD</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}
+        {% if company %}| {{ company.firm_name }}{% endif %}
+        {% if currency == 'UZS' %}| Kurs: 1 USD = {{ usd_rate }} UZS{% endif %}
+    </div>
+</body>
+</html>

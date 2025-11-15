@@ -1,6 +1,33 @@
 import { useEffect, useState } from 'react';
-import { Table, Card, Button, Modal, Form, Input, Select, DatePicker, InputNumber, Typography, Space, message, Divider, Row, Col } from 'antd';
-import { PlusOutlined, FilePdfOutlined, FileExcelOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
+import {
+  Table,
+  Card,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  InputNumber,
+  Typography,
+  Space,
+  message,
+  Row,
+  Col,
+  Tag,
+  Statistic,
+  Tooltip,
+  Popconfirm,
+} from 'antd';
+import {
+  PlusOutlined,
+  FilePdfOutlined,
+  FileExcelOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+} from '@ant-design/icons';
 import { Line, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -9,15 +36,35 @@ import {
   PointElement,
   LineElement,
   Title as ChartTitle,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   Filler,
-  ArcElement
+  ArcElement,
 } from 'chart.js';
+import dayjs, { Dayjs } from 'dayjs';
 import http from '../app/http';
-import dayjs from 'dayjs';
-import { useAuthStore } from '../auth/useAuthStore';
-import { downloadFile } from '../utils/download';
+import {
+  fetchExpenses,
+  fetchExpenseTypes,
+  fetchExpenseStats,
+  fetchExpenseTrend,
+  fetchExpenseDistribution,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+  approveExpense,
+  exportExpensesPdf,
+  exportExpensesExcel,
+} from '../services/expenseApi';
+import type {
+  Expense,
+  ExpenseType,
+  ExpenseStats,
+  ExpenseTrend,
+  ExpenseDistribution,
+  ExpenseFilters,
+} from '../services/expenseApi';
+import type { ColumnsType } from 'antd/es/table';
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,541 +73,637 @@ ChartJS.register(
   PointElement,
   LineElement,
   ChartTitle,
-  Tooltip,
+  ChartTooltip,
   Legend,
   Filler,
   ArcElement
 );
 
-interface ExpenseType { id: number; name: string; is_active: boolean }
-interface PaymentCard { id: number; name: string }
-interface Expense {
-  id: number;
-  date: string;
-  type: number;
-  type_name?: string;
-  method: 'naqd' | 'karta';
-  card?: number | null;
-  card_name?: string | null;
-  currency: 'USD' | 'UZS';
-  amount: number;
-  comment?: string;
-  status: 'yaratilgan' | 'tasdiqlangan';
-}
+const { Title } = Typography;
+const { RangePicker } = DatePicker;
 
-interface ExpenseStats {
-  today?: number;
-  week?: number;
-  month?: number;
-  rate?: number;
+interface PaymentCard {
+  id: number;
+  name: string;
+  number: string;
+  holder_name: string;
+  is_active: boolean;
+  masked_number?: string;
 }
 
 export default function ExpensesPage() {
-  const [data, setData] = useState<Expense[]>([]);
-  const [types, setTypes] = useState<ExpenseType[]>([]);
-  const [cards, setCards] = useState<PaymentCard[]>([]);
-  const [stats, setStats] = useState<ExpenseStats>({});
-  const [trendData, setTrendData] = useState<Array<{ date: string; total_usd: number }>>([]);
-  const [trendTotal, setTrendTotal] = useState<number>(0);
-  const [distributionData, setDistributionData] = useState<Array<{ type: string; amount_usd: number; percent: number }>>([]);
-  const [open, setOpen] = useState(false);
-  const [openTypeModal, setOpenTypeModal] = useState(false);
+  // ========== STATE ==========
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
+  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([]);
+  const [stats, setStats] = useState<ExpenseStats | null>(null);
+  const [trendData, setTrendData] = useState<ExpenseTrend[]>([]);
+  const [distributionData, setDistributionData] = useState<ExpenseDistribution[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm<Expense>();
-  const [typeForm] = Form.useForm<{ name: string }>();
-  const { role } = useAuthStore();
+  const [exporting, setExporting] = useState({ pdf: false, xlsx: false });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [form] = Form.useForm();
 
-  const canWrite = role === 'admin' || role === 'accountant';
+  // Filters
+  const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [filterType, setFilterType] = useState<number | undefined>();
+  const [filterMethod, setFilterMethod] = useState<'cash' | 'card' | undefined>();
+  const [filterCard, setFilterCard] = useState<number | undefined>();
+  const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | undefined>();
 
-  const [filter, setFilter] = useState<{ type?: number | null; method?: 'naqd' | 'karta' | null; range?: [dayjs.Dayjs, dayjs.Dayjs] | null }>({});
-  
-  // Trend filters state
-  const [trendFilters, setTrendFilters] = useState<{
-    type?: number | null;
-    method?: 'naqd' | 'karta' | null;
-    currency?: 'USD' | 'UZS' | null;
-    range?: [dayjs.Dayjs, dayjs.Dayjs] | null;
-  }>({});
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const params: any = {};
-      if (filter.type) params.type = filter.type;
-      if (filter.method) params.method = filter.method;
-      if (filter.range && filter.range.length === 2) {
-        params['date__gte'] = filter.range[0].format('YYYY-MM-DD');
-        params['date__lte'] = filter.range[1].format('YYYY-MM-DD');
-      }
-      const [res, typ, card, stat] = await Promise.all([
-        http.get('/api/expenses/', { params }),
-        http.get('/api/expense-types/'),
-        http.get('/api/payment-cards/', { params: { is_active: true } }),
-        http.get('/api/expenses/stats/'),
-      ]);
-      setData(res.data?.results ?? res.data ?? []);
-      setTypes(typ.data?.results ?? typ.data ?? []);
-      setCards(card.data?.results ?? card.data ?? []);
-      setStats(stat.data ?? {});
-    } catch (e) {
-      console.error(e);
-      message.error("Ma'lumotlarni olishda xatolik");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { 
-    fetchData(); 
-    fetchTrendData();
-    fetchDistributionData();
+  // ========== LOAD DATA ==========
+  useEffect(() => {
+    loadExpenseTypes();
+    loadPaymentCards();
   }, []);
 
-  const fetchTrendData = async () => {
+  useEffect(() => {
+    loadData();
+  }, [dateRange, filterType, filterMethod, filterCard, filterStatus]); // currency o'chirildi
+
+  const loadExpenseTypes = async () => {
     try {
-      const params: any = {};
+      const types = await fetchExpenseTypes();
+      setExpenseTypes(Array.isArray(types) ? types.filter(t => t.is_active) : []);
+    } catch (error) {
+      console.error('Failed to load expense types:', error);
+      message.error('Chiqim turlarini yuklashda xatolik');
+      setExpenseTypes([]);
+    }
+  };
+
+  const loadPaymentCards = async () => {
+    try {
+      const response = await http.get('/api/payment-cards/');
+      // Array tekshiruvi - DRF paginated bo'lsa results dan olish
+      const rawData = response.data;
+      const dataArray = Array.isArray(rawData) 
+        ? rawData 
+        : (Array.isArray(rawData?.results) ? rawData.results : []);
       
-      // Apply trend filters
-      if (trendFilters.type) params.type = trendFilters.type;
-      if (trendFilters.method) params.method = trendFilters.method;
-      if (trendFilters.currency) params.currency = trendFilters.currency;
-      if (trendFilters.range && trendFilters.range.length === 2) {
-        params.start_date = trendFilters.range[0].format('YYYY-MM-DD');
-        params.end_date = trendFilters.range[1].format('YYYY-MM-DD');
-      }
-      
-      const res = await http.get('/api/expenses/trend/', { params });
-      setTrendData(res.data.data || []);
-      setTrendTotal(res.data.total_usd || 0);
-    } catch (e) {
-      console.error(e);
+      // Faqat faol kartalarni filter qilish
+      const activeCards = dataArray.filter((card: PaymentCard) => card.is_active !== false);
+      setPaymentCards(activeCards);
+    } catch (error) {
+      console.error('Failed to load payment cards:', error);
+      message.error('Kartalarni yuklashda xatolik');
+      setPaymentCards([]);
     }
   };
 
-  const fetchDistributionData = async () => {
+  const loadData = async () => {
+    setLoading(true);
+    console.log('🔄 loadData started...');
     try {
-      const res = await http.get('/api/expenses/distribution/');
-      setDistributionData(res.data.data || []);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  // Chart configuration
-  const chartData = {
-    labels: trendData.map(d => d.date),
-    datasets: [
-      {
-        label: 'Xarajatlar (USD)',
-        data: trendData.map(d => d.total_usd),
-        borderColor: '#f87171',
-        backgroundColor: 'rgba(248, 113, 113, 0.1)',
-        fill: true,
-        tension: 0.35,
-        pointRadius: 2,
-        pointHoverRadius: 5,
-      }
-    ]
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        mode: 'index' as const,
-        intersect: false,
-        callbacks: {
-          label: function(context: any) {
-            return `Xarajatlar: $${Number(context.parsed.y || 0).toLocaleString()}`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          maxRotation: 45,
-          minRotation: 45,
-        }
-      },
-      y: {
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        },
-        ticks: {
-          callback: function(value: any) {
-            return '$' + Number(value || 0).toFixed(0);
-          }
-        }
-      }
-    }
-  };
-
-  // Pie chart configuration for distribution
-  const pieChartData = {
-    labels: distributionData.map(d => d.type),
-    datasets: [
-      {
-        label: 'Xarajatlar (USD)',
-        data: distributionData.map(d => d.amount_usd),
-        backgroundColor: [
-          '#3b82f6', // Blue
-          '#10b981', // Green
-          '#f59e0b', // Amber
-          '#ef4444', // Red
-          '#8b5cf6', // Purple
-          '#06b6d4', // Cyan
-          '#ec4899', // Pink
-          '#14b8a6', // Teal
-        ],
-        hoverOffset: 8,
-        borderWidth: 2,
-        borderColor: '#fff',
-      }
-    ]
-  };
-
-  const pieChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          padding: 15,
-          font: {
-            size: 12
-          }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context: any) {
-            const data = distributionData[context.dataIndex];
-            return `${data.type}: $${data.amount_usd.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${data.percent}%)`;
-          }
-        }
-      }
-    }
-  };
-
-  const handleSubmit = async (values: any) => {
-    try {
-      const payload = {
-        ...values,
-        date: values.date ? values.date.format('YYYY-MM-DD') : undefined,
+      const filters: ExpenseFilters = {
+        date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
+        date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
+        type: filterType,
+        method: filterMethod,
+        card: filterCard,
+        status: filterStatus,
       };
-      await http.post('/api/expenses/', payload);
-      message.success('Chiqim yozildi');
-      setOpen(false);
-      form.resetFields();
-      fetchData();
-    } catch (e) {
-      console.error(e);
-      message.error("Saqlashda xatolik");
+      console.log('📋 Filters:', filters);
+
+      const [expensesData, statsData, trendDataResult, distributionDataResult] = await Promise.all([
+        fetchExpenses(filters),
+        fetchExpenseStats(),
+        fetchExpenseTrend(30),
+        fetchExpenseDistribution('month'),
+      ]);
+      
+      console.log('✅ All data loaded:', {
+        expenses: expensesData.length,
+        stats: statsData,
+        trend: trendDataResult.length,
+        distribution: distributionDataResult.length,
+      });
+
+      setExpenses(Array.isArray(expensesData) ? expensesData : []);
+      console.log('📝 Expenses set to state:', expensesData.length, 'items');
+      
+      // Fallback - agar backend bo'sh object qaytarsa
+      setStats(statsData || {
+        today: { count: 0, total_usd: 0, total_uzs: 0 },
+        week: { count: 0, total_usd: 0, total_uzs: 0 },
+        month: { count: 0, total_usd: 0, total_uzs: 0 },
+        total: { count: 0, total_usd: 0, total_uzs: 0 },
+      });
+      
+      setTrendData(trendDataResult || []);
+      setDistributionData(distributionDataResult || []);
+    } catch (error) {
+      message.error("Ma'lumotlarni yuklashda xatolik");
+      console.error('❌ Load data error:', error);
+      
+      // Xatolik bo'lsa ham default qiymatlar
+      setExpenses([]);
+      setStats({
+        today: { count: 0, total_usd: 0, total_uzs: 0 },
+        week: { count: 0, total_usd: 0, total_uzs: 0 },
+        month: { count: 0, total_usd: 0, total_uzs: 0 },
+        total: { count: 0, total_usd: 0, total_uzs: 0 },
+      });
+      setTrendData([]);
+      setDistributionData([]);
+    } finally {
+      setLoading(false);
+      console.log('✅ loadData finished');
     }
   };
 
-  const handleCreateType = async () => {
+  // ========== CRUD OPERATIONS ==========
+  const handleCreate = () => {
+    form.resetFields();
+    setEditingExpense(null);
+    setModalOpen(true);
+  };
+
+  const handleEdit = (expense: Expense) => {
+    form.setFieldsValue({
+      ...expense,
+      date: dayjs(expense.date),
+    });
+    setEditingExpense(expense);
+    setModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
     try {
-      const values = await typeForm.validateFields();
-      const res = await http.post('/api/expense-types/', { name: values.name, is_active: true });
-      const created = res.data;
-      setTypes((prev) => [...prev, created]);
-      // Prefer setting into the expense form if open, else set as active filter
-      if (open) {
-        form.setFieldsValue({ type: created.id });
+      await deleteExpense(id);
+      message.success("Chiqim o'chirildi");
+      loadData();
+    } catch (error) {
+      message.error("O'chirishda xatolik");
+    }
+  };
+
+  const handleApprove = async (id: number) => {
+    try {
+      await approveExpense(id);
+      message.success('Chiqim tasdiqlandi');
+      loadData();
+    } catch (error) {
+      message.error('Tasdiqlashda xatolik');
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      const data = {
+        ...values,
+        date: values.date.format('YYYY-MM-DD'),
+      };
+
+      if (editingExpense) {
+        await updateExpense(editingExpense.id, data);
+        message.success("Chiqim o'zgartirildi");
       } else {
-        setFilter((f) => ({ ...f, type: created.id }));
+        await createExpense(data);
+        message.success('Yangi chiqim yaratildi');
       }
-      setOpenTypeModal(false);
-      typeForm.resetFields();
-      message.success("Chiqim turi qo'shildi");
-    } catch (e: any) {
-      if (e?.errorFields) return; // form validation error
-      console.error(e);
-      message.error("Chiqim turini qo'shishda xatolik");
+
+      setModalOpen(false);
+      loadData();
+    } catch (error) {
+      message.error('Saqlashda xatolik');
     }
   };
 
-  const buildExportQuery = () => {
-    const q: string[] = [];
-    if (filter.type) q.push(`type=${filter.type}`);
-    if (filter.method) q.push(`method=${filter.method}`);
-    if (filter.range && filter.range.length === 2) {
-      q.push(`from=${filter.range[0].format('YYYY-MM-DD')}`);
-      q.push(`to=${filter.range[1].format('YYYY-MM-DD')}`);
-    }
-    return q.length ? `?${q.join('&')}` : '';
-  };
-  const handleExportPdf = async () => {
-    await downloadFile(`/api/expenses/export/${buildExportQuery()}${buildExportQuery() ? '&' : '?'}format=pdf`, 'chiqimlar.pdf');
-  };
-  const handleExportExcel = async () => {
-    await downloadFile(`/api/expenses/export/${buildExportQuery()}${buildExportQuery() ? '&' : '?'}format=xlsx`, 'chiqimlar.xlsx');
-  };
-
-  const handleStatusChange = async (expenseId: number, newStatus: 'yaratilgan' | 'tasdiqlangan') => {
+  // ========== EXPORT ==========
+  const handleExport = async (format: 'pdf' | 'xlsx') => {
+    setExporting((prev) => ({ ...prev, [format]: true }));
     try {
-      await http.post(`/api/expenses/${expenseId}/update-status/`, { status: newStatus });
-      message.success('Holat o\'zgartirildi');
-      fetchData();
-    } catch (e) {
-      console.error(e);
-      message.error('Holatni o\'zgartirishda xatolik');
+      const filters: ExpenseFilters = {
+        date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
+        date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
+        type: filterType,
+        method: filterMethod,
+        card: filterCard,
+        status: filterStatus,
+        currency,
+      };
+
+      const exporter = format === 'pdf' ? exportExpensesPdf : exportExpensesExcel;
+      const blob = await exporter(filters);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `expenses_${dayjs().format('YYYY-MM-DD')}.${format}`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      message.success(`${format.toUpperCase()} yuklandi`);
+    } catch (error) {
+      message.error('Eksport qilishda xatolik');
+    } finally {
+      setExporting((prev) => ({ ...prev, [format]: false }));
     }
   };
+
+  // ========== CHARTS ==========
+  const trendChartData = {
+    labels: trendData.map(d => dayjs(d.date).format('DD MMM')),
+    datasets: [
+      {
+        label: `Chiqimlar (${currency})`,
+        data: trendData.map(d => (currency === 'USD' ? d.total_usd : d.total_uzs)),
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+        fill: true,
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const pieChartData = {
+    labels: distributionData.map(d => d.type_name),
+    datasets: [
+      {
+        data: distributionData.map(d => (currency === 'USD' ? d.total_usd : d.total_uzs)),
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+          'rgba(255, 159, 64, 0.6)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // ========== TABLE COLUMNS ==========
+  const columns: ColumnsType<Expense> = [
+    {
+      title: 'Sana',
+      dataIndex: 'date',
+      key: 'date',
+      render: (date: string) => dayjs(date).format('DD.MM.YYYY'),
+      sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+    },
+    {
+      title: 'Tur',
+      dataIndex: 'type_name',
+      key: 'type_name',
+    },
+    {
+      title: "To'lov usuli",
+      dataIndex: 'method',
+      key: 'method',
+      render: (method: string) => (
+        <Tag color={method === 'cash' ? 'green' : 'blue'}>
+          {method === 'cash' ? 'Naqd' : 'Karta'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Karta',
+      dataIndex: 'card_name',
+      key: 'card_name',
+      render: (name: string | null) => name || '-',
+    },
+    {
+      title: 'Summa',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (amount: number, record: Expense) => (
+        <span>
+          {new Intl.NumberFormat('en-US').format(amount)} {record.currency}
+        </span>
+      ),
+      sorter: (a, b) => a.amount - b.amount,
+    },
+    {
+      title: 'USD',
+      dataIndex: 'amount_usd',
+      key: 'amount_usd',
+      render: (amount: number) => (
+        <strong style={{ color: '#10b981' }}>
+          ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)}
+        </strong>
+      ),
+      sorter: (a, b) => a.amount_usd - b.amount_usd,
+    },
+    {
+      title: 'UZS',
+      dataIndex: 'amount_uzs',
+      key: 'amount_uzs',
+      render: (amount: number) => (
+        <strong style={{ color: '#3b82f6' }}>
+          {new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount)}
+        </strong>
+      ),
+      sorter: (a, b) => a.amount_uzs - b.amount_uzs,
+    },
+    {
+      title: 'Holat',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag
+          icon={status === 'approved' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+          color={status === 'approved' ? 'success' : 'warning'}
+        >
+          {status === 'approved' ? 'Tasdiqlangan' : 'Kutilmoqda'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Izoh',
+      dataIndex: 'description',
+      key: 'description',
+      render: (desc: string | null) => desc || '-',
+    },
+    {
+      title: 'Amallar',
+      key: 'actions',
+      render: (_, record) => (
+        <Space>
+          {record.status === 'pending' && (
+            <Tooltip title="Tasdiqlash">
+              <Button
+                type="link"
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleApprove(record.id)}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title="O'zgartirish">
+            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          </Tooltip>
+          <Popconfirm
+            title="Ishonchingiz komilmi?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Ha"
+            cancelText="Yo'q"
+          >
+            <Button type="link" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <Card
-      title="💸 Chiqimlar"
-      extra={
+    <div style={{ padding: '24px' }}>
+      {/* HEADER */}
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={2}>Chiqimlar</Title>
         <Space>
-          <Space direction="vertical" size={0} align="end">
-            <Typography.Text strong>
-              Bugun: ${(stats.today ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | 
-              Haftalik: ${(stats.week ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | 
-              Oylik: ${(stats.month ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography.Text>
-            {stats.rate && (
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                Kurs: 1 USD = {stats.rate.toLocaleString('en-US')} so'm
-              </Typography.Text>
-            )}
-          </Space>
-          <Button icon={<FilePdfOutlined />} onClick={handleExportPdf}>PDF</Button>
-          <Button icon={<FileExcelOutlined />} onClick={handleExportExcel}>Excel</Button>
-          {canWrite && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>
-              Yangi chiqim
-            </Button>
-          )}
-        </Space>
-      }
-      loading={loading}
-      bordered={false}
-      style={{ borderRadius: 12 }}
-    >
-      <Space style={{ marginBottom: 12 }} wrap>
-        <Select
-          placeholder="Turi"
-          allowClear
-          style={{ width: 200 }}
-          options={types.map((t) => ({ value: t.id, label: t.name }))}
-          value={filter.type ?? null}
-          onChange={(val) => setFilter((f) => ({ ...f, type: val ?? null }))}
-        />
-        {types.length === 0 && role === 'admin' && (
-          <Button size="small" icon={<PlusOutlined />} onClick={() => setOpenTypeModal(true)}>
-            Turi qo'shish
+          <Select value={currency} onChange={setCurrency} style={{ width: 100 }}>
+            <Select.Option value="USD">USD</Select.Option>
+            <Select.Option value="UZS">UZS</Select.Option>
+          </Select>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            Yangi chiqim
           </Button>
-        )}
-        <Select
-          placeholder="Usul"
-          allowClear
-          style={{ width: 160 }}
-          options={[{ value: 'naqd', label: 'Naqd' }, { value: 'karta', label: 'Karta' }]}
-          value={filter.method ?? null}
-          onChange={(val) => setFilter((f) => ({ ...f, method: (val as any) ?? null }))}
-        />
-        <DatePicker.RangePicker
-          value={filter.range as any}
-          onChange={(rng) => setFilter((f) => ({ ...f, range: (rng as any) ?? null }))}
-        />
-        <Button onClick={fetchData}>Filtrlash</Button>
-        <Button onClick={() => { setFilter({}); fetchData(); }}>
-          Tozalash
-        </Button>
-      </Space>
-
-      {/* Expense Trend Chart */}
-      <Divider orientation="left">
-        <Space>
-          <LineChartOutlined />
-          Expense Trend
         </Space>
-      </Divider>
+      </div>
 
-      {/* Trend Filters */}
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Select
-          placeholder="Turi"
-          allowClear
-          style={{ width: 180 }}
-          options={types.map((t) => ({ value: t.id, label: t.name }))}
-          value={trendFilters.type ?? null}
-          onChange={(val) => setTrendFilters((f) => ({ ...f, type: val ?? null }))}
-        />
-        <Select
-          placeholder="Usul"
-          allowClear
-          style={{ width: 140 }}
-          options={[
-            { value: 'naqd', label: '💵 Naqd' },
-            { value: 'karta', label: '💳 Karta' },
-          ]}
-          value={trendFilters.method ?? null}
-          onChange={(val) => setTrendFilters((f) => ({ ...f, method: (val as any) ?? null }))}
-        />
-        <Select
-          placeholder="Valyuta"
-          allowClear
-          style={{ width: 120 }}
-          options={[
-            { value: 'USD', label: '💵 USD' },
-            { value: 'UZS', label: '💸 UZS' },
-          ]}
-          value={trendFilters.currency ?? null}
-          onChange={(val) => setTrendFilters((f) => ({ ...f, currency: (val as any) ?? null }))}
-        />
-        <DatePicker.RangePicker
-          placeholder={['Boshlanish', 'Tugash']}
-          format="DD.MM.YYYY"
-          value={trendFilters.range as any}
-          onChange={(rng) => setTrendFilters((f) => ({ ...f, range: (rng as any) ?? null }))}
-        />
-        <Button type="primary" onClick={fetchTrendData}>
-          Filtrlash
-        </Button>
-        <Button 
-          onClick={() => { 
-            setTrendFilters({}); 
-            setTimeout(fetchTrendData, 100);
-          }}
-        >
-          Tozalash
-        </Button>
-        {trendTotal > 0 && (
-          <Typography.Text strong style={{ marginLeft: 8 }}>
-            Jami: ${trendTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </Typography.Text>
-        )}
-      </Space>
-      
-      <Row gutter={24}>
-        <Col xs={24} lg={16}>
-          <div style={{ height: 280, marginBottom: 24 }}>
-            <Line data={chartData} options={chartOptions} />
-          </div>
+      {/* STATISTICS CARDS */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Bugun"
+              value={stats ? (currency === 'USD' ? stats.today.total_usd : stats.today.total_uzs) : 0}
+              suffix={currency}
+              precision={2}
+            />
+          </Card>
         </Col>
-        
-        <Col xs={24} lg={8}>
-          <Divider orientation="left">
-            <Space>
-              <PieChartOutlined />
-              Expense Distribution (So'nggi 30 kun)
-            </Space>
-          </Divider>
-          <div style={{ height: 280, marginBottom: 24 }}>
-            <Pie data={pieChartData} options={pieChartOptions} />
-          </div>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Hafta"
+              value={stats ? (currency === 'USD' ? stats.week.total_usd : stats.week.total_uzs) : 0}
+              suffix={currency}
+              precision={2}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Oy"
+              value={stats ? (currency === 'USD' ? stats.month.total_usd : stats.month.total_uzs) : 0}
+              suffix={currency}
+              precision={2}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="Jami"
+              value={stats ? (currency === 'USD' ? stats.total.total_usd : stats.total.total_uzs) : 0}
+              suffix={currency}
+              precision={2}
+            />
+          </Card>
         </Col>
       </Row>
 
-      <Table
-        rowKey="id"
-        dataSource={data}
-        columns={[
-          { title: 'Sana', dataIndex: 'date', render: (v: string) => dayjs(v).format('DD.MM.YYYY') },
-          { title: 'Turi', dataIndex: 'type_name' },
-          { title: 'Usul', dataIndex: 'method' },
-          { title: 'Karta', dataIndex: 'card_name' },
-          { title: 'Valyuta', dataIndex: 'currency' },
-          { title: 'Miqdor', dataIndex: 'amount' },
-          { title: 'Izoh', dataIndex: 'comment' },
-          {
-            title: 'Holat',
-            dataIndex: 'status',
-            render: (status: 'yaratilgan' | 'tasdiqlangan', record: Expense) =>
-              canWrite ? (
-                <Select
-                  value={status}
-                  style={{ width: 140 }}
-                  onChange={(val) => handleStatusChange(record.id, val)}
-                  options={[
-                    { value: 'yaratilgan', label: 'Yaratilgan' },
-                    { value: 'tasdiqlangan', label: 'Tasdiqlangan' },
-                  ]}
+      {/* CHARTS */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col xs={24} lg={16}>
+          <Card title="30 kunlik tendensiya">
+            <Line data={trendChartData} options={{ responsive: true, maintainAspectRatio: true }} />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="Oy bo'yicha taqsimot">
+            <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: true }} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* FILTERS & EXPORT */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16}>
+          <Col xs={24} sm={12} md={6}>
+            <RangePicker
+              value={dateRange}
+              onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+              format="DD.MM.YYYY"
+              style={{ width: '100%' }}
+              placeholder={['Boshlanish', 'Tugash']}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="Tur"
+              allowClear
+              value={filterType}
+              onChange={setFilterType}
+              style={{ width: '100%' }}
+            >
+              {expenseTypes.map(type => (
+                <Select.Option key={type.id} value={type.id}>
+                  {type.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="To'lov usuli"
+              allowClear
+              value={filterMethod}
+              onChange={setFilterMethod}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="cash">Naqd</Select.Option>
+              <Select.Option value="card">Karta</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="Karta"
+              allowClear
+              value={filterCard}
+              onChange={setFilterCard}
+              style={{ width: '100%' }}
+              disabled={filterMethod !== 'card'}
+              notFoundContent="Kartalar topilmadi"
+              showSearch
+              optionFilterProp="children"
+            >
+              {Array.isArray(paymentCards) && paymentCards.map(card => (
+                <Select.Option key={card.id} value={card.id}>
+                  {card.name} {card.masked_number ? `(${card.masked_number})` : ''}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="Holat"
+              allowClear
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="pending">Kutilmoqda</Select.Option>
+              <Select.Option value="approved">Tasdiqlangan</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={2}>
+            <Space>
+              <Tooltip title="PDF yuklab olish">
+                <Button
+                  icon={<FilePdfOutlined />}
+                  onClick={() => handleExport('pdf')}
+                  loading={exporting.pdf}
                 />
-              ) : (
-                status
-              ),
-          },
-        ]}
-        pagination={{ pageSize: 25 }}
-      />
+              </Tooltip>
+              <Tooltip title="Excel yuklab olish">
+                <Button
+                  icon={<FileExcelOutlined />}
+                  onClick={() => handleExport('xlsx')}
+                  loading={exporting.xlsx}
+                />
+              </Tooltip>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
+      {/* TABLE */}
+      <Card>
+        <Table
+          columns={columns}
+          dataSource={expenses}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `Jami: ${total}` }}
+        />
+      </Card>
+
+      {/* CREATE/EDIT MODAL */}
       <Modal
-        open={open}
-        title="Yangi chiqim"
-        onCancel={() => setOpen(false)}
-        onOk={() => form.submit()}
+        title={editingExpense ? "Chiqimni o'zgartirish" : 'Yangi chiqim yaratish'}
+        open={modalOpen}
+        onOk={handleSubmit}
+        onCancel={() => setModalOpen(false)}
+        width={600}
         okText="Saqlash"
-        destroyOnClose
+        cancelText="Bekor qilish"
       >
-        <Form layout="vertical" form={form} onFinish={handleSubmit}>
-          <Form.Item name="date" label="Sana">
-            <DatePicker style={{ width: '100%' }} />
+        <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
+          <Form.Item name="date" label="Sana" rules={[{ required: true, message: 'Sanani tanlang' }]}>
+            <DatePicker format="DD.MM.YYYY" style={{ width: '100%' }} />
           </Form.Item>
+
+          <Form.Item name="type" label="Tur" rules={[{ required: true, message: 'Turni tanlang' }]}>
+            <Select placeholder="Tanlang">
+              {expenseTypes.map(type => (
+                <Select.Option key={type.id} value={type.id}>
+                  {type.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="method" label="To'lov usuli" rules={[{ required: true, message: "To'lov usulini tanlang" }]}>
+            <Select placeholder="Tanlang">
+              <Select.Option value="cash">Naqd pul</Select.Option>
+              <Select.Option value="card">Karta</Select.Option>
+            </Select>
+          </Form.Item>
+
           <Form.Item
-            name="type"
-            label={
-              <Space>
-                Turi
-                {types.length === 0 && role === 'admin' && (
-                  <Button size="small" type="link" icon={<PlusOutlined />} onClick={() => setOpenTypeModal(true)}>
-                    qo'shish
-                  </Button>
-                )}
-              </Space>
-            }
-            rules={[{ required: true }] }
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.method !== currentValues.method}
           >
-            <Select options={types.map((t) => ({ value: t.id, label: t.name }))} showSearch optionFilterProp="label" />
+            {({ getFieldValue }) =>
+              getFieldValue('method') === 'card' ? (
+                <Form.Item name="card" label="Karta" rules={[{ required: true, message: 'Kartani tanlang' }]}>
+                  <Select 
+                    placeholder="Kartani tanlang"
+                    notFoundContent="Kartalar topilmadi. Iltimos, avval karta qo'shing."
+                    showSearch
+                    optionFilterProp="children"
+                  >
+                    {Array.isArray(paymentCards) && paymentCards.map(card => (
+                      <Select.Option key={card.id} value={card.id}>
+                        {card.name} {card.masked_number ? `(${card.masked_number})` : ''}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              ) : null
+            }
           </Form.Item>
-          <Form.Item name="method" label="To‘lov usuli" rules={[{ required: true }] }>
-            <Select options={[{ value: 'naqd', label: 'Naqd' }, { value: 'karta', label: 'Karta' }]} />
-          </Form.Item>
-          <Form.Item shouldUpdate noStyle>
-            {() => (
-              <Form.Item name="card" label="Karta" rules={form.getFieldValue('method') === 'karta' ? [{ required: true }] : []}>
-                <Select allowClear options={cards.map((c) => ({ value: c.id, label: c.name }))} placeholder="Karta faqat 'karta' usulida" />
-              </Form.Item>
-            )}
-          </Form.Item>
-          <Form.Item name="currency" label="Valyuta" rules={[{ required: true }]}>
-            <Select options={[{ value: 'USD', label: 'USD' }, { value: 'UZS', label: 'UZS' }]} />
-          </Form.Item>
-          <Form.Item name="amount" label="Miqdor" rules={[{ required: true }]}>
-            <InputNumber min={0} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="comment" label="Izoh">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
-      </Modal>
 
-      <Modal
-        open={openTypeModal}
-        title="Chiqim turi qo'shish"
-        onCancel={() => setOpenTypeModal(false)}
-        onOk={handleCreateType}
-        okText="Saqlash"
-        destroyOnClose
-      >
-        <Form layout="vertical" form={typeForm}>
-          <Form.Item name="name" label="Nomi" rules={[{ required: true, message: 'Nomini kiriting' }]}>
-            <Input placeholder="Masalan: Ijara, Uskuna ta’miri..." />
+          <Form.Item name="currency" label="Valyuta" rules={[{ required: true, message: 'Valyutani tanlang' }]}>
+            <Select placeholder="Tanlang">
+              <Select.Option value="USD">USD</Select.Option>
+              <Select.Option value="UZS">UZS</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="amount" label="Summa" rules={[{ required: true, message: 'Summani kiriting' }]}>
+            <InputNumber min={0} style={{ width: '100%' }} placeholder="0.00" />
+          </Form.Item>
+
+          <Form.Item name="description" label="Izoh">
+            <Input.TextArea rows={3} placeholder="Qo'shimcha ma'lumot..." />
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
 }

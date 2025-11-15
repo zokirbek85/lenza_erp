@@ -1,343 +1,295 @@
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.db.models import Sum
-from django.utils.dateparse import parse_date
-from django.http import HttpResponse, FileResponse
-from django.utils import timezone
-from datetime import timedelta, date
-from .models import LedgerAccount, LedgerEntry
-from core.mixins.report_mixin import BaseReportMixin
-from core.mixins.export_mixins import ExportMixin
-from .serializers import LedgerAccountSerializer, LedgerEntrySerializer
-from .services import LedgerService
+"""
+Ledger Views - Dynamic Balance Calculator
+NOTE: Ledger — bu alohida model emas, balki Payment va Expense'dan real-time hisoblangan data.
+"""
+from datetime import date, timedelta
 from decimal import Decimal
 
+from django.db.models import Sum, Count, Q, F, Case, When, DecimalField
+from django.db.models.functions import TruncDate
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import status
 
-class IsOwnerOrAccountantOrAdmin(permissions.BasePermission):
-    """Only owner, admin, and accountant can access ledger."""
-    def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        return getattr(request.user, 'role', None) in ('owner', 'admin', 'accountant')
+from payments.models import Payment, PaymentCard
+from expenses.models import Expense
 
 
-class LedgerAccountViewSet(viewsets.ModelViewSet):
-    queryset = LedgerAccount.objects.filter(is_active=True).select_related('payment_card')
-    serializer_class = LedgerAccountSerializer
-    permission_classes = [IsOwnerOrAccountantOrAdmin]
-    http_method_names = ['get', 'post', 'patch', 'delete']
-
-    @action(detail=False, methods=['get'])
-    def balances(self, request):
-        """Get aggregated USD balances by account with UZS equivalent."""
-        from payments.models import CurrencyRate
+class LedgerSummaryView(APIView):
+    """
+    Ledger Summary - Birlashtirilgan balans va moliyaviy tahlil
+    
+    GET /api/ledger/?from=2025-01-01&to=2025-12-31&card_id=1
+    
+    Response:
+    {
+        "total_income_usd": 10000,
+        "total_income_uzs": 126000000,
+        "total_expense_usd": 5000,
+        "total_expense_uzs": 63000000,
+        "balance_usd": 5000,
+        "balance_uzs": 63000000,
+        "history": [
+            {
+                "date": "2025-11-15",
+                "income_usd": 1000,
+                "income_uzs": 12600000,
+                "expense_usd": 500,
+                "expense_uzs": 6300000,
+                "balance_usd": 500,
+                "balance_uzs": 6300000
+            }
+        ]
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # Query parametrlari
+        date_from = request.query_params.get('from')
+        date_to = request.query_params.get('to')
+        card_id = request.query_params.get('card_id')
         
-        # Get latest exchange rate
-        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
-        usd_to_uzs = Decimal(str(latest_rate.usd_to_uzs)) if latest_rate else Decimal('12500')
+        # Base querysets - faqat tasdiqlangan to'lovlar va approved xarajatlar
+        payments_qs = Payment.objects.filter(status=Payment.Status.CONFIRMED).select_related('dealer', 'card')
+        expenses_qs = Expense.objects.filter(status=Expense.STATUS_APPROVED).select_related('type', 'card')
         
-        # Aggregate balances in USD
-        entries = LedgerEntry.objects.values('account').annotate(total_usd=Sum('amount_usd'))
-        totals = {e['account']: float(e['total_usd'] or 0) for e in entries}
+        # Filtrlash
+        if date_from:
+            payments_qs = payments_qs.filter(pay_date__gte=date_from)
+            expenses_qs = expenses_qs.filter(date__gte=date_from)
         
-        # Calculate total balances
-        total_balance = sum(totals.values())
-        cash_balance = 0
-        bank_balance = 0
-        card_balance = 0
+        if date_to:
+            payments_qs = payments_qs.filter(pay_date__lte=date_to)
+            expenses_qs = expenses_qs.filter(date__lte=date_to)
         
-        accounts_data = []
-        for acc in self.get_queryset():
-            balance_usd = totals.get(acc.id, 0.0)
-            balance_uzs = round(balance_usd * float(usd_to_uzs), 2)
+        if card_id:
+            payments_qs = payments_qs.filter(card_id=card_id)
+            expenses_qs = expenses_qs.filter(card_id=card_id)
+        
+        # Jami summa hisoblash (optimized - bitta query)
+        total_income_usd = payments_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
+        total_income_uzs = payments_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+        total_expense_usd = expenses_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
+        total_expense_uzs = expenses_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+        
+        balance_usd = total_income_usd - total_expense_usd
+        balance_uzs = total_income_uzs - total_expense_uzs
+        
+        # Kunlik taqsimot (history) - Python'da guruhlaymiz (SQLite TruncDate muammosi)
+        daily_dict = {}
+        
+        # To'lovlarni kunlik guruhga ajratish
+        for payment in payments_qs.values('pay_date', 'amount_usd', 'amount_uzs'):
+            day = payment['pay_date']
+            if day not in daily_dict:
+                daily_dict[day] = {
+                    'date': day.strftime('%Y-%m-%d'),
+                    'income_usd': 0,
+                    'income_uzs': 0,
+                    'expense_usd': 0,
+                    'expense_uzs': 0,
+                }
+            daily_dict[day]['income_usd'] += float(payment['amount_usd'] or 0)
+            daily_dict[day]['income_uzs'] += float(payment['amount_uzs'] or 0)
+        
+        # Chiqimlarni kunlik guruhga ajratish
+        for expense in expenses_qs.values('date', 'amount_usd', 'amount_uzs'):
+            day = expense['date']
+            if day not in daily_dict:
+                daily_dict[day] = {
+                    'date': day.strftime('%Y-%m-%d'),
+                    'income_usd': 0,
+                    'income_uzs': 0,
+                    'expense_usd': 0,
+                    'expense_uzs': 0,
+                }
+            daily_dict[day]['expense_usd'] += float(expense['amount_usd'] or 0)
+            daily_dict[day]['expense_uzs'] += float(expense['amount_uzs'] or 0)
+        
+        # Calculate daily cumulative balances
+        history = []
+        cumulative_usd = Decimal('0')
+        cumulative_uzs = Decimal('0')
+        
+        for day in sorted(daily_dict.keys()):
+            item = daily_dict[day]
+            cumulative_usd += Decimal(str(item['income_usd'])) - Decimal(str(item['expense_usd']))
+            cumulative_uzs += Decimal(str(item['income_uzs'])) - Decimal(str(item['expense_uzs']))
             
-            # Sum by type
-            if acc.type == 'cash':
-                cash_balance += balance_usd
-            elif acc.type == 'bank':
-                bank_balance += balance_usd
-            elif acc.type == 'card':
-                card_balance += balance_usd
-            
-            accounts_data.append({
-                'id': acc.id,
-                'name': acc.name,
-                'type': acc.type,
-                'currency': acc.currency,
-                'balance_usd': balance_usd,
-                'balance_uzs': balance_uzs,
-                'card_name': acc.payment_card.name if acc.payment_card else None,
-            })
+            item['balance_usd'] = float(cumulative_usd)
+            item['balance_uzs'] = float(cumulative_uzs)
+            history.append(item)
         
+        # Response
         return Response({
-            'rate': float(usd_to_uzs),
-            'total_balance': total_balance,
-            'cash_balance': cash_balance,
-            'bank_balance': bank_balance,
-            'card_balance': card_balance,
-            'accounts': accounts_data
+            'total_income_usd': float(total_income_usd),
+            'total_income_uzs': float(total_income_uzs),
+            'total_expense_usd': float(total_expense_usd),
+            'total_expense_uzs': float(total_expense_uzs),
+            'balance_usd': float(balance_usd),
+            'balance_uzs': float(balance_uzs),
+            'history': history,
         })
 
 
-class LedgerEntryViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
-    queryset = LedgerEntry.objects.select_related('account', 'created_by').all()
-    serializer_class = LedgerEntrySerializer
-    permission_classes = [IsOwnerOrAccountantOrAdmin]
-    http_method_names = ['get', 'post', 'delete']
+class CardBalanceView(APIView):
+    """
+    Karta balansi - faqat shu karta orqali qilingan to'lovlar va chiqimlar
     
-    # BaseReportMixin configuration
-    date_field = "date"
-    filename_prefix = "ledger"
-    title_prefix = "Kassa hisoboti"
-    report_template = "ledger/report.html"
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        account = self.request.query_params.get('account')
-        d1 = self.request.query_params.get('from')
-        d2 = self.request.query_params.get('to')
-        if account:
-            qs = qs.filter(account_id=account)
-        if d1:
-            date_from = parse_date(d1)
-            if date_from:
-                qs = qs.filter(date__gte=date_from)
-        if d2:
-            date_to = parse_date(d2)
-            if date_to:
-                qs = qs.filter(date__lte=date_to)
-        return qs.order_by('-date', '-id')
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    @action(detail=False, methods=['post'])
-    def adjustment(self, request):
-        """Create manual adjustment entry."""
-        account_id = request.data.get('account')
-        amount = request.data.get('amount')
-        currency = request.data.get('currency', 'USD')
-        note = request.data.get('note', 'Manual adjustment')
-        date_str = request.data.get('date')
-        
-        if not account_id or amount is None:
-            return Response({'error': 'account and amount required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+    GET /api/cards/1/balance/
+    
+    Response:
+    {
+        "card_id": 1,
+        "card_name": "Uzcard - Asosiy",
+        "income_usd": 5000,
+        "income_uzs": 63000000,
+        "expense_usd": 2000,
+        "expense_uzs": 25200000,
+        "balance_usd": 3000,
+        "balance_uzs": 37800000
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, card_id):
         try:
-            account = LedgerAccount.objects.get(id=account_id, is_active=True)
-        except LedgerAccount.DoesNotExist:
-            return Response({'error': 'Account not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        adj_date = None
-        if date_str:
-            adj_date = parse_date(date_str)
-        
-        entry = LedgerService.post_adjustment(
-            account=account,
-            amount=Decimal(str(amount)),
-            currency=currency,
-            note=note,
-            actor=request.user,
-            date=adj_date
-        )
-        serializer = self.get_serializer(entry)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['post'])
-    def reconcile(self, request, pk=None):
-        """Mark an entry as reconciled."""
-        entry = self.get_object()
-        entry.reconciled = True
-        entry.reconciled_at = timezone.now()
-        entry.reconciled_by = request.user
-        entry.save()
-        serializer = self.get_serializer(entry)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def unreconcile(self, request, pk=None):
-        """Unmark an entry as reconciled."""
-        entry = self.get_object()
-        entry.reconciled = False
-        entry.reconciled_at = None
-        entry.reconciled_by = None
-        entry.save()
-        serializer = self.get_serializer(entry)
-        return Response(serializer.data)
-
-    def get_report_rows(self, queryset):
-        """Generate rows for ledger entries with account, type, amount."""
-        rows = []
-        for entry in queryset.order_by('date', 'id'):
-            rows.append({
-                'Sana': entry.date.strftime('%d.%m.%Y') if entry.date else '',
-                'Hisob': entry.account.name,
-                'Turi': entry.kind,
-                'Valyuta': entry.currency,
-                'Miqdor': f"{float(entry.amount):,.2f}",
-                'USD': f"{float(entry.amount_usd):,.2f}",
-                'Izoh': entry.note or '',
-            })
-        return rows
-    
-    def get_report_total(self, queryset):
-        """Calculate total amount in USD."""
-        total = queryset.aggregate(Sum('amount_usd'))['amount_usd__sum'] or 0
-        return total
-
-    @action(detail=False, methods=['get'])
-    def flow(self, request):
-        """Get cash flow trend for the last 30 days."""
-        today = date.today()
-        days = int(request.query_params.get('days', 30))
-        start = today - timedelta(days=days - 1)
-        
-        # Get all entries within the date range
-        qs = LedgerEntry.objects.filter(date__gte=start, date__lte=today).order_by('date')
-        
-        # Calculate cumulative balance for each day
-        data = []
-        for i in range(days):
-            d = start + timedelta(days=i)
-            # Get cumulative balance up to this date
-            cumulative = LedgerEntry.objects.filter(date__lte=d).aggregate(
-                total=Sum('amount_usd')
-            )['total'] or 0
-            
-            data.append({
-                'date': d.strftime('%d.%m'),
-                'full_date': d.isoformat(),
-                'balance_usd': float(cumulative)
-            })
-        
-        return Response(data)
-
-    @action(detail=False, methods=['get'])
-    def export(self, request):
-        """Unified export: ?format=pdf|xlsx for ledger entries."""
-        fmt = request.query_params.get('format', 'xlsx')
-        qs = self.get_queryset()
-
-        rows = [{
-            'Sana': (e.date.isoformat() if e.date else ''),
-            'Hisob': e.account.name,
-            'Turi': e.kind,
-            'Ref': (f"{e.ref_app} #{e.ref_id}" if e.ref_app and e.ref_id else ''),
-            'Valyuta': e.currency,
-            'Miqdor': float(e.amount),
-            'USD': float(e.amount_usd),
-            'Izoh': (e.note or ''),
-        } for e in qs.order_by('date', 'id')]
-
-        if fmt == 'pdf':
-            return self.render_pdf_with_qr(
-                'ledger/export.html',
-                {'rows': rows, 'title': 'Kassa balans'},
-                'kassa_balans',
-                request=request,
-                doc_type='ledger-export',
-                doc_id=None,
+            card = PaymentCard.objects.get(id=card_id)
+        except PaymentCard.DoesNotExist:
+            return Response(
+                {'error': 'Karta topilmadi'},
+                status=status.HTTP_404_NOT_FOUND
             )
-        return self.render_xlsx(rows, 'kassa_balans')
-
-
-class LedgerReportPDFView(viewsets.ViewSet, ExportMixin):
-    permission_classes = [IsOwnerOrAccountantOrAdmin]
-
-    def list(self, request):
-        """Generate branded, QR-enabled PDF report for ledger entries."""
-        account = request.query_params.get('account')
-        d1 = request.query_params.get('from')
-        d2 = request.query_params.get('to')
-
-        qs = LedgerEntry.objects.select_related('account', 'created_by').all()
-        if account:
-            qs = qs.filter(account_id=account)
-        if d1:
-            date_from = parse_date(d1)
-            if date_from:
-                qs = qs.filter(date__gte=date_from)
-        if d2:
-            date_to = parse_date(d2)
-            if date_to:
-                qs = qs.filter(date__lte=date_to)
-        qs = qs.order_by('date', 'id')
-
-        # Calculate totals
-        total_usd_in = float(qs.filter(amount_usd__gt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
-        total_usd_out = float(qs.filter(amount_usd__lt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
-        net_balance = total_usd_in + total_usd_out
-
-        account_name = None
-        if account:
-            try:
-                acc = LedgerAccount.objects.get(id=account)
-                account_name = acc.name
-            except LedgerAccount.DoesNotExist:
-                pass
-
-        context = {
-            'entries': qs,
-            'from_date': d1,
-            'to_date': d2,
-            'account_name': account_name,
-            'generated_at': timezone.now(),
-            'total_in': total_usd_in,
-            'total_out': abs(total_usd_out),
-            'net_balance': net_balance,
-        }
-
-        return self.render_pdf_with_qr(
-            'reports/ledger_report.html',
-            context,
-            filename_prefix='ledger_report',
-            request=request,
-            doc_type='ledger-report',
-            doc_id='bulk',
+        
+        # Faqat tasdiqlangan to'lovlar va approved xarajatlar
+        payments_qs = Payment.objects.filter(
+            card=card,
+            status=Payment.Status.CONFIRMED
         )
-
-
-class LedgerExportExcelView(viewsets.ViewSet, ExportMixin):
-    permission_classes = [IsOwnerOrAccountantOrAdmin]
-
-    def list(self, request):
-        """Export ledger entries to Excel using render_xlsx."""
-        account = request.query_params.get('account')
-        d1 = request.query_params.get('from')
-        d2 = request.query_params.get('to')
+        expenses_qs = Expense.objects.filter(
+            card=card,
+            status=Expense.STATUS_APPROVED
+        )
         
-        qs = LedgerEntry.objects.select_related('account', 'created_by').all()
-        if account:
-            qs = qs.filter(account_id=account)
-        if d1:
-            date_from = parse_date(d1)
-            if date_from:
-                qs = qs.filter(date__gte=date_from)
-        if d2:
-            date_to = parse_date(d2)
-            if date_to:
-                qs = qs.filter(date__lte=date_to)
-        qs = qs.order_by('date', 'id')
+        # Aggregate
+        income_usd = payments_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
+        income_uzs = payments_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+        expense_usd = expenses_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
+        expense_uzs = expenses_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
         
-        rows = []
-        for e in qs:
-            rows.append({
-                'Date': (e.date.isoformat() if e.date else ''),
-                'Account': e.account.name,
-                'Kind': e.kind,
-                'Ref': (f"{e.ref_app} #{e.ref_id}" if e.ref_app and e.ref_id else ''),
-                'Currency': e.currency,
-                'Amount': float(e.amount),
-                'USD Amount': float(e.amount_usd),
-                'Note': (e.note or ''),
-                'Created By': (e.created_by.full_name if e.created_by else ''),
+        return Response({
+            'card_id': card.id,
+            'card_name': card.name,
+            'income_usd': float(income_usd),
+            'income_uzs': float(income_uzs),
+            'expense_usd': float(expense_usd),
+            'expense_uzs': float(expense_uzs),
+            'balance_usd': float(income_usd - expense_usd),
+            'balance_uzs': float(income_uzs - expense_uzs),
+        })
+
+
+class LedgerByCardView(APIView):
+    """
+    Barcha kartalardagi balanslar ro'yxati
+    
+    GET /api/ledger/by-card/
+    
+    Response:
+    [
+        {
+            "card_id": 1,
+            "card_name": "Uzcard - Asosiy",
+            "income_usd": 5000,
+            "income_uzs": 63000000,
+            "expense_usd": 2000,
+            "expense_uzs": 25200000,
+            "balance_usd": 3000,
+            "balance_uzs": 37800000
+        }
+    ]
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        cards = PaymentCard.objects.filter(is_active=True)
+        results = []
+        
+        for card in cards:
+            # Optimized - har bir karta uchun 2 ta query
+            payments_qs = Payment.objects.filter(
+                card=card,
+                status=Payment.Status.CONFIRMED
+            )
+            expenses_qs = Expense.objects.filter(
+                card=card,
+                status=Expense.STATUS_APPROVED
+            )
+            
+            income_usd = payments_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
+            income_uzs = payments_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+            expense_usd = expenses_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
+            expense_uzs = expenses_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+            
+            results.append({
+                'card_id': card.id,
+                'card_name': card.name,
+                'income_usd': float(income_usd),
+                'income_uzs': float(income_uzs),
+                'expense_usd': float(expense_usd),
+                'expense_uzs': float(expense_uzs),
+                'balance_usd': float(income_usd - expense_usd),
+                'balance_uzs': float(income_uzs - expense_uzs),
             })
+        
+        return Response(results)
 
-        # Totals row for convenience
-        total_usd_in = float(qs.filter(amount_usd__gt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
-        total_usd_out = float(qs.filter(amount_usd__lt=0).aggregate(s=Sum('amount_usd'))['s'] or 0)
-        rows.append({})
-        rows.append({'Currency': 'TOTALS', 'Amount': f'{total_usd_in:.2f}', 'USD Amount': f'{total_usd_out:.2f}', 'Note': f'Net: {total_usd_in + total_usd_out:.2f}'})
 
-        return self.render_xlsx(rows, 'ledger_entries')
+class LedgerByCategoryView(APIView):
+    """
+    Kategoriya (Expense Type) bo'yicha chiqimlar tahlili
+    
+    GET /api/ledger/by-category/
+    
+    Response:
+    [
+        {
+            "category": "Transport",
+            "total_usd": 1000,
+            "total_uzs": 12600000,
+            "count": 10
+        }
+    ]
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        date_from = request.query_params.get('from')
+        date_to = request.query_params.get('to')
+        
+        expenses_qs = Expense.objects.filter(status=Expense.STATUS_APPROVED).select_related('type')
+        
+        if date_from:
+            expenses_qs = expenses_qs.filter(date__gte=date_from)
+        if date_to:
+            expenses_qs = expenses_qs.filter(date__lte=date_to)
+        
+        # Kategoriya bo'yicha guruh
+        by_category = expenses_qs.values('type__name').annotate(
+            total_usd=Sum('amount_usd'),
+            total_uzs=Sum('amount_uzs'),
+            count=Count('id')
+        ).order_by('-total_usd')
+        
+        results = []
+        for item in by_category:
+            results.append({
+                'category': item['type__name'] or 'Unknown',
+                'total_usd': float(item['total_usd'] or 0),
+                'total_uzs': float(item['total_uzs'] or 0),
+                'count': item['count']
+            })
+        
+        return Response(results)

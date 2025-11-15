@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Kassa operatsiyalari</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 11pt;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .report-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .period {
+            font-size: 10pt;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #366092;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr.income-row {
+            background-color: #d4edda;
+        }
+        tr.expense-row {
+            background-color: #f8d7da;
+        }
+        .summary-table {
+            margin-top: 20px;
+            width: 60%;
+            margin-left: auto;
+        }
+        .summary-row {
+            font-weight: bold;
+        }
+        .summary-row.income {
+            background-color: #d4edda !important;
+            color: #155724;
+        }
+        .summary-row.expense {
+            background-color: #f8d7da !important;
+            color: #721c24;
+        }
+        .summary-row.balance {
+            background-color: #cce5ff !important;
+            font-size: 12pt;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if company %}
+        <div class="company-name">{{ company.firm_name }}</div>
+        {% endif %}
+        <div class="report-title">KASSA OPERATSIYALARI</div>
+        <div class="period">
+            Davr: {% if date_from %}{{ date_from }}{% else %}Boshidan{% endif %} - {% if date_to %}{{ date_to }}{% else %}Hozirgacha{% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%">№</th>
+                <th style="width: 12%">Sana</th>
+                <th style="width: 12%">Turi</th>
+                <th style="width: 15%">Manba</th>
+                <th style="width: 12%" class="text-right">Summa</th>
+                <th style="width: 12%" class="text-right">Balans</th>
+                <th style="width: 32%">Tavsif</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% load ledger_extras %}
+            {% with cumulative_balance=0 %}
+            {% for record in records %}
+            <tr class="{% if record.type == 'income' %}income-row{% else %}expense-row{% endif %}">
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ record.date|date:"d.m.Y" }}</td>
+                <td>{{ record.get_type_display }}</td>
+                <td>{{ record.get_source_display }}</td>
+                <td class="text-right">{{ record.amount|floatformat:2 }}</td>
+                <td class="text-right">
+                    {% if record.type == 'income' %}
+                        {% widthratio record.amount 1 1 as balance_change %}
+                    {% else %}
+                        {% widthratio record.amount -1 1 as balance_change %}
+                    {% endif %}
+                    {# Calculate cumulative balance #}
+                    {{ cumulative_balance|add:balance_change|floatformat:2 }}
+                </td>
+                <td>{% if record.description %}{{ record.description }}{% else %}-{% endif %}</td>
+            </tr>
+            {% endfor %}
+            {% endwith %}
+        </tbody>
+    </table>
+
+    <table class="summary-table">
+        <tr class="summary-row income">
+            <td>JAMI KIRIMLAR:</td>
+            <td class="text-right">{{ total_income|floatformat:2 }} {{ currency }}</td>
+        </tr>
+        <tr class="summary-row expense">
+            <td>JAMI CHIQIMLAR:</td>
+            <td class="text-right">{{ total_expense|floatformat:2 }} {{ currency }}</td>
+        </tr>
+        <tr class="summary-row balance">
+            <td>BALANS:</td>
+            <td class="text-right">{{ balance|floatformat:2 }} {{ currency }}</td>
+        </tr>
+        {% if currency == 'UZS' %}
+        <tr class="summary-row balance">
+            <td>USD kursi bo'yicha:</td>
+            <td class="text-right">{{ balance_usd|floatformat:2 }} USD</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <div class="footer">
+        Yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}
+        {% if company %}| {{ company.firm_name }}{% endif %}
+        {% if currency == 'UZS' %}| Kurs: 1 USD = {{ usd_rate }} UZS{% endif %}
+    </div>
+</body>
+</html>

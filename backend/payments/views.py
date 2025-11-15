@@ -119,6 +119,7 @@ class PaymentCardViewSet(viewsets.ModelViewSet):
     queryset = PaymentCard.objects.all()
     serializer_class = PaymentCardSerializer
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    pagination_class = None  # Pagination o'chirish - barcha kartalarni bir vaqtda ko'rsatish
     http_method_names = ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_fields = {
@@ -145,6 +146,58 @@ class PaymentCardViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         self._ensure_writer()
         instance.delete()
+    
+    @action(detail=True, methods=['get'])
+    def balance(self, request, pk=None):
+        """
+        Karta balansi hisoblash
+        Payments (income) - Expenses (outflow) = Balance
+        USD va UZS alohida ko'rsatiladi
+        """
+        card = self.get_object()
+        
+        # Payments orqali kirim (USD va UZS)
+        from django.db.models import Sum, Q, Case, When, DecimalField, Value
+        from decimal import Decimal
+        
+        payments = Payment.objects.filter(card=card)
+        payment_usd = payments.aggregate(
+            total=Sum('amount_usd')
+        )['total'] or Decimal('0.00')
+        payment_uzs = payments.aggregate(
+            total=Sum('amount_uzs')
+        )['total'] or Decimal('0.00')
+        
+        # Expenses orqali chiqim (USD va UZS)
+        from expenses.models import Expense
+        expenses = Expense.objects.filter(card=card, status='approved')
+        expense_usd = expenses.aggregate(
+            total=Sum('amount_usd')
+        )['total'] or Decimal('0.00')
+        expense_uzs = expenses.aggregate(
+            total=Sum('amount_uzs')
+        )['total'] or Decimal('0.00')
+        
+        # Balans hisoblash
+        balance_usd = payment_usd - expense_usd
+        balance_uzs = payment_uzs - expense_uzs
+        
+        return Response({
+            'card_id': card.id,
+            'card_name': card.name,
+            'income': {
+                'usd': float(payment_usd),
+                'uzs': float(payment_uzs)
+            },
+            'expense': {
+                'usd': float(expense_usd),
+                'uzs': float(expense_uzs)
+            },
+            'balance': {
+                'usd': float(balance_usd),
+                'uzs': float(balance_uzs)
+            }
+        })
 
 
 class CurrencyRateHistoryView(APIView):
