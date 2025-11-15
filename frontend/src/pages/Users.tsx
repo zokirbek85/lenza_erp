@@ -167,7 +167,7 @@ const UsersPage = () => {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="page-wrapper space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Users</h1>
@@ -197,7 +197,7 @@ const UsersPage = () => {
         </div>
       </header>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/50">
             <tr>

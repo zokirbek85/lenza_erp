@@ -218,7 +218,7 @@ const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
   return (
     <Card
       className="mb-6 rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-      bodyStyle={{ padding: '16px' }}
+      styles={{ body: { padding: '16px' } }}
     >
       <Collapse
         defaultActiveKey={['filters']}

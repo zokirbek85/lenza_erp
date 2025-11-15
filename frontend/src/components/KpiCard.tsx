@@ -43,7 +43,7 @@ const KpiCard = ({
 
   const cardContent = (
     <Card
-      bordered={false}
+      variant="borderless"
       loading={loading}
       className="kpi-card group transition-all duration-300 hover:shadow-lg"
       style={{
@@ -52,7 +52,11 @@ const KpiCard = ({
         boxShadow: token.boxShadow,
         borderColor: token.colorBorder,
       }}
-      bodyStyle={{ padding: '24px' }}
+      styles={{
+        body: {
+          padding: '24px',
+        },
+      }}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">

@@ -209,7 +209,7 @@ const DashboardPage = () => {
   );
 
   return (
-    <section className="space-y-8">
+    <section className="page-wrapper space-y-8">
       <header>
         <p className="text-sm uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('dashboard.ownerKpi')}</p>
         <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">{t('nav.dashboard')}</h1>

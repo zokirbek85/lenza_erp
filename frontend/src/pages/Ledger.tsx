@@ -159,9 +159,9 @@ export default function LedgerPage() {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <section className="page-wrapper space-y-6">
       {/* HEADER */}
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <Title level={2} style={{ margin: 0 }}>
             {t('ledger.title')}
@@ -197,7 +197,7 @@ export default function LedgerPage() {
       </div>
 
       {/* STATISTICS CARDS */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={8}>
           <Card>
             <Statistic
@@ -269,7 +269,7 @@ export default function LedgerPage() {
 
       {/* CARD BALANCES */}
       <Card title={t('ledger.cardBalances')} style={{ marginBottom: '24px' }}>
-        <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]}>
           {cardBalances.map((card) => (
             <Col xs={24} sm={12} lg={8} key={card.card_id}>
               <Card
@@ -348,6 +348,6 @@ export default function LedgerPage() {
           ))}
         </Row>
       </Card>
-    </div>
+    </section>
   );
 }

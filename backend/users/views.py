@@ -4,6 +4,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .serializers import UserSerializer
 
@@ -41,6 +42,22 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save(update_fields=['is_active'])
         return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
 
+
+class TelegramLinkView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        telegram_id = getattr(request.user, 'telegram_id', None)
+        return Response({'telegram_id': telegram_id}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        telegram_id = request.data.get('telegram_id')
+        if telegram_id is None:
+            return Response({'detail': 'telegram_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+        user.telegram_id = telegram_id
+        user.save(update_fields=['telegram_id'])
+        return Response({'telegram_id': user.telegram_id}, status=status.HTTP_200_OK)
     @action(detail=True, methods=['post'], url_path='deactivate')
     def deactivate(self, request, pk=None):
         user = self.get_object()

@@ -5,10 +5,20 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BASE_DIR / '.env'
+PROD_ENV_FILE = BASE_DIR / '.env.production'
 
-load_dotenv(BASE_DIR / '.env')
+if ENV_FILE.exists():
+    load_dotenv(ENV_FILE, override=False)
+
+debug_flag = os.getenv('DJANGO_DEBUG', os.getenv('DEBUG', 'true')).lower() == 'true'
+if not debug_flag and PROD_ENV_FILE.exists():
+    load_dotenv(PROD_ENV_FILE, override=True)
+elif debug_flag and ENV_FILE.exists():
+    load_dotenv(ENV_FILE, override=True)
+
+DEBUG = debug_flag
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'lenza-erp-dev-secret')
-DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() == 'true'
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
 
@@ -74,13 +84,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
-if os.getenv('POSTGRES_DB'):
+USE_POSTGRES = os.getenv('USE_POSTGRES', 'true' if not DEBUG else 'false').lower() == 'true'
+
+if USE_POSTGRES:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB'),
-            'USER': os.getenv('POSTGRES_USER', 'postgres'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'NAME': os.getenv('POSTGRES_DB', 'lenza_erp'),
+            'USER': os.getenv('POSTGRES_USER', 'admin'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'maxdoors123'),
             'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
             'PORT': os.getenv('POSTGRES_PORT', '5432'),
         }
@@ -113,13 +125,13 @@ TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = os.getenv('STATIC_URL', '/static/')
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = Path(os.getenv('STATIC_ROOT', str(BASE_DIR / 'staticfiles')))
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
+MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', str(BASE_DIR / 'media')))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -150,9 +162,11 @@ REST_FRAMEWORK = {
     },
 }
 
+JWT_ACCESS_MINUTES = int(os.getenv('JWT_ACCESS_LIFETIME', os.getenv('JWT_ACCESS_MINUTES', 30)))
+JWT_REFRESH_MINUTES = int(os.getenv('JWT_REFRESH_LIFETIME', os.getenv('JWT_REFRESH_MINUTES', 1440)))
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_MINUTES', 30))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_DAYS', 1))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_MINUTES),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=JWT_REFRESH_MINUTES),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
@@ -174,8 +188,35 @@ LOGGING = {
     },
 }
 
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_GROUP_CHAT_ID = os.getenv('TELEGRAM_GROUP_CHAT_ID')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', os.getenv('TELEGRAM_TOKEN'))
+TELEGRAM_GROUP_CHAT_ID = os.getenv('TELEGRAM_GROUP_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID'))
+
+COMPANY_NAME = os.getenv('COMPANY_NAME', 'Lenza ERP')
+COMPANY_SLOGAN = os.getenv('COMPANY_SLOGAN', '')
+COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", '')
+COMPANY_PHONE = os.getenv('COMPANY_PHONE', '')
+
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_DB = os.getenv('REDIS_DB', '0')
+REDIS_URL = os.getenv('REDIS_URL', f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}')
+CHANNEL_LAYER_BACKEND = os.getenv('CHANNEL_LAYER_BACKEND', 'channels.layers.InMemoryChannelLayer')
+
+if CHANNEL_LAYER_BACKEND == 'channels_redis.core.RedisChannelLayer':
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': CHANNEL_LAYER_BACKEND,
+            'CONFIG': {
+                'hosts': [REDIS_URL],
+            },
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': CHANNEL_LAYER_BACKEND,
+        }
+    }
 
 cors_allowed_origins = os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', '').split(',')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed_origins if origin.strip()]

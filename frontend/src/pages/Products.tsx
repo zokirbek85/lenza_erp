@@ -10,6 +10,11 @@ import CollapsibleForm from '../components/CollapsibleForm';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
+import { useIsMobile } from '../hooks/useIsMobile';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import ProductsMobileCards from './_mobile/ProductsMobileCards';
+import type { ProductsMobileHandlers } from './_mobile/ProductsMobileCards';
 
 interface Brand {
   id: number;
@@ -92,6 +97,8 @@ const ProductsPage = () => {
   const isWarehouse = role === 'warehouse';
   const canManageProducts = role === 'admin' || role === 'accountant';
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { isMobile } = useIsMobile();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const loadLookups = useCallback(async () => {
     try {
@@ -208,6 +215,13 @@ const ProductsPage = () => {
     fetchProducts();
   };
 
+  const handleViewProduct = (id: number) => {
+    const product = products.find((item) => item.id === id);
+    if (product) {
+      handleEdit(product);
+    }
+  };
+
   const openAdjustModal = (product: Product) => {
     setAdjusting(product);
     setAdjustForm({
@@ -262,6 +276,59 @@ const ProductsPage = () => {
     setPage(1);
   };
 
+  const handleResetFilters = () => {
+    clearFilters();
+    setFiltersOpen(false);
+  };
+
+  const handleApplyFilters = () => {
+    setFiltersOpen(false);
+  };
+
+  const mobileHandlers: ProductsMobileHandlers = {
+    onView: handleViewProduct,
+    onEdit: (id) => {
+      const product = products.find((item) => item.id === id);
+      if (product) handleEdit(product);
+    },
+    onDelete: handleDelete,
+  };
+
+  const filtersContent = (
+    <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.products')}</label>
+        <select
+          value={filters.brandId ?? ''}
+          onChange={(event) => handleFilterChange('brandId', event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          <option value="">Barcha brandlar</option>
+          {brands.map((brand) => (
+            <option key={brand.id} value={brand.id}>
+              {brand.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.categories')}</label>
+        <select
+          value={filters.categoryId ?? ''}
+          onChange={(event) => handleFilterChange('categoryId', event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          <option value="">Barcha kategoriyalar</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
   const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setPageSize(Number(event.target.value));
     setPage(1);
@@ -281,6 +348,44 @@ const ProductsPage = () => {
   const rangeEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
   const canGoPrev = page > 1;
   const canGoNext = page * pageSize < total;
+
+  const mobileProducts = products.map((product) => ({
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    brand: product.brand,
+    category: product.category,
+    sell_price_usd: product.sell_price_usd,
+    stock_ok: product.stock_ok,
+    stock_defect: product.stock_defect,
+    availability_status: product.availability_status,
+  }));
+
+  const paginationMeta = {
+    page,
+    pageSize,
+    total,
+  };
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <div className="flex justify-end">
+          <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        </div>
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
+          title="Filterlar"
+        >
+          {filtersContent}
+        </FilterDrawer>
+        <ProductsMobileCards data={mobileProducts} pagination={paginationMeta} handlers={mobileHandlers} />
+      </div>
+    );
+  }
 
   const handleExportPdf = () => downloadFile('/api/catalog/report/pdf/', 'products.pdf');
   const handleExportExcel = async () => {
@@ -330,7 +435,7 @@ const ProductsPage = () => {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="page-wrapper space-y-6">
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.products')}</h1>
@@ -572,7 +677,10 @@ const ProductsPage = () => {
         </>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="mt-4">
+        {filtersContent}
+      </div>
+      <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>

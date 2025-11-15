@@ -230,7 +230,9 @@ const ReturnsPage = () => {
         <Card
           title="Qaytishlar statistikasi"
           className="border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800"
-          bodyStyle={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 }}
+          styles={{
+            body: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 },
+          }}
         >
           {stats.good === 0 && stats.defective === 0 ? (
             <div className="text-center text-sm text-slate-500 dark:text-slate-300">Ma'lumot mavjud emas</div>
@@ -248,7 +250,7 @@ const ReturnsPage = () => {
         cancelText="Bekor qilish"
         confirmLoading={submitting}
         onOk={() => form.submit()}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical" form={form} onFinish={handleSubmit}>
           <Form.Item name="dealer" label="Diler" rules={[{ required: true, message: 'Diler tanlang' }]}>

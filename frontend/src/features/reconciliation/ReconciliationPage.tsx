@@ -418,7 +418,7 @@ const ReconciliationPage = () => {
                         {new Date(o.date).toLocaleDateString()} • Jami: {formatCurrency(o.total_amount)}
                       </div>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="table-wrapper overflow-x-auto">
                       <table className="w-full border border-gray-300 bg-white text-sm shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900">
                         <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                           <tr>

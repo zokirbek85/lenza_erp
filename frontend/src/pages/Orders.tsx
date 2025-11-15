@@ -18,8 +18,11 @@ import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
 import { loadCache, saveCache } from '../utils/storage';
-
-const { Panel } = Collapse;
+import { useIsMobile } from '../hooks/useIsMobile';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import OrdersMobileCards from './_mobile/OrdersMobileCards';
+import type { OrdersMobileHandlers } from './_mobile/OrdersMobileCards';
 
 interface DealerOption {
   id: number;
@@ -118,6 +121,8 @@ const OrdersPage = () => {
   const [productsLoading, setProductsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { t } = useTranslation();
+  const { isMobile } = useIsMobile();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const {
     filters,
@@ -356,6 +361,50 @@ const OrdersPage = () => {
     toast.success('Draft tozalandi');
   };
 
+  const handleViewOrder = (orderId: number) => toggleOrderDetails(orderId);
+  const handleEditOrder = (orderId: number) => {
+    setShowCreateForm(true);
+    toggleOrderDetails(orderId);
+  };
+  const handleStatusUpdatedFromCards = (orderId: number, newStatus: string) => {
+    handleStatusUpdated(orderId, newStatus);
+  };
+
+  const filtersContent = (
+    <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Brand</label>
+        <select
+          value={brandId ?? ''}
+          onChange={(event) => handleFilterChange('brandId', event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          <option value="">Barcha brandlar</option>
+          {brands.map((brand) => (
+            <option key={brand.id} value={brand.id}>
+              {brand.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category</label>
+        <select
+          value={categoryId ?? ''}
+          onChange={(event) => handleFilterChange('categoryId', event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          <option value="">Barcha kategoriyalar</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!dealerId) {
@@ -423,6 +472,39 @@ const OrdersPage = () => {
   const toggleOrderDetails = (orderId: number) =>
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 
+  const resetFilters = () => {
+    setFilters({ brandId: undefined, categoryId: undefined });
+    setFiltersOpen(false);
+  };
+
+  const handleApplyFilters = () => {
+    setFiltersOpen(false);
+  };
+
+  const mobileHandlers: OrdersMobileHandlers = {
+    onView: handleViewOrder,
+    onEdit: handleEditOrder,
+    onStatusUpdated: handleStatusUpdatedFromCards,
+  };
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-end px-4 pt-4">
+          <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        </div>
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onApply={handleApplyFilters}
+          onReset={resetFilters}
+        >
+          {filtersContent}
+        </FilterDrawer>
+        <OrdersMobileCards data={orders} handlers={mobileHandlers} />
+      </div>
+    );
+  }
   const orderRows = useMemo(
     () =>
       orders.map((order) => ({
@@ -433,7 +515,7 @@ const OrdersPage = () => {
   );
 
   return (
-    <section className="space-y-6">
+    <section className="page-wrapper space-y-6">
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
@@ -465,200 +547,205 @@ const OrdersPage = () => {
         </Button>
       </div>
 
+      <div className="mt-4">{filtersContent}</div>
+
       <Collapse
         className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
         activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
         onChange={(key) => handleCollapseChange(key as string[] | string)}
-      >
-        <Panel header="➕ Yangi buyurtma yaratish" key={CREATE_FORM_PANEL_KEY}>
-          {showCreateForm && (
-            <Card
-              title="Yangi buyurtma yaratish"
-              className="mt-4 border border-slate-700 bg-slate-900"
-              headStyle={{ color: '#fff', backgroundColor: 'transparent' }}
-              bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
-            >
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-      >
-        <div className="grid gap-4 md:grid-cols-4">
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
-            <select
-              required
-              value={dealerId}
-              onChange={(event) => setDealerId(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="">Tanlang</option>
-              {dealers.map((dealer) => (
-                <option key={dealer.id} value={dealer.id}>
-                  {dealer.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Order type</label>
-            <select
-              value={orderType}
-              onChange={(event) => setOrderType(event.target.value as 'regular' | 'reserve')}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="regular">Oddiy</option>
-              <option value="reserve">Bron</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Izoh</label>
-            <input
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Eslatma..."
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Brand</label>
-            <select
-              value={brandId ?? ''}
-              onChange={(event) => handleFilterChange('brandId', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="">Barcha brandlar</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Category</label>
-            <select
-              value={categoryId ?? ''}
-              onChange={(event) => handleFilterChange('categoryId', event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-              <option value="">Barcha kategoriyalar</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Mahsulot qidirish</label>
-            <input
-              value={productSearch}
-              onChange={(event) => setProductSearch(event.target.value)}
-              placeholder="Mahsulot nomi, brand yoki kategoriya..."
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-[2fr,1fr,1fr,auto]">
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Mahsulot tanlash</label>
-              <select
-                value={selectedProduct?.id ?? ''}
-                onChange={(event) => handleSelectProduct(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        items={[
+          {
+            key: CREATE_FORM_PANEL_KEY,
+            label: 'Yangi buyurtma yaratish',
+            children: showCreateForm ? (
+              <Card
+                title="Yangi buyurtma yaratish"
+                className="mt-4 border border-slate-700 bg-slate-900"
+                headStyle={{ color: '#fff', backgroundColor: 'transparent' }}
+                bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
               >
-                <option value="">Mahsulot tanlang</option>
-                {filteredProducts.map((product) => {
-                  const stock = product.total_stock ?? product.stock_ok ?? 0;
-                  const isLow = stock <= 0;
-                  const brandLabel = product.brand?.name ?? '-';
-                  const categoryLabel = product.category?.name ?? '-';
-                  return (
-                    <option key={product.id} value={product.id}>
-                      {product.name} · {brandLabel} · {categoryLabel}{' '}
-                      {isLow ? '(Zaxira tugagan)' : `(${formatQuantity(stock)} dona)`}
-                    </option>
-                  );
-                })}
-              </select>
-              {!filteredProducts.length && !productsLoading && (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Mos mahsulot topilmadi.</p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Miqdor</label>
-              <input
-                type="number"
-                min={0.01}
-                step="0.01"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={quantityInput}
-                onChange={(event) => setQuantityInput(event.target.value)}
-                onBlur={() => setQuantityInput(formatQuantityInputValue(quantityInput || DEFAULT_QTY))}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Narx (USD)</label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                value={priceInput}
-                onChange={(event) => setPriceInput(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={handleAddSelectedProduct}
-                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-              >
-                ➕ Qo&apos;shish
-              </button>
-            </div>
-          </div>
-          {productsLoading && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Mahsulotlar yuklanmoqda...</p>
-          )}
-        </div>
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
+                      <select
+                        required
+                        value={dealerId}
+                        onChange={(event) => setDealerId(event.target.value)}
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      >
+                        <option value="">Tanlang</option>
+                        {dealers.map((dealer) => (
+                          <option key={dealer.id} value={dealer.id}>
+                            {dealer.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Order type</label>
+                      <select
+                        value={orderType}
+                        onChange={(event) => setOrderType(event.target.value as 'regular' | 'reserve')}
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      >
+                        <option value="regular">Oddiy</option>
+                        <option value="reserve">Bron</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Izoh</label>
+                      <input
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
+                        placeholder="Eslatma..."
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      />
+                    </div>
+                  </div>
 
-        <OrderItemTable
-          items={selectedItems}
-          onQtyChange={handleItemQtyChange}
-          onPriceChange={handleItemPriceChange}
-          onRemove={removeItem}
-        />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Brand</label>
+                      <select
+                        value={brandId ?? ''}
+                        onChange={(event) => handleFilterChange('brandId', event.target.value)}
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      >
+                        <option value="">Barcha brandlar</option>
+                        {brands.map((brand) => (
+                          <option key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Category</label>
+                      <select
+                        value={categoryId ?? ''}
+                        onChange={(event) => handleFilterChange('categoryId', event.target.value)}
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      >
+                        <option value="">Barcha kategoriyalar</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={handleClearDraft}
-            className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-900/30"
-          >
-            Draftni tozalash
-          </button>
-          <button
-            className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-            type="submit"
-          >
-            {t('actions.create')}
-          </button>
-        </div>
-      </form>
-            </Card>
-          )}
-        </Panel>
-      </Collapse>
+                  <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Mahsulot qidirish</label>
+                      <input
+                        value={productSearch}
+                        onChange={(event) => setProductSearch(event.target.value)}
+                        placeholder="Mahsulot nomi, brand yoki kategoriya..."
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-[2fr,1fr,1fr,auto]">
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Mahsulot tanlash</label>
+                        <select
+                          value={selectedProduct?.id ?? ''}
+                          onChange={(event) => handleSelectProduct(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        >
+                          <option value="">Mahsulot tanlang</option>
+                          {filteredProducts.map((product) => {
+                            const stock = product.total_stock ?? product.stock_ok ?? 0;
+                            const isLow = stock <= 0;
+                            const brandLabel = product.brand?.name ?? '-';
+                            const categoryLabel = product.category?.name ?? '-';
+                            return (
+                              <option key={product.id} value={product.id}>
+                                {product.name} �� {brandLabel} �� {categoryLabel}{' '}
+                                {isLow ? '(Zaxira tugagan)' : f}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        {!filteredProducts.length && !productsLoading && (
+                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Mos mahsulot topilmadi.</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Miqdor</label>
+                        <input
+                          type="number"
+                          min={0.01}
+                          step="0.01"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          value={quantityInput}
+                          onChange={(event) => setQuantityInput(event.target.value)}
+                          onBlur={() => setQuantityInput(formatQuantityInputValue(quantityInput || DEFAULT_QTY))}
+                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Narx (USD)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={priceInput}
+                          onChange={(event) => setPriceInput(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={handleAddSelectedProduct}
+                          className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                        >
+                          �? Qo&#39;shish
+                        </button>
+                      </div>
+                    </div>
+                    {productsLoading && (
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Mahsulotlar yuklanmoqda...</p>
+                    )}
+                  </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <OrderItemTable
+                    items={selectedItems}
+                    onQtyChange={handleItemQtyChange}
+                    onPriceChange={handleItemPriceChange}
+                    onRemove={removeItem}
+                  />
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={handleClearDraft}
+                      className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-900/30"
+                    >
+                      Draftni tozalash
+                    </button>
+                    <button
+                      className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+                      type="submit"
+                    >
+                      {t('actions.create')}
+                    </button>
+                  </div>
+                </form>
+              </Card>
+            ) : null,
+          },
+        ]}
+      />
+
+      <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>

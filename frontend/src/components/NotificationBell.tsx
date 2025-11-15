@@ -169,7 +169,7 @@ const NotificationBell = () => {
       </Drawer>
     </>
   ) : (
-    <Dropdown trigger={['click']} placement="bottomRight" dropdownRender={() => panelContent}>
+    <Dropdown trigger={['click']} placement="bottomRight" popupRender={() => panelContent}>
       <div className="relative cursor-pointer">
         <Badge count={unreadCount} size="small" offset={[-4, 4]}>
           <BellOutlined className="text-xl text-slate-600 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white" />

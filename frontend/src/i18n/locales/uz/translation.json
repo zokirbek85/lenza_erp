@@ -217,5 +217,322 @@
     "from": "dan",
     "to": "gacha",
     "refresh": "Yangilash"
+  },
+  "manuals": {
+    "title": "Foydalanuvchi qo'llanmasi",
+    "subtitle": "Lenza ERP tizimidan samarali foydalanish bo'yicha bosqichma-bosqich yo'riqnoma",
+    "nav": {
+      "gettingStarted": "Boshlash",
+      "concepts": "Asosiy tushunchalar",
+      "admin": "Admin",
+      "director": "Direktor",
+      "accountant": "Moliyachi",
+      "sales": "Sotuv menejeri",
+      "warehouse": "Omborchi",
+      "faq": "FAQ"
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "Boshlash",
+        "description": "Lenza ERP ga ilk kirish, foydalanuvchi ma'lumotlari va interfeysni moslashtirish bo'yicha asosiy ko'rsatmalar.",
+        "blocks": [
+          {
+            "title": "Kirish va xavfsizlik",
+            "items": [
+              "ERP manzili: app.lenza.uz — parolingizni hech kimga bermang.",
+              "Parolni unutganda: Login sahifasidagi \"Parolni tiklash\" tugmasidan foydalaning.",
+              "OTP (2FA) faollashtirilgan bo'lsa, Google Authenticator yoki shu turdagi ilovadan kodingizni kiriting.",
+              "Rolga qarab kirish cheklovlari mavjud, masalan, omborchi faqat order va qaytishlar bo'limini ko'radi."
+            ]
+          },
+          {
+            "title": "Navigatsiya va til",
+            "items": [
+              "Chap menyuda barcha modullar jamlangan: Buyurtmalar, Moliyaviy blok, Sozlamalar.",
+              "Til o'zgartirish: yuqori o'ngdagi LanguageSwitcher orqali (Uz/Ru).",
+              "Dark/Light rejim: Headerdagi tugma orqali darhol o'zgaradi.",
+              "Sidebarni pin/unpin qilish: keng ekranda barqaror ish uchun."
+            ]
+          },
+          {
+            "title": "Sessiya va cheklovlar",
+            "items": [
+              "Sessiya avtomatik ravishda 30 daqiqa harakatsizlikdan so'ng yopiladi.",
+              "Bir vaqtning o'zida ikkita qurilmadan kirish administrator tomonidan cheklangan bo'lishi mumkin.",
+              "Tizimdan chiqishdan oldin barcha saqlanmagan o'zgarishlarni tasdiqlang."
+            ]
+          }
+        ],
+        "checklist": [
+          "Kirishingiz ishlayotganini tekshiring.",
+          "Til va mavzuni qulay holatga sozlang.",
+          "Rolga mos bo'limlar mavjudligini tekshiring.",
+          "Telegram bildirishnomalari kanaliga ulanganingizni tasdiqlang."
+        ],
+        "warnings": [
+          "Parolingizni hech qachon chat yoki pochta orqali yubormang.",
+          "2FA kodlarini faqat autentifikator ilova orqali oling."
+        ]
+      },
+      "concepts": {
+        "title": "Asosiy tushunchalar",
+        "description": "ERP ichidagi asosiy obyektlar va ularning o'zaro aloqalari.",
+        "blocks": [
+          {
+            "title": "Ma'lumot obyektlari",
+            "items": [
+              "Dealer — xaridor tashkilot, hudud bilan bog'lanadi.",
+              "Hudud — barqaror bozor segmenti, statistik hisobotlar uchun kerak.",
+              "Order — mahsulotlar ro'yxati, narxlar va statuslar ketma-ketligi.",
+              "To'lov / Chiqim / Kassa — moliyaviy modulning asosiy bo'laklari.",
+              "Valyuta kurslari — USD bazaviy, UZS ko'rinishida hisob-kitob qilinadi."
+            ]
+          },
+          {
+            "title": "Buyurtma statuslari",
+            "items": [
+              "Created → Confirmed → Packed → Shipped → Delivered → Returned/Cancelled oqimi.",
+              "Har bir statusga ruxsat: menejer created/confirmed, omborchi packed/shipped/delivered.",
+              "Telegram bildirishnomalari buyurtma yaratilishi va status o'zgarishida yuboriladi."
+            ]
+          },
+          {
+            "title": "Valyuta va kurslar",
+            "items": [
+              "Bazaviy hisob birligi USD, to'lovda UZS kursi avtomatik qo'llanadi.",
+              "Kursni faqat admin/accountant o'zgartiradi, eski orderlarda tarixiy kurs saqlanadi.",
+              "Telegram bildirishnomalari tushishi uchun token va chat ID sozlangan bo'lishi shart."
+            ]
+          }
+        ]
+      },
+      "admin": {
+        "title": "Admin qo'llanmasi",
+        "description": "Administratorlar tizimni sozlash, foydalanuvchilar va ruxsatlarni nazorat qiladi.",
+        "blocks": [
+          {
+            "title": "Foydalanuvchilarni boshqarish",
+            "items": [
+              "Yangi foydalanuvchi: Users → \"Yaratish\", rol va hududini belgilang.",
+              "Bloklash: profil kartasidagi \"Deactivate\" tugmasi.",
+              "Parolni tiklash: \"Reset password\" orqali vaqtinchalik parol yuborish."
+            ]
+          },
+          {
+            "title": "Sozlamalar",
+            "items": [
+              "Company Info — rekvizitlar, logo, manzil.",
+              "Valyuta kurslari — kunlik USD/UZS kursini kiriting.",
+              "Telegram token va chat ID — bildirishnoma yetib kelishini ta'minlaydi."
+            ]
+          },
+          {
+            "title": "Moliyaviy nazorat",
+            "items": [
+              "Payments, Expenses va Ledger bo'limlarida yozuvlarni tasdiqlash.",
+              "Audit loglar orqali kim qachon o'zgartirish kiritganini ko'rish.",
+              "Kassadagi chetlanishlarni tekshirib, kerak bo'lsa rollback qilish."
+            ]
+          }
+        ],
+        "checklist": [
+          "Har hafta foydalanuvchi rollarini qayta ko'rib chiqing.",
+          "Company info va kurslar aktual ekanini tekshiring.",
+          "Telegram va email bildirishnomalari ishlayotganini monitoring qiling."
+        ],
+        "warnings": [
+          "Ruxsatsiz foydalanuvchilarga admin rolini berish xavfli.",
+          "Test ma'lumotlarini real baza bilan aralashtirmang."
+        ]
+      },
+      "director": {
+        "title": "Direktor qo'llanmasi",
+        "description": "Direktor asosiy ko'rsatkichlar va hisobotlarni ko'rib, qaror qabul qiladi.",
+        "blocks": [
+          {
+            "title": "Dashboard va KPI",
+            "items": [
+              "Savdo, qarzdorlik, eng yaxshi dilerlar va balanslar real vaqt rejimida.",
+              "Oylik KPI kartalari: daromad, foyda, kassadagi qoldiq."
+            ]
+          },
+          {
+            "title": "Hisobotlar",
+            "items": [
+              "Akt sverka, chiqimlar va to'lovlar bo'yicha PDF/XLS eksport.",
+              "KPI bo'limida filtrlangan ma'lumotni investors ga yuborish."
+            ]
+          },
+          {
+            "title": "Rollar va cheklovlar",
+            "items": [
+              "Direktor ma'lumotlarni o'zgartirmaydi, faqat ko'radi.",
+              "Tasdiqlash jarayonlari (to'lov/chiqim) moliyachiga topshiriladi."
+            ]
+          }
+        ],
+        "checklist": [
+          "Har dushanba KPI panelini ko'rib chiqing.",
+          "To'lovlar va chiqimlar bo'yicha oylik hisobotni yuklab oling.",
+          "Qarzdorlik ko'tarilishi bo'lsa, sotuv menejeriga topshiriq bering."
+        ]
+      },
+      "accountant": {
+        "title": "Moliyachi qo'llanmasi",
+        "description": "To'lovlar, chiqimlar va kassa harakatlarini yuritish bo'yicha yo'riqnoma.",
+        "blocks": [
+          {
+            "title": "To'lovlar",
+            "items": [
+              "Diler bo'yicha to'lov kiriting: usuli (naqd/karta/bank) va kurs.",
+              "Konvertatsiya avtomatik, ammo kursni tekshirish esdan chiqmasin.",
+              "Kiritilgan to'lov zudlik bilan kassa balansida paydo bo'ladi."
+            ]
+          },
+          {
+            "title": "Chiqimlar va tasdiqlash",
+            "items": [
+              "Chiqim turi, usuli, karta tanlovi majburiy.",
+              "Tasdiqlash workflow'i: pending → approved.",
+              "Xato yozuvni tahrirlash yoki qaytarish uchun admin bilan ishlang."
+            ]
+          },
+          {
+            "title": "Kassa va hisobotlar",
+            "items": [
+              "Kirim/chiqim grafigi bo'yicha tahlil qiling.",
+              "Akt sverka va boshqa hisobotlarni PDF/XLS ga eksport qiling.",
+              "Kursni noto'g'ri kiritsangiz, eski orderlar tarixiy kursda qoladi."
+            ]
+          }
+        ],
+        "checklist": [
+          "Kun oxirida kassa balansini tasdiqlang.",
+          "Chiqimlar bo'yicha tasdiqlashni kechiktirmang.",
+          "Valyuta kursini yangilash jadvalini kuzating."
+        ],
+        "warnings": [
+          "Tasdiqlangan to'lov/chiqimni o'chirish loglarda qayd qilinadi.",
+          "Kursni o'zgartirish barcha yangi orderlarga ta'sir qiladi."
+        ]
+      },
+      "sales": {
+        "title": "Sotuv menejeri qo'llanmasi",
+        "description": "Dilerlar bilan ishlash va buyurtma jarayonlarini boshqarish.",
+        "blocks": [
+          {
+            "title": "Dilerlar",
+            "items": [
+              "Yangi diler yaratish, kredit limiti va hududni belgilash.",
+              "Kontakt ma'lumotlarini yangilash va bloklash funksiyasi."
+            ]
+          },
+          {
+            "title": "Buyurtmalar",
+            "items": [
+              "Oddiy yoki bron order yaratish, mahsulot va narxni tanlash.",
+              "Status o'zgarishi: created → confirmed → cancelled (menejer ruxsati).",
+              "PDF nakladnoyni chiqarish va Telegram guruhga jo'natish."
+            ]
+          },
+          {
+            "title": "Kommunikatsiya",
+            "items": [
+              "Telegram bildirishnomalariga javob berish va dilerga yetkazish.",
+              "Kutilmagan xatolikda admin yoki moliyachiga tezkor xabar bering."
+            ]
+          }
+        ],
+        "checklist": [
+          "Har kuni bron orderlarni tasdiqlang yoki bekor qiling.",
+          "Diler kredit limitini kuzatib boring.",
+          "PDF hujjatni yuborgandan so'ng qabul qilinganini tasdiqlang."
+        ],
+        "warnings": [
+          "Bekor qilingan buyurtmalar auditda ko'rinadi, sababsiz bekor qilmang."
+        ]
+      },
+      "warehouse": {
+        "title": "Omborchi qo'llanmasi",
+        "description": "Mahsulot zaxirasi va yetkazib berish statuslarini boshqarish.",
+        "blocks": [
+          {
+            "title": "Orderlar bilan ishlash",
+            "items": [
+              "Packed/Shipped/Delivered statuslarini faqat tayyor bo'lganda qo'ying.",
+              "Har bir status o'zgarishi dilerga bildirilishini unutmang."
+            ]
+          },
+          {
+            "title": "Zaxira",
+            "items": [
+              "Mahsulot qoldig'ini Order formasi orqali kuzatib boring.",
+              "Minimal zaxira chegarasi buzilsa, admin va sotuvga xabar bering."
+            ]
+          },
+          {
+            "title": "Qaytishlar",
+            "items": [
+              "Returned statusi tushganda mahsulot holatini tekshiring.",
+              "Qaytgan tovarga defect/ok statusini belgilang."
+            ]
+          }
+        ],
+        "checklist": [
+          "Paketlangan buyurtmalarni jo'natishdan oldin sanang.",
+          "Qaytgan mahsulotlarni bir xil kunda tizimga kiriting."
+        ],
+        "warnings": [
+          "Statusni noto'g'ri qo'yish moliyaviy hisobga ta'sir qiladi.",
+          "Zaxira miqdorini qo'lda o'zgartirmang, faqat admin orqali."
+        ]
+      }
+    },
+    "faq": [
+      {
+        "question": "Parolimni unutdim, nima qilaman?",
+        "answer": "Login sahifasidagi \"Parolni tiklash\" tugmasi orqali emailingizga vaqtinchalik havola yuboriladi yoki administrator bilan bog'laning."
+      },
+      {
+        "question": "Buyurtma statusini noto'g'ri qo'ydim, qanday tuzataman?",
+        "answer": "Rolga qarab tasdiqlangan statuslarni faqat admin yoki tegishli menejer orqaga qaytaradi. Audit logda o'zgarish qayd etiladi."
+      },
+      {
+        "question": "To'lov kiritildi, lekin kassa balansida ko'rinmayapti?",
+        "answer": "To'lov kursi yoki karta noto'g'ri tanlangan bo'lishi mumkin. Moliyachi arizani tekshirib, yozuvni tahrirlashi kerak."
+      },
+      {
+        "question": "Valyuta kursini yangilash eski orderlarga ta'sir qiladimi?",
+        "answer": "Yo'q, eski orderlarda tarixiy kurs saqlanadi. Yangi kurs faqat yangi operatsiyalarga qo'llanadi."
+      },
+      {
+        "question": "Telegram bildirishnoma kelmayapti, qayerdan tekshiraman?",
+        "answer": "Sozlamalar → Telegram bo'limida token va chat ID to'g'ri kiritilganini, bot guruhga qo'shilganini tekshiring."
+      },
+      {
+        "question": "Diler limitidan oshsa, buyurtma yarata olmayapman.",
+        "answer": "Admin yoki direktor limitni yangilashi kerak. Limit qayta tasdiqlanmaguncha buyurtma blokda turadi."
+      },
+      {
+        "question": "Chiqim noto'g'ri tasdiqlangan. Uni qaytarish mumkinmi?",
+        "answer": "Approved statusidagi chiqimni admin yoki moliyachi tahrirlashi yoki bekor qilishi mumkin, ammo audit logda iz qoldiriladi."
+      },
+      {
+        "question": "PDF hujjatlar o'zbekcha chiqmayapti.",
+        "answer": "Profil tilini kerakli tilga o'zgartiring yoki eksport vaqtida til parametrini tanlang."
+      },
+      {
+        "question": "Dashboard ko'rsatkichlari sekin yangilanmoqda.",
+        "answer": "Kesh 5 daqiqada yangilanadi. Agar muammo davom etsa, admin cache ni tozalashi mumkin."
+      },
+      {
+        "question": "Mobil qurilmada sidebar yopilmayapti.",
+        "answer": "Headerdagi burger tugmasini bosing yoki brauzer keshi tozalang. Layout optimizatsiyasi mobil uchun moslashgan."
+      },
+      {
+        "question": "Faqat ko'rish huquqim bor, malumotni qanday eksport qilaman?",
+        "answer": "Direktor va nazorat rollari PDF/XLS eksportini bajarishi mumkin. Agar tugma ko'rinmasa, admin ruxsatini tekshiring."
+      }
+    ]
   }
 }

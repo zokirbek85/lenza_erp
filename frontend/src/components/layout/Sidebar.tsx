@@ -130,7 +130,9 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
         onClose={onDrawerClose}
         placement="left"
         width={260}
-        bodyStyle={{ padding: 0 }}
+    styles={{
+      body: { padding: 0 },
+    }}
         className="md:hidden"
       >
         {renderNav}

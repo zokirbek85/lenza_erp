@@ -63,7 +63,7 @@ from expenses.views_export import (
 from ledger.views import LedgerSummaryView, CardBalanceView, LedgerByCardView, LedgerByCategoryView
 from ledger.views_export import ledger_export_view
 from users.auth import RoleAwareTokenObtainPairView
-from users.views import UserViewSet
+from users.views import TelegramLinkView, UserViewSet
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
 from reports.views_cards_pdf import cards_pdf_report
 from core.views_verify import verify_document
@@ -104,6 +104,7 @@ urlpatterns = [
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),
     path('api/orders/export/excel/', OrderExportExcelView.as_view(), name='orders-export-excel'),
     path('api/orders/report/pdf/', OrderSummaryPDFView.as_view(), name='orders-report-pdf'),
+    path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'),
     path('api/products/export/excel/', ProductExportExcelView.as_view(), name='products-export-excel'),
     path('api/products/import/excel/', ProductImportExcelView.as_view(), name='products-import-excel'),
     path('api/products/import/template/', ProductImportTemplateView.as_view(), name='products-import-template'),

@@ -457,9 +457,9 @@ export default function ExpensesPage() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <section className="page-wrapper space-y-6">
       {/* HEADER */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <Title level={2}>Chiqimlar</Title>
         <Space>
           <Select value={currency} onChange={setCurrency} style={{ width: 100 }}>
@@ -473,7 +473,7 @@ export default function ExpensesPage() {
       </div>
 
       {/* STATISTICS CARDS */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
@@ -517,7 +517,7 @@ export default function ExpensesPage() {
       </Row>
 
       {/* CHARTS */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <Card title="30 kunlik tendensiya">
             <Line data={trendChartData} options={{ responsive: true, maintainAspectRatio: true }} />
@@ -531,8 +531,8 @@ export default function ExpensesPage() {
       </Row>
 
       {/* FILTERS & EXPORT */}
-      <Card style={{ marginBottom: 16 }}>
-        <Row gutter={16}>
+      <Card>
+        <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
             <RangePicker
               value={dateRange}
@@ -622,15 +622,17 @@ export default function ExpensesPage() {
       </Card>
 
       {/* TABLE */}
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={expenses}
-          rowKey="id"
-          loading={loading}
-          pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `Jami: ${total}` }}
-        />
-      </Card>
+      <div className="table-wrapper">
+        <Card bordered={false}>
+          <Table
+            columns={columns}
+            dataSource={expenses}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `Jami: ${total}` }}
+          />
+        </Card>
+      </div>
 
       {/* CREATE/EDIT MODAL */}
       <Modal
@@ -704,6 +706,6 @@ export default function ExpensesPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </section>
   );
 }

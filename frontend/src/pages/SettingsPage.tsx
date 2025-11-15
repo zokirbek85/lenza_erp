@@ -206,7 +206,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <section className="space-y-8">
+    <section className="page-wrapper space-y-8">
       {isAdmin && (
         <Card
           title="🏢 Kompaniya ma'lumotlari"

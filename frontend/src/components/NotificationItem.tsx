@@ -37,7 +37,7 @@ const NotificationItem = memo((props: NotificationItemProps) => {
   return (
     <Card
       size="small"
-      bordered={false}
+      variant="borderless"
       className="notification-item hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
       onClick={onClick}
     >

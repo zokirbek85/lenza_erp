@@ -6,6 +6,7 @@
   /* Light theme colors - LENZA ERP */
   --bg-base: #ffffff;
   --bg-secondary: #f8fafc;
+  --bg-body: #f8fafc;
   --bg-elevated: #ffffff;
   --bg-container: #ffffff;
   --text-color: #141414;
@@ -28,6 +29,7 @@
   /* Dark theme colors - LENZA ERP brand palette */
   --bg-base: #0d1117;
   --bg-secondary: #0d1117;
+  --bg-body: #020617;
   --bg-elevated: #2a2e3a;
   --bg-container: #1b1f27;
   --text-color: #f5f6fa;
@@ -111,6 +113,37 @@ body {
 
 .lenza-bg-gold {
   background-color: var(--lenza-gold);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+.ant-layout {
+  background: var(--bg-body);
+}
+
+.page-wrapper {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.table-wrapper {
+  width: 100%;
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+  height: auto !important;
+  box-shadow: var(--shadow);
 }
 
 .lenza-border {

@@ -97,9 +97,8 @@ const DashboardTable = ({ data, loading }: DashboardTableProps) => {
           emptyText: t('dashboard.overdueReceivables') + " yo'q",
         }}
         className="professional-table"
-        style={{ 
-          borderRadius: '8px', 
-          overflow: 'hidden',
+        style={{
+          borderRadius: '8px',
           backgroundColor: token.colorBgContainer,
         }}
       />

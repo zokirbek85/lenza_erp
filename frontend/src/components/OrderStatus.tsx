@@ -122,7 +122,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
         style={{ width: 160 }}
         value={selectedStatus}
         onChange={handleChange}
-        dropdownMatchSelectWidth={false}
+        popupMatchSelectWidth={false}
         onClick={(e) => e.stopPropagation()}
         options={STATUS_OPTIONS.map((s) => ({
           label: (
