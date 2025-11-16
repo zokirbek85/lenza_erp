@@ -17,7 +17,7 @@ const Layout = () => {
   const { t } = useTranslation();
   const { logout, userName } = useAuthStore();
   const { offline, canInstall, promptInstall } = usePwa();
-  const { collapsed, setCollapsed, pinned } = useSidebarStore();
+  const { collapsed, setCollapsed, pinned, toggleCollapsed } = useSidebarStore();
   const { mode, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { isMobile, isTablet } = useIsMobile();
@@ -52,7 +52,7 @@ const Layout = () => {
       setDrawerOpen(true);
       return;
     }
-    setCollapsed((prev) => !prev);
+    toggleCollapsed();
   };
 
   const contentMarginLeft = useMemo(() => {

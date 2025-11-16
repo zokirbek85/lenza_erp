@@ -1,7 +1,6 @@
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import OrderStatus from '../../components/OrderStatus';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import CardField from '../../components/responsive/cards/CardField';
 import MobileCard from '../../components/responsive/cards/MobileCard';
 import MobileCardList from '../../components/responsive/cards/MobileCardList';
 

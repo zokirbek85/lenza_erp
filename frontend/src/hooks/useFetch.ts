@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import http from '../app/http';
 
@@ -15,12 +15,23 @@ export const useFetch = <TResponse = unknown>(url: string, options: Options = {}
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
+  const stableParams = useMemo(() => {
+    if (!params) {
+      return undefined;
+    }
+    try {
+      return JSON.parse(JSON.stringify(params));
+    } catch {
+      return params;
+    }
+  }, [JSON.stringify(params ?? {})]);
+
   const fetchData = useCallback(
     async (overrideParams?: Params) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await http.get<TResponse>(url, { params: overrideParams ?? params });
+        const response = await http.get<TResponse>(url, { params: overrideParams ?? stableParams });
         setData(response.data);
         return response.data;
       } catch (err) {
@@ -30,7 +41,7 @@ export const useFetch = <TResponse = unknown>(url: string, options: Options = {}
         setLoading(false);
       }
     },
-    [url, params]
+    [url, stableParams]
   );
 
   useEffect(() => {

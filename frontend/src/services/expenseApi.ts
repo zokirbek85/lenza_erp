@@ -59,6 +59,7 @@ export interface ExpenseFilters {
   card?: number;
   status?: 'pending' | 'approved';
   currency?: 'USD' | 'UZS';
+  [key: string]: string | number | undefined;
 }
 
 // ========== EXPENSE TYPES ==========

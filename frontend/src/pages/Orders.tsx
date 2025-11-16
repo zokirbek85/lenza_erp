@@ -664,10 +664,11 @@ const OrdersPage = () => {
                             const isLow = stock <= 0;
                             const brandLabel = product.brand?.name ?? '-';
                             const categoryLabel = product.category?.name ?? '-';
+                            const stockLabel = isLow ? '(Zaxira tugagan)' : `(Zaxira: ${stock})`;
                             return (
                               <option key={product.id} value={product.id}>
                                 {product.name} �� {brandLabel} �� {categoryLabel}{' '}
-                                {isLow ? '(Zaxira tugagan)' : f}
+                                {stockLabel}
                               </option>
                             );
                           })}

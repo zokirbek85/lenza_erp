@@ -1,7 +1,7 @@
 import { EyeOutlined } from '@ant-design/icons';
 import { Card } from 'antd';
 import clsx from 'clsx';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useThemeTokens } from '../../../utils/themeTokens';
 
 type Action = {
@@ -15,22 +15,29 @@ type CardField = {
   value: ReactNode;
 };
 
-type MobileCardProps = {
+export type MobileCardProps = {
   title: string;
   subtitle?: string;
   badges?: { label: string; variant?: 'status' | 'info' | 'warning' }[];
   fields?: CardField[];
   actions?: Action[];
-  extra?: React.ReactNode;
+  extra?: ReactNode;
 };
 
-const MobileCard = ({ title, subtitle, badges = [], fields = [], actions = [] }: MobileCardProps) => {
+const MobileCard = ({
+  title,
+  subtitle,
+  badges = [],
+  fields = [],
+  actions = [],
+  extra,
+}: MobileCardProps) => {
   const tokens = useThemeTokens();
   const borderColor = tokens.colorBorder;
 
   return (
     <Card
-      bordered
+      variant="outlined"
       size="small"
       className="w-full rounded-xl border shadow-sm transition-transform duration-200 hover:-translate-y-0.5 dark:shadow-lg"
       bodyStyle={{

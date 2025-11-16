@@ -1,8 +1,6 @@
 import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { formatCurrency } from '../../utils/formatters';
-import CardField from '../../components/responsive/cards/CardField';
-import CardBadge from '../../components/responsive/cards/CardBadge';
-import MobileCard from '../../components/responsive/cards/MobileCard';
+import MobileCard, { type MobileCardProps } from '../../components/responsive/cards/MobileCard';
 import MobileCardList from '../../components/responsive/cards/MobileCardList';
 
 export type ProductMobileItem = {
@@ -38,7 +36,7 @@ export const ProductsMobileCard = ({ product, handlers }: ProductsMobileCardProp
     { label: 'Stock Defect', value: product.stock_defect },
   ];
 
-  const badges = [
+  const badges: NonNullable<MobileCardProps['badges']> = [
     {
       label: product.availability_status,
       variant: product.stock_ok > 0 ? 'info' : 'warning',

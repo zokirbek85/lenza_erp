@@ -1,9 +1,9 @@
-import { ReactNode } from 'react';
+import type { Key, ReactNode } from 'react';
 
 type MobileCardListProps<T> = {
   data: T[];
   renderCard: (item: T) => ReactNode;
-  keyExtractor?: (item: T, index: number) => React.Key;
+  keyExtractor?: (item: T, index: number) => Key;
 };
 
 const MobileCardList = <T extends unknown>({ data, renderCard, keyExtractor }: MobileCardListProps<T>) => (

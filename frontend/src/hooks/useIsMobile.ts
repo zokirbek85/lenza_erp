@@ -22,7 +22,7 @@ export const useIsMobile = (): DeviceType => {
     }
 
     const mediaQuery = window.matchMedia(`(max-width: ${BREAKPOINT}px)`);
-    let timeout: number | NodeJS.Timeout;
+    let timeout: ReturnType<typeof window.setTimeout> | undefined;
 
     const update = () => {
       const width = window.innerWidth;
@@ -33,7 +33,9 @@ export const useIsMobile = (): DeviceType => {
     };
 
     const listener = () => {
-      window.clearTimeout(timeout as number);
+      if (timeout) {
+        window.clearTimeout(timeout);
+      }
       timeout = window.setTimeout(update, DEBOUNCE_MS);
     };
 
@@ -42,7 +44,9 @@ export const useIsMobile = (): DeviceType => {
 
     return () => {
       mediaQuery.removeEventListener('change', listener);
-      window.clearTimeout(timeout as number);
+      if (timeout) {
+        window.clearTimeout(timeout);
+      }
     };
   }, []);
 

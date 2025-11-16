@@ -5,7 +5,7 @@ export type ThemeTokens = {
   colorBorder: string;
   colorText: string;
   colorTextSecondary: string;
-  borderRadius: string;
+  borderRadius: string | number;
 };
 
 export const useThemeTokens = (): ThemeTokens => {

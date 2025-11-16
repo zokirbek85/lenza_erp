@@ -1,12 +1,13 @@
 import clsx from 'clsx';
-import { ReactNode } from 'react';
+
+type BadgeVariant = 'status' | 'info' | 'warning';
 
 type BadgeProps = {
   value: string;
-  variant?: 'status' | 'info' | 'warning';
+  variant?: BadgeVariant;
 };
 
-const variantClasses: Record<BadgeProps['variant'], string> = {
+const variantClasses: Record<BadgeVariant, string> = {
   status: 'bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-200',
   info: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
   warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200',

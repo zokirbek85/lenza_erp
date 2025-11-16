@@ -1,6 +1,5 @@
 import { Button, Drawer } from 'antd';
-import clsx from 'clsx';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 type FilterDrawerProps = {
   open: boolean;

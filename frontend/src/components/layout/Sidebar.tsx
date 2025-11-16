@@ -3,7 +3,6 @@ import { Drawer } from 'antd';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../auth/useAuthStore';
-import { useTheme } from '../../context/ThemeContext';
 
 import {
   DashboardOutlined,
@@ -92,7 +91,6 @@ type SidebarProps = {
 const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarProps) => {
   const { t } = useTranslation();
   const role = useAuthStore((state) => state.role);
-  const { mode } = useTheme();
   const items = MENU_CONFIG[role as keyof typeof MENU_CONFIG] ?? DEFAULT_MENU;
 
   const renderNav = (

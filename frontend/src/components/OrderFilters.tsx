@@ -138,7 +138,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
         background: token.colorBgContainer,
         borderColor: token.colorBorder,
       }}
-      bordered
+      variant="outlined"
       title={
         <Space>
           <FilterOutlined style={{ color: '#d4af37' }} />

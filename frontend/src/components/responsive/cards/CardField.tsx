@@ -1,8 +1,8 @@
-import clsx from 'clsx';
+import type { ReactNode } from 'react';
 
 type CardFieldProps = {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
 };
 
 const CardField = ({ label, value }: CardFieldProps) => (

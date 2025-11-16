@@ -623,7 +623,7 @@ export default function ExpensesPage() {
 
       {/* TABLE */}
       <div className="table-wrapper">
-        <Card bordered={false}>
+        <Card variant="borderless">
           <Table
             columns={columns}
             dataSource={expenses}

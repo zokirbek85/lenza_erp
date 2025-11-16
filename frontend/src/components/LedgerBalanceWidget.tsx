@@ -61,7 +61,7 @@ const LedgerBalanceWidget = () => {
 
   if (loading) {
     return (
-      <Card bordered={false} style={{ minHeight: 200 }}>
+      <Card variant="borderless" style={{ minHeight: 200 }}>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 150 }}>
           <Spin />
         </div>
@@ -84,7 +84,7 @@ const LedgerBalanceWidget = () => {
           />
         </Space>
       }
-      bordered={false}
+      variant="borderless"
       style={{ height: '100%' }}
     >
       <Row gutter={[16, 16]}>

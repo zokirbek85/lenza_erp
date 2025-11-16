@@ -30,7 +30,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import {
   fetchLedgerSummary,
   fetchCardBalances,
