@@ -69,15 +69,22 @@ sudo -u postgres psql <<'SQL'
 CREATE DATABASE lenza_erp;
 CREATE USER lenza_erp_user WITH ENCRYPTED PASSWORD 'bu_faqat_namuna';
 GRANT ALL PRIVILEGES ON DATABASE lenza_erp TO lenza_erp_user;
+ALTER DATABASE lenza_erp OWNER TO lenza_erp_user;
+GRANT ALL ON SCHEMA public TO lenza_erp_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO lenza_erp_user;
 SQL
 ```
+> Agar `permission denied for schema public` xatosi chiqsa, yuqoridagi `ALTER`/`GRANT` buyruqlarini yana bir bor ishga tushiring (yoki `psql` ga kirib qo‘lda bajaring).
 
 ### .env (production)
 `/etc/lenza_erp/.env` faylini yarating (o‘qish huquqi rootdagina bo‘lsin):
 ```
-DJANGO_SECRET_KEY=generate_a_secure_64_char_key    # Django uchun maxfiy kalit
-DJANGO_DEBUG=False                                 # Production rejim
-DJANGO_ALLOWED_HOSTS=erp.lenza.uz,127.0.0.1,localhost
+DJANGO_SECRET_KEY=generate_a_secure_64_char_key
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=erp.lenza.uz,erp.maxdoors.uz,api.lenza.uz,api.maxdoors.uz,vps00405.eskiz.uz,45.138.159.195,0.0.0.0,127.0.0.1,localhost
+DJANGO_CSRF_TRUSTED_ORIGINS=https://erp.lenza.uz,https://erp.maxdoors.uz,https://api.lenza.uz,https://api.maxdoors.uz
+DJANGO_CORS_ALLOWED_ORIGINS=https://erp.lenza.uz,https://erp.maxdoors.uz
+DJANGO_CORS_ALLOW_ALL=False
 USE_POSTGRES=True
 POSTGRES_DB=lenza_erp
 POSTGRES_USER=lenza_erp_user
@@ -90,10 +97,11 @@ REDIS_DB=0
 CHANNEL_LAYER_BACKEND=channels_redis.core.RedisChannelLayer
 STATIC_ROOT=/opt/lenza_erp/backend/staticfiles
 MEDIA_ROOT=/opt/lenza_erp/backend/media
-TELEGRAM_BOT_TOKEN=telegramdan_olingan_token
-TELEGRAM_GROUP_CHAT_ID=-100xxxxxxxxx
+TELEGRAM_BOT_TOKEN=8219609902:AAHtZkLxmZ4_E6fo_nwFDWkE2nnZyAxNA3M
+TELEGRAM_GROUP_CHAT_ID=-1003006758530
 ```
 > Diqqat: parollar namuna sifatida yozildi, real qiymatlar bilan almashtiring.
+> `DJANGO_ALLOWED_HOSTS` ichida `0.0.0.0` va server IP manzili qoldirilsa, Django `DisallowedHost` xatoligini bermaydi (masalan, `systemctl status lenza_erp.service` loglarida ko‘ringanidek).
 
 Backend tayyorgarligi:
 ```bash
@@ -110,6 +118,7 @@ cd /opt/lenza_erp/frontend
 npm install        # yoki yarn install
 npm run build      # natija frontend/dist/ papkasida
 ```
+> `npm run build` paytida `frontend/.env.production` avtomatik yuklanadi. Undagi `VITE_API_URL=https://erp.lenza.uz/api` va `VITE_WS_URL=wss://erp.lenza.uz` qiymatlarini VPS domeningizga moslang (kerak bo‘lsa API uchun alohida subdomen yozing).
 React build keyinchalik Nginx orqali servis qilinadi.
 
 ## 6. Daphne (ASGI) bilan test
@@ -121,7 +130,7 @@ daphne -b 127.0.0.1 -p 8000 core.asgi:application
 ```
 Test:
 ```bash
-curl http://127.0.0.1:8000/api/health/   # agar health endpoint bo‘lmasa, asosiy sahifani tekshiring
+curl http://127.0.0.1:8000/api/health/   # Success => {"status":"ok","database":"ok"}
 ```
 `Ctrl+C` bilan to‘xtating.
 

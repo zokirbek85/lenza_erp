@@ -14,7 +14,7 @@ from catalog.views import (
     ProductReportPDFView,
     ProductViewSet,
 )
-from core.views import AuditLogViewSet, CompanyInfoViewSet, DashboardSummaryView, SearchView, SystemBackupView, SystemConfigView, UserManualViewSet
+from core.views import AuditLogViewSet, CompanyInfoViewSet, DashboardSummaryView, SearchView, SystemBackupView, SystemConfigView, UserManualViewSet, HealthCheckView
 from dealers.views import (
     DealerBalancePDFView,
     DealerExportExcelView,
@@ -95,6 +95,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Dashboard summary
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
+    path('api/health/', HealthCheckView.as_view(), name='health-check'),
     path('api/expenses/export/pdf/', ExpenseListPDFExportView.as_view(), name='expense-export-pdf'),
     path('api/expenses/export/pdf', ExpenseListPDFExportView.as_view()),
     path('api/expenses/export/excel/', ExpenseListExcelExportView.as_view(), name='expense-export-excel'),

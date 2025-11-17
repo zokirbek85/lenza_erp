@@ -3,6 +3,7 @@ from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework import permissions, status, viewsets
+from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,6 +17,8 @@ from orders.models import Order
 from orders.serializers import OrderSerializer
 from payments.models import Payment
 from expenses.models import Expense
+from django.db import connections
+from django.db.utils import OperationalError
 
 from .config import load_config, update_config
 from .middleware import AuditLog
@@ -208,3 +211,23 @@ class UserManualViewSet(viewsets.ModelViewSet):
         if role:
             return UserManual.objects.filter(role=role)
         return UserManual.objects.none()
+
+
+class HealthCheckView(APIView):
+    """Lightweight health endpoint for load balancers and uptime checks."""
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+
+    def get(self, request):
+        status_payload = {'status': 'ok'}
+        try:
+            with connections['default'].cursor() as cursor:
+                cursor.execute('SELECT 1')
+                cursor.fetchone()
+            status_payload['database'] = 'ok'
+        except OperationalError as exc:
+            status_payload['database'] = 'error'
+            status_payload['error'] = str(exc)
+            return Response(status_payload, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response(status_payload)
