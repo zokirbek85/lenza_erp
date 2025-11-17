@@ -10,7 +10,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.permissions import IsAccountant, IsAdmin, IsOwner
+from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales
 from core.utils.exporter import export_payments_to_excel
 from core.mixins.report_mixin import BaseReportMixin
 from core.mixins.export_mixins import ExportMixin
@@ -22,7 +22,7 @@ from .serializers import CurrencyRateSerializer, PaymentSerializer, PaymentCardS
 class CurrencyRateViewSet(viewsets.ModelViewSet):
     queryset = CurrencyRate.objects.all()
     serializer_class = CurrencyRateSerializer
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
     filterset_fields = ('rate_date',)
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering = ('-rate_date',)
@@ -31,7 +31,7 @@ class CurrencyRateViewSet(viewsets.ModelViewSet):
 class PaymentViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
     queryset = Payment.objects.select_related('dealer', 'rate', 'card').all()
     serializer_class = PaymentSerializer
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_fields = {
         'dealer': ['exact'],

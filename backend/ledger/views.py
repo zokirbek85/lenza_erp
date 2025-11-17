@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 
-from payments.models import Payment, PaymentCard
+from payments.models import Payment, PaymentCard, CurrencyRate
 from expenses.models import Expense
 
 
@@ -293,3 +293,76 @@ class LedgerByCategoryView(APIView):
             })
         
         return Response(results)
+
+
+class LedgerBalanceWidgetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
+        usd_to_uzs = latest_rate.usd_to_uzs if latest_rate else Decimal('0')
+
+        payments = Payment.objects.filter(status=Payment.Status.CONFIRMED)
+        expenses = Expense.objects.filter(status=Expense.STATUS_APPROVED)
+
+        def sum_usd(queryset):
+            return queryset.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
+
+        cash_income = sum_usd(payments.filter(method=Payment.Method.CASH))
+        cash_expense = sum_usd(expenses.filter(method=Expense.METHOD_CASH))
+        cash_balance = cash_income - cash_expense
+
+        bank_income = sum_usd(payments.filter(method=Payment.Method.TRANSFER)) + sum_usd(
+            payments.filter(method=Payment.Method.CARD, card__isnull=True)
+        )
+        bank_expense = sum_usd(expenses.filter(method=Expense.METHOD_CARD, card__isnull=True))
+        bank_balance = bank_income - bank_expense
+
+        accounts = [
+            {
+                'id': 0,
+                'name': 'Naqd kassalar',
+                'type': 'cash',
+                'balance_usd': float(cash_balance),
+                'balance_uzs': float(cash_balance * usd_to_uzs) if usd_to_uzs else 0.0,
+                'currency': 'USD',
+            },
+            {
+                'id': -1,
+                'name': 'Bank hisoblari',
+                'type': 'bank',
+                'balance_usd': float(bank_balance),
+                'balance_uzs': float(bank_balance * usd_to_uzs) if usd_to_uzs else 0.0,
+                'currency': 'USD',
+            },
+        ]
+
+        card_total = Decimal('0')
+        for card in PaymentCard.objects.filter(is_active=True):
+            income = sum_usd(payments.filter(card=card))
+            expense = sum_usd(expenses.filter(card=card))
+            balance = income - expense
+            card_total += balance
+            accounts.append(
+                {
+                    'id': card.id,
+                    'name': card.name,
+                    'type': 'card',
+                    'balance_usd': float(balance),
+                    'balance_uzs': float(balance * usd_to_uzs) if usd_to_uzs else 0.0,
+                    'currency': 'USD',
+                }
+            )
+
+        total_balance = cash_balance + bank_balance + card_total
+
+        return Response(
+            {
+                'rate': float(usd_to_uzs) if usd_to_uzs else None,
+                'total_balance': float(total_balance),
+                'cash_balance': float(cash_balance),
+                'bank_balance': float(bank_balance),
+                'card_balance': float(card_total),
+                'accounts': accounts,
+            }
+        )

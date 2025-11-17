@@ -22,14 +22,14 @@ from .utils.excel_tools import export_products_to_excel, generate_import_templat
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
-    permission_classes = [IsAdmin | IsWarehouse | IsSales]
+    permission_classes = [IsAdmin | IsWarehouse | IsSales | IsAccountant | IsOwner]
     search_fields = ('name',)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdmin | IsWarehouse | IsSales]
+    permission_classes = [IsAdmin | IsWarehouse | IsSales | IsAccountant | IsOwner]
     search_fields = ('name',)
 
 

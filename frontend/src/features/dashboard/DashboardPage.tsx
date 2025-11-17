@@ -84,43 +84,62 @@ const DashboardPage = () => {
   const [currencyHistory, setCurrencyHistory] = useState<CurrencyHistory[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(false);
-  const [cardKpi, setCardKpi] = useState<Array<{ card_id: number; card_name: string; holder_name: string; total_amount: number; payments_count: number; last_payment_date?: string | null }>>([]);
+  const [cardKpi, setCardKpi] = useState<
+    Array<{ card_id: number; card_name: string; holder_name: string; total_amount: number; payments_count: number; last_payment_date?: string | null }>
+  >([]);
+  const [debtAnalytics, setDebtAnalytics] = useState<DebtAnalytics | null>(null);
+
+  const canLoadOwnerKpi = role === 'admin' || role === 'owner' || role === 'accountant';
+  const canLoadSalesKpi = role === 'admin' || role === 'sales';
+  const canLoadAccountantKpi = role === 'admin' || role === 'accountant';
+  const canLoadCardKpi = role === 'admin' || role === 'accountant' || role === 'owner';
+  const canViewDebtAnalytics = role !== 'warehouse';
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [owner, sales, accountant, currency, summary, cards] = await Promise.all([
-        fetchDashboardData(filters),
-        fetchSalesManagerData(filters),
-        fetchAccountantData(filters),
-        fetchCurrencyHistory(filters),
+      const debtAnalyticsRequest = canViewDebtAnalytics
+        ? fetchDebtAnalytics().catch(() => ({ data: null }))
+        : Promise.resolve({ data: null });
+
+      const [owner, sales, accountant, currency, summary, cards, analytics] = await Promise.all([
+        canLoadOwnerKpi ? fetchDashboardData(filters) : Promise.resolve({ data: null }),
+        canLoadSalesKpi ? fetchSalesManagerData(filters) : Promise.resolve({ data: null }),
+        canLoadAccountantKpi ? fetchAccountantData(filters) : Promise.resolve({ data: null }),
+        fetchCurrencyHistory(filters).catch(() => ({ data: [] as CurrencyHistory[] })),
         fetchDashboardSummary(filters).catch(() => ({
           total_sales: 0,
           net_profit: 0,
           cash_balance: 0,
           open_orders_count: 0,
           satisfaction_score: 0,
+          total_debt_usd: 0,
+          dealers: 0,
           overdue_receivables: [],
           revenue_by_month: [],
           revenue_by_product: [],
           inventory_trend: [],
           expenses_vs_budget: { expenses: 0, budget: 100000 },
         })),
-        fetchCardsKpi(filters).catch(() => ({ data: [] as any[] })),
+        canLoadCardKpi ? fetchCardsKpi(filters).catch(() => ({ data: [] as any[] })) : Promise.resolve({ data: [] as any[] }),
+        debtAnalyticsRequest,
       ]);
-      setOwnerData(owner.data);
-      setSalesData(sales.data);
-      setAccountantData(accountant.data);
-      setCurrencyHistory(currency.data);
+      setOwnerData(owner?.data ?? null);
+      setSalesData(sales?.data ?? null);
+      setAccountantData(accountant?.data ?? null);
+      setCurrencyHistory(currency?.data ?? []);
       setDashboardData(summary);
-      setCardKpi(cards.data as any);
+      const normalizedCards = Array.isArray(cards?.data) ? (cards?.data as any) : [];
+      setCardKpi(normalizedCards);
+      setDebtAnalytics((analytics?.data as DebtAnalytics | null) ?? null);
       saveCache('dashboard-data', {
-        owner: owner.data,
-        sales: sales.data,
-        accountant: accountant.data,
-        currency: currency.data,
+        owner: owner?.data ?? null,
+        sales: sales?.data ?? null,
+        accountant: accountant?.data ?? null,
+        currency: currency?.data ?? [],
         summary,
-        cardKpi: cards.data,
+        cardKpi: normalizedCards,
+        analytics: (analytics?.data as DebtAnalytics | null) ?? null,
       });
     } finally {
       setLoading(false);
@@ -130,18 +149,22 @@ const DashboardPage = () => {
   useEffect(() => {
     fetchAll().catch(() => {
       const cached = loadCache<{
-        owner: OwnerKpiResponse;
-        sales: SalesManagerKPI;
-        accountant: AccountantKPI;
-        currency: CurrencyHistory[];
-        cardKpi: any[];
+        owner: OwnerKpiResponse | null;
+        sales: SalesManagerKPI | null;
+        accountant: AccountantKPI | null;
+        currency: CurrencyHistory[] | null;
+        cardKpi: any[] | null;
+        summary: DashboardSummary | null;
+        analytics: DebtAnalytics | null;
       }>('dashboard-data');
       if (cached) {
         setOwnerData(cached.owner);
         setSalesData(cached.sales);
         setAccountantData(cached.accountant);
-        setCurrencyHistory(cached.currency);
+        setCurrencyHistory(cached.currency || []);
         setCardKpi(cached.cardKpi || []);
+        setDashboardData(cached.summary ?? null);
+        setDebtAnalytics(cached.analytics ?? null);
       }
     });
   }, []);
@@ -172,7 +195,8 @@ const DashboardPage = () => {
     [ownerData, t]
   );
 
-  const showCardKpi = role === 'accountant' || role === 'owner';
+  const showCardKpi = role === 'accountant' || role === 'owner' || role === 'admin';
+  const showDebtAnalytics = canViewDebtAnalytics && Boolean(debtAnalytics);
 
   const salesTrendChart = useMemo<ChartData<'bar'>>(
     () => ({
@@ -218,50 +242,81 @@ const DashboardPage = () => {
 
       <DashboardFilterBar onApply={fetchAll} />
 
-      {/* New KPI Cards Grid */}
-      <Row gutter={[16, 16]}>
+            <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Jami Daromad"
+            title="Jami savdolar"
             value={ownerData?.total_sales_usd || 0}
             prefix="$"
             precision={2}
-            change={12.5}
-            tooltip="Umumiy sotish hajmi — eng muhim moliyaviy ko'rsatkich"
             icon={<DollarOutlined />}
+            tooltip="Barcha sotuvlar yig'indisi"
             loading={loading}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Sof Foyda"
+            title="Jami to'lovlar"
+            value={ownerData?.total_payments_usd || 0}
+            prefix="$"
+            precision={2}
+            icon={<WalletOutlined />}
+            tooltip="Tasdiqlangan to'lovlar"
+            loading={loading}
+          />
+        </Col>
+        {canViewDebtAnalytics && (
+          <Col xs={24} sm={12} lg={6}>
+            <KpiCard
+              title="Umumiy qarzdorlik"
+              value={debtAnalytics?.total_debt ?? dashboardData?.total_debt_usd ?? 0}
+              prefix="$"
+              precision={2}
+              icon={<DollarOutlined />}
+              tooltip="Opening + Orders - Payments - Returns"
+              loading={loading}
+              valueStyle={{ color: '#dc2626' }}
+            />
+          </Col>
+        )}
+        <Col xs={24} sm={12} lg={6}>
+          <KpiCard
+            title="Dilerlar soni"
+            value={dashboardData?.dealers ?? 0}
+            precision={0}
+            icon={<ShoppingOutlined />}
+            tooltip="Faol dilerlar"
+            loading={loading}
+          />
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} lg={6}>
+          <KpiCard
+            title="Sof foyda"
             value={accountantData?.net_profit_usd || 0}
             prefix="$"
             precision={2}
-            change={8.3}
-            tooltip="Kompaniyaning haqiqiy rentabelligini baholaydi"
             icon={<RiseOutlined />}
             loading={loading}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Kassa Balansi"
+            title="Kassa balansi"
             value={ownerData?.total_payments_usd || 0}
             prefix="$"
             precision={2}
-            change={-2.1}
-            tooltip="Likvidlik va barqarorlikni baholaydi"
             icon={<WalletOutlined />}
             loading={loading}
           />
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
-            title="Ochiq Buyurtmalar"
-            value={25}
+            title="Ochiq buyurtmalar"
+            value={dashboardData?.open_orders_count || 0}
             precision={0}
-            tooltip="Operatsion yuklamani baholaydi"
             icon={<ShoppingOutlined />}
             loading={loading}
           />
@@ -273,7 +328,6 @@ const DashboardPage = () => {
             suffix="/5"
             precision={1}
             icon={<SmileOutlined style={{ fontSize: '24px', color: '#d4af37' }} />}
-            tooltip={t('dashboard.satisfactionScore')}
             loading={loading}
           />
         </Col>
@@ -318,6 +372,16 @@ const DashboardPage = () => {
           </p>
         </article>
       </div>
+
+      {showDebtAnalytics && debtAnalytics && (
+        <>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <DebtByDealerChart data={debtAnalytics.by_dealers} loading={loading} />
+            <DebtByRegionPie data={debtAnalytics.by_regions} loading={loading} />
+          </div>
+          <DebtTrendChart data={debtAnalytics.monthly} loading={loading} />
+        </>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {showCardKpi && (

@@ -35,7 +35,7 @@ class DealerFilter(filters.FilterSet):
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.select_related('manager_user').all()
     serializer_class = RegionSerializer
-    permission_classes = [IsAdmin | IsOwner]
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsSales | IsWarehouse]
     filter_backends = (filters.DjangoFilterBackend, drf_filters.SearchFilter)
     filterset_fields = ('manager_user',)
     search_fields = ('name',)

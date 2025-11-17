@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button as AntButton, Card, Form, Input, Upload, message } from 'antd';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -38,6 +39,7 @@ interface CompanyInfoPayload extends CompanyInfoFormValues {
 }
 
 const SettingsPage = () => {
+  const { t } = useTranslation();
   const { role } = useAuthStore();
   const [telegramId, setTelegramId] = useState('');
   const [connected, setConnected] = useState(false);
@@ -109,7 +111,7 @@ const SettingsPage = () => {
         }
       } catch (error) {
         console.error(error);
-        message.error("Kompaniya ma'lumotlarini yuklashda xatolik yuz berdi");
+        message.error(t('settings.companyInfo.messages.loadError'));
       } finally {
         setCompanyLoading(false);
       }
@@ -129,10 +131,10 @@ const SettingsPage = () => {
     event.preventDefault();
     try {
       await http.post('/api/telegram/link/', { telegram_id: telegramId });
-      toast.success('Telegram linked');
+      toast.success(t('settings.telegram.messages.linked'));
       setConnected(true);
     } catch (error) {
-      toast.error('Telegram linking failed');
+      toast.error(t('settings.telegram.messages.linkFailed'));
     }
   };
 
@@ -142,9 +144,9 @@ const SettingsPage = () => {
     try {
       const response = await http.put<SystemConfig>('/api/system/config/', config);
       setConfig(response.data);
-      toast.success('Configuration updated');
+      toast.success(t('settings.system.messages.updated'));
     } catch (error) {
-      toast.error('Failed to update config');
+      toast.error(t('settings.system.messages.updateFailed'));
     }
   };
 
@@ -196,10 +198,10 @@ const SettingsPage = () => {
         setLogoPreview(null);
       }
       setLogoFile(null);
-      message.success("Kompaniya ma'lumotlari saqlandi!");
+      message.success(t('settings.companyInfo.messages.saved'));
     } catch (error) {
       console.error(error);
-      message.error("Kompaniya ma'lumotlarini saqlashda xatolik yuz berdi");
+      message.error(t('settings.companyInfo.messages.saveError'));
     } finally {
       setSavingCompany(false);
     }
@@ -209,18 +211,18 @@ const SettingsPage = () => {
     <section className="page-wrapper space-y-8">
       {isAdmin && (
         <Card
-          title="🏢 Kompaniya ma'lumotlari"
+          title={`🏢 ${t('settings.companyInfo.title')}`}
           className="max-w-3xl border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           loading={companyLoading}
         >
           <Form form={companyForm} layout="vertical" onFinish={handleCompanySave}>
-            <Form.Item name="name" label="Kompaniya nomi" rules={[{ required: true, message: 'Kompaniya nomi majburiy' }]}>
-              <Input placeholder="Masalan: Lenza Group LLC" />
+            <Form.Item name="name" label={t('settings.companyInfo.form.name')} rules={[{ required: true, message: t('settings.companyInfo.form.nameRequired') }]}>
+              <Input placeholder={t('settings.companyInfo.form.namePlaceholder')} />
             </Form.Item>
-            <Form.Item name="slogan" label="Slogan">
-              <Input placeholder="Masalan: Yangi avlod eshiklari" />
+            <Form.Item name="slogan" label={t('settings.companyInfo.form.slogan')}>
+              <Input placeholder={t('settings.companyInfo.form.sloganPlaceholder')} />
             </Form.Item>
-            <Form.Item label="Logo">
+            <Form.Item label={t('settings.companyInfo.form.logo')}>
               <Upload
                 name="logo"
                 showUploadList={false}
@@ -228,78 +230,78 @@ const SettingsPage = () => {
                 accept="image/*"
                 onChange={handleLogoChange}
               >
-                <AntButton icon={<UploadOutlined />}>Logo yuklash</AntButton>
+                <AntButton icon={<UploadOutlined />}>{t('settings.companyInfo.form.uploadLogo')}</AntButton>
               </Upload>
               {logoPreview && (
                 <div className="mt-3 space-y-2">
-                  <img src={logoPreview} alt="Company logo" className="h-16 object-contain" />
+                  <img src={logoPreview} alt={t('settings.companyInfo.form.logoAlt')} className="h-16 object-contain" />
                   <div>
                     <AntButton size="small" onClick={() => { setLogoPreview(null); setLogoFile(null); }}>
-                      Tozalash
+                      {t('actions.clear')}
                     </AntButton>
                   </div>
                 </div>
               )}
             </Form.Item>
-            <Form.Item name="address" label="Manzil">
-              <TextArea rows={2} placeholder="Manzilni kiriting" />
+            <Form.Item name="address" label={t('settings.companyInfo.form.address')}>
+              <TextArea rows={2} placeholder={t('settings.companyInfo.form.addressPlaceholder')} />
             </Form.Item>
-            <Form.Item name="phone" label="Telefon">
-              <Input placeholder="+998 xx xxx xx xx" />
+            <Form.Item name="phone" label={t('settings.companyInfo.form.phone')}>
+              <Input placeholder={t('settings.companyInfo.form.phonePlaceholder')} />
             </Form.Item>
-            <Form.Item name="email" label="Email">
-              <Input placeholder="info@example.com" />
+            <Form.Item name="email" label={t('settings.companyInfo.form.email')}>
+              <Input placeholder={t('settings.companyInfo.form.emailPlaceholder')} />
             </Form.Item>
-            <Form.Item name="website" label="Website">
-              <Input placeholder="https://lenza.uz" />
+            <Form.Item name="website" label={t('settings.companyInfo.form.website')}>
+              <Input placeholder={t('settings.companyInfo.form.websitePlaceholder')} />
             </Form.Item>
-            <Form.Item name="bank_name" label="Bank nomi">
+            <Form.Item name="bank_name" label={t('settings.companyInfo.form.bankName')}>
               <Input />
             </Form.Item>
-            <Form.Item name="account_number" label="Hisob raqami">
+            <Form.Item name="account_number" label={t('settings.companyInfo.form.accountNumber')}>
               <Input />
             </Form.Item>
-            <Form.Item name="inn" label="INN">
+            <Form.Item name="inn" label={t('settings.companyInfo.form.inn')}>
               <Input />
             </Form.Item>
-            <Form.Item name="mfo" label="MFO">
+            <Form.Item name="mfo" label={t('settings.companyInfo.form.mfo')}>
               <Input />
             </Form.Item>
-            <Form.Item name="director" label="Direktor">
+            <Form.Item name="director" label={t('settings.companyInfo.form.director')}>
               <Input />
             </Form.Item>
             <AntButton type="primary" icon={<SaveOutlined />} htmlType="submit" loading={savingCompany}>
-              Saqlash
+              {t('actions.save')}
             </AntButton>
           </Form>
         </Card>
       )}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Telegram</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Link your Telegram account to receive bot notifications.</p>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('settings.telegram.title')}</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t('settings.telegram.description')}</p>
         <form onSubmit={handleTelegramSubmit} className="mt-4 flex flex-col gap-3 md:flex-row md:items-end">
           <div className="flex-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Telegram ID</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('settings.telegram.telegramId')}</label>
             <input
               value={telegramId}
               onChange={(event) => setTelegramId(event.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              placeholder="123456789"
+              placeholder={t('settings.telegram.placeholder')}
             />
           </div>
           <button className="rounded-lg bg-slate-900 px-4 py-2 text-white dark:bg-emerald-500 dark:text-slate-900" type="submit">
-            {connected ? 'Connected ✅' : 'Connect'}
+            {connected ? t('settings.telegram.connected') : t('settings.telegram.connect')}
           </button>
         </form>
       </div>
 
       {isAdmin && config && (
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">System Configuration</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('settings.system.title')}</h2>
           <form onSubmit={handleConfigSubmit} className="mt-4 space-y-4">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-              Low stock threshold
+              {t('settings.system.lowStockThreshold')}
               <input
                 type="number"
                 value={config.LOW_STOCK_THRESHOLD as number}
@@ -308,7 +310,7 @@ const SettingsPage = () => {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-              Backup path
+              {t('settings.system.backupPath')}
               <input
                 type="text"
                 value={config.BACKUP_PATH as string}
@@ -317,7 +319,7 @@ const SettingsPage = () => {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-              Default exchange rate
+              {t('settings.system.defaultExchangeRate')}
               <input
                 type="number"
                 value={config.DEFAULT_EXCHANGE_RATE as string}
@@ -326,7 +328,7 @@ const SettingsPage = () => {
               />
             </label>
             <button className="rounded-lg bg-slate-900 px-4 py-2 text-white dark:bg-emerald-500 dark:text-slate-900" type="submit">
-              Save
+              {t('actions.save')}
             </button>
           </form>
         </div>

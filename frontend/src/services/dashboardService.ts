@@ -7,6 +7,9 @@ export interface DashboardSummary {
   cash_balance: number;
   open_orders_count: number;
   satisfaction_score: number;
+  total_debt_usd: number;
+  products?: number;
+  dealers?: number;
   overdue_receivables: Array<{
     id: number;
     dealer_name: string;
@@ -17,6 +20,13 @@ export interface DashboardSummary {
   revenue_by_product: Array<{ category: string; revenue: number }>;
   inventory_trend: Array<{ date: string; stock_value: number }>;
   expenses_vs_budget: { expenses: number; budget: number };
+}
+
+export interface DebtAnalytics {
+  total_debt: number;
+  by_dealers: { dealer: string; debt: number }[];
+  by_regions: { region: string; debt: number }[];
+  monthly: { month: string; debt: number }[];
 }
 
 /**
@@ -45,6 +55,8 @@ export const fetchDashboardSummary = async (filters: DashboardFilters): Promise<
   const response = await http.get<DashboardSummary>(url);
   return response.data;
 };
+
+export const fetchDebtAnalytics = () => http.get<DebtAnalytics>('/api/dashboard/debt-analytics/');
 
 /**
  * Fetch dashboard KPI data with optional filters

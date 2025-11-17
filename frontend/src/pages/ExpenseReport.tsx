@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   DatePicker,
@@ -64,6 +65,7 @@ interface ExpenseReportPayload {
 }
 
 export default function ExpenseReportPage() {
+  const { t } = useTranslation();
   const [month, setMonth] = useState<Dayjs>(dayjs());
   const [report, setReport] = useState<ExpenseReportPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -78,7 +80,7 @@ export default function ExpenseReportPage() {
         setReport(response.data);
       } catch (err) {
         console.error('Monthly expenses load failed', err);
-        message.error('Oylik chiqimlar maʼlumotini yuklashda xatolik yuz berdi');
+        message.error(t('expenseReport.messages.loadError'));
         setReport(null);
       } finally {
         setLoading(false);
@@ -199,17 +201,17 @@ export default function ExpenseReportPage() {
       const filename = `chiqimlar_${suffix}.${format}`;
       const url = `/api/expenses/monthly/export/${endpoint}/?month=${monthParam}`;
       await downloadFile(url, filename);
-      message.success(`${format === 'pdf' ? 'PDF' : 'Excel'} yuklab olindi`);
+      message.success(t('expenseReport.messages.exportSuccess', { format: format === 'pdf' ? 'PDF' : 'Excel' }));
     } catch (err) {
       console.error('Expense report export failed', err);
-      message.error('Eksportni yuklab olishda xatolik yuz berdi');
+      message.error(t('expenseReport.messages.exportError'));
     } finally {
       setExporting((prev) => ({ ...prev, [format]: false }));
     }
   };
 
   const columns = [
-    { title: 'Chiqim turi', dataIndex: 'type', key: 'type' },
+    { title: t('expenseReport.table.type'), dataIndex: 'type', key: 'type' },
     {
       title: 'USD',
       dataIndex: 'usd',
@@ -225,7 +227,7 @@ export default function ExpenseReportPage() {
       render: (value: number) => `${Math.round(value || 0).toLocaleString('en-US')} so'm`,
     },
     {
-      title: 'Ulush (%)',
+      title: t('expenseReport.table.percentage'),
       dataIndex: 'percentage',
       key: 'percentage',
       align: 'right' as const,
@@ -240,7 +242,7 @@ export default function ExpenseReportPage() {
           <span role="img" aria-label="chart">
             📊
           </span>
-          Oylik chiqimlar hisobot
+          {t('expenseReport.title')}
         </div>
       }
       extra={
@@ -271,7 +273,7 @@ export default function ExpenseReportPage() {
       <Row gutter={16}>
         <Col xs={24} sm={8}>
           <Statistic
-            title="Jami USD"
+            title={t('expenseReport.stats.totalUsd')}
             value={report?.total_usd ?? 0}
             precision={2}
             formatter={(value) => `$${Number(value).toFixed(2)}`}
@@ -279,7 +281,7 @@ export default function ExpenseReportPage() {
         </Col>
         <Col xs={24} sm={8}>
           <Statistic
-            title="Jami UZS"
+            title={t('expenseReport.stats.totalUzs')}
             value={report?.total_uzs ?? 0}
             precision={0}
             formatter={(value) => `${Math.round(Number(value || 0)).toLocaleString('en-US')} so'm`}
@@ -287,7 +289,7 @@ export default function ExpenseReportPage() {
         </Col>
         <Col xs={24} sm={8}>
           <Statistic
-            title="Chiqimlar soni"
+            title={t('expenseReport.stats.count')}
             value={report?.count ?? 0}
             precision={0}
           />
@@ -296,10 +298,11 @@ export default function ExpenseReportPage() {
 
       <Paragraph style={{ marginTop: 12 }}>
         {report
-          ? `Buyurtma oraligʻi: ${dayjs(report.from_date).format('DD.MM.YYYY')} — ${dayjs(report.to_date).format(
-              'DD.MM.YYYY'
-            )}`
-          : 'Maʼlumotlar yuklanmoqda...'}
+          ? t('expenseReport.dateRange', { 
+              from: dayjs(report.from_date).format('DD.MM.YYYY'),
+              to: dayjs(report.to_date).format('DD.MM.YYYY')
+            })
+          : t('expenseReport.loading')}
       </Paragraph>
 
       <Row gutter={24} style={{ marginBottom: 24 }}>
@@ -341,11 +344,11 @@ export default function ExpenseReportPage() {
         columns={columns}
         pagination={false}
         loading={loading && !report}
-        locale={{ emptyText: 'Tanlangan oy uchun chiqimlar topilmadi' }}
+        locale={{ emptyText: t('expenseReport.table.noExpenses') }}
         summary={() => (
           <Table.Summary.Row>
             <Table.Summary.Cell index={0}>
-              <Typography.Text strong>Jami</Typography.Text>
+              <Typography.Text strong>{t('expenseReport.table.total')}</Typography.Text>
             </Table.Summary.Cell>
             <Table.Summary.Cell index={1} align="right">
               <Typography.Text strong>

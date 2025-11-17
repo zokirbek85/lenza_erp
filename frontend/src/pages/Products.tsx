@@ -107,7 +107,7 @@ const ProductsPage = () => {
       setCategories(toArray<Category>(categoryRes.data));
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load brand/category references');
+      toast.error(t('messages.error'));
     }
   }, []);
 
@@ -133,7 +133,7 @@ const ProductsPage = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load products');
+      toast.error(t('messages.error'));
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,7 @@ const ProductsPage = () => {
       fetchProducts();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to save product');
+      toast.error(t('products.messages.created'));
     }
   };
 
@@ -246,18 +246,18 @@ const ProductsPage = () => {
       payload.stock_defect = normalizeStockValue(adjustForm.stock_defect);
     }
     if (!Object.keys(payload).length) {
-      toast.error('Enter at least one value');
+      toast.error(t('validation.required'));
       return;
     }
     setAdjustSaving(true);
     try {
       await http.patch(`/api/products/${adjusting.id}/adjust/`, payload);
-      toast.success('Stock levels updated');
+      toast.success(t('products.messages.updated'));
       setAdjusting(null);
       fetchProducts();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to adjust stock');
+      toast.error(t('messages.error'));
     } finally {
       setAdjustSaving(false);
     }
@@ -297,13 +297,13 @@ const ProductsPage = () => {
   const filtersContent = (
     <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.products')}</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.brand')}</label>
         <select
           value={filters.brandId ?? ''}
           onChange={(event) => handleFilterChange('brandId', event.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         >
-          <option value="">Barcha brandlar</option>
+          <option value="">{t('common.all')}</option>
           {brands.map((brand) => (
             <option key={brand.id} value={brand.id}>
               {brand.name}
@@ -312,13 +312,13 @@ const ProductsPage = () => {
         </select>
       </div>
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.categories')}</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.category')}</label>
         <select
           value={filters.categoryId ?? ''}
           onChange={(event) => handleFilterChange('categoryId', event.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         >
-          <option value="">Barcha kategoriyalar</option>
+          <option value="">{t('common.all')}</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -378,7 +378,7 @@ const ProductsPage = () => {
           onClose={() => setFiltersOpen(false)}
           onApply={handleApplyFilters}
           onReset={handleResetFilters}
-          title="Filterlar"
+          title={t('filters.title')}
         >
           {filtersContent}
         </FilterDrawer>
@@ -391,20 +391,20 @@ const ProductsPage = () => {
   const handleExportExcel = async () => {
     try {
       await downloadFile('/api/products/export/excel/', `products_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      toast.success('Excel exported');
+      toast.success(t('messages.success'));
     } catch (error) {
       console.error(error);
-      toast.error('Export failed');
+      toast.error(t('messages.error'));
     }
   };
 
   const handleDownloadTemplate = async () => {
     try {
       await downloadFile('/api/products/import/template/', 'products_import_template.xlsx');
-      toast.success('Template downloaded');
+      toast.success(t('messages.success'));
     } catch (error) {
       console.error(error);
-      toast.error('Template download failed');
+      toast.error(t('messages.error'));
     }
   };
 
@@ -413,7 +413,7 @@ const ProductsPage = () => {
     if (!file) {
       return;
     }
-    const toastId = toast.loading('Importing Excel...');
+    const toastId = toast.loading(t('messages.loading'));
     setImporting(true);
     try {
       const formData = new FormData();
@@ -427,7 +427,7 @@ const ProductsPage = () => {
       await fetchProducts();
     } catch (error) {
       console.error(error);
-      toast.error('Import failed', { id: toastId });
+      toast.error(t('messages.error'), { id: toastId });
     } finally {
       setImporting(false);
       event.target.value = '';
@@ -438,9 +438,9 @@ const ProductsPage = () => {
     <section className="page-wrapper space-y-6">
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.products')}</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('products.title')}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('actions.save')} &middot; inventory monitoring
+            {t('products.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -456,14 +456,14 @@ const ProductsPage = () => {
                 onClick={handleExportExcel}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                📤 Export Excel
+                📤 {t('actions.exportExcel')}
               </button>
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                📄 Import Template
+                📄 {t('actions.download')} Template
               </button>
               <button
                 type="button"
@@ -471,7 +471,7 @@ const ProductsPage = () => {
                 disabled={importing}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
               >
-                {importing ? 'Loading…' : '📥 Import Excel'}
+                {importing ? t('common.loading') : `📥 ${t('actions.import')} Excel`}
               </button>
               <input
                 ref={fileInputRef}
@@ -488,13 +488,13 @@ const ProductsPage = () => {
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Brand filter</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.brand')}</label>
           <select
             value={filters.brandId ?? ''}
             onChange={(event) => handleFilterChange('brandId', event.target.value)}
             className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">Barcha brandlar</option>
+            <option value="">{t('common.all')}</option>
             {brands.map((brand) => (
               <option key={brand.id} value={brand.id}>
                 {brand.name}
@@ -509,7 +509,7 @@ const ProductsPage = () => {
             onChange={(event) => handleFilterChange('categoryId', event.target.value)}
             className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">Barcha kategoriyalar</option>
+            <option value="">{t('common.all')}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -522,7 +522,7 @@ const ProductsPage = () => {
           onClick={clearFilters}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
-          Filtrlarni tozalash
+          {t('filters.reset')}
         </button>
       </div>
 
@@ -543,7 +543,7 @@ const ProductsPage = () => {
               aria-expanded={showForm}
               aria-controls="product-create-form"
             >
-              {showForm ? '− Formani yopish' : '+ Yangi mahsulot yaratish'}
+              {showForm ? `− ${t('products.form.name')}` : `+ ${t('products.new')}`}
             </button>
           </div>
           <div className="mt-3">
@@ -561,7 +561,7 @@ const ProductsPage = () => {
                 className="grid gap-4 p-4 md:grid-cols-2"
               >
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">SKU</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.sku')}</label>
           <input
             required
             name="sku"
@@ -571,7 +571,7 @@ const ProductsPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.products')}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.name')}</label>
           <input
             required
             name="name"
@@ -581,14 +581,14 @@ const ProductsPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Brend</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.brand')}</label>
           <select
             name="brand_id"
             value={formState.brand_id}
             onChange={handleChange}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">Tanlang</option>
+            <option value="">{t('common.select')}</option>
             {brands.map((brand) => (
               <option key={brand.id} value={brand.id}>
                 {brand.name}
@@ -597,14 +597,14 @@ const ProductsPage = () => {
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Kategoriya</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.category')}</label>
           <select
             name="category_id"
             value={formState.category_id}
             onChange={handleChange}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">Tanlang</option>
+            <option value="">{t('common.select')}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -613,7 +613,7 @@ const ProductsPage = () => {
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Sotuv narxi (USD)</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.sellingPrice')}</label>
           <input
             name="sell_price_usd"
             value={formState.sell_price_usd}
@@ -625,7 +625,7 @@ const ProductsPage = () => {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Sog&apos;lom zaxira</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.stock')} OK</label>
             <input
               name="stock_ok"
               value={formState.stock_ok}
@@ -638,7 +638,7 @@ const ProductsPage = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Defekt zaxira</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.stock')} Defect</label>
             <input
               name="stock_defect"
               value={formState.stock_defect}
@@ -684,13 +684,13 @@ const ProductsPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('nav.products')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Brend</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Kategoriya</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Narx</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Zaxira</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Availability</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">{t('actions.save')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.name')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.brand')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.category')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.sellingPrice')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.stock')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('common.status')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -705,11 +705,11 @@ const ProductsPage = () => {
                 <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.sell_price_usd)}</td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Ok: {formatQuantity(product.stock_ok)} / Defect: {formatQuantity(product.stock_defect)}
+                    OK: {formatQuantity(product.stock_ok)} / Defect: {formatQuantity(product.stock_defect)}
                   </div>
                   {!product.canSell && (
                     <p className="text-xs font-semibold uppercase tracking-widest text-rose-600">
-                      Zaxira yo&apos;q
+                      {t('products.messages.lowStockWarning')}
                     </p>
                   )}
                 </td>
@@ -731,7 +731,7 @@ const ProductsPage = () => {
                         className="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                         onClick={() => handleEdit(product)}
                       >
-                        Tahrirlash
+                        {t('actions.edit')}
                       </button>
                     )}
                     {isWarehouse && (
@@ -739,7 +739,7 @@ const ProductsPage = () => {
                         className="text-sm font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-300"
                         onClick={() => openAdjustModal(product)}
                       >
-                        Adjust
+                        {t('actions.update')}
                       </button>
                     )}
                     {canManageProducts && (
@@ -747,7 +747,7 @@ const ProductsPage = () => {
                         className="text-sm font-semibold text-rose-600 hover:text-rose-800"
                         onClick={() => handleDelete(product.id)}
                       >
-                        O&apos;chirish
+                        {t('actions.delete')}
                       </button>
                     )}
                   </div>
@@ -757,7 +757,7 @@ const ProductsPage = () => {
             {!loading && products.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                  Mahsulotlar mavjud emas
+                  {t('table.noData')}
                 </td>
               </tr>
             )}
@@ -767,7 +767,7 @@ const ProductsPage = () => {
 
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
-          <span>Ko&apos;rsat:</span>
+          <span>{t('pagination.showing')}:</span>
           <select
             value={pageSize}
             onChange={handlePageSizeChange}
@@ -779,7 +779,7 @@ const ProductsPage = () => {
               </option>
             ))}
           </select>
-          <span>ta mahsulot / sahifa</span>
+          <span>{t('table.items')} / {t('pagination.page')}</span>
           <span className="text-xs text-slate-400 dark:text-slate-500">
             {rangeStart} - {rangeEnd} / {total}
           </span>
@@ -792,10 +792,10 @@ const ProductsPage = () => {
             onClick={() => canGoPrev && setPage((prev) => Math.max(1, prev - 1))}
             className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
           >
-            ← Oldingi
+            ← {t('pagination.previous')}
           </button>
           <span className="text-xs text-slate-400 dark:text-slate-500">
-            Sahifa {page} / {totalPages}
+            {t('pagination.page')} {page} / {totalPages}
           </span>
           <button
             type="button"
@@ -803,7 +803,7 @@ const ProductsPage = () => {
             onClick={() => canGoNext && setPage((prev) => prev + 1)}
             className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
           >
-            Keyingi →
+            {t('pagination.next')} →
           </button>
         </div>
       </div>
@@ -816,7 +816,7 @@ const ProductsPage = () => {
             setAdjustForm({ stock_ok: '', stock_defect: '' });
           }
         }}
-        title="Adjust stock"
+        title={t('actions.update')}
         footer={
           <>
             <button
@@ -824,7 +824,7 @@ const ProductsPage = () => {
               onClick={() => setAdjusting(null)}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -832,18 +832,18 @@ const ProductsPage = () => {
               disabled={adjustSaving}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
             >
-              {adjustSaving ? 'Saving…' : 'Update'}
+              {adjustSaving ? t('common.saving') : t('actions.save')}
             </button>
           </>
         }
       >
         <form id="adjust-form" onSubmit={handleAdjustSubmit} className="space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-300">
-            {adjusting ? `Update ${adjusting.name} stock levels.` : 'Select product'}
+            {adjusting ? `${t('actions.update')} ${adjusting.name} ${t('products.table.stock')}` : t('common.select')}
           </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Stock OK</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.stock')} OK</label>
               <input
                 name="stock_ok"
                 value={adjustForm.stock_ok}
@@ -856,7 +856,7 @@ const ProductsPage = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Stock Defect</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.stock')} Defect</label>
               <input
                 name="stock_defect"
                 value={adjustForm.stock_defect}

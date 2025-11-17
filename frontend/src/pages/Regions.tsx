@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import http from '../app/http';
@@ -29,6 +30,7 @@ const emptyRegion = {
 };
 
 const RegionsPage = () => {
+  const { t } = useTranslation();
   const [regions, setRegions] = useState<RegionRecord[]>([]);
   const [managers, setManagers] = useState<ManagerRecord[]>([]);
   const [form, setForm] = useState(emptyRegion);
@@ -56,7 +58,7 @@ const RegionsPage = () => {
       setRegions(normalized);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load regions');
+      toast.error(t('regions.messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -114,10 +116,10 @@ const RegionsPage = () => {
     try {
       if (editing) {
         await http.put(`/api/regions/${editing.id}/`, payload);
-        toast.success('Region updated');
+        toast.success(t('regions.messages.updated'));
       } else {
         await http.post('/api/regions/', payload);
-        toast.success('Region created');
+        toast.success(t('regions.messages.created'));
       }
       setModalOpen(false);
       setForm(emptyRegion);
@@ -127,10 +129,10 @@ const RegionsPage = () => {
       console.error(error);
       if (typeof error === 'object' && error && 'response' in error) {
         const detail = (error as { response?: { data?: Record<string, string[]> } }).response?.data;
-        const message = detail?.name?.[0] || 'Save failed';
+        const message = detail?.name?.[0] || t('regions.messages.saveError');
         toast.error(message);
       } else {
-        toast.error('Save failed');
+        toast.error(t('regions.messages.saveError'));
       }
     } finally {
       setSaving(false);
@@ -138,14 +140,14 @@ const RegionsPage = () => {
   };
 
   const handleDelete = async (region: RegionRecord) => {
-    if (!window.confirm(`Delete region "${region.name}"?`)) return;
+    if (!window.confirm(t('regions.confirmDelete', { name: region.name }))) return;
     try {
       await http.delete(`/api/regions/${region.id}/`);
-      toast.success('Region removed');
+      toast.success(t('regions.messages.deleted'));
       loadRegions();
     } catch (error) {
       console.error(error);
-      toast.error('Unable to delete region');
+      toast.error(t('regions.messages.deleteError'));
     }
   };
 
@@ -153,14 +155,14 @@ const RegionsPage = () => {
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Regions</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Assign regional managers for dealers.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('regions.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('regions.subtitle')}</p>
         </div>
         <button
           onClick={() => openModal()}
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
         >
-          Add region
+          {t('regions.new')}
         </button>
       </header>
 
@@ -168,16 +170,16 @@ const RegionsPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/40">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Region name</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Manager</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('regions.table.name')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('regions.table.manager')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
             {loading && (
               <tr>
                 <td colSpan={3} className="px-4 py-6 text-center text-sm text-slate-500">
-                  Loading regions...
+                  {t('regions.messages.loading')}
                 </td>
               </tr>
             )}
@@ -189,10 +191,10 @@ const RegionsPage = () => {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
                       <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(region)}>
-                        Edit
+                        {t('actions.edit')}
                       </button>
                       <button className="text-rose-600 hover:text-rose-800 dark:text-rose-300" onClick={() => handleDelete(region)}>
-                        Delete
+                        {t('actions.delete')}
                       </button>
                     </div>
                   </td>
@@ -201,7 +203,7 @@ const RegionsPage = () => {
             {!loading && regions.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-4 py-6 text-center text-sm text-slate-500">
-                  No regions registered
+                  {t('regions.messages.noRegions')}
                 </td>
               </tr>
             )}
@@ -228,7 +230,7 @@ const RegionsPage = () => {
             setEditing(null);
           }
         }}
-        title={editing ? 'Edit region' : 'Add region'}
+        title={editing ? t('regions.editTitle') : t('regions.addTitle')}
         footer={
           <>
             <button
@@ -240,7 +242,7 @@ const RegionsPage = () => {
               }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -248,14 +250,14 @@ const RegionsPage = () => {
               disabled={saving}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
             >
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? t('actions.saving') : t('actions.save')}
             </button>
           </>
         }
       >
         <form id="region-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Name</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('regions.form.name')}</label>
             <input
               required
               name="name"
@@ -265,14 +267,14 @@ const RegionsPage = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Manager</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('regions.form.manager')}</label>
             <select
               name="manager_user_id"
               value={form.manager_user_id}
               onChange={handleChange}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             >
-              <option value="">Unassigned</option>
+              <option value="">{t('regions.form.unassigned')}</option>
               {managers.map((manager) => (
                 <option key={manager.id} value={manager.id}>
                   {manager.first_name || manager.last_name ? `${manager.first_name} ${manager.last_name}`.trim() : manager.username}

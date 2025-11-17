@@ -1,8 +1,10 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import http from '../app/http';
+import { useAuthStore } from '../auth/useAuthStore';
 import Modal from '../components/Modal';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
@@ -62,6 +64,8 @@ const emptyForm = {
 };
 
 const DealersPage = () => {
+  const { t } = useTranslation();
+  const role = useAuthStore((state) => state.role);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
@@ -106,11 +110,14 @@ const DealersPage = () => {
       setDealers(normalized);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load dealers');
+      toast.error(t('messages.error'));
     } finally {
       setLoading(false);
     }
   }, [filter, page, pageSize]);
+
+  const canLoadRegions = role === 'admin' || role === 'owner';
+  const canLoadSalesManagers = role === 'admin' || role === 'owner' || role === 'accountant' || role === 'warehouse';
 
   const loadRegions = useCallback(async () => {
     try {
@@ -131,9 +138,17 @@ const DealersPage = () => {
   }, []);
 
   useEffect(() => {
-    loadRegions();
-    loadManagers();
-  }, [loadRegions, loadManagers]);
+    if (canLoadRegions) {
+      loadRegions();
+    } else {
+      setRegions([]);
+    }
+    if (canLoadSalesManagers) {
+      loadManagers();
+    } else {
+      setManagers([]);
+    }
+  }, [canLoadRegions, canLoadSalesManagers, loadRegions, loadManagers]);
 
   useEffect(() => {
     loadDealers();
@@ -192,10 +207,10 @@ const DealersPage = () => {
     try {
       if (editing) {
         await http.put(`/api/dealers/${editing.id}/`, payload);
-        toast.success('Dealer updated');
+        toast.success(t('dealers.messages.updated'));
       } else {
         await http.post('/api/dealers/', payload);
-        toast.success('Dealer created');
+        toast.success(t('dealers.messages.created'));
       }
       setModalOpen(false);
       setForm(emptyForm);
@@ -203,21 +218,21 @@ const DealersPage = () => {
       loadDealers();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to save dealer');
+      toast.error(t('dealers.messages.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (dealer: Dealer) => {
-    if (!window.confirm(`Delete dealer "${dealer.name}"?`)) return;
+    if (!window.confirm(t('dealers.confirmDelete', { name: dealer.name }))) return;
     try {
       await http.delete(`/api/dealers/${dealer.id}/`);
-      toast.success('Dealer removed');
+      toast.success(t('dealers.messages.deleted'));
       loadDealers();
     } catch (error) {
       console.error(error);
-      toast.error('Unable to delete dealer');
+      toast.error(t('dealers.messages.deleteError'));
     }
   };
 
@@ -234,7 +249,7 @@ const DealersPage = () => {
       setPayments(toArray<PaymentSummary>(paymentsRes.data));
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load dealer history');
+      toast.error(t('dealers.messages.loadHistoryError'));
     } finally {
       setDetailLoading(false);
     }
@@ -247,7 +262,7 @@ const DealersPage = () => {
       await downloadFile('/api/dealers/export/excel/', 'dealers.xlsx');
     } catch (error) {
       console.error(error);
-      toast.error('Export failed');
+      toast.error(t('dealers.messages.exportError'));
     }
   };
 
@@ -256,14 +271,14 @@ const DealersPage = () => {
       await downloadFile('/api/dealers/import/template/', 'dealers_import_template.xlsx');
     } catch (error) {
       console.error(error);
-      toast.error('Template download failed');
+      toast.error(t('dealers.messages.templateError'));
     }
   };
 
   const handleImportSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!importFile) {
-      toast.error('Select Excel file first');
+      toast.error(t('dealers.messages.selectFile'));
       return;
     }
     const formData = new FormData();
@@ -274,12 +289,12 @@ const DealersPage = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setImportSummary(response.data);
-      toast.success('Import completed');
+      toast.success(t('dealers.messages.importSuccess'));
       setImportFile(null);
       loadDealers();
     } catch (error) {
       console.error(error);
-      toast.error('Import failed');
+      toast.error(t('dealers.messages.importError'));
     } finally {
       setImporting(false);
     }
@@ -295,8 +310,8 @@ const DealersPage = () => {
     <section className="page-wrapper space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Dealers</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Region-based partner management.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('dealers.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('dealers.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -304,7 +319,7 @@ const DealersPage = () => {
             onChange={handleFilterChange}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
           >
-            <option value="">All regions</option>
+            <option value="">{t('dealers.filters.allRegions')}</option>
             {regions.map((region) => (
               <option key={region.id} value={region.id}>
                 {region.name}
@@ -315,25 +330,25 @@ const DealersPage = () => {
             onClick={handleTemplateDownload}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Import template
+            {t('dealers.importTemplate')}
           </button>
           <button
             onClick={handleExport}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Export Excel
+            {t('dealers.exportExcel')}
           </button>
           <button
             onClick={() => setImportModalOpen(true)}
             className="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
           >
-            Import Excel
+            {t('dealers.importExcel')}
           </button>
           <button
             onClick={() => openModal()}
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
           >
-            Add dealer
+            {t('dealers.new')}
           </button>
         </div>
       </header>
@@ -342,18 +357,18 @@ const DealersPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/40">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Dealer</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Region</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Manager</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Balance (USD)</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.dealer')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.region')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.manager')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.balanceUsd')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
             {loading && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
-                  Loading dealers...
+                  {t('dealers.messages.loading')}
                 </td>
               </tr>
             )}
@@ -381,13 +396,13 @@ const DealersPage = () => {
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap items-center justify-end gap-2">
                         <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openDetails(dealer)}>
-                          View details
+                          {t('dealers.viewDetails')}
                         </button>
                         <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(dealer)}>
-                          Edit
+                          {t('actions.edit')}
                         </button>
                         <button className="text-rose-600 hover:text-rose-800 dark:text-rose-300" onClick={() => handleDelete(dealer)}>
-                          Delete
+                          {t('actions.delete')}
                         </button>
                       </div>
                     </td>
@@ -397,7 +412,7 @@ const DealersPage = () => {
             {!loading && dealers.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
-                  No dealers found
+                  {t('dealers.messages.noDealers')}
                 </td>
               </tr>
             )}
@@ -417,7 +432,7 @@ const DealersPage = () => {
       <Modal
         open={importModalOpen}
         onClose={closeImportModal}
-        title="Import dealers"
+        title={t('dealers.importTitle')}
         footer={
           <>
             <button
@@ -425,7 +440,7 @@ const DealersPage = () => {
               onClick={closeImportModal}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -433,14 +448,14 @@ const DealersPage = () => {
               disabled={importing}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
             >
-              {importing ? 'Importing...' : 'Start import'}
+              {importing ? t('dealers.importing') : t('dealers.startImport')}
             </button>
           </>
         }
       >
         <form id="dealer-import-form" onSubmit={handleImportSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Excel file</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.excelFile')}</label>
             <input
               type="file"
               accept=".xlsx,.xls"
@@ -450,9 +465,9 @@ const DealersPage = () => {
           </div>
           {importSummary && (
             <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              <p>Created: {importSummary.created}</p>
-              <p>Updated: {importSummary.updated}</p>
-              {typeof importSummary.skipped === 'number' && <p>Skipped: {importSummary.skipped}</p>}
+              <p>{t('dealers.importSummary.created')}: {importSummary.created}</p>
+              <p>{t('dealers.importSummary.updated')}: {importSummary.updated}</p>
+              {typeof importSummary.skipped === 'number' && <p>{t('dealers.importSummary.skipped')}: {importSummary.skipped}</p>}
             </div>
           )}
         </form>
@@ -467,7 +482,7 @@ const DealersPage = () => {
             setEditing(null);
           }
         }}
-        title={editing ? 'Edit dealer' : 'Add dealer'}
+        title={editing ? t('dealers.editTitle') : t('dealers.addTitle')}
         footer={
           <>
             <button
@@ -479,7 +494,7 @@ const DealersPage = () => {
               }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -487,7 +502,7 @@ const DealersPage = () => {
               disabled={saving}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
             >
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? t('actions.saving') : t('actions.save')}
             </button>
           </>
         }
@@ -495,7 +510,7 @@ const DealersPage = () => {
         <form id="dealer-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Name</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.name')}</label>
               <input
                 required
                 name="name"
@@ -505,7 +520,7 @@ const DealersPage = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Code</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.code')}</label>
               <input
                 required
                 name="code"
@@ -516,7 +531,7 @@ const DealersPage = () => {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Contact</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.contact')}</label>
             <input
               name="contact"
               value={form.contact}
@@ -526,14 +541,14 @@ const DealersPage = () => {
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Region</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.region')}</label>
               <select
                 name="region_id"
                 value={form.region_id}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
-                <option value="">Select region</option>
+                <option value="">{t('dealers.form.selectRegion')}</option>
                 {regions.map((region) => (
                   <option key={region.id} value={region.id}>
                     {region.name}
@@ -542,14 +557,14 @@ const DealersPage = () => {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Manager</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.manager')}</label>
               <select
                 name="manager_user_id"
                 value={form.manager_user_id}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
-                <option value="">Unassigned</option>
+                <option value="">{t('dealers.form.unassigned')}</option>
                 {managers.map((manager) => (
                   <option key={manager.id} value={manager.id}>
                     {manager.first_name || manager.last_name ? `${manager.first_name} ${manager.last_name}`.trim() : manager.username}
@@ -559,7 +574,7 @@ const DealersPage = () => {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Opening balance (USD)</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.openingBalance')}</label>
             <input
               type="number"
               step="0.01"
@@ -579,22 +594,22 @@ const DealersPage = () => {
           setOrders([]);
           setPayments([]);
         }}
-        title={selectedDealer ? `${selectedDealer.name} overview` : 'Dealer overview'}
+        title={selectedDealer ? `${selectedDealer.name} ${t('dealers.overview')}` : t('dealers.overview')}
         widthClass="max-w-4xl"
       >
-        {detailLoading && <p className="text-sm text-slate-500">Loading details...</p>}
+        {detailLoading && <p className="text-sm text-slate-500">{t('dealers.messages.loadingDetails')}</p>}
         {!detailLoading && selectedDealer && (
           <div className="space-y-6">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">Recent orders</h4>
-              {orders.length === 0 && <p className="text-sm text-slate-500">No orders found</p>}
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">{t('dealers.recentOrders')}</h4>
+              {orders.length === 0 && <p className="text-sm text-slate-500">{t('dealers.messages.noOrders')}</p>}
               {orders.length > 0 && (
                 <ul className="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
                   {orders.slice(0, 5).map((order) => (
                     <li key={order.id} className="flex items-center justify-between px-4 py-2 text-sm">
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-white">{order.display_no}</p>
-                        <p className="text-xs uppercase tracking-widest text-slate-500">Status: {order.status}</p>
+                        <p className="text-xs uppercase tracking-widest text-slate-500">{t('dealers.status')}: {order.status}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-slate-900 dark:text-white">{formatCurrency(order.total_usd)}</p>
@@ -606,8 +621,8 @@ const DealersPage = () => {
               )}
             </div>
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">Recent payments</h4>
-              {payments.length === 0 && <p className="text-sm text-slate-500">No payments found</p>}
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">{t('dealers.recentPayments')}</h4>
+              {payments.length === 0 && <p className="text-sm text-slate-500">{t('dealers.messages.noPayments')}</p>}
               {payments.length > 0 && (
                 <ul className="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
                   {payments.slice(0, 5).map((payment) => (

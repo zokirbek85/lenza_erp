@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   Card,
@@ -92,6 +93,8 @@ interface PaymentCard {
 }
 
 export default function ExpensesPage() {
+  const { t } = useTranslation();
+  
   // ========== STATE ==========
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
@@ -129,7 +132,7 @@ export default function ExpensesPage() {
       setExpenseTypes(Array.isArray(types) ? types.filter(t => t.is_active) : []);
     } catch (error) {
       console.error('Failed to load expense types:', error);
-      message.error('Chiqim turlarini yuklashda xatolik');
+      message.error(t('expenses.messages.loadTypesError'));
       setExpenseTypes([]);
     }
   };
@@ -148,7 +151,7 @@ export default function ExpensesPage() {
       setPaymentCards(activeCards);
     } catch (error) {
       console.error('Failed to load payment cards:', error);
-      message.error('Kartalarni yuklashda xatolik');
+      message.error(t('expenses.messages.loadCardsError'));
       setPaymentCards([]);
     }
   };
@@ -195,7 +198,7 @@ export default function ExpensesPage() {
       setTrendData(trendDataResult || []);
       setDistributionData(distributionDataResult || []);
     } catch (error) {
-      message.error("Ma'lumotlarni yuklashda xatolik");
+      message.error(t('expenses.messages.loadError'));
       console.error('❌ Load data error:', error);
       
       // Xatolik bo'lsa ham default qiymatlar
@@ -233,20 +236,20 @@ export default function ExpensesPage() {
   const handleDelete = async (id: number) => {
     try {
       await deleteExpense(id);
-      message.success("Chiqim o'chirildi");
+      message.success(t('expenses.messages.deleted'));
       loadData();
     } catch (error) {
-      message.error("O'chirishda xatolik");
+      message.error(t('expenses.messages.deleteError'));
     }
   };
 
   const handleApprove = async (id: number) => {
     try {
       await approveExpense(id);
-      message.success('Chiqim tasdiqlandi');
+      message.success(t('expenses.messages.approved'));
       loadData();
     } catch (error) {
-      message.error('Tasdiqlashda xatolik');
+      message.error(t('expenses.messages.approveError'));
     }
   };
 
@@ -260,16 +263,16 @@ export default function ExpensesPage() {
 
       if (editingExpense) {
         await updateExpense(editingExpense.id, data);
-        message.success("Chiqim o'zgartirildi");
+        message.success(t('expenses.messages.updated'));
       } else {
         await createExpense(data);
-        message.success('Yangi chiqim yaratildi');
+        message.success(t('expenses.messages.created'));
       }
 
       setModalOpen(false);
       loadData();
     } catch (error) {
-      message.error('Saqlashda xatolik');
+      message.error(t('expenses.messages.saveError'));
     }
   };
 
@@ -295,9 +298,9 @@ export default function ExpensesPage() {
       link.download = `expenses_${dayjs().format('YYYY-MM-DD')}.${format}`;
       link.click();
       window.URL.revokeObjectURL(url);
-      message.success(`${format.toUpperCase()} yuklandi`);
+      message.success(t('expenses.messages.exportSuccess', { format: format.toUpperCase() }));
     } catch (error) {
-      message.error('Eksport qilishda xatolik');
+      message.error(t('expenses.messages.exportError'));
     } finally {
       setExporting((prev) => ({ ...prev, [format]: false }));
     }
@@ -308,7 +311,7 @@ export default function ExpensesPage() {
     labels: trendData.map(d => dayjs(d.date).format('DD MMM')),
     datasets: [
       {
-        label: `Chiqimlar (${currency})`,
+        label: t('expenses.chart.expenses', { currency }),
         data: trendData.map(d => (currency === 'USD' ? d.total_usd : d.total_uzs)),
         borderColor: 'rgb(255, 99, 132)',
         backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -347,35 +350,35 @@ export default function ExpensesPage() {
   // ========== TABLE COLUMNS ==========
   const columns: ColumnsType<Expense> = [
     {
-      title: 'Sana',
+      title: t('expenses.table.date'),
       dataIndex: 'date',
       key: 'date',
       render: (date: string) => dayjs(date).format('DD.MM.YYYY'),
       sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
     },
     {
-      title: 'Tur',
+      title: t('expenses.table.type'),
       dataIndex: 'type_name',
       key: 'type_name',
     },
     {
-      title: "To'lov usuli",
+      title: t('expenses.table.method'),
       dataIndex: 'method',
       key: 'method',
       render: (method: string) => (
         <Tag color={method === 'cash' ? 'green' : 'blue'}>
-          {method === 'cash' ? 'Naqd' : 'Karta'}
+          {method === 'cash' ? t('expenses.method.cash') : t('expenses.method.card')}
         </Tag>
       ),
     },
     {
-      title: 'Karta',
+      title: t('expenses.table.card'),
       dataIndex: 'card_name',
       key: 'card_name',
       render: (name: string | null) => name || '-',
     },
     {
-      title: 'Summa',
+      title: t('expenses.table.amount'),
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: number, record: Expense) => (
@@ -408,7 +411,7 @@ export default function ExpensesPage() {
       sorter: (a, b) => a.amount_uzs - b.amount_uzs,
     },
     {
-      title: 'Holat',
+      title: t('expenses.table.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
@@ -416,23 +419,23 @@ export default function ExpensesPage() {
           icon={status === 'approved' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
           color={status === 'approved' ? 'success' : 'warning'}
         >
-          {status === 'approved' ? 'Tasdiqlangan' : 'Kutilmoqda'}
+          {status === 'approved' ? t('expenses.status.approved') : t('expenses.status.pending')}
         </Tag>
       ),
     },
     {
-      title: 'Izoh',
+      title: t('expenses.table.description'),
       dataIndex: 'description',
       key: 'description',
       render: (desc: string | null) => desc || '-',
     },
     {
-      title: 'Amallar',
+      title: t('table.actions'),
       key: 'actions',
       render: (_, record) => (
         <Space>
           {record.status === 'pending' && (
-            <Tooltip title="Tasdiqlash">
+            <Tooltip title={t('expenses.actions.approve')}>
               <Button
                 type="link"
                 icon={<CheckCircleOutlined />}
@@ -440,14 +443,14 @@ export default function ExpensesPage() {
               />
             </Tooltip>
           )}
-          <Tooltip title="O'zgartirish">
+          <Tooltip title={t('actions.edit')}>
             <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
           </Tooltip>
           <Popconfirm
-            title="Ishonchingiz komilmi?"
+            title={t('expenses.confirmDelete')}
             onConfirm={() => handleDelete(record.id)}
-            okText="Ha"
-            cancelText="Yo'q"
+            okText={t('actions.yes')}
+            cancelText={t('actions.no')}
           >
             <Button type="link" danger icon={<DeleteOutlined />} />
           </Popconfirm>
@@ -460,14 +463,14 @@ export default function ExpensesPage() {
     <section className="page-wrapper space-y-6">
       {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <Title level={2}>Chiqimlar</Title>
+        <Title level={2}>{t('expenses.title')}</Title>
         <Space>
           <Select value={currency} onChange={setCurrency} style={{ width: 100 }}>
             <Select.Option value="USD">USD</Select.Option>
             <Select.Option value="UZS">UZS</Select.Option>
           </Select>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Yangi chiqim
+            {t('expenses.new')}
           </Button>
         </Space>
       </div>
@@ -477,7 +480,7 @@ export default function ExpensesPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Bugun"
+              title={t('expenses.stats.today')}
               value={stats ? (currency === 'USD' ? stats.today.total_usd : stats.today.total_uzs) : 0}
               suffix={currency}
               precision={2}
@@ -487,7 +490,7 @@ export default function ExpensesPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Hafta"
+              title={t('expenses.stats.week')}
               value={stats ? (currency === 'USD' ? stats.week.total_usd : stats.week.total_uzs) : 0}
               suffix={currency}
               precision={2}
@@ -497,7 +500,7 @@ export default function ExpensesPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Oy"
+              title={t('expenses.stats.month')}
               value={stats ? (currency === 'USD' ? stats.month.total_usd : stats.month.total_uzs) : 0}
               suffix={currency}
               precision={2}
@@ -507,7 +510,7 @@ export default function ExpensesPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Jami"
+              title={t('expenses.stats.total')}
               value={stats ? (currency === 'USD' ? stats.total.total_usd : stats.total.total_uzs) : 0}
               suffix={currency}
               precision={2}
@@ -519,12 +522,12 @@ export default function ExpensesPage() {
       {/* CHARTS */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <Card title="30 kunlik tendensiya">
+          <Card title={t('expenses.chart.trend')}>
             <Line data={trendChartData} options={{ responsive: true, maintainAspectRatio: true }} />
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="Oy bo'yicha taqsimot">
+          <Card title={t('expenses.chart.distribution')}>
             <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: true }} />
           </Card>
         </Col>
@@ -539,12 +542,12 @@ export default function ExpensesPage() {
               onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
               format="DD.MM.YYYY"
               style={{ width: '100%' }}
-              placeholder={['Boshlanish', 'Tugash']}
+              placeholder={[t('expenses.filters.startDate'), t('expenses.filters.endDate')]}
             />
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Select
-              placeholder="Tur"
+              placeholder={t('expenses.filters.type')}
               allowClear
               value={filterType}
               onChange={setFilterType}
@@ -559,25 +562,25 @@ export default function ExpensesPage() {
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Select
-              placeholder="To'lov usuli"
+              placeholder={t('expenses.filters.method')}
               allowClear
               value={filterMethod}
               onChange={setFilterMethod}
               style={{ width: '100%' }}
             >
-              <Select.Option value="cash">Naqd</Select.Option>
-              <Select.Option value="card">Karta</Select.Option>
+              <Select.Option value="cash">{t('expenses.method.cash')}</Select.Option>
+              <Select.Option value="card">{t('expenses.method.card')}</Select.Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Select
-              placeholder="Karta"
+              placeholder={t('expenses.filters.card')}
               allowClear
               value={filterCard}
               onChange={setFilterCard}
               style={{ width: '100%' }}
               disabled={filterMethod !== 'card'}
-              notFoundContent="Kartalar topilmadi"
+              notFoundContent={t('expenses.filters.noCards')}
               showSearch
               optionFilterProp="children"
             >
@@ -590,26 +593,26 @@ export default function ExpensesPage() {
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Select
-              placeholder="Holat"
+              placeholder={t('expenses.filters.status')}
               allowClear
               value={filterStatus}
               onChange={setFilterStatus}
               style={{ width: '100%' }}
             >
-              <Select.Option value="pending">Kutilmoqda</Select.Option>
-              <Select.Option value="approved">Tasdiqlangan</Select.Option>
+              <Select.Option value="pending">{t('expenses.status.pending')}</Select.Option>
+              <Select.Option value="approved">{t('expenses.status.approved')}</Select.Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={2}>
             <Space>
-              <Tooltip title="PDF yuklab olish">
+              <Tooltip title={t('expenses.exportPdf')}>
                 <Button
                   icon={<FilePdfOutlined />}
                   onClick={() => handleExport('pdf')}
                   loading={exporting.pdf}
                 />
               </Tooltip>
-              <Tooltip title="Excel yuklab olish">
+              <Tooltip title={t('expenses.exportExcel')}>
                 <Button
                   icon={<FileExcelOutlined />}
                   onClick={() => handleExport('xlsx')}
@@ -629,28 +632,28 @@ export default function ExpensesPage() {
             dataSource={expenses}
             rowKey="id"
             loading={loading}
-            pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `Jami: ${total}` }}
+            pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => t('table.total', { count: total }) }}
           />
         </Card>
       </div>
 
       {/* CREATE/EDIT MODAL */}
       <Modal
-        title={editingExpense ? "Chiqimni o'zgartirish" : 'Yangi chiqim yaratish'}
+        title={editingExpense ? t('expenses.editTitle') : t('expenses.createTitle')}
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         width={600}
-        okText="Saqlash"
-        cancelText="Bekor qilish"
+        okText={t('actions.save')}
+        cancelText={t('actions.cancel')}
       >
         <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-          <Form.Item name="date" label="Sana" rules={[{ required: true, message: 'Sanani tanlang' }]}>
+          <Form.Item name="date" label={t('expenses.form.date')} rules={[{ required: true, message: t('expenses.form.dateRequired') }]}>
             <DatePicker format="DD.MM.YYYY" style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item name="type" label="Tur" rules={[{ required: true, message: 'Turni tanlang' }]}>
-            <Select placeholder="Tanlang">
+          <Form.Item name="type" label={t('expenses.form.type')} rules={[{ required: true, message: t('expenses.form.typeRequired') }]}>
+            <Select placeholder={t('expenses.form.selectType')}>
               {expenseTypes.map(type => (
                 <Select.Option key={type.id} value={type.id}>
                   {type.name}
@@ -659,10 +662,10 @@ export default function ExpensesPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="method" label="To'lov usuli" rules={[{ required: true, message: "To'lov usulini tanlang" }]}>
-            <Select placeholder="Tanlang">
-              <Select.Option value="cash">Naqd pul</Select.Option>
-              <Select.Option value="card">Karta</Select.Option>
+          <Form.Item name="method" label={t('expenses.form.method')} rules={[{ required: true, message: t('expenses.form.methodRequired') }]}>
+            <Select placeholder={t('expenses.form.selectMethod')}>
+              <Select.Option value="cash">{t('expenses.method.cash')}</Select.Option>
+              <Select.Option value="card">{t('expenses.method.card')}</Select.Option>
             </Select>
           </Form.Item>
 
@@ -672,10 +675,10 @@ export default function ExpensesPage() {
           >
             {({ getFieldValue }) =>
               getFieldValue('method') === 'card' ? (
-                <Form.Item name="card" label="Karta" rules={[{ required: true, message: 'Kartani tanlang' }]}>
+                <Form.Item name="card" label={t('expenses.form.card')} rules={[{ required: true, message: t('expenses.form.cardRequired') }]}>
                   <Select 
-                    placeholder="Kartani tanlang"
-                    notFoundContent="Kartalar topilmadi. Iltimos, avval karta qo'shing."
+                    placeholder={t('expenses.form.selectCard')}
+                    notFoundContent={t('expenses.form.noCardsAvailable')}
                     showSearch
                     optionFilterProp="children"
                   >
@@ -690,19 +693,19 @@ export default function ExpensesPage() {
             }
           </Form.Item>
 
-          <Form.Item name="currency" label="Valyuta" rules={[{ required: true, message: 'Valyutani tanlang' }]}>
-            <Select placeholder="Tanlang">
+          <Form.Item name="currency" label={t('expenses.form.currency')} rules={[{ required: true, message: t('expenses.form.currencyRequired') }]}>
+            <Select placeholder={t('expenses.form.selectCurrency')}>
               <Select.Option value="USD">USD</Select.Option>
               <Select.Option value="UZS">UZS</Select.Option>
             </Select>
           </Form.Item>
 
-          <Form.Item name="amount" label="Summa" rules={[{ required: true, message: 'Summani kiriting' }]}>
+          <Form.Item name="amount" label={t('expenses.form.amount')} rules={[{ required: true, message: t('expenses.form.amountRequired') }]}>
             <InputNumber min={0} style={{ width: '100%' }} placeholder="0.00" />
           </Form.Item>
 
-          <Form.Item name="description" label="Izoh">
-            <Input.TextArea rows={3} placeholder="Qo'shimcha ma'lumot..." />
+          <Form.Item name="description" label={t('expenses.form.description')}>
+            <Input.TextArea rows={3} placeholder={t('expenses.form.descriptionPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>

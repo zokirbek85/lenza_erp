@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import { useAuthStore } from '../auth/useAuthStore';
@@ -20,14 +21,6 @@ interface UserRecord {
   is_active: boolean;
 }
 
-const ROLE_OPTIONS = [
-  { label: 'Admin', value: 'admin' },
-  { label: 'Owner', value: 'owner' },
-  { label: 'Accountant', value: 'accountant' },
-  { label: 'Warehouse', value: 'warehouse' },
-  { label: 'Sales', value: 'sales' },
-];
-
 const emptyForm = {
   username: '',
   first_name: '',
@@ -38,7 +31,17 @@ const emptyForm = {
 };
 
 const UsersPage = () => {
+  const { t } = useTranslation();
   const { role } = useAuthStore();
+  
+  const ROLE_OPTIONS = [
+    { label: t('users.roles.admin'), value: 'admin' },
+    { label: t('users.roles.owner'), value: 'owner' },
+    { label: t('users.roles.accountant'), value: 'accountant' },
+    { label: t('users.roles.warehouse'), value: 'warehouse' },
+    { label: t('users.roles.sales'), value: 'sales' },
+  ];
+  
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ role: '' });
@@ -74,7 +77,7 @@ const UsersPage = () => {
       setUsers(normalized);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load users');
+      toast.error(t('users.messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -137,10 +140,10 @@ const UsersPage = () => {
     try {
       if (editing) {
         await http.put(`/api/users/${editing.id}/`, payload);
-        toast.success('User updated');
+        toast.success(t('users.messages.updated'));
       } else {
         await http.post('/api/users/', payload);
-        toast.success('User created');
+        toast.success(t('users.messages.created'));
       }
       setModalOpen(false);
       setForm(emptyForm);
@@ -148,7 +151,7 @@ const UsersPage = () => {
       loadUsers();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to save user');
+      toast.error(t('users.messages.saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -158,11 +161,11 @@ const UsersPage = () => {
     const path = user.is_active ? 'deactivate' : 'activate';
     try {
       await http.post(`/api/users/${user.id}/${path}/`);
-      toast.success(`User ${user.is_active ? 'deactivated' : 'activated'}`);
+      toast.success(user.is_active ? t('users.messages.deactivated') : t('users.messages.activated'));
       loadUsers();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to update status');
+      toast.error(t('users.messages.statusError'));
     }
   };
 
@@ -170,8 +173,8 @@ const UsersPage = () => {
     <section className="page-wrapper space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Users</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Manage ERP accounts and roles.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('users.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('users.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -179,7 +182,7 @@ const UsersPage = () => {
             onChange={handleFilterChange}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
           >
-            <option value="">All roles</option>
+            <option value="">{t('users.filters.allRoles')}</option>
             {ROLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -191,7 +194,7 @@ const UsersPage = () => {
               onClick={() => openModal()}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
             >
-              Add user
+              {t('users.new')}
             </button>
           )}
         </div>
@@ -201,18 +204,18 @@ const UsersPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/50">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Username</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Role</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Email</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Status</th>
-              {canManage && <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>}
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('users.table.username')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('users.table.role')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('users.table.email')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('users.table.status')}</th>
+              {canManage && <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('table.actions')}</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
             {loading && (
               <tr>
                 <td colSpan={canManage ? 5 : 4} className="px-4 py-6 text-center text-sm text-slate-500">
-                  Loading users...
+                  {t('users.messages.loading')}
                 </td>
               </tr>
             )}
@@ -230,20 +233,20 @@ const UsersPage = () => {
                           : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200'
                       }`}
                     >
-                      {user.is_active ? 'Active' : 'Inactive'}
+                      {user.is_active ? t('users.status.active') : t('users.status.inactive')}
                     </span>
                   </td>
                   {canManage && (
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(user)}>
-                          Edit
+                          {t('actions.edit')}
                         </button>
                         <button
                           className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-300"
                           onClick={() => toggleActive(user)}
                         >
-                          {user.is_active ? 'Deactivate' : 'Activate'}
+                          {user.is_active ? t('users.deactivate') : t('users.activate')}
                         </button>
                       </div>
                     </td>
@@ -253,7 +256,7 @@ const UsersPage = () => {
             {!loading && users.length === 0 && (
               <tr>
                 <td colSpan={canManage ? 5 : 4} className="px-4 py-6 text-center text-sm text-slate-500">
-                  No users found
+                  {t('users.messages.noUsers')}
                 </td>
               </tr>
             )}
@@ -280,7 +283,7 @@ const UsersPage = () => {
             setEditing(null);
           }
         }}
-        title={editing ? 'Edit user' : 'Add new user'}
+        title={editing ? t('users.editTitle') : t('users.addTitle')}
         footer={
           <>
             <button
@@ -292,7 +295,7 @@ const UsersPage = () => {
               }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Cancel
+              {t('actions.cancel')}
             </button>
             <button
               type="submit"
@@ -300,7 +303,7 @@ const UsersPage = () => {
               disabled={submitting}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
             >
-              {submitting ? 'Saving…' : 'Save'}
+              {submitting ? t('actions.saving') : t('actions.save')}
             </button>
           </>
         }
@@ -308,7 +311,7 @@ const UsersPage = () => {
         <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Username</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.username')}</label>
               <input
                 required
                 name="username"
@@ -318,7 +321,7 @@ const UsersPage = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Role</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.role')}</label>
               <select
                 name="role"
                 value={form.role}
@@ -335,7 +338,7 @@ const UsersPage = () => {
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">First name</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.firstName')}</label>
               <input
                 name="first_name"
                 value={form.first_name}
@@ -344,7 +347,7 @@ const UsersPage = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Last name</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.lastName')}</label>
               <input
                 name="last_name"
                 value={form.last_name}
@@ -354,7 +357,7 @@ const UsersPage = () => {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Email</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.email')}</label>
             <input
               type="email"
               name="email"
@@ -365,7 +368,7 @@ const UsersPage = () => {
           </div>
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              Password {editing && <span className="text-xs text-slate-400">(leave blank to keep current)</span>}
+              {t('users.form.password')} {editing && <span className="text-xs text-slate-400">({t('users.form.passwordHint')})</span>}
             </label>
             <input
               type="password"

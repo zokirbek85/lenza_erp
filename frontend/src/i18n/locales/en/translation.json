@@ -5,7 +5,8 @@
     "operations": "Today's operations",
     "logout": "Logout",
     "language": "Language",
-    "darkMode": "Dark mode"
+    "darkMode": "Dark mode",
+    "suite": "ERP Suite"
   },
   "auth": {
     "signIn": "Sign in",
@@ -22,7 +23,7 @@
     "unexpectedError": "Unexpected error. Please try again.",
     "otpRequired": "OTP code is required.",
     "invalidOtp": "Invalid OTP code.",
-  "setup2faRequired": "Two-factor setup required for this role."
+    "setup2faRequired": "Two-factor setup required for this role."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -33,8 +34,8 @@
     "regions": "Regions",
     "payments": "Payments",
     "expenses": "Expenses",
-  "expenseReport": "📊 Monthly Expense Report",
-  "expenseCategories": "⚙️ Expense Categories",
+    "expenseReport": "📊 Monthly Expense Report",
+    "expenseCategories": "⚙️ Expense Categories",
     "ledger": "Cash Ledger",
     "currency": "Currency",
     "returns": "Returns",
@@ -49,7 +50,526 @@
     "save": "Save",
     "cancel": "Cancel",
     "exportPdf": "Export PDF",
-    "exportExcel": "Export Excel"
+    "exportExcel": "Export Excel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "print": "Print",
+    "download": "Download",
+    "upload": "Upload",
+    "approve": "Approve",
+    "reject": "Reject",
+    "submit": "Submit",
+    "send": "Send",
+    "update": "Update",
+    "refresh": "Refresh",
+    "reset": "Reset",
+    "filter": "Filter",
+    "search": "Search",
+    "clear": "Clear",
+    "close": "Close",
+    "confirm": "Confirm",
+    "import": "Import",
+    "export": "Export"
+  },
+  "table": {
+    "actions": "Actions",
+    "noData": "No data available",
+    "loading": "Loading...",
+    "total": "Total",
+    "selected": "Selected",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "rowsPerPage": "Rows per page",
+    "of": "of",
+    "page": "Page",
+    "showing": "Showing",
+    "to": "to",
+    "items": "items"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "first": "First",
+    "last": "Last",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "to": "to",
+    "items": "",
+    "rowsPerPage": "Per page:"
+  },
+  "filters": {
+    "title": "Filters",
+    "apply": "Apply",
+    "reset": "Reset",
+    "clear": "Clear",
+    "search": "Search...",
+    "selectAll": "Select all",
+    "from": "From",
+    "to": "To",
+    "dateRange": "Date range",
+    "status": "Status",
+    "type": "Type",
+    "region": "Region",
+    "dealer": "Dealer",
+    "product": "Product",
+    "category": "Category",
+    "brand": "Brand",
+    "noResults": "No results found"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Invalid email address",
+    "phone": "Invalid phone number",
+    "minLength": "Minimum {{min}} characters",
+    "maxLength": "Maximum {{max}} characters",
+    "min": "Minimum {{min}}",
+    "max": "Maximum {{max}}",
+    "number": "Must be a number",
+    "positive": "Must be positive",
+    "integer": "Must be an integer",
+    "url": "Invalid URL",
+    "match": "Does not match",
+    "unique": "This value already exists",
+    "invalid": "Invalid value"
+  },
+  "messages": {
+    "success": "Operation successful",
+    "error": "An error occurred",
+    "warning": "Warning",
+    "info": "Information",
+    "saved": "Saved",
+    "deleted": "Deleted",
+    "updated": "Updated",
+    "created": "Created",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "confirmDelete": "Confirm deletion?",
+    "confirmAction": "Confirm action?",
+    "unsavedChanges": "You have unsaved changes",
+    "connectionError": "Network error",
+    "serverError": "Server error",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "notFound": "Not found"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "print": "Print",
+    "refresh": "Refresh",
+    "reset": "Reset",
+    "apply": "Apply",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "noData": "No data",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "from": "From",
+    "to": "To",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "required": "Required",
+    "optional": "Optional",
+    "all": "All",
+    "none": "None",
+    "other": "Other",
+    "notes": "Notes",
+    "description": "Description",
+    "details": "Details",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "select": "Select",
+    "selected": "Selected",
+    "page": "Page",
+    "of": "of",
+    "items": "items",
+    "showing": "Showing",
+    "perPage": "Per page",
+    "confirmDelete": "Confirm deletion?",
+    "confirmAction": "Confirm action?",
+    "unsavedChanges": "You have unsaved changes",
+    "leaveWithoutSaving": "Leave without saving?"
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Product catalog and inventory management",
+    "new": "New product",
+    "edit": "Edit",
+    "delete": "Delete",
+    "table": {
+      "sku": "SKU",
+      "name": "Name",
+      "brand": "Brand",
+      "category": "Category",
+      "costPrice": "Cost price",
+      "sellingPrice": "Selling price",
+      "stock": "Stock",
+      "minStock": "Min. stock",
+      "actions": "Actions"
+    },
+    "form": {
+      "sku": "SKU code",
+      "name": "Product name",
+      "brand": "Brand",
+      "category": "Category",
+      "costPrice": "Cost price (USD)",
+      "sellingPrice": "Selling price (USD)",
+      "stock": "Stock quantity",
+      "minStock": "Minimum stock",
+      "description": "Description",
+      "selectBrand": "Select brand",
+      "selectCategory": "Select category"
+    },
+    "filters": {
+      "search": "Search...",
+      "brand": "By brand",
+      "category": "By category",
+      "lowStock": "Low stock"
+    },
+    "messages": {
+      "created": "Product created",
+      "updated": "Product updated",
+      "deleted": "Product deleted",
+      "deleteConfirm": "Delete this product?",
+      "lowStockWarning": "Stock below minimum level!"
+    }
+  },
+  "dealers": {
+    "title": "Dealers",
+    "subtitle": "Customer and dealer management",
+    "new": "New dealer",
+    "edit": "Edit",
+    "delete": "Delete",
+    "table": {
+      "name": "Name",
+      "region": "Region",
+      "contact": "Contact",
+      "phone": "Phone",
+      "creditLimit": "Credit limit",
+      "balance": "Balance",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "form": {
+      "name": "Dealer name",
+      "region": "Region",
+      "contact": "Contact person",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "creditLimit": "Credit limit (USD)",
+      "tin": "TIN / Tax ID",
+      "notes": "Notes",
+      "selectRegion": "Select region"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "blocked": "Blocked"
+    },
+    "messages": {
+      "created": "Dealer created",
+      "updated": "Dealer updated",
+      "deleted": "Dealer deleted",
+      "deleteConfirm": "Delete this dealer?",
+      "creditExceeded": "Credit limit exceeded!"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "System users and permissions",
+    "new": "New user",
+    "edit": "Edit",
+    "delete": "Delete",
+    "resetPassword": "Reset password",
+    "table": {
+      "username": "Username",
+      "fullName": "Full name",
+      "role": "Role",
+      "region": "Region",
+      "email": "Email",
+      "status": "Status",
+      "lastLogin": "Last login",
+      "actions": "Actions"
+    },
+    "form": {
+      "username": "Username",
+      "password": "Password",
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "region": "Region",
+      "selectRole": "Select role",
+      "selectRegion": "Select region"
+    },
+    "roles": {
+      "admin": "Administrator",
+      "owner": "Owner",
+      "director": "Director",
+      "accountant": "Accountant",
+      "sales_manager": "Sales Manager",
+      "warehouse": "Warehouse"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "messages": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted",
+      "deleteConfirm": "Delete this user?",
+      "passwordReset": "Password reset",
+      "twoFaRequired": "2FA setup required"
+    }
+  },
+  "regions": {
+    "title": "Regions",
+    "subtitle": "Geographic regions and market segments",
+    "new": "New region",
+    "edit": "Edit",
+    "delete": "Delete",
+    "table": {
+      "name": "Name",
+      "code": "Code",
+      "manager": "Manager",
+      "dealers": "Dealer count",
+      "revenue": "Revenue",
+      "actions": "Actions"
+    },
+    "form": {
+      "name": "Region name",
+      "code": "Region code",
+      "description": "Description",
+      "selectManager": "Select manager"
+    },
+    "messages": {
+      "created": "Region created",
+      "updated": "Region updated",
+      "deleted": "Region deleted",
+      "deleteConfirm": "Delete this region?",
+      "hasActiveDealers": "Has active dealers!"
+    }
+  },
+  "currency": {
+    "title": "Currency Rates",
+    "subtitle": "USD/UZS rate history and management",
+    "updateRate": "Update rate",
+    "table": {
+      "date": "Date",
+      "rate": "Rate",
+      "updatedBy": "Updated by",
+      "actions": "Actions"
+    },
+    "form": {
+      "date": "Date",
+      "rate": "USD/UZS rate",
+      "note": "Note"
+    },
+    "messages": {
+      "updated": "Rate updated",
+      "error": "Error updating rate",
+      "confirmUpdate": "Update rate?",
+      "affectNewOnly": "Will affect new operations only"
+    }
+  },
+  "returns": {
+    "title": "Returns",
+    "subtitle": "Product returns and processing",
+    "new": "New return",
+    "table": {
+      "order": "Order",
+      "dealer": "Dealer",
+      "product": "Product",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions"
+    },
+    "form": {
+      "order": "Order",
+      "product": "Product",
+      "quantity": "Quantity",
+      "reason": "Return reason",
+      "notes": "Notes",
+      "selectOrder": "Select order",
+      "selectProduct": "Select product"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "completed": "Completed"
+    },
+    "reasons": {
+      "defective": "Defective",
+      "wrong_item": "Wrong item",
+      "excess": "Excess",
+      "other": "Other"
+    },
+    "messages": {
+      "created": "Return registered",
+      "approved": "Return approved",
+      "rejected": "Return rejected",
+      "confirmApprove": "Approve this return?",
+      "confirmReject": "Reject this return?"
+    }
+  },
+  "reconciliation": {
+    "title": "Reconciliation",
+    "subtitle": "Financial reconciliation with dealers",
+    "generate": "Generate report",
+    "table": {
+      "dealer": "Dealer",
+      "period": "Period",
+      "startBalance": "Starting balance",
+      "orders": "Orders",
+      "payments": "Payments",
+      "endBalance": "Ending balance",
+      "actions": "Actions"
+    },
+    "form": {
+      "dealer": "Dealer",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "selectDealer": "Select dealer"
+    },
+    "details": {
+      "orders": "Orders",
+      "payments": "Payments",
+      "returns": "Returns",
+      "total": "Total"
+    },
+    "messages": {
+      "generated": "Report generated",
+      "exported": "Report exported",
+      "error": "Error generating report"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "System settings and configuration",
+    "tabs": {
+      "company": "Company",
+      "telegram": "Telegram",
+      "notifications": "Notifications",
+      "security": "Security",
+      "backup": "Backup"
+    },
+    "company": {
+      "name": "Company name",
+      "tin": "Tax ID / TIN",
+      "address": "Address",
+      "phone": "Phone",
+      "email": "Email",
+      "logo": "Logo",
+      "uploadLogo": "Upload logo"
+    },
+    "telegram": {
+      "botToken": "Bot token",
+      "chatId": "Chat ID",
+      "testMessage": "Send test message",
+      "enabled": "Telegram enabled"
+    },
+    "notifications": {
+      "orderCreated": "New order",
+      "orderStatus": "Status change",
+      "payment": "Payments",
+      "lowStock": "Low stock",
+      "creditLimit": "Credit limit"
+    },
+    "messages": {
+      "saved": "Settings saved",
+      "testSent": "Test message sent",
+      "error": "An error occurred"
+    }
+  },
+  "kpi": {
+    "title": "KPI",
+    "subtitle": "Key performance indicators and analysis",
+    "owner": {
+      "title": "Owner dashboard",
+      "totalRevenue": "Total revenue",
+      "netProfit": "Net profit",
+      "profitMargin": "Profit margin",
+      "totalOrders": "Total orders",
+      "activeOrders": "Active orders",
+      "completedOrders": "Completed",
+      "totalDealers": "Total dealers",
+      "activeDealers": "Active dealers",
+      "topDealers": "Top dealers",
+      "cashBalance": "Cash balance",
+      "receivables": "Receivables",
+      "payables": "Payables"
+    },
+    "manager": {
+      "title": "Sales manager dashboard",
+      "salesTarget": "Target",
+      "salesAchieved": "Achieved",
+      "achievement": "Achievement %",
+      "myDealers": "My dealers",
+      "newOrders": "New orders",
+      "pendingOrders": "Pending",
+      "myRevenue": "My sales",
+      "topProducts": "Top products",
+      "recentActivity": "Recent activity"
+    },
+    "warehouse": {
+      "title": "Warehouse dashboard",
+      "totalProducts": "Total products",
+      "lowStock": "Low stock",
+      "outOfStock": "Out of stock",
+      "pendingShipments": "Pending shipments",
+      "shippedToday": "Shipped today",
+      "returns": "Returns",
+      "stockValue": "Stock value",
+      "turnoverRate": "Turnover rate"
+    },
+    "charts": {
+      "revenueTrend": "Revenue trend",
+      "salesByRegion": "Sales by region",
+      "topProducts": "Top products",
+      "orderStatus": "Order statuses",
+      "paymentMethods": "Payment methods",
+      "expensesByCategory": "Expenses by category"
+    },
+    "filters": {
+      "today": "Today",
+      "week": "Week",
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year",
+      "custom": "Custom"
+    }
   },
   "dashboard": {
     "ownerKpi": "Owner overview",
@@ -124,10 +644,6 @@
     "no_history": "No changes yet",
     "history_fetch_failed": "Failed to load history",
     "error": "Error"
-  },
-  "common": {
-    "confirm": "Confirm",
-    "cancel": "Cancel"
   },
   "payments": {
     "title": "Payments",
@@ -217,6 +733,19 @@
     "from": "From",
     "to": "To",
     "refresh": "Refresh"
+  },
+  "manuals": {
+    "title": "User Manual",
+    "subtitle": "Step-by-step guide for effective use of Lenza ERP system",
+    "nav": {
+      "gettingStarted": "Getting Started",
+      "concepts": "Core Concepts",
+      "admin": "Administrator",
+      "director": "Director",
+      "accountant": "Accountant",
+      "sales": "Sales Manager",
+      "warehouse": "Warehouse",
+      "faq": "FAQ"
+    }
   }
 }
-

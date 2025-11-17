@@ -1,12 +1,14 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { RouterErrorBoundary } from '../components/ErrorBoundary';
 import NotFound from '../pages/NotFound';
-import Guard from '../auth/Guard';
 import Layout from '../components/Layout';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import CurrencyRatesPage from '../pages/CurrencyRates';
 import DealersPage from '../pages/Dealers';
 import KpiPage from '../pages/KpiPage';
+import OwnerKpiPage from '../pages/kpi/OwnerKpiPage';
+import ManagerKpiPage from '../pages/kpi/ManagerKpiPage';
+import WarehouseKpiPage from '../pages/kpi/WarehouseKpiPage';
 import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
@@ -24,170 +26,198 @@ import RegionsPage from '../pages/Regions';
 import ReconciliationPage from '../features/reconciliation/ReconciliationPage';
 import NotificationCenterPage from '../pages/NotificationCenter';
 import UserManualPage from '../pages/UserManual';
+import Unauthorized from '../pages/Unauthorized';
+import ProtectedRoute from '../auth/ProtectedRoute';
+
+const DashboardEntry = () => {
+  return <DashboardPage />;
+};
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Guard />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     errorElement: <RouterErrorBoundary />,
     children: [
       {
-        element: <Layout />, 
-        errorElement: <RouterErrorBoundary />,
-        children: [
-          {
-            index: true,
-            element: (
-              <Guard roles={['admin', 'owner', 'sales']}>
-                <DashboardPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'orders',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales', 'warehouse']}>
-                <OrdersPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'users',
-            element: (
-              <Guard roles={['admin', 'owner']}>
-                <UsersPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'regions',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales']}>
-                <RegionsPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'products',
-            element: (
-              <Guard roles={['admin', 'sales', 'warehouse']}>
-                <ProductsPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'dealers',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales', 'accountant']}>
-                <DealersPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'payments',
-            element: (
-              <Guard roles={['admin', 'owner', 'accountant']}>
-                <PaymentsPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'expenses',
-            element: (
-              <Guard roles={['admin', 'owner', 'accountant']}>
-                <ExpensesPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'expenses/report',
-            element: (
-              <Guard roles={['admin', 'accountant']}>
-                <ExpenseReportPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'expenses/categories',
-            element: (
-              <Guard roles={['admin']}>
-                <ExpenseTypesPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'ledger',
-            element: (
-              <Guard roles={['admin', 'owner', 'accountant']}>
-                <LedgerPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'currency',
-            element: (
-              <Guard roles={['admin', 'owner', 'accountant']}>
-                <CurrencyRatesPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'kpi',
-            element: (
-              <Guard roles={['admin', 'owner']}>
-                <KpiPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'reconciliation',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales', 'accountant']}>
-                <ReconciliationPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'returns',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales', 'warehouse']}>
-                <ReturnsPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'settings',
-            element: (
-              <Guard roles={['admin']}>
-                <SettingsPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'settings/cards',
-            element: (
-              <Guard roles={['admin', 'accountant']}>
-                <CompanyCardsPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'notifications',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales', 'warehouse', 'accountant']}>
-                <NotificationCenterPage />
-              </Guard>
-            ),
-          },
-          {
-            path: 'manuals',
-            element: (
-              <Guard roles={['admin', 'owner', 'sales', 'warehouse', 'accountant']}>
-                <UserManualPage />
-              </Guard>
-            ),
-          },
-        ],
+        index: true,
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <DashboardEntry />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'orders',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
+            <OrdersPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'users',
+        element: (
+          <ProtectedRoute roles={['admin']}>
+            <UsersPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'regions',
+        element: (
+          <ProtectedRoute roles={['admin']}>
+            <RegionsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'products',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
+            <ProductsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'dealers',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
+            <DealersPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'payments',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
+            <PaymentsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'expenses',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <ExpensesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'expenses/report',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant']}>
+            <ExpenseReportPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'expenses/categories',
+        element: (
+          <ProtectedRoute roles={['admin']}>
+            <ExpenseTypesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'ledger',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <LedgerPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'currency',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
+            <CurrencyRatesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'kpi',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant', 'owner']}>
+            <KpiPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'kpi/owner',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <OwnerKpiPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'kpi/manager',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales']}>
+            <ManagerKpiPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'kpi/warehouse',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <WarehouseKpiPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'reconciliation',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
+            <ReconciliationPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'returns',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
+            <ReturnsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'settings',
+        element: (
+          <ProtectedRoute roles={['admin']}>
+            <SettingsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'settings/cards',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant']}>
+            <CompanyCardsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'notifications',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
+            <NotificationCenterPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'manuals',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant', 'owner']}>
+            <UserManualPage />
+          </ProtectedRoute>
+        ),
       },
     ],
   },
@@ -198,6 +228,10 @@ const router = createBrowserRouter([
   {
     path: '/2fa',
     element: <TwoFactor />,
+  },
+  {
+    path: '/unauthorized',
+    element: <Unauthorized />,
   },
   {
     path: '*',

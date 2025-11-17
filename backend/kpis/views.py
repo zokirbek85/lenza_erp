@@ -25,7 +25,7 @@ class KPIRecordViewSet(viewsets.ModelViewSet):
 
 
 class OwnerKPIView(APIView):
-    permission_classes = [IsAdmin | IsOwner]
+    permission_classes = [IsAdmin | IsOwner | IsAccountant]
 
     def get(self, request):
         active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
@@ -145,7 +145,7 @@ class CardKPIView(APIView):
     - card_id, card_name, holder_name
     - total_amount (USD), payments_count, last_payment_date
     """
-    permission_classes = [IsAccountant | IsOwner]
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
         from_param = request.query_params.get('from')

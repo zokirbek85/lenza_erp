@@ -1,16 +1,18 @@
 import { Result, Button } from 'antd';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function NotFound() {
+  const { t } = useTranslation();
   return (
     <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <Result
         status="404"
         title="404"
-        subTitle="Sahifa topilmadi yoki ko'chirilgan bo'lishi mumkin."
+        subTitle={t('errors.notFound')}
         extra={
           <Button type="primary">
-            <Link to="/">Bosh sahifaga qaytish</Link>
+            <Link to="/">{t('errors.backHome')}</Link>
           </Button>
         }
       />

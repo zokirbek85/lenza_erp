@@ -1,22 +1,28 @@
 import { type PropsWithChildren } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-import type { UserRole } from './useAuthStore';
 import { useAuthStore } from './useAuthStore';
+import type { AppRole } from './routeAccess';
+import { canAccessRoute } from './routeAccess';
 
 interface GuardProps {
-  roles?: UserRole[];
+  roles?: AppRole[];
 }
 
 const Guard = ({ roles, children }: PropsWithChildren<GuardProps>) => {
   const location = useLocation();
   const { isAuthenticated, role } = useAuthStore();
+  const typedRole = (role ?? null) as AppRole | null;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  if (roles && roles.length > 0 && role && !roles.includes(role)) {
+  if (typedRole && !canAccessRoute(typedRole, location.pathname)) {
+    return <Navigate to="/kpi" replace state={{ from: location, reason: 'forbidden' }} />;
+  }
+
+  if (roles && roles.length > 0 && typedRole && !roles.includes(typedRole)) {
     return <Navigate to="/login" replace state={{ from: location, reason: 'unauthorized' }} />;
   }
 

@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.permissions import IsAdmin, IsOwner, IsSales, IsWarehouse
+from core.permissions import IsAdmin, IsOwner, IsSales, IsWarehouse, IsAccountant
 from core.utils.exporter import export_orders_to_excel
 from core.mixins.report_mixin import BaseReportMixin
 
@@ -26,7 +26,7 @@ STATUS_FLOW = {
 class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     queryset = Order.objects.prefetch_related('items__product', 'status_logs', 'returns').select_related('dealer')
     serializer_class = OrderSerializer
-    permission_classes = [IsAdmin | IsSales | IsOwner | IsWarehouse]
+    permission_classes = [IsAdmin | IsSales | IsOwner | IsWarehouse | IsAccountant]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_fields = ('status', 'dealer', 'is_reserve')
     search_fields = ('display_no', 'dealer__name')

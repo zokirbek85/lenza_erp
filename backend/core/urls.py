@@ -14,7 +14,17 @@ from catalog.views import (
     ProductReportPDFView,
     ProductViewSet,
 )
-from core.views import AuditLogViewSet, CompanyInfoViewSet, DashboardSummaryView, SearchView, SystemBackupView, SystemConfigView, UserManualViewSet, HealthCheckView
+from core.views import (
+    AuditLogViewSet,
+    CompanyInfoViewSet,
+    DashboardSummaryView,
+    DebtAnalyticsView,
+    SearchView,
+    SystemBackupView,
+    SystemConfigView,
+    UserManualViewSet,
+    HealthCheckView,
+)
 from dealers.views import (
     DealerBalancePDFView,
     DealerExportExcelView,
@@ -60,7 +70,7 @@ from expenses.views_export import (
     MonthlyExpenseExcelExportView,
     MonthlyExpensePDFExportView,
 )
-from ledger.views import LedgerSummaryView, CardBalanceView, LedgerByCardView, LedgerByCategoryView
+from ledger.views import LedgerSummaryView, CardBalanceView, LedgerByCardView, LedgerByCategoryView, LedgerBalanceWidgetView
 from ledger.views_export import ledger_export_view
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import TelegramLinkView, UserViewSet
@@ -95,6 +105,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Dashboard summary
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
+    path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
     path('api/expenses/export/pdf/', ExpenseListPDFExportView.as_view(), name='expense-export-pdf'),
     path('api/expenses/export/pdf', ExpenseListPDFExportView.as_view()),
@@ -127,6 +138,7 @@ urlpatterns = [
     path('api/ledger/', LedgerSummaryView.as_view(), name='ledger-summary'),
     path('api/ledger/by-card/', LedgerByCardView.as_view(), name='ledger-by-card'),
     path('api/ledger/by-category/', LedgerByCategoryView.as_view(), name='ledger-by-category'),
+    path('api/ledger-accounts/balances/', LedgerBalanceWidgetView.as_view(), name='ledger-balances'),
     path('api/cards/<int:card_id>/balance/', CardBalanceView.as_view(), name='card-balance'),
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),

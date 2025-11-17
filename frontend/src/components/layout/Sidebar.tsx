@@ -1,8 +1,11 @@
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import { Drawer } from 'antd';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../auth/useAuthStore';
+import type { AppRole } from '../../auth/routeAccess';
+import { rolesForPath } from '../../auth/routeAccess';
 
 import {
   DashboardOutlined,
@@ -21,65 +24,128 @@ import {
   BookOutlined,
 } from '@ant-design/icons';
 
-type MenuItem = {
+export interface MenuItem {
+  path: string;
   label: string;
-  to: string;
-  icon: React.ReactNode;
-};
+  icon?: ReactNode;
+  roles: AppRole[];
+}
 
-const MENU_CONFIG: Record<string, MenuItem[]> = {
-  admin: [
-    { label: 'nav.dashboard', to: '/', icon: <DashboardOutlined /> },
-    { label: 'nav.users', to: '/users', icon: <TeamOutlined /> },
-    { label: 'nav.regions', to: '/regions', icon: <AuditOutlined /> },
-    { label: 'nav.orders', to: '/orders', icon: <ShoppingOutlined /> },
-    { label: 'nav.products', to: '/products', icon: <ShopOutlined /> },
-    { label: 'nav.dealers', to: '/dealers', icon: <BankOutlined /> },
-    { label: 'nav.payments', to: '/payments', icon: <WalletOutlined /> },
-    { label: 'nav.expenses', to: '/expenses', icon: <FileTextOutlined /> },
-    { label: 'nav.expenseReport', to: '/expenses/report', icon: <LineChartOutlined /> },
-    { label: 'nav.expenseCategories', to: '/expenses/categories', icon: <UnorderedListOutlined /> },
-    { label: 'nav.ledger', to: '/ledger', icon: <LineChartOutlined /> },
-    { label: 'nav.currency', to: '/currency', icon: <RiseOutlined /> },
-    { label: 'nav.returns', to: '/returns', icon: <AuditOutlined /> },
-    { label: 'nav.reconciliation', to: '/reconciliation', icon: <AuditOutlined /> },
-    { label: 'nav.kpi', to: '/kpi', icon: <LineChartOutlined /> },
-    { label: 'nav.settings', to: '/settings', icon: <SettingOutlined /> },
-    { label: 'nav.notifications', to: '/notifications', icon: <NotificationOutlined /> },
-    { label: 'nav.userManual', to: '/manuals', icon: <BookOutlined /> },
-  ],
-  owner: [
-    { label: 'nav.dashboard', to: '/', icon: <DashboardOutlined /> },
-    { label: 'nav.orders', to: '/orders', icon: <ShoppingOutlined /> },
-    { label: 'nav.dealers', to: '/dealers', icon: <BankOutlined /> },
-    { label: 'nav.payments', to: '/payments', icon: <WalletOutlined /> },
-    { label: 'nav.expenses', to: '/expenses', icon: <FileTextOutlined /> },
-    { label: 'nav.kpi', to: '/kpi', icon: <LineChartOutlined /> },
-    { label: 'nav.notifications', to: '/notifications', icon: <NotificationOutlined /> },
-  ],
-  sales: [
-    { label: 'nav.dashboard', to: '/', icon: <DashboardOutlined /> },
-    { label: 'nav.orders', to: '/orders', icon: <ShoppingOutlined /> },
-    { label: 'nav.dealers', to: '/dealers', icon: <BankOutlined /> },
-    { label: 'nav.kpi', to: '/kpi', icon: <LineChartOutlined /> },
-    { label: 'nav.currency', to: '/currency', icon: <RiseOutlined /> },
-  ],
-  warehouse: [
-    { label: 'nav.orders', to: '/orders', icon: <ShoppingOutlined /> },
-    { label: 'nav.returns', to: '/returns', icon: <AuditOutlined /> },
-    { label: 'nav.currency', to: '/currency', icon: <RiseOutlined /> },
-  ],
-  accountant: [
-    { label: 'nav.dashboard', to: '/', icon: <DashboardOutlined /> },
-    { label: 'nav.payments', to: '/payments', icon: <WalletOutlined /> },
-    { label: 'nav.expenses', to: '/expenses', icon: <FileTextOutlined /> },
-    { label: 'nav.expenseReport', to: '/expenses/report', icon: <LineChartOutlined /> },
-    { label: 'nav.ledger', to: '/ledger', icon: <LineChartOutlined /> },
-    { label: 'nav.currency', to: '/currency', icon: <RiseOutlined /> },
-  ],
-};
+const BASE_MENU: Array<Omit<MenuItem, 'roles'>> = [
+    {
+      path: '/',
+      label: 'nav.dashboard',
+      icon: <DashboardOutlined />,
+      roles: ['admin', 'accountant', 'owner'],
+    },
+    {
+      path: '/kpi',
+      label: 'nav.kpi',
+      icon: <LineChartOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant', 'owner'],
+    },
+    {
+      path: '/orders',
+      label: 'nav.orders',
+      icon: <ShoppingOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant'],
+    },
+    {
+      path: '/products',
+      label: 'nav.products',
+      icon: <ShopOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant'],
+    },
+    {
+      path: '/dealers',
+      label: 'nav.dealers',
+      icon: <BankOutlined />,
+      roles: ['admin', 'sales', 'accountant'],
+    },
+    {
+      path: '/payments',
+      label: 'nav.payments',
+      icon: <WalletOutlined />,
+      roles: ['admin', 'sales', 'accountant'],
+    },
+    {
+      path: '/expenses',
+      label: 'nav.expenses',
+      icon: <FileTextOutlined />,
+      roles: ['admin', 'accountant', 'owner'],
+    },
+    {
+      path: '/ledger',
+      label: 'nav.ledger',
+      icon: <LineChartOutlined />,
+      roles: ['admin', 'accountant', 'owner'],
+    },
+    {
+      path: '/currency',
+      label: 'nav.currency',
+      icon: <RiseOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant'],
+    },
+    {
+      path: '/returns',
+      label: 'nav.returns',
+      icon: <AuditOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant'],
+    },
+    {
+      path: '/reconciliation',
+      label: 'nav.reconciliation',
+      icon: <AuditOutlined />,
+      roles: ['admin', 'sales', 'accountant'],
+    },
+    {
+      path: '/notifications',
+      label: 'nav.notifications',
+      icon: <NotificationOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant'],
+    },
+    {
+      path: '/manuals',
+      label: 'nav.userManual',
+      icon: <BookOutlined />,
+      roles: ['admin', 'sales', 'warehouse', 'accountant', 'owner'],
+    },
+    {
+      path: '/users',
+      label: 'nav.users',
+      icon: <TeamOutlined />,
+      roles: ['admin'],
+    },
+    {
+      path: '/regions',
+      label: 'nav.regions',
+      icon: <AuditOutlined />,
+      roles: ['admin'],
+    },
+    {
+      path: '/expenses/report',
+      label: 'nav.expenseReport',
+      icon: <LineChartOutlined />,
+      roles: ['admin'],
+    },
+    {
+      path: '/expenses/categories',
+      label: 'nav.expenseCategories',
+      icon: <UnorderedListOutlined />,
+      roles: ['admin'],
+    },
+    {
+      path: '/settings',
+      label: 'nav.settings',
+      icon: <SettingOutlined />,
+      roles: ['admin'],
+    },
+];
 
-const DEFAULT_MENU = MENU_CONFIG.admin;
+const MENU: MenuItem[] = BASE_MENU.map((item) => ({
+  ...item,
+  roles: rolesForPath(item.path),
+}));
 
 type SidebarProps = {
   collapsed: boolean;
@@ -90,8 +156,8 @@ type SidebarProps = {
 
 const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarProps) => {
   const { t } = useTranslation();
-  const role = useAuthStore((state) => state.role);
-  const items = MENU_CONFIG[role as keyof typeof MENU_CONFIG] ?? DEFAULT_MENU;
+  const role = useAuthStore((state) => state.role as AppRole | null);
+  const menuItems = role ? MENU.filter((item) => item.roles.includes(role)) : [];
 
   const renderNav = (
     <div className="flex h-full flex-col bg-white dark:bg-[#0E1117] shadow-lg">
@@ -100,10 +166,10 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
         <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">ERP Suite</p>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-4">
-        {items.map((item) => (
+        {menuItems.map((item) => (
           <NavLink
-            key={item.to}
-            to={item.to}
+            key={item.path}
+            to={item.path}
             className={({ isActive }) =>
               clsx(
                 'flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200',

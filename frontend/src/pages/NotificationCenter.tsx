@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, ConfigProvider, Divider, Empty, List, Pagination, Segmented, Spin, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import http from '../app/http';
@@ -23,6 +24,7 @@ interface Paginated<T> {
 const PAGE_SIZE = 20;
 
 export default function NotificationCenterPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -68,27 +70,27 @@ export default function NotificationCenterPage() {
       <div className="mx-auto w-full max-w-4xl p-4">
         <div className="mb-4 flex items-center justify-between">
           <Typography.Title level={3} style={{ margin: 0 }}>
-            Notifications
+            {t('notifications.title')}
           </Typography.Title>
           <div className="flex items-center gap-2">
-            <Button onClick={() => load(page)}>Refresh</Button>
+            <Button onClick={() => load(page)}>{t('actions.refresh')}</Button>
             <Button type="primary" onClick={onMarkAll}>
-              Mark all as read
+              {t('notifications.markAllRead')}
             </Button>
           </div>
         </div>
         <div className="mb-3 flex items-center justify-between">
           <Segmented
             options={[
-              { label: 'All', value: 'all' },
-              { label: 'Unread', value: 'unread' },
-              { label: 'Read', value: 'read' },
+              { label: t('notifications.filters.all'), value: 'all' },
+              { label: t('notifications.filters.unread'), value: 'unread' },
+              { label: t('notifications.filters.read'), value: 'read' },
             ]}
             value={filter}
             onChange={(val) => setFilter(val as 'all' | 'unread' | 'read')}
           />
           <div className="text-xs text-slate-500">
-            Total: {total} • Unread: {items.filter(i => !i.is_read).length}
+            {t('notifications.stats.total')}: {total} • {t('notifications.stats.unread')}: {items.filter(i => !i.is_read).length}
           </div>
         </div>
         <Divider style={{ margin: '8px 0 16px' }} />
@@ -97,7 +99,7 @@ export default function NotificationCenterPage() {
             <Spin />
           </div>
         ) : items.length === 0 ? (
-          <Empty description="No notifications" />
+          <Empty description={t('notifications.noNotifications')} />
         ) : (
           <List
             itemLayout="vertical"

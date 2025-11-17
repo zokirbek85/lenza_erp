@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import http from '../app/http';
 import { toArray } from '../utils/api';
@@ -11,6 +12,7 @@ interface CurrencyRate {
 }
 
 const CurrencyRatesPage = () => {
+  const { t } = useTranslation();
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [form, setForm] = useState({ rate_date: '', usd_to_uzs: '' });
 
@@ -42,8 +44,8 @@ const CurrencyRatesPage = () => {
   return (
     <section className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Valyuta kurslari</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Uzbekiston so&apos;mi uchun USD kurslari.</p>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('currencyRates.title')}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t('currencyRates.description')}</p>
       </header>
 
       <form
@@ -51,7 +53,7 @@ const CurrencyRatesPage = () => {
         className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3"
       >
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Sana</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('currencyRates.form.date')}</label>
           <input
             type="date"
             required
@@ -61,7 +63,7 @@ const CurrencyRatesPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">USD → UZS</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('currencyRates.form.usdToUzs')}</label>
           <input
             required
             type="number"
@@ -76,7 +78,7 @@ const CurrencyRatesPage = () => {
             className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900 dark:hover:bg-emerald-400"
             type="submit"
           >
-            Saqlash
+            {t('actions.save')}
           </button>
         </div>
       </form>
@@ -85,8 +87,8 @@ const CurrencyRatesPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Sana</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">USD → UZS</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('currencyRates.table.date')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('currencyRates.table.rate')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -99,7 +101,7 @@ const CurrencyRatesPage = () => {
             {rates.length === 0 && (
               <tr>
                 <td colSpan={2} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-                  Kurslar topilmadi
+                  {t('currencyRates.noRates')}
                 </td>
               </tr>
             )}

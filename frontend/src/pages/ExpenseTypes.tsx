@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from 'react-i18next';
 import { Table, Card, Button, Modal, Form, Input, Switch, Space, message, Divider, Empty } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons"
 import http from '../app/http'
@@ -11,6 +12,7 @@ interface ExpenseType {
 }
 
 export default function ExpenseTypes() {
+  const { t } = useTranslation();
   const [data, setData] = useState<ExpenseType[]>([])
   const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -31,7 +33,7 @@ export default function ExpenseTypes() {
       })
       .catch((error) => {
         console.error('Fetch expense types error:', error)
-        message.error("Ma'lumotlarni yuklashda xatolik")
+        message.error(t('expenseTypes.messages.loadError'))
         setData([]) // Xatolik bo'lsa bo'sh array
       })
       .finally(() => {
@@ -64,36 +66,36 @@ export default function ExpenseTypes() {
           : http.post("/api/expense-types/", values)
         req
           .then(() => {
-            message.success("Saqlash muvaffaqiyatli")
+            message.success(t('expenseTypes.messages.saved'))
             setVisible(false)
             form.resetFields()
             fetchData()
           })
           .catch(() => {
-            message.error("Saqlashda xatolik")
+            message.error(t('expenseTypes.messages.saveError'))
           })
       })
       .catch(() => {
-        message.warning("Iltimos, barcha maydonlarni to'ldiring")
+        message.warning(t('expenseTypes.messages.fillRequired'))
       })
   }
 
   const handleDelete = (id: number) => {
     Modal.confirm({
-      title: "O'chirishni tasdiqlaysizmi?",
-      content: "Bu chiqim turini o'chirishni tasdiqlaysizmi?",
-      okText: "Ha",
-      cancelText: "Yo'q",
+      title: t('expenseTypes.confirmDelete.title'),
+      content: t('expenseTypes.confirmDelete.content'),
+      okText: t('actions.yes'),
+      cancelText: t('actions.no'),
       okButtonProps: { danger: true },
       onOk: () => {
         http
           .delete(`/api/expense-types/${id}/`)
           .then(() => {
-            message.success("O'chirildi")
+            message.success(t('expenseTypes.messages.deleted'))
             fetchData()
           })
           .catch(() => {
-            message.error("O'chirishda xatolik")
+            message.error(t('expenseTypes.messages.deleteError'))
           })
       },
     })
@@ -104,11 +106,11 @@ export default function ExpenseTypes() {
       <Card>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
           <SettingOutlined style={{ fontSize: 24, marginRight: 8, color: "#1890ff" }} />
-          <h2 style={{ margin: 0, fontSize: 20 }}>Chiqim turlari boshqaruvi</h2>
+          <h2 style={{ margin: 0, fontSize: 20 }}>{t('expenseTypes.title')}</h2>
         </div>
         <Divider style={{ margin: "16px 0" }} />
         <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()} size="large">
-          Yangi tur qo'shish
+          {t('expenseTypes.new')}
         </Button>
         <Table
           loading={loading}
@@ -119,10 +121,10 @@ export default function ExpenseTypes() {
             emptyText: (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="Hozircha chiqim turlari yo'q"
+                description={t('expenseTypes.noTypes')}
               >
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
-                  Birinchi turni qo'shish
+                  {t('expenseTypes.addFirst')}
                 </Button>
               </Empty>
             )
@@ -130,36 +132,36 @@ export default function ExpenseTypes() {
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
-            showTotal: (total) => `Jami: ${total} ta`,
+            showTotal: (total) => t('table.total', { count: total }),
           }}
           columns={[
             {
-              title: "Nomi",
+              title: t('expenseTypes.table.name'),
               dataIndex: "name",
               key: "name",
               sorter: (a, b) => a.name.localeCompare(b.name),
             },
             {
-              title: "Tavsif",
+              title: t('expenseTypes.table.description'),
               dataIndex: "description",
               key: "description",
               render: (text) => text || "-",
             },
             {
-              title: "Holat",
+              title: t('expenseTypes.table.status'),
               dataIndex: "is_active",
               key: "is_active",
               width: 100,
               align: "center" as const,
-              render: (val) => (val ? "✅ Faol" : "❌ Faol emas"),
+              render: (val) => (val ? t('expenseTypes.status.active') : t('expenseTypes.status.inactive')),
               filters: [
-                { text: "Faol", value: true },
-                { text: "Faol emas", value: false },
+                { text: t('expenseTypes.status.active'), value: true },
+                { text: t('expenseTypes.status.inactive'), value: false },
               ],
               onFilter: (value, record) => record.is_active === value,
             },
             {
-              title: "Harakatlar",
+              title: t('table.actions'),
               key: "actions",
               width: 150,
               align: "center" as const,
@@ -183,7 +185,7 @@ export default function ExpenseTypes() {
           title={
             <div style={{ display: "flex", alignItems: "center" }}>
               <SettingOutlined style={{ marginRight: 8 }} />
-              {editing ? "Chiqim turini tahrirlash" : "Yangi chiqim turi"}
+              {editing ? t('expenseTypes.editTitle') : t('expenseTypes.createTitle')}
             </div>
           }
           onOk={handleSave}
@@ -191,23 +193,23 @@ export default function ExpenseTypes() {
             setVisible(false)
             form.resetFields()
           }}
-          okText="Saqlash"
-          cancelText="Bekor qilish"
+          okText={t('actions.save')}
+          cancelText={t('actions.cancel')}
           width={600}
         >
           <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
             <Form.Item
-              label="Nomi"
+              label={t('expenseTypes.form.name')}
               name="name"
-              rules={[{ required: true, message: "Nom kiritish majburiy" }]}
+              rules={[{ required: true, message: t('expenseTypes.form.nameRequired') }]}
             >
-              <Input placeholder="Masalan: Transport, Maosh, Ofis xarajatlari" />
+              <Input placeholder={t('expenseTypes.form.namePlaceholder')} />
             </Form.Item>
-            <Form.Item label="Tavsif" name="description">
-              <Input.TextArea rows={3} placeholder="Chiqim turi haqida qo'shimcha ma'lumot" />
+            <Form.Item label={t('expenseTypes.form.description')} name="description">
+              <Input.TextArea rows={3} placeholder={t('expenseTypes.form.descriptionPlaceholder')} />
             </Form.Item>
-            <Form.Item label="Faol" name="is_active" valuePropName="checked">
-              <Switch checkedChildren="Faol" unCheckedChildren="Faol emas" />
+            <Form.Item label={t('expenseTypes.form.active')} name="is_active" valuePropName="checked">
+              <Switch checkedChildren={t('expenseTypes.status.active')} unCheckedChildren={t('expenseTypes.status.inactive')} />
             </Form.Item>
           </Form>
         </Modal>

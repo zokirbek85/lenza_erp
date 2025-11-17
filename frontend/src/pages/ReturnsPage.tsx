@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Card, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ArcElement, Chart as ChartJS, Legend, Tooltip } from 'chart.js';
@@ -32,12 +33,14 @@ interface ReturnRecord {
   created_at: string;
 }
 
-const RETURNS_TYPE_OPTIONS = [
-  { label: "Sog'lom", value: 'good' },
-  { label: 'Nuqsonli', value: 'defective' },
-];
-
 const ReturnsPage = () => {
+  const { t } = useTranslation();
+  
+  const RETURNS_TYPE_OPTIONS = [
+    { label: t('returns.type.good'), value: 'good' },
+    { label: t('returns.type.defective'), value: 'defective' },
+  ];
+  
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
   const [dealers, setDealers] = useState<DealerOption[]>([]);
   const [products, setProducts] = useState<ProductOption[]>([]);
@@ -69,7 +72,7 @@ const ReturnsPage = () => {
       fetchStats();
     } catch (error) {
       console.error('Error fetching returns:', error);
-      message.error('Qaytishlarni yuklab bo\'lmadi');
+      message.error(t('returns.messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -121,14 +124,14 @@ const ReturnsPage = () => {
     setSubmitting(true);
     try {
       await http.post('/api/returns/', values);
-      message.success('Qaytish muvaffaqiyatli qo\'shildi');
+      message.success(t('returns.messages.created'));
       setModalOpen(false);
       form.resetFields();
       fetchReturns();
       fetchStats();
     } catch (error) {
       console.error(error);
-      message.error('Qaytish qo\'shishda xatolik yuz berdi');
+      message.error(t('returns.messages.createError'));
     } finally {
       setSubmitting(false);
     }
@@ -145,7 +148,7 @@ const ReturnsPage = () => {
   const chartData = useMemo(() => {
     const values = [stats.good, stats.defective];
     return {
-      labels: ["Sog'lom", 'Nuqsonli'],
+      labels: [t('returns.type.good'), t('returns.type.defective')],
       datasets: [
         {
           data: values,
@@ -170,36 +173,36 @@ const ReturnsPage = () => {
 
   const columns: ColumnsType<ReturnRecord> = [
     {
-      title: 'Diler',
+      title: t('returns.table.dealer'),
       dataIndex: 'dealer_name',
       render: (value: string | null) => value || '—',
     },
     {
-      title: 'Mahsulot',
+      title: t('returns.table.product'),
       dataIndex: 'product_name',
       render: (value: string | null) => value || '—',
     },
     {
-      title: 'Miqdor',
+      title: t('returns.table.quantity'),
       dataIndex: 'quantity',
       render: (value: string) => formatQuantity(value),
     },
     {
-      title: 'Turi',
+      title: t('returns.table.type'),
       dataIndex: 'return_type',
       render: (value: ReturnRecord['return_type']) => (
         <Tag color={value === 'defective' ? 'red' : 'green'}>
-          {value === 'defective' ? 'Nuqsonli' : "Sog'lom"}
+          {value === 'defective' ? t('returns.type.defective') : t('returns.type.good')}
         </Tag>
       ),
     },
     {
-      title: 'Sabab',
+      title: t('returns.table.reason'),
       dataIndex: 'reason',
       render: (value: string | null) => value || '—',
     },
     {
-      title: 'Sana',
+      title: t('returns.table.date'),
       dataIndex: 'created_at',
       render: (value: string) => formatDate(value),
     },
@@ -207,14 +210,14 @@ const ReturnsPage = () => {
 
   return (
     <Card
-      title="↩️ Qaytishlar"
+      title={t('returns.title')}
       className="rounded-2xl border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       extra={
         <Space>
-          <Button onClick={handleExportPdf}>PDF</Button>
-          <Button onClick={handleExportExcel}>Excel</Button>
+          <Button onClick={handleExportPdf}>{t('actions.exportPdf')}</Button>
+          <Button onClick={handleExportExcel}>{t('actions.exportExcel')}</Button>
           <Button type="primary" onClick={() => setModalOpen(true)}>
-            Yangi qaytish
+            {t('returns.new')}
           </Button>
         </Space>
       }
@@ -228,14 +231,14 @@ const ReturnsPage = () => {
           pagination={{ pageSize: 10 }}
         />
         <Card
-          title="Qaytishlar statistikasi"
+          title={t('returns.stats.title')}
           className="border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800"
           styles={{
             body: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 },
           }}
         >
           {stats.good === 0 && stats.defective === 0 ? (
-            <div className="text-center text-sm text-slate-500 dark:text-slate-300">Ma'lumot mavjud emas</div>
+            <div className="text-center text-sm text-slate-500 dark:text-slate-300">{t('returns.stats.noData')}</div>
           ) : (
             <Doughnut data={chartData} options={chartOptions} />
           )}
@@ -243,40 +246,40 @@ const ReturnsPage = () => {
       </div>
 
       <Modal
-        title="Yangi qaytish qo'shish"
+        title={t('returns.createTitle')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        okText="Saqlash"
-        cancelText="Bekor qilish"
+        okText={t('actions.save')}
+        cancelText={t('actions.cancel')}
         confirmLoading={submitting}
         onOk={() => form.submit()}
         destroyOnHidden
       >
         <Form layout="vertical" form={form} onFinish={handleSubmit}>
-          <Form.Item name="dealer" label="Diler" rules={[{ required: true, message: 'Diler tanlang' }]}>
+          <Form.Item name="dealer" label={t('returns.form.dealer')} rules={[{ required: true, message: t('returns.form.dealerRequired') }]}>
             <Select
               showSearch
-              placeholder="Dilerni tanlang"
+              placeholder={t('returns.form.selectDealer')}
               options={dealerOptions}
               optionFilterProp="label"
             />
           </Form.Item>
-          <Form.Item name="product" label="Mahsulot" rules={[{ required: true, message: 'Mahsulot tanlang' }]}>
+          <Form.Item name="product" label={t('returns.form.product')} rules={[{ required: true, message: t('returns.form.productRequired') }]}>
             <Select
               showSearch
-              placeholder="Mahsulotni tanlang"
+              placeholder={t('returns.form.selectProduct')}
               options={productOptions}
               optionFilterProp="label"
             />
           </Form.Item>
-          <Form.Item name="quantity" label="Miqdor" rules={[{ required: true, message: 'Miqdor kiriting' }]}>
+          <Form.Item name="quantity" label={t('returns.form.quantity')} rules={[{ required: true, message: t('returns.form.quantityRequired') }]}>
             <InputNumber min={0.01} step={0.01} style={{ width: '100%' }} placeholder="0.00" />
           </Form.Item>
-          <Form.Item name="return_type" label="Qaytish turi" initialValue="good">
+          <Form.Item name="return_type" label={t('returns.form.type')} initialValue="good">
             <Select options={RETURNS_TYPE_OPTIONS} />
           </Form.Item>
-          <Form.Item name="reason" label="Sabab">
-            <Input.TextArea rows={2} placeholder="Qo'shimcha izoh (ixtiyoriy)" />
+          <Form.Item name="reason" label={t('returns.form.reason')}>
+            <Input.TextArea rows={2} placeholder={t('returns.form.reasonPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>
