@@ -1,23 +1,19 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const SUPPORTED_LANGS = [
-  { code: 'uz', label: 'Uz' },
-  { code: 'ru', label: 'Ru' },
-  { code: 'en', label: 'En' },
-];
+import { LANGUAGE_OPTIONS, LANGUAGE_STORAGE_KEY } from '../i18n/languages';
 
 export const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('lenza_lang');
+      const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
       if (stored) {
         i18n.changeLanguage(stored);
       }
     } catch {
-      // ignore
+      // ignore persistence issues
     }
   }, [i18n]);
 
@@ -25,9 +21,9 @@ export const LanguageSwitcher = () => {
     const lang = event.target.value;
     i18n.changeLanguage(lang);
     try {
-      localStorage.setItem('lenza_lang', lang);
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
     } catch {
-      // ignore
+      // ignore persistence issues
     }
   };
 
@@ -35,9 +31,10 @@ export const LanguageSwitcher = () => {
     <select
       value={i18n.language}
       onChange={handleChange}
+      aria-label={t('app.language')}
       className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-100"
     >
-      {SUPPORTED_LANGS.map((lang) => (
+      {LANGUAGE_OPTIONS.map((lang) => (
         <option key={lang.code} value={lang.code}>
           {lang.label}
         </option>

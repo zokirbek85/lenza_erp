@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { OrderItem } from '../../store/useOrderStore';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -9,10 +10,12 @@ interface OrderItemTableProps {
 }
 
 const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderItemTableProps) => {
+  const { t } = useTranslation();
+
   if (!items.length) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-        Tanlangan mahsulotlar ro&apos;yxati bo&apos;sh.
+        {t('orders.items.empty')}
       </div>
     );
   }
@@ -23,10 +26,18 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
         <thead className="bg-slate-50 dark:bg-slate-800">
           <tr>
             <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">#</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Mahsulot</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Miqdor</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Narx (USD)</th>
-            <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">Summa</th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+              {t('orders.table.product')}
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+              {t('orders.table.quantity')}
+            </th>
+            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+              {t('orders.table.priceUsd')}
+            </th>
+            <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">
+              {t('orders.table.total')}
+            </th>
             <th className="px-4 py-3" />
           </tr>
         </thead>
@@ -68,7 +79,7 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
                   onClick={() => onRemove(item.product)}
                   className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-900/30"
                 >
-                  Remove
+                  {t('actions.remove')}
                 </button>
               </td>
             </tr>

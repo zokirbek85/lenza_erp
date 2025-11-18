@@ -36,9 +36,10 @@ from dealers.views import (
     DealerViewSet,
     RegionViewSet,
 )
+from returns.views import ReturnViewSet
 from inventory.views import (
     ReturnedProductStatsView,
-    ReturnedProductViewSet,
+    # ReturnedProductViewSet,
     ReturnsExportExcelView,
     ReturnsReportPDFView,
 )
@@ -96,7 +97,7 @@ router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
 router.register('company-info', CompanyInfoViewSet, basename='company-info')
-router.register('returns', ReturnedProductViewSet, basename='return')
+router.register('returns', ReturnViewSet, basename='return')
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
 
 urlpatterns = [

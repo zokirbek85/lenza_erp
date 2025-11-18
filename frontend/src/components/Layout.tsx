@@ -4,13 +4,13 @@ import { Outlet, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../auth/useAuthStore';
 import { usePwa } from '../hooks/usePwa';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { useSidebarStore } from '../store/useSidebarStore';
 import { useTheme } from '../context/ThemeContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './NotificationBell';
 import Sidebar from './layout/Sidebar';
 import Container from './responsive/Container';
-import { useIsMobile } from '../hooks/useIsMobile';
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -61,6 +61,13 @@ const Layout = () => {
     return sidebarWidth;
   }, [isMobile, isTablet, sidebarWidth]);
 
+  const subtitle = userName
+    ? t('layout.operationsWithUser', { name: userName, operations: t('app.operations') })
+    : t('layout.operationsAnonymous', { operations: t('app.operations') });
+
+  const themeLabel = mode === 'dark' ? t('layout.lightMode') : t('layout.darkMode');
+  const themeIcon = mode === 'dark' ? '☀' : '🌙';
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <Sidebar
@@ -80,18 +87,16 @@ const Layout = () => {
                 <button
                   onClick={handleBurger}
                   className="mr-2 rounded-full border border-slate-200 px-3 py-1 text-lg font-semibold text-slate-600 transition hover:border-slate-300 dark:border-slate-600 dark:text-slate-200 dark:hover:border-slate-500"
-                  aria-label="Toggle sidebar"
+                  aria-label={t('layout.toggleSidebar')}
                 >
                   ☰
                 </button>
                 {t('app.welcome')}
               </div>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                {userName ? `, ${userName}` : ''} · {t('app.operations')}
-              </span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</span>
               {offline && (
                 <span className="mt-1 inline-flex items-center rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-600 dark:bg-amber-400/20 dark:text-amber-200">
-                  Offline mode
+                  {t('layout.offlineMode')}
                 </span>
               )}
             </div>
@@ -100,16 +105,17 @@ const Layout = () => {
               <LanguageSwitcher />
               <button
                 onClick={toggleTheme}
+                aria-label={themeLabel}
                 className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                {mode === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                {`${themeIcon} ${themeLabel}`}
               </button>
               {canInstall && (
                 <button
                   onClick={promptInstall}
                   className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-emerald-400"
                 >
-                  Install
+                  {t('layout.installApp')}
                 </button>
               )}
               <button

@@ -247,7 +247,7 @@ const OrdersPage = () => {
       await fetchProducts(searchText);
     } catch (error) {
       console.error(error);
-      toast.error('Mahsulotlarni yuklab bo\'lmadi');
+      toast.error(t('orders.toast.productsLoadError'));
     } finally {
       setProductsLoading(false);
     }
@@ -312,18 +312,18 @@ const OrdersPage = () => {
 
   const handleAddSelectedProduct = () => {
     if (!selectedProduct) {
-      toast.error('Mahsulot tanlang');
+      toast.error(t('orders.toast.selectProduct'));
       return;
     }
     const normalizedQty = normalizeQuantityValue(quantityInput || DEFAULT_QTY);
     if (!Number.isFinite(normalizedQty) || normalizedQty <= 0) {
-      toast.error('Miqdor 0 dan katta va decimal formatda bo\'lishi kerak');
+      toast.error(t('orders.toast.invalidQuantity'));
       return;
     }
     const qtyValue = Number(normalizedQty.toFixed(2));
     const priceValue = Number(priceInput || selectedProduct.sell_price_usd || 0);
     if (!Number.isFinite(priceValue) || priceValue < 0) {
-      toast.error('Narx musbat bo\'lishi kerak');
+      toast.error(t('orders.toast.invalidPrice'));
       return;
     }
     addItem({
@@ -332,7 +332,7 @@ const OrdersPage = () => {
       qty: qtyValue,
       price_usd: priceValue,
     });
-    toast.success('Mahsulot qo\'shildi');
+    toast.success(t('orders.toast.itemAdded'));
     setQuantityInput(DEFAULT_QTY);
     setPriceInput(String(selectedProduct.sell_price_usd ?? 0));
   };
@@ -340,7 +340,7 @@ const OrdersPage = () => {
   const handleItemQtyChange = (productId: number, qty: number) => {
     const normalizedQty = normalizeQuantityValue(qty);
     if (!Number.isFinite(normalizedQty) || normalizedQty <= 0) {
-      toast.error('Miqdor 0 dan katta va decimal formatda bo\'lishi kerak');
+      toast.error(t('orders.toast.invalidQuantity'));
       return;
     }
     updateItem(productId, { qty: Number(normalizedQty.toFixed(2)) });
@@ -348,7 +348,7 @@ const OrdersPage = () => {
 
   const handleItemPriceChange = (productId: number, price: number) => {
     if (!Number.isFinite(price) || price < 0) {
-      toast.error('Narx musbat bo\'lishi kerak');
+      toast.error(t('orders.toast.invalidPrice'));
       return;
     }
     updateItem(productId, { price_usd: price });
@@ -358,7 +358,7 @@ const OrdersPage = () => {
     clearOrder();
     setNote('');
     resetProductInputs();
-    toast.success('Draft tozalandi');
+    toast.success(t('orders.toast.draftCleared'));
   };
 
   const handleViewOrder = (orderId: number) => toggleOrderDetails(orderId);
@@ -373,13 +373,15 @@ const OrdersPage = () => {
   const filtersContent = (
     <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Brand</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('orders.filters.brand')}
+        </label>
         <select
           value={brandId ?? ''}
           onChange={(event) => handleFilterChange('brandId', event.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         >
-          <option value="">Barcha brandlar</option>
+          <option value="">{t('orders.filters.allBrands')}</option>
           {brands.map((brand) => (
             <option key={brand.id} value={brand.id}>
               {brand.name}
@@ -388,13 +390,15 @@ const OrdersPage = () => {
         </select>
       </div>
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('orders.filters.category')}
+        </label>
         <select
           value={categoryId ?? ''}
           onChange={(event) => handleFilterChange('categoryId', event.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         >
-          <option value="">Barcha kategoriyalar</option>
+          <option value="">{t('orders.filters.allCategories')}</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -408,11 +412,11 @@ const OrdersPage = () => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!dealerId) {
-      toast.error('Dealer is required');
+      toast.error(t('orders.toast.dealerRequired'));
       return;
     }
     if (!selectedItems.length) {
-      toast.error('Kamida bitta mahsulot qo\'shing');
+      toast.error(t('orders.toast.itemsRequired'));
       return;
     }
 
@@ -435,12 +439,12 @@ const OrdersPage = () => {
       setNote('');
       clearOrder();
       resetProductInputs();
-      toast.success('Order created');
+      toast.success(t('orders.toast.created'));
       setShowCreateForm(false);
       loadOrders().catch(() => null);
     } catch (error) {
       console.error(error);
-      toast.error('Order yaratishda xatolik yuz berdi');
+      toast.error(t('orders.toast.createError'));
     }
   };
 
@@ -463,7 +467,7 @@ const OrdersPage = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error('PDF yuklab olinmadi');
+      toast.error(t('orders.toast.pdfError'));
     }
   };
 
@@ -519,7 +523,7 @@ const OrdersPage = () => {
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Statusni kuzatish va eksport.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
@@ -543,7 +547,7 @@ const OrdersPage = () => {
           icon={showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
           onClick={handleToggleCreateForm}
         >
-          {showCreateForm ? 'Formani yashirish' : 'Yangi buyurtma yaratish'}
+          {t(showCreateForm ? 'orders.header.hideForm' : 'orders.header.showForm')}
         </Button>
       </div>
 
@@ -556,10 +560,10 @@ const OrdersPage = () => {
         items={[
           {
             key: CREATE_FORM_PANEL_KEY,
-            label: 'Yangi buyurtma yaratish',
+            label: t('orders.header.panelTitle'),
             children: showCreateForm ? (
               <Card
-                title="Yangi buyurtma yaratish"
+                title={t('orders.header.panelTitle')}
                 className="mt-4 border border-slate-700 bg-slate-900"
                 headStyle={{ color: '#fff', backgroundColor: 'transparent' }}
                 bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
@@ -570,14 +574,16 @@ const OrdersPage = () => {
                 >
                   <div className="grid gap-4 md:grid-cols-4">
                     <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('nav.dealers')}</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('orders.form.dealer')}
+                      </label>
                       <select
                         required
                         value={dealerId}
                         onChange={(event) => setDealerId(event.target.value)}
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       >
-                        <option value="">Tanlang</option>
+                        <option value="">{t('orders.form.dealerPlaceholder')}</option>
                         {dealers.map((dealer) => (
                           <option key={dealer.id} value={dealer.id}>
                             {dealer.name}
@@ -586,22 +592,26 @@ const OrdersPage = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Order type</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('orders.form.orderType')}
+                      </label>
                       <select
                         value={orderType}
                         onChange={(event) => setOrderType(event.target.value as 'regular' | 'reserve')}
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       >
-                        <option value="regular">Oddiy</option>
-                        <option value="reserve">Bron</option>
+                        <option value="regular">{t('orders.types.regular')}</option>
+                        <option value="reserve">{t('orders.types.reserve')}</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Izoh</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('orders.form.note')}
+                      </label>
                       <input
                         value={note}
                         onChange={(event) => setNote(event.target.value)}
-                        placeholder="Eslatma..."
+                        placeholder={t('orders.form.notePlaceholder')}
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       />
                     </div>
@@ -609,13 +619,15 @@ const OrdersPage = () => {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Brand</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('orders.filters.brand')}
+                      </label>
                       <select
                         value={brandId ?? ''}
                         onChange={(event) => handleFilterChange('brandId', event.target.value)}
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       >
-                        <option value="">Barcha brandlar</option>
+                        <option value="">{t('orders.filters.allBrands')}</option>
                         {brands.map((brand) => (
                           <option key={brand.id} value={brand.id}>
                             {brand.name}
@@ -624,13 +636,15 @@ const OrdersPage = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Category</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('orders.filters.category')}
+                      </label>
                       <select
                         value={categoryId ?? ''}
                         onChange={(event) => handleFilterChange('categoryId', event.target.value)}
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       >
-                        <option value="">Barcha kategoriyalar</option>
+                        <option value="">{t('orders.filters.allCategories')}</option>
                         {categories.map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.name}
@@ -642,23 +656,27 @@ const OrdersPage = () => {
 
                   <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Mahsulot qidirish</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('orders.form.productSearch')}
+                      </label>
                       <input
                         value={productSearch}
                         onChange={(event) => setProductSearch(event.target.value)}
-                        placeholder="Mahsulot nomi, brand yoki kategoriya..."
+                        placeholder={t('orders.form.productSearchPlaceholder')}
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       />
                     </div>
                     <div className="grid gap-4 md:grid-cols-[2fr,1fr,1fr,auto]">
                       <div>
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Mahsulot tanlash</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {t('orders.form.productSelect')}
+                        </label>
                         <select
                           value={selectedProduct?.id ?? ''}
                           onChange={(event) => handleSelectProduct(event.target.value)}
                           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         >
-                          <option value="">Mahsulot tanlang</option>
+                          <option value="">{t('orders.form.productSelectPlaceholder')}</option>
                           {filteredProducts.map((product) => {
                             const stock = product.total_stock ?? product.stock_ok ?? 0;
                             const isLow = stock <= 0;
@@ -750,13 +768,27 @@ const OrdersPage = () => {
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">ID</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('nav.dealers')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Type</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Status</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Qiymat</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('app.operations')}</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">PDF</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.id')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.dealer')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.type')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.status')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.amount')}
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.date')}
+              </th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">
+                {t('orders.list.columns.pdf')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

@@ -34,6 +34,9 @@ const NotificationBell = () => {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md; // md breakpoint and above considered desktop
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const newTagLabel = t('notifications.newTag');
+  const fallbackTitle = t('notifications.newNotification');
+  const fallbackMessage = t('notifications.emptyMessage');
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -56,8 +59,8 @@ const NotificationBell = () => {
       // Extract notification data
       const newNotification: NotificationItem = {
         id: typeof detail.id === 'number' ? detail.id : Date.now(),
-        title: typeof detail.title === 'string' ? detail.title : 'New notification',
-        message: typeof detail.message === 'string' ? detail.message : '',
+        title: typeof detail.title === 'string' ? detail.title : fallbackTitle,
+        message: typeof detail.message === 'string' ? detail.message : fallbackMessage,
         level: typeof detail.level === 'string' ? detail.level : 'info',
         created_at: typeof detail.created_at === 'string' ? detail.created_at : new Date().toISOString(),
         type: typeof detail.type === 'string' ? detail.type : undefined,
@@ -75,10 +78,10 @@ const NotificationBell = () => {
         duration: 4,
       });
     };
-    
+
     window.addEventListener('notifications:refresh', handleRefresh as EventListener);
     return () => window.removeEventListener('notifications:refresh', handleRefresh as EventListener);
-  }, [addNotification]);
+  }, [addNotification, fallbackMessage, fallbackTitle]);
 
   const markAll = async () => {
     try {
@@ -125,7 +128,12 @@ const NotificationBell = () => {
                 avatar={getNotificationIcon(item.type)}
                 title={
                   <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {item.title} {!item.is_read && <span className="ml-1 rounded bg-red-500/20 px-1 py-0.5 text-[10px] text-red-600">New</span>}
+                    {item.title}{' '}
+                    {!item.is_read && (
+                      <span className="ml-1 rounded bg-red-500/20 px-1 py-0.5 text-[10px] text-red-600">
+                        {newTagLabel}
+                      </span>
+                    )}
                   </span>
                 }
                 description={

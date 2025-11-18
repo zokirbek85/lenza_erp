@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Bar,
   BarChart,
@@ -26,8 +27,10 @@ const ChartBar = <TData extends Record<string, unknown>>({
   height = 280,
   legendLabel,
 }: ChartBarProps<TData>) => {
+  const { t } = useTranslation();
+
   if (!data.length) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Ma&apos;lumot topilmadi</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">{t('kpi.noData')}</p>;
   }
 
   return (

@@ -23,7 +23,7 @@
     "unexpectedError": "Kutilmagan xato. Qayta urinib ko'ring.",
     "otpRequired": "OTP kod talab qilinadi.",
     "invalidOtp": "OTP noto'g'ri.",
-  "setup2faRequired": "Bu rol uchun 2FA sozlash talab qilinadi."
+    "setup2faRequired": "Bu rol uchun 2FA sozlash talab qilinadi."
   },
   "nav": {
     "dashboard": "Bosh panel",
@@ -34,8 +34,8 @@
     "regions": "Hududlar",
     "payments": "To'lovlar",
     "expenses": "Chiqimlar",
-  "expenseReport": "📊 Oylik chiqimlar",
-  "expenseCategories": "⚙️ Chiqim turlari",
+    "expenseReport": "📊 Oylik chiqimlar",
+    "expenseCategories": "⚙️ Chiqim turlari",
     "ledger": "Kassa balans",
     "currency": "Kurslar",
     "reconciliation": "Akt sverka",
@@ -97,7 +97,11 @@
     "showing": "Ko'rsatilmoqda",
     "to": "gacha",
     "items": "ta",
-    "rowsPerPage": "Sahifada:"
+    "rowsPerPage": "Sahifada:",
+    "show": "Ko'rsat:",
+    "itemsPerPage": "ta yozuv / sahifa",
+    "range": "{{start}}-{{end}} / {{total}}",
+    "pageOf": "Sahifa {{page}} / {{total}}"
   },
   "filters": {
     "title": "Filtrlar",
@@ -193,13 +197,38 @@
   "notifications": {
     "title": "Bildirishnomalar",
     "empty": "Bildirishnoma yo'q",
-    "markAll": "Barchasini o'qilgan deyish"
+    "markAll": "Barchasini o'qilgan deyish",
+    "markAsRead": "O'qilgan deb belgilash",
+    "markAsUnread": "O'qilmagan deb belgilash",
+    "all": "Hammasi",
+    "unread": "O'qilmagan",
+    "read": "O'qilgan",
+    "totalCount": "Jami: {{count}}",
+    "unreadCount": "O'qilmagan: {{count}}",
+    "refresh": "Yangilash",
+    "newNotification": "Yangi bildirishnoma",
+    "emptyMessage": "Xabar matni mavjud emas",
+    "newTag": "Yangi",
+    "types": {
+      "order": "Buyurtma",
+      "payment": "To'lov",
+      "return": "Qaytish",
+      "currency": "Valyuta",
+      "info": "Ma'lumot"
+    }
   },
   "layout": {
     "collapseSidebar": "Panelni yopish",
     "expandSidebar": "Panelni ochish",
     "pinSidebar": "Panelni mahkamlash",
-    "unpinSidebar": "Panelni ajratish"
+    "unpinSidebar": "Panelni ajratish",
+    "toggleSidebar": "Yon panelni almashtirish",
+    "offlineMode": "Offline rejim",
+    "installApp": "Ilovani o'rnatish",
+    "lightMode": "Yorug' rejim",
+    "darkMode": "Tungi rejim",
+    "operationsWithUser": "{{name}} • {{operations}}",
+    "operationsAnonymous": "{{operations}}"
   },
   "order": {
     "status": {
@@ -378,7 +407,14 @@
     "totalExpense": "Jami chiqim",
     "from": "dan",
     "to": "gacha",
-    "refresh": "Yangilash"
+    "refresh": "Yangilash",
+    "widget": {
+      "title": "💼 Kassa balans",
+      "totalBalance": "Umumiy balans",
+      "cash": "Naqd pul",
+      "bank": "Bank hisob",
+      "cards": "Kartalar"
+    }
   },
   "products": {
     "title": "Mahsulotlar",
@@ -732,7 +768,8 @@
       "quarter": "Chorak",
       "year": "Yil",
       "custom": "Boshqa"
-    }
+    },
+    "noData": "Ma'lumot topilmadi"
   },
   "manuals": {
     "title": "Foydalanuvchi qo'llanmasi",
@@ -1050,5 +1087,112 @@
         "answer": "Direktor va nazorat rollari PDF/XLS eksportini bajarishi mumkin. Agar tugma ko'rinmasa, admin ruxsatini tekshiring."
       }
     ]
+  },
+  "errors": {
+    "unexpectedTitle": "Kutilmagan xatolik",
+    "unexpectedMessage": "Noma'lum xato yuz berdi. Iltimos, qayta urinib ko'ring.",
+    "notFoundTitle": "Sahifa topilmadi",
+    "notFoundMessage": "Qidirilgan sahifa mavjud emas yoki ko'chirilgan bo'lishi mumkin.",
+    "unauthorizedTitle": "Kirish talab qilinadi",
+    "unauthorizedMessage": "Bu sahifani ko'rish uchun tizimga kiring.",
+    "forbiddenTitle": "Ruxsat yo'q",
+    "forbiddenMessage": "Bu sahifaga kirish uchun huquqingiz yo'q.",
+    "genericTitle": "Xatolik ({{code}})",
+    "codeLabel": "Kod: {{code}}",
+    "backToHome": "Bosh sahifaga qaytish",
+    "reloadPage": "Sahifani qayta yuklash",
+    "boundaryTitle": "Ilova ishlashda xatolik",
+    "boundarySubtitle": "Sahifa render qilinayotganda xatolik yuz berdi. Iltimos, sahifani yangilang yoki qayta urinib ko'ring.",
+    "showDetails": "Batafsil ko'rish"
+  },
+  "orders": {
+    "header": {
+      "subtitle": "Statusni kuzatish va eksport qilish",
+      "showForm": "Yangi buyurtma yaratish",
+      "hideForm": "Formani yashirish",
+      "panelTitle": "Yangi buyurtma yaratish"
+    },
+    "filters": {
+      "brand": "Brend",
+      "category": "Kategoriya",
+      "allBrands": "Barcha brandlar",
+      "allCategories": "Barcha kategoriyalar"
+    },
+    "form": {
+      "dealer": "Diler",
+      "dealerPlaceholder": "Tanlang",
+      "orderType": "Buyurtma turi",
+      "note": "Izoh",
+      "notePlaceholder": "Eslatma...",
+      "productSearch": "Mahsulot qidirish",
+      "productSearchPlaceholder": "Mahsulot nomi, brend yoki kategoriya...",
+      "productSelect": "Mahsulot tanlash",
+      "productSelectPlaceholder": "Mahsulot tanlang",
+      "quantity": "Miqdor",
+      "price": "Narx (USD)",
+      "addProduct": "Qo'shish",
+      "clearDraft": "Draftni tozalash",
+      "productsLoading": "Mahsulotlar yuklanmoqda..."
+    },
+    "product": {
+      "noMatches": "Mos mahsulot topilmadi.",
+      "stockOut": "Zaxira tugagan",
+      "stockValue": "Zaxira: {{count}}",
+      "unknownProduct": "Mahsulot #{{id}}"
+    },
+    "toast": {
+      "itemAdded": "Mahsulot qo'shildi",
+      "selectProduct": "Mahsulot tanlang",
+      "productsLoadError": "Mahsulotlarni yuklab bo'lmadi",
+      "invalidQuantity": "Miqdor 0 dan katta va o'nlik formatda bo'lishi kerak",
+      "invalidPrice": "Narx musbat bo'lishi kerak",
+      "draftCleared": "Draft tozalandi",
+      "dealerRequired": "Diler tanlanishi kerak",
+      "itemsRequired": "Kamida bitta mahsulot qo'shing",
+      "created": "Buyurtma yaratildi",
+      "createError": "Buyurtmani yaratishda xatolik yuz berdi",
+      "pdfError": "PDF yuklab olinmadi"
+    },
+    "list": {
+      "columns": {
+        "id": "ID",
+        "dealer": "Diler",
+        "type": "Turi",
+        "status": "Holat",
+        "amount": "Qiymat",
+        "date": "Sana",
+        "pdf": "PDF"
+      },
+      "loading": "Yuklanmoqda...",
+      "empty": "Buyurtmalar topilmadi",
+      "detailsTitle": "Tarkibi",
+      "detailsEmpty": "Tarkib mavjud emas"
+    },
+    "types": {
+      "regular": "Oddiy",
+      "reserve": "Bron"
+    },
+    "items": {
+      "empty": "Tanlangan mahsulotlar ro'yxati bo'sh."
+    },
+    "table": {
+      "product": "Mahsulot",
+      "quantity": "Miqdor",
+      "priceUsd": "Narx (USD)",
+      "total": "Summa"
+    },
+    "mobile": {
+      "fields": {
+        "totalUsd": "Jami (USD)",
+        "totalUzs": "Jami (UZS)",
+        "items": "Mahsulotlar",
+        "valueDate": "Qiymat sanasi",
+        "createdBy": "Kim yaratgan"
+      },
+      "actions": {
+        "view": "Ko'rish",
+        "edit": "Tahrirlash"
+      }
+    }
   }
 }

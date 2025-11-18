@@ -1,4 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+
+import { formatCurrency } from '../../utils/formatters';
 
 interface ChartPieProps<TData extends Record<string, unknown>> {
   data: TData[];
@@ -17,8 +20,10 @@ const ChartPie = <TData extends Record<string, unknown>>({
   height = 280,
   colors = DEFAULT_COLORS,
 }: ChartPieProps<TData>) => {
+  const { t } = useTranslation();
+
   if (!data.length) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Ma&apos;lumot topilmadi</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">{t('kpi.noData')}</p>;
   }
 
   return (
@@ -48,7 +53,7 @@ const ChartPie = <TData extends Record<string, unknown>>({
               borderRadius: '0.5rem',
               color: '#f8fafc',
             }}
-            formatter={(value: number) => [`${value.toLocaleString('en-US', { minimumFractionDigits: 0 })} USD`, '']}
+            formatter={(value: number) => [formatCurrency(value), t('common.amount')]}
           />
           <Legend />
         </PieChart>

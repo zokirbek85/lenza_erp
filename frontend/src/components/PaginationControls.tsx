@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 
 interface PaginationProps {
@@ -12,11 +13,14 @@ interface PaginationProps {
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export const PaginationControls = ({ page, pageSize, total, setPage, setPageSize, className }: PaginationProps) => {
+  const { t } = useTranslation();
   const totalPages = Math.max(1, Math.ceil((total || 0) / pageSize) || 1);
   const canGoPrev = page > 1;
   const canGoNext = page < totalPages && total > 0;
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
+  const pageLabel = t('pagination.pageOf', { page: total === 0 ? 0 : page, total: total === 0 ? 1 : totalPages });
+  const rangeLabel = t('pagination.range', { start: rangeStart, end: rangeEnd, total });
 
   const handlePrev = () => {
     if (canGoPrev) setPage(page - 1);
@@ -34,7 +38,7 @@ export const PaginationControls = ({ page, pageSize, total, setPage, setPageSize
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span>Ko&apos;rsat:</span>
+        <span>{t('pagination.show')}</span>
         <select
           value={pageSize}
           onChange={(event) => {
@@ -49,10 +53,8 @@ export const PaginationControls = ({ page, pageSize, total, setPage, setPageSize
             </option>
           ))}
         </select>
-        <span>ta yozuv / sahifa</span>
-        <span className="text-xs text-slate-400 dark:text-slate-500">
-          {rangeStart} – {rangeEnd} / {total}
-        </span>
+        <span>{t('pagination.itemsPerPage')}</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">{rangeLabel}</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -62,18 +64,16 @@ export const PaginationControls = ({ page, pageSize, total, setPage, setPageSize
           disabled={!canGoPrev}
           className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
         >
-          ← Oldingi
+          {t('pagination.previous')}
         </button>
-        <span className="text-xs text-slate-400 dark:text-slate-500">
-          Sahifa {total === 0 ? 0 : page} / {total === 0 ? 1 : totalPages}
-        </span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">{pageLabel}</span>
         <button
           type="button"
           onClick={handleNext}
           disabled={!canGoNext}
           className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
         >
-          Keyingi →
+          {t('pagination.next')}
         </button>
       </div>
     </div>

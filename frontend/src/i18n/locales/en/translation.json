@@ -97,7 +97,11 @@
     "showing": "Showing",
     "to": "to",
     "items": "",
-    "rowsPerPage": "Per page:"
+    "rowsPerPage": "Per page:",
+    "show": "Show:",
+    "itemsPerPage": "items / page",
+    "range": "{{start}}-{{end}} / {{total}}",
+    "pageOf": "Page {{page}} / {{total}}"
   },
   "filters": {
     "title": "Filters",
@@ -569,7 +573,8 @@
       "quarter": "Quarter",
       "year": "Year",
       "custom": "Custom"
-    }
+    },
+    "noData": "No data available"
   },
   "dashboard": {
     "ownerKpi": "Owner overview",
@@ -610,13 +615,38 @@
   "notifications": {
     "title": "Notifications",
     "empty": "All caught up",
-    "markAll": "Mark all as read"
+    "markAll": "Mark all as read",
+    "markAsRead": "Mark as read",
+    "markAsUnread": "Mark as unread",
+    "all": "All",
+    "unread": "Unread",
+    "read": "Read",
+    "totalCount": "Total: {{count}}",
+    "unreadCount": "Unread: {{count}}",
+    "refresh": "Refresh",
+    "newNotification": "New notification",
+    "emptyMessage": "No additional message",
+    "newTag": "New",
+    "types": {
+      "order": "Order",
+      "payment": "Payment",
+      "return": "Return",
+      "currency": "Rate",
+      "info": "Info"
+    }
   },
   "layout": {
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
     "pinSidebar": "Pin sidebar",
-    "unpinSidebar": "Unpin sidebar"
+    "unpinSidebar": "Unpin sidebar",
+    "toggleSidebar": "Toggle sidebar",
+    "offlineMode": "Offline mode",
+    "installApp": "Install app",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "operationsWithUser": "{{name}} • {{operations}}",
+    "operationsAnonymous": "{{operations}}"
   },
   "order": {
     "status": {
@@ -732,7 +762,14 @@
     "totalExpense": "Total Expense",
     "from": "From",
     "to": "To",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "widget": {
+      "title": "💼 Cash balance",
+      "totalBalance": "Total balance",
+      "cash": "Cash",
+      "bank": "Bank account",
+      "cards": "Cards"
+    }
   },
   "manuals": {
     "title": "User Manual",
@@ -746,6 +783,113 @@
       "sales": "Sales Manager",
       "warehouse": "Warehouse",
       "faq": "FAQ"
+    }
+  },
+  "errors": {
+    "unexpectedTitle": "Unexpected error",
+    "unexpectedMessage": "An unknown error occurred. Please try again.",
+    "notFoundTitle": "Page not found",
+    "notFoundMessage": "The page you are looking for was removed or never existed.",
+    "unauthorizedTitle": "Authentication required",
+    "unauthorizedMessage": "Please sign in to view this page.",
+    "forbiddenTitle": "Access denied",
+    "forbiddenMessage": "You don't have permission to view this page.",
+    "genericTitle": "Error ({{code}})",
+    "codeLabel": "Code: {{code}}",
+    "backToHome": "Back to home",
+    "reloadPage": "Reload page",
+    "boundaryTitle": "Application error",
+    "boundarySubtitle": "Something went wrong while rendering this view. Reload or try again later.",
+    "showDetails": "Show details"
+  },
+  "orders": {
+    "header": {
+      "subtitle": "Track order statuses and export results",
+      "showForm": "Create new order",
+      "hideForm": "Hide form",
+      "panelTitle": "Create new order"
+    },
+    "filters": {
+      "brand": "Brand",
+      "category": "Category",
+      "allBrands": "All brands",
+      "allCategories": "All categories"
+    },
+    "form": {
+      "dealer": "Dealer",
+      "dealerPlaceholder": "Select",
+      "orderType": "Order type",
+      "note": "Note",
+      "notePlaceholder": "Add a note...",
+      "productSearch": "Search products",
+      "productSearchPlaceholder": "Product name, brand or category...",
+      "productSelect": "Choose product",
+      "productSelectPlaceholder": "Select a product",
+      "quantity": "Quantity",
+      "price": "Price (USD)",
+      "addProduct": "Add",
+      "clearDraft": "Clear draft",
+      "productsLoading": "Loading products..."
+    },
+    "product": {
+      "noMatches": "No matching products found.",
+      "stockOut": "Out of stock",
+      "stockValue": "Stock: {{count}}",
+      "unknownProduct": "Product #{{id}}"
+    },
+    "toast": {
+      "itemAdded": "Product added",
+      "selectProduct": "Please select a product",
+      "productsLoadError": "Failed to load products",
+      "invalidQuantity": "Quantity must be greater than 0 and use decimal format",
+      "invalidPrice": "Price must be positive",
+      "draftCleared": "Draft cleared",
+      "dealerRequired": "Dealer is required",
+      "itemsRequired": "Add at least one product",
+      "created": "Order created",
+      "createError": "Failed to create order",
+      "pdfError": "Unable to download PDF"
+    },
+    "list": {
+      "columns": {
+        "id": "ID",
+        "dealer": "Dealer",
+        "type": "Type",
+        "status": "Status",
+        "amount": "Amount",
+        "date": "Date",
+        "pdf": "PDF"
+      },
+      "loading": "Loading...",
+      "empty": "No orders found",
+      "detailsTitle": "Line items",
+      "detailsEmpty": "No items available"
+    },
+    "types": {
+      "regular": "Standard",
+      "reserve": "Reserve"
+    },
+    "items": {
+      "empty": "Selected products list is empty."
+    },
+    "table": {
+      "product": "Product",
+      "quantity": "Quantity",
+      "priceUsd": "Price (USD)",
+      "total": "Total"
+    },
+    "mobile": {
+      "fields": {
+        "totalUsd": "Total (USD)",
+        "totalUzs": "Total (UZS)",
+        "items": "Items",
+        "valueDate": "Value date",
+        "createdBy": "Created by"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit"
+      }
     }
   }
 }

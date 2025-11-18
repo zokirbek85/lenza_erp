@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'ledger.apps.LedgerConfig',
     'kpis',
     'notifications.apps.NotificationsConfig',
+    'returns.apps.ReturnsConfig',
 ]
 
 MIDDLEWARE = [

@@ -163,7 +163,7 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
     <div className="flex h-full flex-col bg-white dark:bg-[#0E1117] shadow-lg">
       <div className="border-b border-slate-200 px-4 py-5 dark:border-slate-800">
         <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('app.title')}</p>
-        <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">ERP Suite</p>
+        <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{t('app.suite')}</p>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-4">
         {menuItems.map((item) => (
