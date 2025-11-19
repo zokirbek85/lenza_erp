@@ -49,26 +49,36 @@ const WarehouseKpiPage = () => {
     [data?.low_stock]
   );
 
-  const riskItems = useMemo(() => {
-    const low = (data?.low_stock ?? []).filter((item) => item.stock_ok < 5);
-    const defects = (data?.defect_stock ?? []).filter((item) => item.stock_defect > 0);
-    return [
-      {
-        title: t('kpi.warehouse.criticalLowStock'),
-        items: low,
-        highlightClass: 'text-amber-600',
-        valueKey: 'stock_ok' as const,
-        suffix: ` ${t('common.units')}`,
-      },
-      {
-        title: t('kpi.warehouse.activeDefects'),
-        items: defects,
-        highlightClass: 'text-rose-600',
-        valueKey: 'stock_defect' as const,
-        suffix: ` ${t('common.units')}`,
-      },
-    ];
-  }, [data?.low_stock, data?.defect_stock]);
+  const riskItems = useMemo(
+    () =>
+      [
+        {
+          title: t('kpi.warehouse.criticalLowStock'),
+          items: (data?.low_stock ?? [])
+            .filter((item) => item.stock_ok < 5)
+            .map((item) => ({
+              sku: item.sku,
+              name: item.name,
+              value: item.stock_ok,
+            })),
+          highlightClass: 'text-amber-600',
+          suffix: ` ${t('common.units')}`,
+        },
+        {
+          title: t('kpi.warehouse.activeDefects'),
+          items: (data?.defect_stock ?? [])
+            .filter((item) => item.stock_defect > 0)
+            .map((item) => ({
+              sku: item.sku,
+              name: item.name,
+              value: item.stock_defect,
+            })),
+          highlightClass: 'text-rose-600',
+          suffix: ` ${t('common.units')}`,
+        },
+      ],
+    [data?.low_stock, data?.defect_stock, t]
+  );
 
   const renderSkeleton = () => (
     <div className="space-y-6">
@@ -136,7 +146,7 @@ const WarehouseKpiPage = () => {
                       <p className="text-xs text-slate-500 dark:text-slate-400">{item.sku}</p>
                     </div>
                     <span className={risk.highlightClass}>
-                      {formatQuantity(item[risk.valueKey])}
+                      {formatQuantity(item.value)}
                       {risk.suffix}
                     </span>
                   </div>
