@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath, URL } from 'node:url';
 
 // Vite config: ensure base '/', UTF-8 charset handled by index.html meta tag.
 // Removed custom server headers (not needed and can interfere with proper content-type negotiation).
@@ -20,6 +21,11 @@ export default defineConfig({
       output: {
         manualChunks: undefined,
       },
+    },
+  },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 });

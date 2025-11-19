@@ -604,6 +604,7 @@
     "title": "Qaytishlar",
     "subtitle": "Mahsulot qaytarish va qayta ishlash",
     "new": "Yangi qaytish",
+    "createTitle": "Qaytarish yaratish",
     "table": {
       "order": "Buyurtma",
       "dealer": "Diler",
@@ -612,16 +613,38 @@
       "reason": "Sabab",
       "status": "Holat",
       "date": "Sana",
-      "actions": "Amallar"
+      "actions": "Amallar",
+      "items": "Mahsulotlar",
+      "comment": "Izoh"
     },
     "form": {
       "order": "Buyurtma",
-      "product": "Mahsulot",
-      "quantity": "Soni",
-      "reason": "Qaytarish sababi",
-      "notes": "Izohlar",
+      "orderRequired": "Buyurtma talab qilinadi",
       "selectOrder": "Buyurtma tanlang",
-      "selectProduct": "Mahsulot tanlang"
+      "product": "Mahsulot",
+      "productRequired": "Mahsulot talab qilinadi",
+      "selectProduct": "Mahsulot tanlang",
+      "quantity": "Soni",
+      "quantityRequired": "Miqdor talab qilinadi",
+      "quantityMustBePositive": "Miqdor musbat bo'lishi kerak",
+      "quantityExceedsMax": "Miqdor {{max}} dan oshmasligi kerak",
+      "max": "Maks",
+      "available": "Mavjud",
+      "comment": "Izoh",
+      "generalComment": "Umumiy izoh",
+      "commentPlaceholder": "Ixtiyoriy izoh...",
+      "items": "Qaytariladigan mahsulotlar",
+      "addItem": "Mahsulot qo'shish",
+      "dealer": "Diler",
+      "dealerRequired": "Diler talab qilinadi",
+      "selectDealer": "Diler tanlang",
+      "reason": "Qaytarish sababi",
+      "reasonPlaceholder": "Ixtiyoriy sabab...",
+      "type": "Qaytarish turi"
+    },
+    "type": {
+      "good": "Yaxshi holatda",
+      "defective": "Nuqsonli"
     },
     "status": {
       "pending": "Kutilmoqda",
@@ -636,11 +659,18 @@
       "other": "Boshqa"
     },
     "messages": {
-      "created": "Qaytish ro'yxatga olindi",
+      "created": "Qaytarish muvaffaqiyatli ro'yxatga olindi",
       "approved": "Qaytish tasdiqlandi",
       "rejected": "Qaytish rad etildi",
       "confirmApprove": "Qaytishni tasdiqlaymizmi?",
-      "confirmReject": "Qaytishni rad etamizmi?"
+      "confirmReject": "Qaytishni rad etamizmi?",
+      "loadError": "Qaytarishlarni yuklashda xatolik",
+      "createError": "Qaytarish yaratishda xatolik",
+      "orderLoadError": "Buyurtma mahsulotlarini yuklashda xatolik"
+    },
+    "stats": {
+      "title": "Statistika",
+      "noData": "Ma'lumot yo'q"
     }
   },
   "reconciliation": {

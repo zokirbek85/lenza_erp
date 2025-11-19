@@ -4,6 +4,7 @@ import { Drawer } from 'antd';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../auth/useAuthStore';
+import type { UserRole } from '../../auth/useAuthStore';
 import type { AppRole } from '../../auth/routeAccess';
 import { rolesForPath } from '../../auth/routeAccess';
 
@@ -28,10 +29,10 @@ export interface MenuItem {
   path: string;
   label: string;
   icon?: ReactNode;
-  roles: AppRole[];
+  roles?: UserRole[];
 }
 
-const BASE_MENU: Array<Omit<MenuItem, 'roles'>> = [
+const BASE_MENU: MenuItem[] = [
     {
       path: '/',
       label: 'nav.dashboard',
@@ -144,7 +145,7 @@ const BASE_MENU: Array<Omit<MenuItem, 'roles'>> = [
 
 const MENU: MenuItem[] = BASE_MENU.map((item) => ({
   ...item,
-  roles: rolesForPath(item.path),
+  roles: item.roles ?? rolesForPath(item.path),
 }));
 
 type SidebarProps = {
@@ -157,7 +158,7 @@ type SidebarProps = {
 const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarProps) => {
   const { t } = useTranslation();
   const role = useAuthStore((state) => state.role as AppRole | null);
-  const menuItems = role ? MENU.filter((item) => item.roles.includes(role)) : [];
+  const menuItems = role ? MENU.filter((item) => item.roles?.includes(role)) : [];
 
   const renderNav = (
     <div className="flex h-full flex-col bg-white dark:bg-[#0E1117] shadow-lg">

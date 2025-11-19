@@ -59,8 +59,14 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
       },
       tooltip: {
         callbacks: {
-          label: (context) =>
-            `${context.label}: ${formatCurrency(context.parsed as number, 'USD')}`,
+          label: (context) => {
+            const parsedValue = context.parsed;
+            const value =
+              typeof parsedValue === 'object' && parsedValue !== null
+                ? Number((parsedValue as { y?: number }).y ?? 0)
+                : Number(parsedValue ?? 0);
+            return `${context.label}: ${formatCurrency(value, 'USD')}`;
+          },
         },
       },
     },

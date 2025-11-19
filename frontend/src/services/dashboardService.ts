@@ -1,5 +1,6 @@
 import http from '../app/http';
 import type { DashboardFilters } from '../store/useDashboardStore';
+import type { DebtAnalytics } from '@/types/dashboard';
 
 export interface DashboardSummary {
   total_sales: number;
@@ -20,13 +21,6 @@ export interface DashboardSummary {
   revenue_by_product: Array<{ category: string; revenue: number }>;
   inventory_trend: Array<{ date: string; stock_value: number }>;
   expenses_vs_budget: { expenses: number; budget: number };
-}
-
-export interface DebtAnalytics {
-  total_debt: number;
-  by_dealers: { dealer: string; debt: number }[];
-  by_regions: { region: string; debt: number }[];
-  monthly: { month: string; debt: number }[];
 }
 
 /**

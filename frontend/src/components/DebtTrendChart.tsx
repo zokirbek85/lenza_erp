@@ -58,15 +58,20 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
       },
       tooltip: {
         callbacks: {
-          label: (context) =>
-            formatCurrency(context.parsed.y ?? context.parsed ?? 0, 'USD'),
+          label: (context) => {
+            const value =
+              typeof context.parsed === 'object'
+                ? Number(context.parsed?.y ?? 0)
+                : Number(context.parsed ?? 0);
+            return formatCurrency(value, 'USD');
+          },
         },
       },
     },
     scales: {
       y: {
         ticks: {
-          callback: (value) => formatCurrency(value as number, 'USD'),
+          callback: (value) => formatCurrency(Number(value), 'USD'),
         },
       },
     },

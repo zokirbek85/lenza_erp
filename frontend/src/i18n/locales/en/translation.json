@@ -409,6 +409,7 @@
     "title": "Returns",
     "subtitle": "Product returns and processing",
     "new": "New return",
+    "createTitle": "Create return",
     "table": {
       "order": "Order",
       "dealer": "Dealer",
@@ -417,16 +418,38 @@
       "reason": "Reason",
       "status": "Status",
       "date": "Date",
-      "actions": "Actions"
+      "actions": "Actions",
+      "items": "Items",
+      "comment": "Comment"
     },
     "form": {
       "order": "Order",
-      "product": "Product",
-      "quantity": "Quantity",
-      "reason": "Return reason",
-      "notes": "Notes",
+      "orderRequired": "Order is required",
       "selectOrder": "Select order",
-      "selectProduct": "Select product"
+      "product": "Product",
+      "productRequired": "Product is required",
+      "selectProduct": "Select product",
+      "quantity": "Quantity",
+      "quantityRequired": "Quantity is required",
+      "quantityMustBePositive": "Quantity must be positive",
+      "quantityExceedsMax": "Quantity cannot exceed {{max}}",
+      "max": "Max",
+      "available": "Available",
+      "comment": "Comment",
+      "generalComment": "General comment",
+      "commentPlaceholder": "Optional comment...",
+      "items": "Return items",
+      "addItem": "Add item",
+      "dealer": "Dealer",
+      "dealerRequired": "Dealer is required",
+      "selectDealer": "Select dealer",
+      "reason": "Return reason",
+      "reasonPlaceholder": "Optional reason...",
+      "type": "Return type"
+    },
+    "type": {
+      "good": "Good condition",
+      "defective": "Defective"
     },
     "status": {
       "pending": "Pending",
@@ -441,11 +464,18 @@
       "other": "Other"
     },
     "messages": {
-      "created": "Return registered",
+      "created": "Return registered successfully",
       "approved": "Return approved",
       "rejected": "Return rejected",
       "confirmApprove": "Approve this return?",
-      "confirmReject": "Reject this return?"
+      "confirmReject": "Reject this return?",
+      "loadError": "Error loading returns",
+      "createError": "Error creating return",
+      "orderLoadError": "Error loading order items"
+    },
+    "stats": {
+      "title": "Statistics",
+      "noData": "No data available"
     }
   },
   "reconciliation": {

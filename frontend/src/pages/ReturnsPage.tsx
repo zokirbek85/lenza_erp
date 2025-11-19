@@ -1,62 +1,61 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Input, Modal, Select, Space, Table, message } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { ArcElement, Chart as ChartJS, Legend, Tooltip } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
 
 import http from '../app/http';
 import { downloadFile } from '../utils/download';
 import { formatDate, formatQuantity } from '../utils/formatters';
+import ReturnItemRow from '../components/returns/ReturnItemRow';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-interface DealerOption {
+interface OrderOption {
   id: number;
-  name: string;
+  display_no: string;
 }
 
-interface ProductOption {
+interface OrderItem {
   id: number;
-  name: string;
+  product: number;
+  product_name: string;
+  qty: string;
+}
+
+interface ReturnItem {
+  product_id: number;
+  quantity: number;
+  comment: string;
 }
 
 interface ReturnRecord {
   id: number;
-  dealer: number | null;
-  dealer_name: string | null;
-  product: number | null;
-  product_name: string | null;
-  quantity: string;
-  return_type: 'good' | 'defective';
-  reason: string | null;
+  order: number;
+  order_display_no?: string;
+  items: Array<{
+    product_name: string;
+    quantity: string;
+    comment: string;
+  }>;
+  comment: string;
   created_at: string;
 }
 
 const ReturnsPage = () => {
   const { t } = useTranslation();
-  
-  const RETURNS_TYPE_OPTIONS = [
-    { label: t('returns.type.good'), value: 'good' },
-    { label: t('returns.type.defective'), value: 'defective' },
-  ];
+  const [form] = Form.useForm();
   
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
-  const [dealers, setDealers] = useState<DealerOption[]>([]);
-  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [orders, setOrders] = useState<OrderOption[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [stats, setStats] = useState<{ good: number; defective: number }>({ good: 0, defective: 0 });
-  const [form] = Form.useForm();
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [itemIndexes, setItemIndexes] = useState<number[]>([0]);
 
-  const dealerOptions = useMemo(
-    () => dealers.map((dealer) => ({ label: dealer.name, value: dealer.id })),
-    [dealers]
-  );
-  const productOptions = useMemo(
-    () => products.map((product) => ({ label: product.name, value: product.id })),
-    [products]
+  const orderOptions = useMemo(
+    () => orders.map((order) => ({ label: order.display_no, value: order.id })),
+    [orders]
   );
 
   const fetchReturns = async () => {
@@ -64,12 +63,8 @@ const ReturnsPage = () => {
     try {
       const response = await http.get('/api/returns/');
       const payload = response.data;
-      // Backend may return paginated { results: [...] } or direct array
       const list: ReturnRecord[] = Array.isArray(payload) ? payload : (payload.results || []);
-      console.log('Returns API response:', payload);
-      console.log('Extracted returns list:', list);
       setReturns(list);
-      fetchStats();
     } catch (error) {
       console.error('Error fetching returns:', error);
       message.error(t('returns.messages.loadError'));
@@ -78,63 +73,93 @@ const ReturnsPage = () => {
     }
   };
 
-  const fetchStats = async () => {
+  const fetchOrders = async () => {
     try {
-      const response = await http.get<{ good: number; defective: number }>('/api/returns/stats/');
-      const payload = response.data || { good: 0, defective: 0 };
-      setStats({
-        good: Number(payload.good ?? 0),
-        defective: Number(payload.defective ?? 0),
-      });
+      const response = await http.get('/api/orders/', { params: { limit: 'all' } });
+      const payload = response.data;
+      const list: OrderOption[] = Array.isArray(payload) ? payload : payload.results || [];
+      setOrders(list);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const fetchDealers = async () => {
+  const fetchOrderItems = async (orderId: number) => {
     try {
-      const response = await http.get('/api/dealers/', { params: { limit: 'all' } });
-      const payload = response.data;
-      const list: DealerOption[] = Array.isArray(payload) ? payload : payload.results || [];
-      setDealers(list);
+      const response = await http.get(`/api/orders/${orderId}/`);
+      const order = response.data;
+      if (order && order.items) {
+        setOrderItems(order.items);
+      }
     } catch (error) {
       console.error(error);
-    }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const response = await http.get('/api/products/', { params: { limit: 'all' } });
-      const payload = response.data;
-      const list: ProductOption[] = Array.isArray(payload) ? payload : payload.results || [];
-      setProducts(list);
-    } catch (error) {
-      console.error(error);
+      message.error(t('returns.messages.orderLoadError'));
     }
   };
 
   useEffect(() => {
     fetchReturns();
-    fetchDealers();
-    fetchProducts();
-    fetchStats();
+    fetchOrders();
   }, []);
 
-  const handleSubmit = async (values: { dealer: number; product: number; quantity: number; return_type: string; reason?: string }) => {
+  const handleOrderChange = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    fetchOrderItems(orderId);
+    setItemIndexes([0]);
+    form.setFieldsValue({ items: [{}] });
+  };
+
+  const handleAddItem = () => {
+    const newIndex = itemIndexes.length > 0 ? Math.max(...itemIndexes) + 1 : 0;
+    setItemIndexes([...itemIndexes, newIndex]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    if (itemIndexes.length > 1) {
+      setItemIndexes(itemIndexes.filter(i => i !== index));
+      const currentItems = form.getFieldValue('items') || [];
+      const newItems = currentItems.filter((_: any, i: number) => i !== index);
+      form.setFieldsValue({ items: newItems });
+    }
+  };
+
+  const selectedProducts = useMemo(() => {
+    const items = form.getFieldValue('items') || [];
+    return items.map((item: ReturnItem) => item?.product_id).filter(Boolean);
+  }, [form]);
+
+  const handleSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      await http.post('/api/returns/', values);
+      const payload = {
+        order_id: selectedOrderId,
+        comment: values.comment || '',
+        items: values.items.filter((item: ReturnItem) => item?.product_id && item?.quantity)
+      };
+      
+      await http.post('/api/returns/', payload);
       message.success(t('returns.messages.created'));
       setModalOpen(false);
       form.resetFields();
+      setSelectedOrderId(null);
+      setOrderItems([]);
+      setItemIndexes([0]);
       fetchReturns();
-      fetchStats();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      message.error(t('returns.messages.createError'));
+      const errorMsg = error?.response?.data?.message || t('returns.messages.createError');
+      message.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleModalOpen = () => {
+    setModalOpen(true);
+    setSelectedOrderId(null);
+    setOrderItems([]);
+    setItemIndexes([0]);
+    form.resetFields();
   };
 
   const handleExportPdf = () => {
@@ -145,60 +170,29 @@ const ReturnsPage = () => {
       downloadFile('/api/returns/export/excel/', 'returns.xlsx');
   };
 
-  const chartData = useMemo(() => {
-    const values = [stats.good, stats.defective];
-    return {
-      labels: [t('returns.type.good'), t('returns.type.defective')],
-      datasets: [
-        {
-          data: values,
-          backgroundColor: ['#10b981', '#f87171'],
-          borderColor: ['#065f46', '#b91c1c'],
-          borderWidth: 1,
-        },
-      ],
-    };
-  }, [stats]);
-
-  const chartOptions = useMemo(
-    () => ({
-      plugins: {
-        legend: {
-          position: 'bottom' as const,
-        },
-      },
-    }),
-    []
-  );
-
   const columns: ColumnsType<ReturnRecord> = [
     {
-      title: t('returns.table.dealer'),
-      dataIndex: 'dealer_name',
-      render: (value: string | null) => value || '—',
+      title: t('returns.table.order'),
+      dataIndex: 'order_display_no',
+      render: (value: string | null, record) => value || `Order #${record.order}`,
     },
     {
-      title: t('returns.table.product'),
-      dataIndex: 'product_name',
-      render: (value: string | null) => value || '—',
-    },
-    {
-      title: t('returns.table.quantity'),
-      dataIndex: 'quantity',
-      render: (value: string) => formatQuantity(value),
-    },
-    {
-      title: t('returns.table.type'),
-      dataIndex: 'return_type',
-      render: (value: ReturnRecord['return_type']) => (
-        <Tag color={value === 'defective' ? 'red' : 'green'}>
-          {value === 'defective' ? t('returns.type.defective') : t('returns.type.good')}
-        </Tag>
+      title: t('returns.table.items'),
+      dataIndex: 'items',
+      render: (items: ReturnRecord['items']) => (
+        <div>
+          {items.map((item, idx) => (
+            <div key={idx}>
+              {item.product_name} × {formatQuantity(item.quantity)}
+              {item.comment && <span className="text-slate-500 text-xs ml-2">({item.comment})</span>}
+            </div>
+          ))}
+        </div>
       ),
     },
     {
-      title: t('returns.table.reason'),
-      dataIndex: 'reason',
+      title: t('returns.table.comment'),
+      dataIndex: 'comment',
       render: (value: string | null) => value || '—',
     },
     {
@@ -216,71 +210,91 @@ const ReturnsPage = () => {
         <Space>
           <Button onClick={handleExportPdf}>{t('actions.exportPdf')}</Button>
           <Button onClick={handleExportExcel}>{t('actions.exportExcel')}</Button>
-          <Button type="primary" onClick={() => setModalOpen(true)}>
+          <Button type="primary" onClick={handleModalOpen}>
             {t('returns.new')}
           </Button>
         </Space>
       }
     >
-      <div className="mb-6 grid gap-4 md:grid-cols-[1fr,320px]">
-        <Table<ReturnRecord>
-          rowKey="id"
-          columns={columns}
-          dataSource={returns}
-          loading={loading}
-          pagination={{ pageSize: 10 }}
-        />
-        <Card
-          title={t('returns.stats.title')}
-          className="border border-slate-200 shadow-sm dark:border-slate-700 dark:bg-slate-800"
-          styles={{
-            body: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 },
-          }}
-        >
-          {stats.good === 0 && stats.defective === 0 ? (
-            <div className="text-center text-sm text-slate-500 dark:text-slate-300">{t('returns.stats.noData')}</div>
-          ) : (
-            <Doughnut data={chartData} options={chartOptions} />
-          )}
-        </Card>
-      </div>
+      <Table<ReturnRecord>
+        rowKey="id"
+        columns={columns}
+        dataSource={returns}
+        loading={loading}
+        pagination={{ pageSize: 10 }}
+      />
 
       <Modal
         title={t('returns.createTitle')}
         open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false);
+          setSelectedOrderId(null);
+          setOrderItems([]);
+          setItemIndexes([0]);
+          form.resetFields();
+        }}
         okText={t('actions.save')}
         cancelText={t('actions.cancel')}
         confirmLoading={submitting}
         onOk={() => form.submit()}
         destroyOnHidden
+        width={900}
       >
         <Form layout="vertical" form={form} onFinish={handleSubmit}>
-          <Form.Item name="dealer" label={t('returns.form.dealer')} rules={[{ required: true, message: t('returns.form.dealerRequired') }]}>
+          <Form.Item 
+            name="order_id" 
+            label={t('returns.form.order')} 
+            rules={[{ required: true, message: t('returns.form.orderRequired') }]}
+          >
             <Select
               showSearch
-              placeholder={t('returns.form.selectDealer')}
-              options={dealerOptions}
+              placeholder={t('returns.form.selectOrder')}
+              options={orderOptions}
               optionFilterProp="label"
+              onChange={handleOrderChange}
             />
           </Form.Item>
-          <Form.Item name="product" label={t('returns.form.product')} rules={[{ required: true, message: t('returns.form.productRequired') }]}>
-            <Select
-              showSearch
-              placeholder={t('returns.form.selectProduct')}
-              options={productOptions}
-              optionFilterProp="label"
-            />
-          </Form.Item>
-          <Form.Item name="quantity" label={t('returns.form.quantity')} rules={[{ required: true, message: t('returns.form.quantityRequired') }]}>
-            <InputNumber min={0.01} step={0.01} style={{ width: '100%' }} placeholder="0.00" />
-          </Form.Item>
-          <Form.Item name="return_type" label={t('returns.form.type')} initialValue="good">
-            <Select options={RETURNS_TYPE_OPTIONS} />
-          </Form.Item>
-          <Form.Item name="reason" label={t('returns.form.reason')}>
-            <Input.TextArea rows={2} placeholder={t('returns.form.reasonPlaceholder')} />
-          </Form.Item>
+
+          {selectedOrderId && orderItems.length > 0 && (
+            <>
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium">{t('returns.form.items')}</label>
+                  <Button 
+                    type="dashed" 
+                    onClick={handleAddItem}
+                    icon={<PlusOutlined />}
+                    size="small"
+                  >
+                    {t('returns.form.addItem')}
+                  </Button>
+                </div>
+                
+                <div className="space-y-3">
+                  <Form.List name="items">
+                    {() => (
+                      <>
+                        {itemIndexes.map((index) => (
+                          <ReturnItemRow
+                            key={index}
+                            index={index}
+                            orderItems={orderItems}
+                            selectedProducts={selectedProducts}
+                            onRemove={handleRemoveItem}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </Form.List>
+                </div>
+              </div>
+
+              <Form.Item name="comment" label={t('returns.form.generalComment')}>
+                <Input.TextArea rows={2} placeholder={t('returns.form.commentPlaceholder')} />
+              </Form.Item>
+            </>
+          )}
         </Form>
       </Modal>
     </Card>

@@ -31,9 +31,13 @@ import KpiCard from '../../components/KpiCard';
 import LedgerBalanceWidget from '../../components/LedgerBalanceWidget';
 import { RevenueTrendChart, RevenueSharePie, InventoryTrendLine, ExpensesGauge } from '../../components/DashboardCharts';
 import DashboardTable from '../../components/DashboardTable';
+import DebtByDealerChart from '@/components/DebtByDealerChart';
+import DebtByRegionPie from '@/components/DebtByRegionPie';
+import DebtTrendChart from '@/components/DebtTrendChart';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useAuthStore } from '../../auth/useAuthStore';
 import type { DashboardSummary } from '../../services/dashboardService';
+import type { DebtAnalytics } from '@/types/dashboard';
 import {
   fetchDashboardData,
   fetchSalesManagerData,
@@ -42,6 +46,7 @@ import {
   fetchDashboardSummary,
   fetchCardsKpi,
 } from '../../services/dashboardService';
+import { fetchDebtAnalytics } from '@/services/dashboard';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
 

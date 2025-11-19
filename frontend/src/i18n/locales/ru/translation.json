@@ -409,6 +409,7 @@
     "title": "Возвраты",
     "subtitle": "Возврат товаров и обработка",
     "new": "Новый возврат",
+    "createTitle": "Создать возврат",
     "table": {
       "order": "Заказ",
       "dealer": "Дилер",
@@ -417,16 +418,38 @@
       "reason": "Причина",
       "status": "Статус",
       "date": "Дата",
-      "actions": "Действия"
+      "actions": "Действия",
+      "items": "Товары",
+      "comment": "Комментарий"
     },
     "form": {
       "order": "Заказ",
-      "product": "Товар",
-      "quantity": "Количество",
-      "reason": "Причина возврата",
-      "notes": "Примечания",
+      "orderRequired": "Заказ обязателен",
       "selectOrder": "Выберите заказ",
-      "selectProduct": "Выберите товар"
+      "product": "Товар",
+      "productRequired": "Товар обязателен",
+      "selectProduct": "Выберите товар",
+      "quantity": "Количество",
+      "quantityRequired": "Количество обязательно",
+      "quantityMustBePositive": "Количество должно быть положительным",
+      "quantityExceedsMax": "Количество не может превышать {{max}}",
+      "max": "Макс",
+      "available": "Доступно",
+      "comment": "Комментарий",
+      "generalComment": "Общий комментарий",
+      "commentPlaceholder": "Необязательный комментарий...",
+      "items": "Возвращаемые товары",
+      "addItem": "Добавить товар",
+      "dealer": "Дилер",
+      "dealerRequired": "Дилер обязателен",
+      "selectDealer": "Выберите дилера",
+      "reason": "Причина возврата",
+      "reasonPlaceholder": "Необязательная причина...",
+      "type": "Тип возврата"
+    },
+    "type": {
+      "good": "Хорошее состояние",
+      "defective": "Дефектный"
     },
     "status": {
       "pending": "Ожидание",
@@ -441,11 +464,18 @@
       "other": "Другое"
     },
     "messages": {
-      "created": "Возврат зарегистрирован",
+      "created": "Возврат успешно зарегистрирован",
       "approved": "Возврат подтверждён",
       "rejected": "Возврат отклонён",
       "confirmApprove": "Подтвердить возврат?",
-      "confirmReject": "Отклонить возврат?"
+      "confirmReject": "Отклонить возврат?",
+      "loadError": "Ошибка загрузки возвратов",
+      "createError": "Ошибка создания возврата",
+      "orderLoadError": "Ошибка загрузки товаров заказа"
+    },
+    "stats": {
+      "title": "Статистика",
+      "noData": "Нет данных"
     }
   },
   "reconciliation": {
