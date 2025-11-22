@@ -12,6 +12,7 @@ const ReturnsPage = () => {
   const { t } = useTranslation();
   const role = useAuthStore((state) => state.role);
   const isWarehouse = role === 'warehouse';
+  const isSalesManager = role === 'sales';
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -41,9 +42,11 @@ const ReturnsPage = () => {
         <Space>
           <Button onClick={handleExportPdf}>{t('common:actions.exportPdf')}</Button>
           <Button onClick={handleExportExcel}>{t('common:actions.exportExcel')}</Button>
-          <Button type="primary" onClick={() => setCreateOpen(true)}>
-            {t('returns.new')}
-          </Button>
+          {!isSalesManager && (
+            <Button type="primary" onClick={() => setCreateOpen(true)}>
+              {t('returns.new')}
+            </Button>
+          )}
         </Space>
       }
     >
@@ -98,14 +101,16 @@ const ReturnsPage = () => {
         pagination={{ pageSize: 10 }}
       />
 
-      <ReturnCreateModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => {
-          setCreateOpen(false);
-          loadReturns();
-        }}
-      />
+      {!isSalesManager && (
+        <ReturnCreateModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => {
+            setCreateOpen(false);
+            loadReturns();
+          }}
+        />
+      )}
     </Card>
   );
 };
