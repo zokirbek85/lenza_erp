@@ -119,3 +119,11 @@ class ReturnSerializer(serializers.ModelSerializer):
             dealer.save(update_fields=['debt_usd'])
 
         return return_obj
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'role') and request.user.role == 'warehouse':
+            # Remove total_sum for warehouse users
+            data.pop('total_sum', None)
+        return data

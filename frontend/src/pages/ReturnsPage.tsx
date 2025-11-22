@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Card, Space, Table, Tag } from 'antd';
 
+import { useAuthStore } from '../auth/useAuthStore';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
 import ReturnCreateModal from './returns/ReturnCreateModal';
@@ -9,6 +10,8 @@ import { fetchReturns, type ReturnRecord } from '../api/returnsApi';
 
 const ReturnsPage = () => {
   const { t } = useTranslation();
+  const role = useAuthStore((state) => state.role);
+  const isWarehouse = role === 'warehouse';
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -67,11 +70,11 @@ const ReturnsPage = () => {
               </div>
             ),
           },
-          {
+          ...(!isWarehouse ? [{
             title: t('returns.table.total'),
             dataIndex: 'total_sum',
             render: (value: number) => formatCurrency(value),
-          },
+          }] : []),
           {
             title: t('returns.table.status'),
             dataIndex: 'status',
