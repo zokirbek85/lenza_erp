@@ -52,13 +52,15 @@ export const ProductsMobileCard = ({ product, handlers, permissions }: ProductsM
     },
   ];
 
-  const actions: NonNullable<MobileCardProps['actions']> = [
+  type Action = { icon: React.ReactElement; label: string; onClick: () => void };
+
+  const actions: Action[] = [
     { icon: <EyeOutlined />, label: 'View', onClick: () => handlers.onView(product.id) },
     permissions.canEdit ? { icon: <EditOutlined />, label: 'Edit', onClick: () => handlers.onEdit(product.id) } : null,
     permissions.canDelete
       ? { icon: <DeleteOutlined />, label: 'Delete', onClick: () => handlers.onDelete(product.id) }
       : null,
-  ].filter((action): action is NonNullable<MobileCardProps['actions']>[number] => Boolean(action));
+  ].filter((item): item is Action => item !== null);
 
   return (
     <MobileCard
