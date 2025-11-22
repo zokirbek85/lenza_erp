@@ -20,7 +20,7 @@ from core.utils.temp_files import cleanup_temp_files, get_tmp_dir
 
 IMPORT_TEMPLATE_COLUMNS = [
     'dealer_name',      # Dealer name (will be matched or created)
-    'product_sku',      # Product SKU (must exist)
+    'product_name',     # Product name (will be matched by name)
     'qty',              # Quantity (decimal, min 0.01)
     'price_usd',        # Price in USD (decimal)
     'value_date',       # Order date (YYYY-MM-DD format)
@@ -115,16 +115,16 @@ def _get_dealer(name: str) -> Dealer | None:
     return dealer
 
 
-def _get_product(sku: str) -> Product | None:
-    """Get product by SKU."""
-    if not sku:
+def _get_product(name: str) -> Product | None:
+    """Get product by name (case-insensitive)."""
+    if not name:
         return None
     
-    product_sku = sku.strip()
-    if not product_sku:
+    product_name = name.strip()
+    if not product_name:
         return None
     
-    return Product.objects.filter(sku=product_sku).first()
+    return Product.objects.filter(name__iexact=product_name).first()
 
 
 def _write_dataframe(dataframe: pd.DataFrame, filename: str) -> str:
@@ -154,7 +154,7 @@ def generate_import_template() -> str:
     # Add sample row for reference
     sample_data = {
         'dealer_name': 'Example Dealer',
-        'product_sku': 'PROD001',
+        'product_name': 'Product Name Example',
         'qty': 10.00,
         'price_usd': 25.50,
         'value_date': timezone.now().date().isoformat(),
@@ -228,24 +228,24 @@ def import_orders_from_excel(file_obj, created_by=None) -> dict:
         # Process items for this order
         order_items = []
         for _, row in group_df.iterrows():
-            product_sku = _to_str(row.get('product_sku'))
-            if not product_sku:
-                errors.append(f'Row with empty product_sku skipped (dealer: {dealer_name})')
+            product_name = _to_str(row.get('product_name'))
+            if not product_name:
+                errors.append(f'Row with empty product_name skipped (dealer: {dealer_name})')
                 continue
             
-            product = _get_product(product_sku)
+            product = _get_product(product_name)
             if not product:
-                errors.append(f'Product not found: {product_sku} (dealer: {dealer_name})')
+                errors.append(f'Product not found: {product_name} (dealer: {dealer_name})')
                 continue
             
             qty = _to_quantity(row.get('qty'))
             if qty <= 0:
-                errors.append(f'Invalid quantity for product {product_sku}: {row.get("qty")} (dealer: {dealer_name})')
+                errors.append(f'Invalid quantity for product {product_name}: {row.get("qty")} (dealer: {dealer_name})')
                 continue
             
             price_usd = _to_decimal(row.get('price_usd'), default=product.sell_price_usd)
             if price_usd < 0:
-                errors.append(f'Invalid price for product {product_sku}: {row.get("price_usd")} (dealer: {dealer_name})')
+                errors.append(f'Invalid price for product {product_name}: {row.get("price_usd")} (dealer: {dealer_name})')
                 continue
             
             order_items.append({
