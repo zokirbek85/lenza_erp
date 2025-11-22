@@ -86,7 +86,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
-USE_POSTGRES = os.getenv('USE_POSTGRES', 'true' if not DEBUG else 'false').lower() == 'true'
+# Database Configuration
+# Local development: SQLite3 (default)
+# Production (VPS): PostgreSQL
+ENV = os.getenv('ENV', 'development').lower()
+USE_POSTGRES = ENV == 'production' or os.getenv('USE_POSTGRES', 'false').lower() == 'true'
 
 if USE_POSTGRES:
     DATABASES = {
@@ -100,6 +104,7 @@ if USE_POSTGRES:
         }
     }
 else:
+    # SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

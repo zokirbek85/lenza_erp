@@ -38,9 +38,14 @@ npm run build
 
 echo ">>> Servislarni qayta ishga tushirish..."
 systemctl restart lenza_erp.service
+systemctl restart lenza_erp_daphne.service
 if systemctl list-unit-files | grep -q "lenza_erp_bot.service"; then
   systemctl restart lenza_erp_bot.service || echo "lenza_erp_bot servisni qayta ishga tushirishda muammo."
 fi
 systemctl reload nginx
+
+echo ">>> Servislar holati..."
+systemctl status lenza_erp.service --no-pager
+systemctl status lenza_erp_daphne.service --no-pager
 
 echo ">>> Yangilash muvaffaqiyatli yakunlandi."

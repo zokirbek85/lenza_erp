@@ -37,7 +37,7 @@ echo ">>> Zarur paketlarni o'rnatish..."
 apt update
 apt install -y python3 python3-venv python3-pip git nginx postgresql postgresql-contrib build-essential
 apt install -y libpq-dev pkg-config libffi-dev libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libjpeg-dev zlib1g-dev
-apt install -y nodejs npm
+apt install -y nodejs npm redis-server
 
 echo ">>> Postgres bazasi va foydalanuvchisini tekshirish/yaratish..."
 sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='${DEFAULT_DB_USER}';" | grep -q 1 || \
@@ -60,9 +60,13 @@ pip install -r "${BACKEND_DIR}/requirements.txt"
 if [[ ! -f "${ENV_FILE}" ]]; then
   echo ">>> Namuna .env faylini yaratish..."
   cat <<'EOF' > "${ENV_FILE}"
+ENV=production
 DJANGO_DEBUG=False
-DJANGO_SECRET_KEY=PLEASE_CHANGE_ME
+DJANGO_SECRET_KEY=PLEASE_CHANGE_ME_TO_LONG_RANDOM_STRING
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,45.138.159.195,erp.lenza.uz
+DJANGO_CSRF_TRUSTED_ORIGINS=http://erp.lenza.uz,http://45.138.159.195
+DJANGO_CORS_ALLOWED_ORIGINS=http://erp.lenza.uz,http://45.138.159.195
+DJANGO_CORS_ALLOW_ALL=False
 
 USE_POSTGRES=True
 POSTGRES_DB=lenza_erp
@@ -102,11 +106,15 @@ cd "${FRONTEND_DIR}"
 npm install
 npm run build
 
+echo ">>> Gunicorn o'rnatish..."
+pip install gunicorn
+
 echo ">>> Gunicorn systemd servis faylini yaratish..."
 cat <<EOF > "${SERVICE_FILE}"
 [Unit]
 Description=Lenza ERP Django Service
-After=network.target
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
 
 [Service]
 User=root
@@ -115,7 +123,32 @@ WorkingDirectory=${BACKEND_DIR}
 Environment="DJANGO_SETTINGS_MODULE=core.settings"
 Environment="PYTHONUNBUFFERED=1"
 EnvironmentFile=${ENV_FILE}
-ExecStart=${VENV_DIR}/bin/gunicorn core.wsgi:application --bind 127.0.0.1:8000 --workers 4
+ExecStart=${VENV_DIR}/bin/gunicorn core.wsgi:application --bind 127.0.0.1:8000 --workers 4 --timeout 120
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo ">>> Daphne (WebSocket server) o'rnatish..."
+pip install daphne
+
+echo ">>> Daphne systemd servis faylini yaratish..."
+cat <<EOF > "/etc/systemd/system/lenza_erp_daphne.service"
+[Unit]
+Description=Lenza ERP Daphne (WebSocket) Service
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=${BACKEND_DIR}
+Environment="DJANGO_SETTINGS_MODULE=core.settings"
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=${ENV_FILE}
+ExecStart=${VENV_DIR}/bin/daphne -b 127.0.0.1 -p 8001 core.asgi:application
 Restart=always
 RestartSec=5
 
@@ -128,7 +161,7 @@ if [[ ! -f "${BOT_SERVICE_FILE}" ]]; then
   cat <<EOF > "${BOT_SERVICE_FILE}"
 [Unit]
 Description=Lenza ERP Telegram Bot
-After=network.target
+After=network.target postgresql.service
 
 [Service]
 User=root
@@ -174,6 +207,20 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 120s;
+        proxy_connect_timeout 120s;
+    }
+
+    location ^~ /ws/ {
+        proxy_pass http://127.0.0.1:8001/ws/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 86400;
     }
 
     location / {
@@ -184,10 +231,16 @@ EOF
 
 ln -sf "${NGINX_AVAILABLE}" "${NGINX_ENABLED}"
 
+echo ">>> Redis servisini ishga tushirish..."
+systemctl enable redis-server
+systemctl start redis-server
+
 echo ">>> Servislarni ishga tushirish..."
 systemctl daemon-reload
 systemctl enable lenza_erp.service
 systemctl restart lenza_erp.service
+systemctl enable lenza_erp_daphne.service
+systemctl restart lenza_erp_daphne.service
 
 if systemctl list-unit-files | grep -q "lenza_erp_bot.service"; then
   echo ">>> Telegram bot servisini hozircha faollashtirmayapmiz. Zarur bo'lsa qo'lda enable/start qiling."
@@ -195,6 +248,10 @@ fi
 
 nginx -t
 systemctl reload nginx
+
+echo ">>> Servislar holati..."
+systemctl status lenza_erp.service --no-pager
+systemctl status lenza_erp_daphne.service --no-pager
 
 cat <<'EOM'
 ==============================================
