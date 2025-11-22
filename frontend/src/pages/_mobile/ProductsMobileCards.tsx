@@ -24,6 +24,7 @@ export type ProductsMobileHandlers = {
 export type ProductMobilePermissions = {
   canEdit: boolean;
   canDelete: boolean;
+  canViewPrice: boolean;
 };
 
 type ProductsMobileCardProps = {
@@ -36,8 +37,10 @@ export const ProductsMobileCard = ({ product, handlers, permissions }: ProductsM
   const fields = [
     { label: 'SKU', value: product.sku },
     { label: 'Brand / Category', value: `${product.brand?.name ?? '—'} / ${product.category?.name ?? '—'}` },
-    { label: 'Price USD', value: formatCurrency(product.sell_price_usd) },
-    { label: 'Price UZS', value: formatCurrency(product.sell_price_usd, 'UZS') },
+    ...(permissions.canViewPrice ? [
+      { label: 'Price USD', value: formatCurrency(product.sell_price_usd) },
+      { label: 'Price UZS', value: formatCurrency(product.sell_price_usd, 'UZS') },
+    ] : []),
     { label: 'Stock OK', value: product.stock_ok },
     { label: 'Stock Defect', value: product.stock_defect },
   ];

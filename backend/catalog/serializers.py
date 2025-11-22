@@ -71,3 +71,12 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_availability_status(self, obj):
         return 'Not available' if obj.stock_ok <= 0 else 'Available'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'role') and request.user.role == 'warehouse':
+            # Remove price fields for warehouse users
+            data.pop('cost_usd', None)
+            data.pop('sell_price_usd', None)
+        return data

@@ -318,6 +318,7 @@ const ProductsPage = () => {
   const mobilePermissions: ProductMobilePermissions = {
     canEdit: canCreateOrEdit,
     canDelete,
+    canViewPrice: !isWarehouse,
   };
 
   const filtersContent = (
@@ -644,17 +645,19 @@ const ProductsPage = () => {
             ))}
           </select>
         </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.sellingPrice')}</label>
-          <input
-            name="sell_price_usd"
-            value={formState.sell_price_usd}
-            onChange={handleChange}
-            type="number"
-            step="0.01"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          />
-        </div>
+        {!isWarehouse && (
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.sellingPrice')}</label>
+            <input
+              name="sell_price_usd"
+              value={formState.sell_price_usd}
+              onChange={handleChange}
+              type="number"
+              step="0.01"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.stock')} OK</label>
@@ -719,7 +722,9 @@ const ProductsPage = () => {
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.name')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.brand')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.category')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.sellingPrice')}</th>
+              {!isWarehouse && (
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.sellingPrice')}</th>
+              )}
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('products.table.stock')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('common.status')}</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">{t('table.actions')}</th>
@@ -732,9 +737,11 @@ const ProductsPage = () => {
                   <div className="font-semibold text-slate-900 dark:text-white">{product.name}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">{product.sku}</div>
                 </td>
-                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.brand?.name ?? 'вЂ”'}</td>
-                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.category?.name ?? 'вЂ”'}</td>
-                <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.sell_price_usd)}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.brand?.name ?? '—'}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.category?.name ?? '—'}</td>
+                {!isWarehouse && (
+                  <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.sell_price_usd)}</td>
+                )}
                 <td className="px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     OK: {formatQuantity(product.stock_ok)} / Defect: {formatQuantity(product.stock_defect)}
