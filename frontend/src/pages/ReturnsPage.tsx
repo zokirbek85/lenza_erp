@@ -27,8 +27,8 @@ const ReturnsPage = () => {
     loadReturns();
   }, []);
 
-  const handleExportPdf = () => downloadFile('/api/returns/export/pdf/', 'returns_report.pdf');
-  const handleExportExcel = () => downloadFile('/api/returns/export/excel/', 'returns.xlsx');
+  const handleExportPdf = () => downloadFile('/returns/export/pdf/', 'returns_report.pdf');
+  const handleExportExcel = () => downloadFile('/returns/export/excel/', 'returns.xlsx');
 
   return (
     <Card

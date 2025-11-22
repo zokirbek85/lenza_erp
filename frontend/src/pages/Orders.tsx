@@ -461,9 +461,9 @@ const OrdersPage = () => {
     try {
       if (orderId) {
         const filename = displayNo ? `${displayNo}.pdf` : `order-${orderId}.pdf`;
-        await downloadFile(`/api/orders/${orderId}/pdf/`, filename);
+        await downloadFile(`/orders/${orderId}/pdf/`, filename);
       } else {
-        await downloadFile('/api/orders/report/pdf/', 'orders.pdf');
+        await downloadFile('/orders/report/pdf/', 'orders.pdf');
       }
     } catch (error) {
       console.error(error);
@@ -471,7 +471,7 @@ const OrdersPage = () => {
     }
   };
 
-  const handleExcel = () => downloadFile('/api/orders/export/excel/', 'orders.xlsx');
+  const handleExcel = () => downloadFile('/orders/export/excel/', 'orders.xlsx');
 
   const toggleOrderDetails = (orderId: number) =>
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));

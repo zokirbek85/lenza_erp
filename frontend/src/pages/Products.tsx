@@ -418,10 +418,10 @@ const ProductsPage = () => {
     );
   }
 
-  const handleExportPdf = () => downloadFile('/api/catalog/report/pdf/', 'products.pdf');
+  const handleExportPdf = () => downloadFile('/catalog/report/pdf/', 'products.pdf');
   const handleExportExcel = async () => {
     try {
-      await downloadFile('/api/products/export/excel/', `products_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      await downloadFile('/products/export/excel/', `products_${new Date().toISOString().slice(0, 10)}.xlsx`);
       toast.success(t('messages.success'));
     } catch (error) {
       console.error(error);
@@ -431,7 +431,7 @@ const ProductsPage = () => {
 
   const handleDownloadTemplate = async () => {
     try {
-      await downloadFile('/api/products/import/template/', 'products_import_template.xlsx');
+      await downloadFile('/products/import/template/', 'products_import_template.xlsx');
       toast.success(t('messages.success'));
     } catch (error) {
       console.error(error);

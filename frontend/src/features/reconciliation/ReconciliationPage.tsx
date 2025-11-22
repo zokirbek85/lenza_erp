@@ -186,9 +186,9 @@ const ReconciliationPage = () => {
       <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Lenza ERP</p>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Akt sverka</h1>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">{t('reconciliation.title')}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Dilerlar bo&apos;yicha buyurtma va to&apos;lovlar muvofiqlashtirish hisobotlari.
+            {t('reconciliation.subtitle')}
           </p>
         </div>
         <div className="rounded-full border border-yellow-400 px-4 py-2 text-sm font-semibold text-yellow-600">
@@ -204,14 +204,14 @@ const ReconciliationPage = () => {
         className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-4"
       >
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Diler</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('reconciliation.dealer')}</label>
           <select
             required
             value={selectedDealer}
             onChange={(event) => setSelectedDealer(event.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
-            <option value="">Tanlang</option>
+            <option value="">{t('reconciliation.selectDealer')}</option>
             {dealers.map((dealer) => (
               <option key={dealer.id} value={dealer.id}>
                 {dealer.name}
@@ -220,7 +220,7 @@ const ReconciliationPage = () => {
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Boshlanish sanasi</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('reconciliation.startDate')}</label>
           <input
             type="date"
             value={fromDate}
@@ -229,7 +229,7 @@ const ReconciliationPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Tugash sanasi</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('reconciliation.endDate')}</label>
           <input
             type="date"
             value={toDate}
@@ -243,7 +243,7 @@ const ReconciliationPage = () => {
             disabled={loading}
             className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-500 dark:text-slate-900"
           >
-            {loading ? 'Yuklanmoqda...' : "Ko'rsatish"}
+            {loading ? t('reconciliation.loading') : t('reconciliation.generate')}
           </button>
         </div>
       </form>
@@ -252,17 +252,17 @@ const ReconciliationPage = () => {
         <>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-              <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">Davr</p>
+              <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('reconciliation.period')}</p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">{report.period}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-              <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">Boshlang&apos;ich balans</p>
+              <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('reconciliation.openingBalance')}</p>
               <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {formatCurrency(report.opening_balance)}
               </p>
             </div>
             <div className="rounded-2xl border border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-4 shadow-md dark:border-yellow-500/40 dark:from-slate-900 dark:to-slate-900">
-              <p className="text-sm uppercase tracking-wide text-yellow-600">Yakuniy balans</p>
+              <p className="text-sm uppercase tracking-wide text-yellow-600">{t('reconciliation.closingBalance')}</p>
               <p className="text-2xl font-semibold text-yellow-600">{formatCurrency(report.closing_balance)}</p>
             </div>
           </div>
@@ -274,27 +274,27 @@ const ReconciliationPage = () => {
                 checked={detailed}
                 onChange={(e) => setDetailed(e.target.checked)}
               />
-              Batafsil hisobot
+              {t('reconciliation.detailedReport')}
             </label>
             <button
               type="button"
               onClick={loadPdfPreview}
               className="rounded-lg border border-emerald-500 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20"
             >
-              👁️ Ko&apos;rish
+              👁️ {t('reconciliation.view')}
             </button>
             <button
               type="button"
               onClick={handlePdfDownload}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
             >
-              📄 PDF eksport
+              📄 {t('reconciliation.exportPdf')}
             </button>
             <button
               type="button"
               onClick={async () => {
                 if (!selectedDealer) {
-                  toast.error('Avval diler tanlang');
+                  toast.error(t('reconciliation.toast.selectDealer'));
                   return;
                 }
                 try {
@@ -302,23 +302,23 @@ const ReconciliationPage = () => {
                     `/dealers/${selectedDealer}/reconciliation/excel/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
                     'reconciliation.xlsx'
                   );
-                  toast.success('Excel yuklab olindi');
+                  toast.success(t('reconciliation.toast.excelSuccess'));
                 } catch (error) {
                   console.error(error);
-                  toast.error('Excel eksportda xatolik');
+                  toast.error(t('reconciliation.toast.excelError'));
                 }
               }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
             >
-              📊 Excel eksport
+              📊 {t('reconciliation.exportExcel')}
             </button>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Harakatlar</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Buyurtmalar, to&apos;lovlar va qaytarishlar.</p>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('reconciliation.movements')}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('reconciliation.movementsDesc')}</p>
               </div>
               <div className="text-right text-sm">
                 <p className="text-slate-500 dark:text-slate-400">Debit: {formatCurrency(totalDebit)}</p>
@@ -328,7 +328,7 @@ const ReconciliationPage = () => {
 
             {isEmptyState ? (
               <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                Tanlangan davr uchun ma&apos;lumot topilmadi.
+                {t('reconciliation.noData')}
               </div>
             ) : (
               <>
@@ -336,10 +336,10 @@ const ReconciliationPage = () => {
                   <table className="w-full border border-gray-300 bg-white text-sm shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900">
                     <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                       <tr>
-                        <th className="px-4 py-3">Sana</th>
-                        <th className="px-4 py-3">Nomi</th>
-                        <th className="px-4 py-3">Yo&apos;nalish</th>
-                        <th className="px-4 py-3 text-right">Miqdor (USD)</th>
+                        <th className="px-4 py-3">{t('reconciliation.date')}</th>
+                        <th className="px-4 py-3">{t('reconciliation.name')}</th>
+                        <th className="px-4 py-3">{t('reconciliation.direction')}</th>
+                        <th className="px-4 py-3 text-right">{t('reconciliation.amount')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -357,7 +357,7 @@ const ReconciliationPage = () => {
                                   : 'bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-200'
                               }`}
                             >
-                              {row.direction === 'debit' ? 'Debet' : 'Kredit'}
+                              {row.direction === 'debit' ? t('reconciliation.debit') : t('reconciliation.credit')}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
@@ -400,16 +400,16 @@ const ReconciliationPage = () => {
             )}
 
             <div className="mt-6 flex flex-col gap-3 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
-              <p>Imzo: _____________________________</p>
-              <p>Sana: ___ / ___ / ____</p>
+              <p>{t('reconciliation.signatureLine')}</p>
+              <p>{t('reconciliation.dateLine')}</p>
             </div>
           </div>
 
           {report?.detailed && (report.orders_detailed?.length ?? 0) > 0 && (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
               <div className="mb-4">
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Buyurtmalar (batafsil)</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Har bir buyurtma uchun itemlar ro'yxati.</p>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('reconciliation.ordersDetailed')}</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('reconciliation.ordersDetailedDesc')}</p>
               </div>
               <div className="space-y-4">
                 {report.orders_detailed!.map((o) => (
@@ -424,10 +424,10 @@ const ReconciliationPage = () => {
                       <table className="w-full border border-gray-300 bg-white text-sm shadow-sm transition-all dark:border-slate-700 dark:bg-slate-900">
                         <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                           <tr>
-                            <th className="px-4 py-3">Mahsulot</th>
-                            <th className="px-4 py-3 text-right">Miqdor</th>
-                            <th className="px-4 py-3 text-right">Narx</th>
-                            <th className="px-4 py-3 text-right">Jami</th>
+                            <th className="px-4 py-3">{t('reconciliation.product')}</th>
+                            <th className="px-4 py-3 text-right">{t('reconciliation.quantity')}</th>
+                            <th className="px-4 py-3 text-right">{t('reconciliation.price')}</th>
+                            <th className="px-4 py-3 text-right">{t('reconciliation.total')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -450,7 +450,7 @@ const ReconciliationPage = () => {
         </>
       ) : (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-          Avval filtrlarni tanlab, hisobotni ko&apos;rsating.
+          {t('reconciliation.emptyState')}
         </div>
       )}
 
@@ -464,7 +464,7 @@ const ReconciliationPage = () => {
             setPdfBlobUrl(null);
           }
         }}
-        title="PDF ko'rish"
+        title={t('reconciliation.view')}
         widthClass="max-w-7xl"
       >
         {pdfBlobUrl ? (

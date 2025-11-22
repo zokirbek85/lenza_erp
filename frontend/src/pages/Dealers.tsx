@@ -255,11 +255,11 @@ const DealersPage = () => {
     }
   };
 
-  const managerLabel = (manager?: Dealer['manager_user']) => manager ?? 'вЂ”';
+  const managerLabel = (manager?: Dealer['manager_user']) => manager ?? '—';
 
   const handleExport = async () => {
     try {
-      await downloadFile('/api/dealers/export/excel/', 'dealers.xlsx');
+      await downloadFile('/dealers/export/excel/', 'dealers.xlsx');
     } catch (error) {
       console.error(error);
       toast.error(t('dealers.messages.exportError'));
@@ -268,7 +268,7 @@ const DealersPage = () => {
 
   const handleTemplateDownload = async () => {
     try {
-      await downloadFile('/api/dealers/import/template/', 'dealers_import_template.xlsx');
+      await downloadFile('/dealers/import/template/', 'dealers_import_template.xlsx');
     } catch (error) {
       console.error(error);
       toast.error(t('dealers.messages.templateError'));
