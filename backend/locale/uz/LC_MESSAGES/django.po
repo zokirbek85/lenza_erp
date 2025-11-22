@@ -1,0 +1,351 @@
+# Uzbek translation for Lenza ERP
+# Copyright (C) 2025 Lenza ERP
+# This file is distributed under the same license as the Lenza ERP package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-22 14:45+0500\n"
+"PO-Revision-Date: 2025-11-22 14:45+0500\n"
+"Last-Translator: Lenza Team\n"
+"Language-Team: Uzbek\n"
+"Language: uz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Invoice template translations
+msgid "Invoice"
+msgstr "Hisob-faktura"
+
+msgid "Issued"
+msgstr "Chiqarilgan"
+
+msgid "Status"
+msgstr "Holat"
+
+msgid "Dealer"
+msgstr "Diler"
+
+msgid "Value date"
+msgstr "Sana"
+
+msgid "Created by"
+msgstr "Yaratgan"
+
+msgid "Order type"
+msgstr "Buyurtma turi"
+
+msgid "Reserve"
+msgstr "Bron"
+
+msgid "Regular"
+msgstr "Oddiy"
+
+msgid "Total Items"
+msgstr "Jami mahsulotlar"
+
+msgid "Product"
+msgstr "Mahsulot"
+
+msgid "Qty"
+msgstr "Miqdor"
+
+msgid "Price (USD)"
+msgstr "Narx (USD)"
+
+msgid "Line total"
+msgstr "Jami"
+
+msgid "SKU"
+msgstr "SKU"
+
+msgid "No items in this order."
+msgstr "Bu buyurtmada mahsulotlar yo'q."
+
+msgid "Subtotal"
+msgstr "Oraliq jami"
+
+msgid "Total (USD)"
+msgstr "Jami (USD)"
+
+msgid "Note"
+msgstr "Izoh"
+
+msgid "Authorized signature"
+msgstr "Vakolatli imzo"
+
+# Reconciliation report translations
+msgid "Reconciliation Report"
+msgstr "Muvofiqlashtirish hisoboti"
+
+msgid "Period"
+msgstr "Davr"
+
+msgid "Generated"
+msgstr "Yaratilgan"
+
+msgid "Summary"
+msgstr "Xulosa"
+
+msgid "Total Sales"
+msgstr "Jami savdo"
+
+msgid "Total Payments"
+msgstr "Jami to'lovlar"
+
+msgid "Net Balance"
+msgstr "Sof qoldiq"
+
+msgid "Dealer Balance Details"
+msgstr "Diler balansi tafsilotlari"
+
+msgid "Opening Balance"
+msgstr "Boshlang'ich qoldiq"
+
+msgid "Sales Amount"
+msgstr "Savdo miqdori"
+
+msgid "Payments"
+msgstr "To'lovlar"
+
+msgid "Closing Balance"
+msgstr "Yakuniy qoldiq"
+
+msgid "Date"
+msgstr "Sana"
+
+msgid "Amount"
+msgstr "Summa"
+
+msgid "Description"
+msgstr "Tavsif"
+
+msgid "No data available"
+msgstr "Ma'lumot mavjud emas"
+
+# Expenses report translations
+msgid "Expenses Report"
+msgstr "Xarajatlar hisoboti"
+
+msgid "Type"
+msgstr "Turi"
+
+msgid "Category"
+msgstr "Kategoriya"
+
+msgid "Method"
+msgstr "Usul"
+
+msgid "Total"
+msgstr "Jami"
+
+msgid "Currency"
+msgstr "Valyuta"
+
+msgid "Card"
+msgstr "Karta"
+
+msgid "Cash"
+msgstr "Naqd"
+
+msgid "Bank Transfer"
+msgstr "Bank o'tkazmasi"
+
+# Payment report translations
+msgid "Payment Report"
+msgstr "To'lov hisoboti"
+
+msgid "Payment Date"
+msgstr "To'lov sanasi"
+
+msgid "Payment Method"
+msgstr "To'lov usuli"
+
+msgid "Reference"
+msgstr "Ma'lumotnoma"
+
+# General
+msgid "Page"
+msgstr "Sahifa"
+
+msgid "of"
+msgstr "dan"
+
+msgid "All"
+msgstr "Barchasi"
+
+msgid "From"
+msgstr "Dan"
+
+msgid "To"
+msgstr "Gacha"
+
+msgid "Filter"
+msgstr "Filtr"
+
+msgid "Export"
+msgstr "Eksport"
+
+msgid "Print"
+msgstr "Chop etish"
+
+# Excel export headers
+msgid "Expenses"
+msgstr "Xarajatlar"
+
+msgid "Monthly Expenses"
+msgstr "Oylik xarajatlar"
+
+msgid "Total USD"
+msgstr "Jami USD"
+
+msgid "Total UZS"
+msgstr "Jami UZS"
+
+msgid "Share (%)"
+msgstr "Ulush (%)"
+
+msgid "Expenses Export"
+msgstr "Xarajatlar eksporti"
+
+# Additional translations
+msgid "Daily Payments Report"
+msgstr "Kunlik to'lovlar hisoboti"
+
+msgid "USD Equivalent"
+msgstr "USD ekvivalenti"
+
+msgid "No payments on this date."
+msgstr "Bu sanada to'lovlar yo'q."
+
+msgid "Month"
+msgstr "Oy"
+
+msgid "Account"
+msgstr "Hisob"
+
+msgid "Total (USD)"
+msgstr "Jami (USD)"
+
+msgid "Signed via"
+msgstr "Imzolangan"
+
+msgid "system"
+msgstr "tizimi orqali"
+
+msgid "Scan QR to verify authenticity"
+msgstr "Haqiqiylikni tekshirish uchun QR kodni skanerlang"
+
+# Orders report
+msgid "Orders Summary"
+msgstr "Buyurtmalar xulosasi"
+
+msgid "Display #"
+msgstr "Raqam"
+
+msgid "No orders available"
+msgstr "Buyurtmalar mavjud emas"
+
+# Products report
+msgid "Product Inventory"
+msgstr "Mahsulotlar inventarizatsiyasi"
+
+msgid "Name"
+msgstr "Nomi"
+
+msgid "Brand"
+msgstr "Brend"
+
+msgid "Sell Price"
+msgstr "Sotuv narxi"
+
+msgid "Stock OK"
+msgstr "Sog'lom stok"
+
+msgid "Stock Defect"
+msgstr "Nuqsonli stok"
+
+msgid "No products available"
+msgstr "Mahsulotlar mavjud emas"
+
+# Returns report
+msgid "Report"
+msgstr "Hisobot"
+
+msgid "Returns"
+msgstr "Qaytarishlar"
+
+msgid "Total records"
+msgstr "Jami yozuvlar"
+
+msgid "Quantity"
+msgstr "Miqdor"
+
+msgid "Reason"
+msgstr "Sabab"
+
+msgid "Defective"
+msgstr "Nuqsonli"
+
+msgid "Good"
+msgstr "Sog'lom"
+
+msgid "No data found"
+msgstr "Ma'lumot topilmadi"
+
+# Dealer balance
+msgid "Dealer Balances"
+msgstr "Dilerlar balansi"
+
+msgid "Region"
+msgstr "Hudud"
+
+msgid "Balance (USD)"
+msgstr "Balans (USD)"
+
+msgid "No dealers available"
+msgstr "Dilerlar mavjud emas"
+
+# Monthly expenses report
+msgid "Monthly Expenses Report"
+msgstr "Oylik xarajatlar hisoboti"
+
+msgid "Rate (1 USD)"
+msgstr "Kurs (1 USD)"
+
+msgid "som"
+msgstr "so'm"
+
+msgid "Expense type"
+msgstr "Xarajat turi"
+
+msgid "Rate"
+msgstr "Kurs"
+
+# Cards report
+msgid "Payment statistics by card"
+msgstr "Karta bo'yicha to'lovlar statistikasi"
+
+msgid "Card name"
+msgstr "Karta nomi"
+
+msgid "Number"
+msgstr "Raqam"
+
+msgid "User"
+msgstr "Foydalanuvchi"
+
+msgid "Payment count"
+msgstr "To'lovlar soni"
+
+msgid "Total amount (USD)"
+msgstr "Umumiy summa (USD)"
+
+msgid "Last payment"
+msgstr "Oxirgi to'lov"
+
+msgid "Report generated"
+msgstr "Hisobot yaratilgan"

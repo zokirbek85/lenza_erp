@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import http from '../../app/http';
@@ -73,7 +73,7 @@ const ReconciliationPage = () => {
 
   const loadDealers = useCallback(async () => {
     try {
-      const response = await http.get('/api/dealers/', { params: { page_size: 500 } });
+      const response = await http.get('/dealers/', { params: { page_size: 500 } });
       setDealers(toArray<DealerOption>(response.data));
     } catch (error) {
       console.error(error);
@@ -88,13 +88,13 @@ const ReconciliationPage = () => {
     }
     setLoading(true);
     try {
-      const response = await http.get<ReconciliationResponse>(`/api/dealers/${selectedDealer}/reconciliation/`, {
+      const response = await http.get<ReconciliationResponse>(`/dealers/${selectedDealer}/reconciliation/`, {
         params: { from_date: fromDate, to_date: toDate, detailed },
       });
       setReport(response.data);
     } catch (error) {
       console.error(error);
-      toast.error('Akt sverka maʼlumotlarini olishda xatolik');
+      toast.error('Akt sverka ma\'lumotlarini olishda xatolik');
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ const ReconciliationPage = () => {
       }
 
       const response = await http.get(
-        `/api/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
+        `/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
         { responseType: 'blob' }
       );
 
@@ -136,7 +136,7 @@ const ReconciliationPage = () => {
     try {
       const filename = report ? `Akt_sverka_${report.dealer}.pdf` : 'Akt_sverka.pdf';
       await downloadFile(
-        `/api/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
+        `/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
         filename
       );
       toast.success('PDF yuklab olindi', { id: 'reconciliation-pdf' });
@@ -297,7 +297,7 @@ const ReconciliationPage = () => {
                 }
                 try {
                   await downloadFile(
-                    `/api/dealers/${selectedDealer}/reconciliation/excel/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
+                    `/dealers/${selectedDealer}/reconciliation/excel/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
                     'reconciliation.xlsx'
                   );
                   toast.success('Excel yuklab olindi');
@@ -407,7 +407,7 @@ const ReconciliationPage = () => {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Buyurtmalar (batafsil)</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Har bir buyurtma uchun itemlar roʻyxati.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Har bir buyurtma uchun itemlar ro'yxati.</p>
               </div>
               <div className="space-y-4">
                 {report.orders_detailed!.map((o) => (
@@ -415,7 +415,7 @@ const ReconciliationPage = () => {
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
                       <div className="font-semibold text-slate-900 dark:text-white">{o.order_number}</div>
                       <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {new Date(o.date).toLocaleDateString()} • Jami: {formatCurrency(o.total_amount)}
+                        {new Date(o.date).toLocaleDateString()} вЂў Jami: {formatCurrency(o.total_amount)}
                       </div>
                     </div>
                     <div className="table-wrapper overflow-x-auto">
@@ -485,3 +485,4 @@ const ReconciliationPage = () => {
 };
 
 export default ReconciliationPage;
+

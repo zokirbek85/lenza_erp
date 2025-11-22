@@ -68,11 +68,11 @@ def generate_ledger_pdf(date_from=None, date_to=None, currency='USD'):
     })
     
     # PDF generatsiya
-    html = HTML(string=html_string)
+    html = HTML(string=html_string, encoding='utf-8')
     pdf_file = html.write_pdf()
     
     # Response
-    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response = HttpResponse(pdf_file, content_type='application/pdf; charset=utf-8')
     filename = f"kassa_{date_from or 'all'}_{date_to or 'all'}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     

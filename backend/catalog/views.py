@@ -32,6 +32,13 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin | IsWarehouse | IsSales | IsAccountant | IsOwner]
     search_fields = ('name',)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        brand_id = self.request.query_params.get('brand')
+        if brand_id:
+            queryset = queryset.filter(products__brand_id=brand_id).distinct()
+        return queryset
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.select_related('category', 'brand', 'dealer').all()
@@ -65,8 +72,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_superuser:
             return
-        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
-            raise PermissionDenied('Only admin or accountant can modify products.')
+        if getattr(user, 'role', None) not in {'admin', 'owner'}:
+            raise PermissionDenied('Only admin users can modify products.')
 
     def perform_create(self, serializer):
         self._ensure_manager()

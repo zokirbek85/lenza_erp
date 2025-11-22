@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Badge, Button, Dropdown, Empty, List, Drawer, Grid, notification as antNotification } from 'antd';
@@ -40,7 +40,7 @@ const NotificationBell = () => {
 
   const loadNotifications = useCallback(async () => {
     try {
-      const response = await http.get('/api/notifications/');
+      const response = await http.get('/notifications/');
       const items = Array.isArray(response.data) ? response.data : [];
       setNotifications(items);
     } catch (error) {
@@ -85,7 +85,7 @@ const NotificationBell = () => {
 
   const markAll = async () => {
     try {
-      await http.post('/api/notifications/mark-all-read/');
+      await http.post('/notifications/mark-all-read/');
       markAllRead();
     } catch (error) {
       console.error('Failed to mark notifications as read', error);
@@ -188,3 +188,4 @@ const NotificationBell = () => {
 };
 
 export default NotificationBell;
+

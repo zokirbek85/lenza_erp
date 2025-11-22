@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ConfigProvider, Divider, Empty, List, Pagination, Segmented, Spin, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -35,7 +35,7 @@ export default function NotificationCenterPage() {
   const load = async (p = 1) => {
     setLoading(true);
     try {
-      const res = await http.get('/api/notifications/', {
+      const res = await http.get('/notifications/', {
         params: { page: p, page_size: PAGE_SIZE },
       });
       const payload = (res.data?.results ? res.data : { results: res.data, count: Array.isArray(res.data) ? res.data.length : 0 }) as Paginated<ApiNotificationItem>;
@@ -51,7 +51,7 @@ export default function NotificationCenterPage() {
   }, [page]);
 
   const onMarkAll = async () => {
-    await http.post('/api/notifications/mark-all-read/');
+    await http.post('/notifications/mark-all-read/');
     // Optimistically mark local state as read
     setItems((prev) => prev.map((it) => ({ ...it, is_read: true })));
   };
@@ -73,7 +73,7 @@ export default function NotificationCenterPage() {
             {t('notifications.title')}
           </Typography.Title>
           <div className="flex items-center gap-2">
-            <Button onClick={() => load(page)}>{t('actions.refresh')}</Button>
+            <Button onClick={() => load(page)}>{t('common:actions.refresh')}</Button>
             <Button type="primary" onClick={onMarkAll}>
               {t('notifications.markAllRead')}
             </Button>
@@ -90,7 +90,7 @@ export default function NotificationCenterPage() {
             onChange={(val) => setFilter(val as 'all' | 'unread' | 'read')}
           />
           <div className="text-xs text-slate-500">
-            {t('notifications.stats.total')}: {total} • {t('notifications.stats.unread')}: {items.filter(i => !i.is_read).length}
+            {t('notifications.stats.total')}: {total} вЂў {t('notifications.stats.unread')}: {items.filter(i => !i.is_read).length}
           </div>
         </div>
         <Divider style={{ margin: '8px 0 16px' }} />
@@ -127,3 +127,4 @@ export default function NotificationCenterPage() {
     </ConfigProvider>
   );
 }
+

@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
 <head>
 <meta charset="utf-8"/>
 <style>
-body { font-family: Arial, sans-serif; font-size: 11px; margin: 25px; }
+body { font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif; font-size: 11px; margin: 25px; }
 .header { display: flex; align-items: center; margin-bottom: 20px; }
 .logo { height: 50px; margin-right: 12px; }
 h1 { margin: 0; font-size: 16px; }
@@ -27,17 +28,17 @@ tfoot td { font-weight: bold; background: #fafafa; }
 </div>
 
 <h2>{{ title }}</h2>
-<p>Oy: {{ month }}</p>
+<p>{% trans 'Month' %}: {{ month }}</p>
 <table>
   <thead>
     <tr>
-      <th>Sana</th>
-      <th>Hisob</th>
-      <th>Turi</th>
-      <th>Valyuta</th>
-      <th>Miqdor</th>
+      <th>{% trans 'Date' %}</th>
+      <th>{% trans 'Account' %}</th>
+      <th>{% trans 'Type' %}</th>
+      <th>{% trans 'Currency' %}</th>
+      <th>{% trans 'Amount' %}</th>
       <th>USD</th>
-      <th>Izoh</th>
+      <th>{% trans 'Description' %}</th>
     </tr>
   </thead>
   <tbody>
@@ -55,14 +56,14 @@ tfoot td { font-weight: bold; background: #fafafa; }
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="5">Jami (USD):</td>
+      <td colspan="5">{% trans 'Total (USD)' %}:</td>
       <td colspan="2">{{ total }}</td>
     </tr>
   </tfoot>
 </table>
 <div class="footer">
-  <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
-  <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+  <p>{% trans 'Signed via' %}: <strong>{{ company_name }}</strong> {% trans 'system' %}</p>
+  <p>{% trans 'Scan QR to verify authenticity' %}:</p>
   <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
   <a href="{{ verify_url }}">{{ verify_url }}</a>
 </div>

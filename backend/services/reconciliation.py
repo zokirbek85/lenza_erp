@@ -12,6 +12,8 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from dealers.models import Dealer
 from orders.models import Order, OrderReturn
 from payments.models import Payment
+from returns.models import Return as ProductReturn
+from returns.models import ReturnItem as ProductReturnItem
 
 ALLOWED_ROLES = {'sales', 'accountant', 'owner', 'admin'}
 
@@ -75,7 +77,15 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
         ).aggregate(total=Sum('amount_usd'))['total']
         or Decimal('0')
     )
-    return StatementTotals(orders=orders_total, payments=payments_total, returns=returns_total)
+    new_returns_total = (
+        ProductReturn.objects.filter(
+            dealer=dealer,
+            created_at__date__gte=start,
+            created_at__date__lte=end,
+        ).aggregate(total=Sum('total_sum'))['total']
+        or Decimal('0')
+    )
+    return StatementTotals(orders=orders_total, payments=payments_total, returns=returns_total + new_returns_total)
 
 
 def get_reconciliation_data(
@@ -135,6 +145,31 @@ def get_reconciliation_data(
         .order_by('created_at')
         .values('created_at', 'amount_usd', 'order__display_no')
     )
+    product_returns = list(
+        ProductReturn.objects.filter(
+            dealer=dealer,
+            created_at__date__gte=start,
+            created_at__date__lte=end,
+        )
+        .order_by('created_at')
+        .values('created_at', 'total_sum', 'general_comment', 'status')
+    )
+    product_return_items = list(
+        ProductReturnItem.objects.filter(
+            return_document__dealer=dealer,
+            return_document__created_at__date__gte=start,
+            return_document__created_at__date__lte=end,
+        )
+        .select_related('product', 'return_document')
+        .order_by('return_document__created_at', 'product__name')
+        .values(
+            'return_document__created_at',
+            'return_document__general_comment',
+            'product__name',
+            'quantity',
+            'status',
+        )
+    )
 
     totals = _aggregate_totals(dealer, start, end)
     opening_balance = Decimal(dealer.opening_balance_usd or 0)
@@ -184,6 +219,18 @@ def get_reconciliation_data(
                 'date': created_date,
                 'order_no': row['order__display_no'],
                 'amount_usd': float(row['amount_usd'] or 0),
+                'source': 'order',
+            }
+
+    def _format_new_returns():
+        for row in product_returns:
+            created = row['created_at']
+            created_date = created.date() if isinstance(created, datetime) else created
+            yield {
+                'date': created_date,
+                'order_no': row.get('general_comment') or 'Return',
+                'amount_usd': float(row.get('total_sum') or 0),
+                'source': 'inventory',
             }
 
     movements = []
@@ -207,7 +254,9 @@ def get_reconciliation_data(
                 'type': 'payment',
             }
         )
-    for ret in _format_returns():
+    combined_returns = [*list(_format_returns()), *list(_format_new_returns())]
+
+    for ret in combined_returns:
         movements.append(
             {
                 'date': ret['date'],
@@ -232,7 +281,8 @@ def get_reconciliation_data(
         'closing_balance': float(closing_balance),
         'orders': list(_format_orders()),
         'payments': list(_format_payments()),
-        'returns': list(_format_returns()),
+        'returns': combined_returns,
+        'returns_items': product_return_items,
         'movements': movements,
         'generated_at': timezone.now(),
     }

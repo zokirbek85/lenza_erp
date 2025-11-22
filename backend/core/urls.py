@@ -46,6 +46,7 @@ from inventory.views import (
 from kpis.views import (
     AccountantKPIView,
     CardKPIView,
+    InventoryStatsView,
     KPIRecordViewSet,
     OwnerKPIView,
     SalesManagerKPIView,
@@ -165,6 +166,7 @@ urlpatterns = [
     path('api/kpis/sales-manager/', SalesManagerKPIView.as_view(), name='kpi-sales-manager'),
     path('api/kpis/accountant/', AccountantKPIView.as_view(), name='kpi-accountant'),
     path('api/kpi/cards/', CardKPIView.as_view(), name='kpi-cards'),
+    path('api/kpi/inventory-stats/', InventoryStatsView.as_view(), name='kpi-inventory-stats'),
     path('api/returns/export/pdf/', ReturnsReportPDFView.as_view(), name='returns-export-pdf'),
     path('api/returns/export/excel/', ReturnsExportExcelView.as_view(), name='returns-export-excel'),
     path('api/returns/stats/', ReturnedProductStatsView.as_view(), name='returns-stats'),

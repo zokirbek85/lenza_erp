@@ -49,7 +49,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
 
     // Ruxsat etilmagan status tanlansa
     if (!allowedStatuses.includes(newStatus)) {
-      message.warning(t('order.status_not_allowed'));
+      message.warning(t('orders.status.notAllowed'));
       setSelectedStatus(value);
       setIsDirty(false);
       return;
@@ -67,7 +67,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
 
     // Oxirgi tekshiruv - ruxsat bormi?
     if (!allowedStatuses.includes(selectedStatus)) {
-      message.warning(t('order.status_not_allowed'));
+      message.warning(t('orders.status.notAllowed'));
       setSelectedStatus(value);
       setIsDirty(false);
       return;
@@ -90,7 +90,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
         responseData: response,
       });
 
-      message.success(t('order.status_updated_success'));
+      message.success(t('orders.status.updated'));
       
       // Parent komponentga xabar berish
       if (onStatusUpdated) {
@@ -106,7 +106,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
         error: err,
       });
       
-      message.error(t('order.status_update_failed'));
+      message.error(t('orders.status.updateFailed'));
       
       // Xatolik bo'lsa, eski statusga qaytarish
       setSelectedStatus(value);

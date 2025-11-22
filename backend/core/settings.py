@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -121,7 +122,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'uz'
+
+LANGUAGES = [
+    ('uz', 'Uzbek'),
+    ('ru', 'Russian'),
+    ('en', 'English'),
+]
+
+LOCALE_PATHS = [BASE_DIR / 'locale']
+
 TIME_ZONE = 'Asia/Tashkent'
 USE_I18N = True
 USE_TZ = True
@@ -137,6 +147,7 @@ MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', str(BASE_DIR / 'media')))
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DEFAULT_CHARSET = 'utf-8'
+FILE_CHARSET = 'utf-8'
 DEFAULT_CONTENT_TYPE = 'text/html'
 
 REST_FRAMEWORK = {
@@ -220,12 +231,13 @@ else:
     }
 
 cors_allowed_origins = os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', '').split(',')
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed_origins if origin.strip()]
+default_cors = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
+from corsheaders.defaults import default_headers
 
-if not CORS_ALLOWED_ORIGINS:
-    CORS_ALLOW_ALL_ORIGINS = os.getenv('DJANGO_CORS_ALLOW_ALL', 'true').lower() == 'true'
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-
-CORS_ALLOW_CREDENTIALS = False
-CORS_ALLOW_HEADERS = ['*']
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed_origins if origin.strip()] or default_cors
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = list(default_headers) + ['Authorization']

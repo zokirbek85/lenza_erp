@@ -1,15 +1,14 @@
 import axios from 'axios';
 import { useAuthStore } from '../auth/useAuthStore';
-
-axios.defaults.withCredentials = false;
-
-const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+import { getApiBase } from './apiBase';
 
 const http = axios.create({
-  baseURL: apiBase,
+  baseURL: `${getApiBase()}/api`,
+  withCredentials: true,
   timeout: 15000,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Accept': 'application/json',
   },
 });
 

@@ -176,6 +176,18 @@
     "inventoryTrend": "Ombor tendentsiyasi",
     "expensesBudget": "Xarajatlar va byudjet",
     "overdueReceivables": "Muddati o'tgan qarzlar",
+    "inventory": {
+      "title": "Ombordagi mahsulotlar (sog'lom)",
+      "unit": "dona",
+      "totalValue": "Umumiy qiymati"
+    },
+    "charts": {
+      "revenue": "Daromad (USD)",
+      "stockValue": "Stok qiymati (USD)",
+      "used": "Ishlatilgan",
+      "expenses": "Xarajat",
+      "budget": "Budjet"
+    },
     "dealerName": "Diller",
     "daysOverdue": "Kechikish (Kun)",
     "amountUsd": "Qarz (USD)",
@@ -197,7 +209,9 @@
   "notifications": {
     "title": "Bildirishnomalar",
     "empty": "Bildirishnoma yo'q",
+    "noNotifications": "Bildirishnomalar yo'q",
     "markAll": "Barchasini o'qilgan deyish",
+    "markAllRead": "Barchasini o'qilgan deb belgilash",
     "markAsRead": "O'qilgan deb belgilash",
     "markAsUnread": "O'qilmagan deb belgilash",
     "all": "Hammasi",
@@ -209,6 +223,15 @@
     "newNotification": "Yangi bildirishnoma",
     "emptyMessage": "Xabar matni mavjud emas",
     "newTag": "Yangi",
+    "filters": {
+      "all": "Barchasi",
+      "unread": "O'qilmagan",
+      "read": "O'qilgan"
+    },
+    "stats": {
+      "total": "Jami",
+      "unread": "O'qilmagan"
+    },
     "types": {
       "order": "Buyurtma",
       "payment": "To'lov",
@@ -350,31 +373,155 @@
   "expenses": {
     "title": "Chiqimlar",
     "subtitle": "Kompaniya xarajatlari va tahlil",
-    "newExpense": "Yangi chiqim",
-    "type": "Turi",
-    "method": "To'lov usuli",
-    "card": "Karta",
-    "amount": "Summa",
-    "usd": "USD",
-    "uzs": "UZS",
-    "status": "Holat",
-    "note": "Izoh",
-    "actions": "Amallar",
-    "approve": "Tasdiqlash",
-    "edit": "O'zgartirish",
-    "delete": "O'chirish",
-    "confirmDelete": "Ishonchingiz komilmi?",
-    "yes": "Ha",
-    "no": "Yo'q",
-    "pending": "Kutilmoqda",
-    "approved": "Tasdiqlangan",
-    "today": "Bugun",
-    "week": "Hafta",
-    "month": "Oy",
-    "total": "Jami",
-    "statistics": "Statistika",
-    "trend": "Trend",
-    "distribution": "Taqsimot"
+    "new": "Yangi chiqim",
+    "createTitle": "Yangi chiqim qo'shish",
+    "editTitle": "Chiqimni tahrirlash",
+    "exportPdf": "PDF eksport",
+    "exportExcel": "Excel eksport",
+    "table": {
+      "date": "Sana",
+      "type": "Turi",
+      "method": "To'lov usuli",
+      "card": "Karta",
+      "amount": "Summa",
+      "status": "Holat",
+      "description": "Izoh",
+      "actions": "Amallar"
+    },
+    "form": {
+      "date": "Sana",
+      "dateRequired": "Sana majburiy",
+      "type": "Chiqim turi",
+      "typeRequired": "Chiqim turi majburiy",
+      "typeSelect": "Chiqim turini tanlang",
+      "method": "To'lov usuli",
+      "methodRequired": "To'lov usuli majburiy",
+      "methodSelect": "To'lov usulini tanlang",
+      "card": "Karta",
+      "cardSelect": "Kartani tanlang",
+      "currency": "Valyuta",
+      "currencyRequired": "Valyuta majburiy",
+      "amount": "Summa",
+      "amountRequired": "Summa majburiy",
+      "amountPositive": "Summa musbat bo'lishi kerak",
+      "description": "Izoh",
+      "descriptionPlaceholder": "Qo'shimcha ma'lumot kiriting"
+    },
+    "filters": {
+      "startDate": "Dan",
+      "endDate": "Gacha",
+      "type": "Turi",
+      "typeAll": "Barcha turlar",
+      "method": "To'lov usuli",
+      "methodAll": "Barcha usullar",
+      "card": "Karta",
+      "cardAll": "Barcha kartalar",
+      "status": "Holat",
+      "statusAll": "Barcha holatlar",
+      "noCards": "Kartalar mavjud emas"
+    },
+    "chart": {
+      "expenses": "Chiqimlar",
+      "trend": "Chiqimlar trendi",
+      "distribution": "Chiqim turlari bo'yicha taqsimot"
+    },
+    "stats": {
+      "today": "Bugun",
+      "week": "Haftalik",
+      "month": "Oylik",
+      "total": "Jami"
+    },
+    "method": {
+      "cash": "Naqd pul",
+      "card": "Karta"
+    },
+    "status": {
+      "pending": "Kutilmoqda",
+      "approved": "Tasdiqlangan"
+    },
+    "actions": {
+      "approve": "Tasdiqlash",
+      "edit": "O'zgartirish",
+      "delete": "O'chirish",
+      "confirmDelete": "Haqiqatan ham bu chiqimni o'chirmoqchimisiz?"
+    },
+    "messages": {
+      "loadError": "Chiqimlarni yuklashda xatolik",
+      "created": "Chiqim muvaffaqiyatli qo'shildi",
+      "updated": "Chiqim muvaffaqiyatli yangilandi",
+      "deleted": "Chiqim o'chirildi",
+      "approved": "Chiqim tasdiqlandi",
+      "saveError": "Saqlashda xatolik yuz berdi",
+      "deleteError": "O'chirishda xatolik yuz berdi",
+      "approveError": "Tasdiqlashda xatolik yuz berdi",
+      "exportSuccess": "Eksport muvaffaqiyatli yakunlandi",
+      "loadTypesError": "Chiqim turlarini yuklashda xatolik",
+      "loadCardsError": "Kartalarni yuklashda xatolik"
+    }
+  },
+  "expenseTypes": {
+    "title": "Chiqim turlari",
+    "new": "Yangi tur",
+    "addFirst": "Birinchi chiqim turini qo'shish",
+    "noTypes": "Hozircha chiqim turlari yo'q",
+    "createTitle": "Yangi chiqim turi",
+    "editTitle": "Chiqim turini tahrirlash",
+    "table": {
+      "name": "Nomi",
+      "description": "Izoh",
+      "status": "Holat"
+    },
+    "status": {
+      "active": "Faol",
+      "inactive": "Nofaol"
+    },
+    "form": {
+      "name": "Tur nomi",
+      "namePlaceholder": "Masalan: Transport xarajatlari",
+      "nameRequired": "Tur nomi majburiy",
+      "description": "Tavsif",
+      "descriptionPlaceholder": "Qo'shimcha ma'lumot kiriting",
+      "active": "Faol holat"
+    },
+    "messages": {
+      "loadError": "Chiqim turlarini yuklashda xatolik",
+      "saved": "Chiqim turi muvaffaqiyatli saqlandi",
+      "saveError": "Saqlashda xatolik yuz berdi",
+      "deleted": "Chiqim turi o'chirildi",
+      "deleteError": "O'chirishda xatolik yuz berdi",
+      "fillRequired": "Iltimos, barcha majburiy maydonlarni to'ldiring"
+    },
+    "confirmDelete": {
+      "title": "Chiqim turini o'chirish",
+      "content": "Haqiqatan ham bu chiqim turini o'chirmoqchimisiz?"
+    }
+  },
+  "expenseReport": {
+    "title": "Oylik chiqimlar hisoboti",
+    "loading": "Yuklanmoqda...",
+    "dateRange": "Davr: {{from}} - {{to}}",
+    "selectMonth": "Oyni tanlang",
+    "table": {
+      "type": "Chiqim turi",
+      "percentage": "Ulush (%)",
+      "total": "Jami (USD)",
+      "noExpenses": "Chiqimlar topilmadi"
+    },
+    "stats": {
+      "totalUsd": "Jami (USD)",
+      "totalUzs": "Jami (UZS)",
+      "count": "Chiqimlar soni"
+    },
+    "chart": {
+      "typeDistribution": "Chiqim turlari bo'yicha ulush (USD)",
+      "monthlyTrend": "Oy bo'yicha trend (USD / UZS)",
+      "noData": "Ma'lumot yo'q"
+    },
+    "messages": {
+      "loadError": "Hisobotni yuklashda xatolik",
+      "exportSuccess": "Eksport muvaffaqiyatli yakunlandi",
+      "exportError": "Eksport xatolik"
+    }
   },
   "ledger": {
     "title": "Kassa jurnali",
@@ -508,6 +655,10 @@
     "edit": "Tahrirlash",
     "delete": "O'chirish",
     "resetPassword": "Parolni tiklash",
+    "addTitle": "Foydalanuvchi qo'shish",
+    "editTitle": "Foydalanuvchini tahrirlash",
+    "activate": "Faollashtirish",
+    "deactivate": "O'chirish",
     "table": {
       "username": "Login",
       "fullName": "To'liq ism",
@@ -521,7 +672,10 @@
     "form": {
       "username": "Login",
       "password": "Parol",
+      "passwordHint": "o'zgartirish uchun",
       "fullName": "To'liq ism",
+      "firstName": "Ism",
+      "lastName": "Familiya",
       "email": "Email",
       "phone": "Telefon",
       "role": "Rol",
@@ -533,17 +687,28 @@
       "admin": "Administrator",
       "owner": "Egasi",
       "director": "Direktor",
-      "accountant": "Moliyachi",
+      "accountant": "Hisobchi",
       "sales_manager": "Sotuv menejeri",
+      "sales": "Sotuv menejeri",
       "warehouse": "Omborchi"
     },
     "status": {
       "active": "Faol",
       "inactive": "Faol emas"
     },
+    "filters": {
+      "allRoles": "Barcha rollar"
+    },
     "messages": {
+      "loading": "Yuklanmoqda...",
+      "noUsers": "Foydalanuvchilar topilmadi",
+      "loadError": "Foydalanuvchilarni yuklashda xatolik",
       "created": "Foydalanuvchi yaratildi",
       "updated": "Foydalanuvchi yangilandi",
+      "saveError": "Saqlashda xatolik",
+      "activated": "Foydalanuvchi faollashtirildi",
+      "deactivated": "Foydalanuvchi o'chirildi",
+      "statusError": "Holatni o'zgartirishda xatolik",
       "deleted": "Foydalanuvchi o'chirildi",
       "deleteConfirm": "Foydalanuvchini o'chirishni xohlaysizmi?",
       "passwordReset": "Parol tiklandi",
@@ -556,6 +721,9 @@
     "new": "Yangi hudud",
     "edit": "Tahrirlash",
     "delete": "O'chirish",
+    "addTitle": "Hudud qo'shish",
+    "editTitle": "Hududni tahrirlash",
+    "unassigned": "Tayinlanmagan",
     "table": {
       "name": "Nomi",
       "code": "Kod",
@@ -568,9 +736,17 @@
       "name": "Hudud nomi",
       "code": "Hudud kodi",
       "description": "Tavsif",
+      "manager": "Menejer",
+      "unassigned": "Tayinlanmagan",
       "selectManager": "Menejer tanlang"
     },
+    "confirmDelete": "{{name}} hududini o'chirishni xohlaysizmi?",
     "messages": {
+      "loading": "Yuklanmoqda...",
+      "noRegions": "Hududlar topilmadi",
+      "loadError": "Hududlarni yuklashda xatolik",
+      "saveError": "Saqlashda xatolik",
+      "deleteError": "O'chirishda xatolik",
       "created": "Hudud yaratildi",
       "updated": "Hudud yangilandi",
       "deleted": "Hudud o'chirildi",
@@ -640,7 +816,16 @@
       "selectDealer": "Diler tanlang",
       "reason": "Qaytarish sababi",
       "reasonPlaceholder": "Ixtiyoriy sabab...",
-      "type": "Qaytarish turi"
+      "type": "Qaytarish turi",
+      "brand": "Brend",
+      "brandRequired": "Brend tanlanishi shart",
+      "selectBrand": "Brend tanlang",
+      "category": "Kategoriya",
+      "categoryRequired": "Kategoriya tanlanishi shart",
+      "selectCategory": "Kategoriya tanlang",
+      "itemsRequired": "Kamida bitta mahsulot qo'shing",
+      "currentDebt": "Joriy qarz",
+      "total": "Jami summa"
     },
     "type": {
       "good": "Yaxshi holatda",
@@ -650,7 +835,9 @@
       "pending": "Kutilmoqda",
       "approved": "Tasdiqlangan",
       "rejected": "Rad etilgan",
-      "completed": "Bajarilgan"
+      "completed": "Bajarilgan",
+      "healthy": "Sog'lom",
+      "defect": "Nuqsonli"
     },
     "reasons": {
       "defective": "Nuqsonli",
@@ -714,6 +901,37 @@
       "security": "Xavfsizlik",
       "backup": "Zaxira nusxa"
     },
+    "companyInfo": {
+      "title": "Kompaniya ma'lumotlari",
+      "form": {
+        "name": "Kompaniya nomi",
+        "nameRequired": "Kompaniya nomi kiritilishi shart",
+        "namePlaceholder": "Kompaniya nomini kiriting",
+        "slogan": "Slogan",
+        "sloganPlaceholder": "Kompaniya sloganini kiriting",
+        "logo": "Logotip",
+        "uploadLogo": "Logo yuklash",
+        "logoAlt": "Kompaniya logotipi",
+        "address": "Manzil",
+        "addressPlaceholder": "Kompaniya manzilini kiriting",
+        "phone": "Telefon",
+        "phonePlaceholder": "+998 XX XXX XX XX",
+        "email": "Email",
+        "emailPlaceholder": "info@company.uz",
+        "website": "Veb-sayt",
+        "websitePlaceholder": "https://company.uz",
+        "bankName": "Bank nomi",
+        "accountNumber": "Hisob raqami",
+        "inn": "INN / STIR",
+        "mfo": "MFO",
+        "director": "Direktor"
+      },
+      "messages": {
+        "saved": "Kompaniya ma'lumotlari saqlandi",
+        "saveError": "Saqlashda xatolik",
+        "loadError": "Yuklashda xatolik"
+      }
+    },
     "company": {
       "name": "Kompaniya nomi",
       "tin": "INN / STIR",
@@ -724,10 +942,30 @@
       "uploadLogo": "Logo yuklash"
     },
     "telegram": {
+      "title": "Telegram integratsiyasi",
+      "description": "Telegram botni ulang",
+      "telegramId": "Telegram ID",
+      "placeholder": "Telegram ID ni kiriting",
+      "connect": "Ulash",
+      "connected": "Ulangan",
       "botToken": "Bot token",
       "chatId": "Chat ID",
       "testMessage": "Test xabar yuborish",
-      "enabled": "Telegram faol"
+      "enabled": "Telegram faol",
+      "messages": {
+        "linked": "Telegram ulandi",
+        "linkFailed": "Ulanishda xatolik"
+      }
+    },
+    "system": {
+      "title": "Tizim sozlamalari",
+      "lowStockThreshold": "Kam zaxira chegarasi",
+      "backupPath": "Zaxira nusxa yo'li",
+      "defaultExchangeRate": "Standart valyuta kursi",
+      "messages": {
+        "updated": "Sozlamalar yangilandi",
+        "updateFailed": "Yangilashda xatolik"
+      }
     },
     "notifications": {
       "orderCreated": "Yangi buyurtma",
@@ -762,10 +1000,15 @@
     },
     "manager": {
       "title": "Sotuv menejeri paneli",
+      "mySales": "Mening savdolarim",
+      "myPayments": "Mening to'lovlarim",
+      "myDealers": "Mening dilerlarim",
+      "assignedToMe": "Menga biriktirilgan",
+      "topDealers": "Top dilerlar",
+      "salesByRegion": "Hududlar bo'yicha savdo",
       "salesTarget": "Plan",
       "salesAchieved": "Bajarilgan",
       "achievement": "Bajarilish %",
-      "myDealers": "Mening dilerlarim",
       "newOrders": "Yangi buyurtmalar",
       "pendingOrders": "Kutilayotgan",
       "myRevenue": "Mening savdolarim",
@@ -774,6 +1017,9 @@
     },
     "warehouse": {
       "title": "Omborchi paneli",
+      "criticalLowStock": "Kritik kam zaxira",
+      "activeDefects": "Faol nuqsonlar",
+      "lowStockProducts": "Kam zaxirali mahsulotlar",
       "totalProducts": "Jami mahsulotlar",
       "lowStock": "Kam zaxira",
       "outOfStock": "Tugagan",
@@ -799,7 +1045,14 @@
       "year": "Yil",
       "custom": "Boshqa"
     },
-    "noData": "Ma'lumot topilmadi"
+    "noData": "Ma'lumot topilmadi",
+    "sales": "Savdo",
+    "salesUsd": "Savdo (USD)",
+    "messages": {
+      "loadError": "KPI ma'lumotlarini yuklashda xatolik",
+      "pleaseLogin": "Iltimos, tizimga qayta kiring",
+      "noAccessPage": "Sizning rolingiz uchun KPI sahifasi topilmadi"
+    }
   },
   "manuals": {
     "title": "Foydalanuvchi qo'llanmasi",
@@ -1143,6 +1396,12 @@
       "panelTitle": "Yangi buyurtma yaratish"
     },
     "filters": {
+      "dealers": "Dilerlar",
+      "type": "Buyurtma turi",
+      "status": "Status",
+      "region": "Hudud",
+      "dateFrom": "Boshlanish",
+      "dateTo": "Tugash",
       "brand": "Brend",
       "category": "Kategoriya",
       "allBrands": "Barcha brandlar",
@@ -1194,16 +1453,43 @@
         "pdf": "PDF"
       },
       "loading": "Yuklanmoqda...",
-      "empty": "Buyurtmalar topilmadi",
-      "detailsTitle": "Tarkibi",
-      "detailsEmpty": "Tarkib mavjud emas"
+      "empty": "Buyurtmalar topilmadi"
     },
-    "types": {
+    "type": {
       "regular": "Oddiy",
       "reserve": "Bron"
     },
+    "details": {
+      "items": "Tarkibi",
+      "noItems": "Tarkib mavjud emas",
+      "product": "Mahsulot"
+    },
     "items": {
       "empty": "Tanlangan mahsulotlar ro'yxati bo'sh."
+    },
+    "history": {
+      "title": "Status tarixi",
+      "loading": "Yuklanmoqda...",
+      "loadError": "Tarixni yuklab bo'lmadi",
+      "oldStatus": "Eski status",
+      "newStatus": "Yangi status",
+      "changedBy": "Kim o'zgartirgan",
+      "changedAt": "Qachon",
+      "initialCreation": "Boshlang'ich yaratilish",
+      "system": "Tizim",
+      "noHistory": "Status tarixi mavjud emas"
+    },
+    "status": {
+      "created": "Yaratildi",
+      "confirmed": "Tasdiqlandi",
+      "packed": "Qadoqlandi",
+      "shipped": "Jo'natildi",
+      "delivered": "Yetkazildi",
+      "cancelled": "Bekor qilindi",
+      "returned": "Qaytarildi",
+      "updated": "Status yangilandi",
+      "updateFailed": "Statusni yangilab bo'lmadi",
+      "notAllowed": "Bu statusga o'tkazish uchun ruxsatingiz yo'q"
     },
     "table": {
       "product": "Mahsulot",
@@ -1224,5 +1510,18 @@
         "edit": "Tahrirlash"
       }
     }
+  },
+  "currencyRates": {
+    "title": "Valyuta kurslari",
+    "description": "USD/UZS valyuta kurslarini boshqarish",
+    "form": {
+      "date": "Sana",
+      "usdToUzs": "1 USD (so'm)"
+    },
+    "table": {
+      "date": "Sana",
+      "rate": "Kurs (UZS)"
+    },
+    "noRates": "Valyuta kurslari mavjud emas"
   }
 }

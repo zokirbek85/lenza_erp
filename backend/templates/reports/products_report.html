@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
   <head>
     <meta charset="utf-8" />
     <style>
-      body { font-family: Arial, sans-serif; font-size: 12px; margin: 25px; }
+      body { font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif; font-size: 12px; margin: 25px; }
       .header { display:flex; align-items:center; margin-bottom: 12px; }
       .logo { height: 48px; margin-right: 10px; }
       h1 { text-align: center; }
@@ -23,17 +24,17 @@
         <div style="font-size:10px;">{{ company_address }}{% if company_phone %} | {{ company_phone }}{% endif %}</div>
       </div>
     </div>
-    <h1>Product Inventory</h1>
+    <h1>{% trans 'Product Inventory' %}</h1>
     <table>
       <thead>
         <tr>
-          <th>SKU</th>
-          <th>Name</th>
-          <th>Brand</th>
-          <th>Category</th>
-          <th>Sell Price</th>
-          <th>Stock OK</th>
-          <th>Stock Defect</th>
+          <th>{% trans 'SKU' %}</th>
+          <th>{% trans 'Name' %}</th>
+          <th>{% trans 'Brand' %}</th>
+          <th>{% trans 'Category' %}</th>
+          <th>{% trans 'Sell Price' %}</th>
+          <th>{% trans 'Stock OK' %}</th>
+          <th>{% trans 'Stock Defect' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -48,13 +49,13 @@
           <td>{{ product.stock_defect }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="7">No products available.</td></tr>
+        <tr><td colspan="7">{% trans 'No products available' %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
     <div class="footer">
-      <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
-      <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+      <p>{% trans 'Signed via' %} <strong>{{ company_name }}</strong> {% trans 'system' %}</p>
+      <p>{% trans 'Scan QR to verify authenticity' %}:</p>
       <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
       <a href="{{ verify_url }}">{{ verify_url }}</a>
     </div>

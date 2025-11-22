@@ -21,12 +21,18 @@ export type ProductsMobileHandlers = {
   onDelete: (productId: number) => void;
 };
 
+export type ProductMobilePermissions = {
+  canEdit: boolean;
+  canDelete: boolean;
+};
+
 type ProductsMobileCardProps = {
   product: ProductMobileItem;
   handlers: ProductsMobileHandlers;
+  permissions: ProductMobilePermissions;
 };
 
-export const ProductsMobileCard = ({ product, handlers }: ProductsMobileCardProps) => {
+export const ProductsMobileCard = ({ product, handlers, permissions }: ProductsMobileCardProps) => {
   const fields = [
     { label: 'SKU', value: product.sku },
     { label: 'Brand / Category', value: `${product.brand?.name ?? '—'} / ${product.category?.name ?? '—'}` },
@@ -43,11 +49,13 @@ export const ProductsMobileCard = ({ product, handlers }: ProductsMobileCardProp
     },
   ];
 
-  const actions = [
+  const actions: NonNullable<MobileCardProps['actions']> = [
     { icon: <EyeOutlined />, label: 'View', onClick: () => handlers.onView(product.id) },
-    { icon: <EditOutlined />, label: 'Edit', onClick: () => handlers.onEdit(product.id) },
-    { icon: <DeleteOutlined />, label: 'Delete', onClick: () => handlers.onDelete(product.id) },
-  ];
+    permissions.canEdit ? { icon: <EditOutlined />, label: 'Edit', onClick: () => handlers.onEdit(product.id) } : null,
+    permissions.canDelete
+      ? { icon: <DeleteOutlined />, label: 'Delete', onClick: () => handlers.onDelete(product.id) }
+      : null,
+  ].filter((action): action is NonNullable<MobileCardProps['actions']>[number] => Boolean(action));
 
   return (
     <MobileCard
@@ -71,13 +79,16 @@ type ProductsMobileCardsProps = {
     total: number;
   };
   handlers: ProductsMobileHandlers;
+  permissions: ProductMobilePermissions;
 };
 
-const ProductsMobileCards = ({ data, handlers }: ProductsMobileCardsProps) => (
+const ProductsMobileCards = ({ data, handlers, permissions }: ProductsMobileCardsProps) => (
   <MobileCardList
     data={data}
     keyExtractor={(product) => product.id}
-    renderCard={(product) => <ProductsMobileCard key={product.id} product={product} handlers={handlers} />}
+    renderCard={(product) => (
+      <ProductsMobileCard key={product.id} product={product} handlers={handlers} permissions={permissions} />
+    )}
   />
 );
 

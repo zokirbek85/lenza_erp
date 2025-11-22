@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -45,7 +45,7 @@ const RegionsPage = () => {
   const loadRegions = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/regions/', { params: { page, page_size: pageSize } });
+      const response = await http.get('/regions/', { params: { page, page_size: pageSize } });
       const data = response.data;
       let normalized: RegionRecord[];
       if (data && typeof data === 'object' && Array.isArray(data.results)) {
@@ -64,7 +64,7 @@ const RegionsPage = () => {
     }
   }, [page, pageSize]);
 
-  const { data: managerResponse } = useFetch<ManagerRecord[]>('/api/users/', { params: { role: 'sales' } });
+  const { data: managerResponse } = useFetch<ManagerRecord[]>('/users/', { params: { role: 'sales' } });
 
   useEffect(() => {
     loadRegions();
@@ -115,10 +115,10 @@ const RegionsPage = () => {
     };
     try {
       if (editing) {
-        await http.put(`/api/regions/${editing.id}/`, payload);
+        await http.put(`/regions/${editing.id}/`, payload);
         toast.success(t('regions.messages.updated'));
       } else {
-        await http.post('/api/regions/', payload);
+        await http.post('/regions/', payload);
         toast.success(t('regions.messages.created'));
       }
       setModalOpen(false);
@@ -142,7 +142,7 @@ const RegionsPage = () => {
   const handleDelete = async (region: RegionRecord) => {
     if (!window.confirm(t('regions.confirmDelete', { name: region.name }))) return;
     try {
-      await http.delete(`/api/regions/${region.id}/`);
+      await http.delete(`/regions/${region.id}/`);
       toast.success(t('regions.messages.deleted'));
       loadRegions();
     } catch (error) {
@@ -172,7 +172,7 @@ const RegionsPage = () => {
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('regions.table.name')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('regions.table.manager')}</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('table.actions')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('common:table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
@@ -187,14 +187,14 @@ const RegionsPage = () => {
               regions.map((region) => (
                 <tr key={region.id}>
                   <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{region.name}</td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{region.manager_user || '—'}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{region.manager_user || t('regions.unassigned')}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
                       <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(region)}>
-                        {t('actions.edit')}
+                        {t('common:actions.edit')}
                       </button>
                       <button className="text-rose-600 hover:text-rose-800 dark:text-rose-300" onClick={() => handleDelete(region)}>
-                        {t('actions.delete')}
+                        {t('common:actions.delete')}
                       </button>
                     </div>
                   </td>
@@ -242,7 +242,7 @@ const RegionsPage = () => {
               }}
               className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              {t('actions.cancel')}
+              {t('common:actions.cancel')}
             </button>
             <button
               type="submit"
@@ -250,7 +250,7 @@ const RegionsPage = () => {
               disabled={saving}
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
             >
-              {saving ? t('actions.saving') : t('actions.save')}
+              {saving ? t('common:actions.saving') : t('common:actions.save')}
             </button>
           </>
         }
@@ -289,3 +289,4 @@ const RegionsPage = () => {
 };
 
 export default RegionsPage;
+

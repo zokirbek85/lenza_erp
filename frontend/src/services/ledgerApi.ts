@@ -1,4 +1,4 @@
-import http from '../app/http';
+﻿import http from '../app/http';
 
 // ========== NEW LEDGER API - DYNAMIC CALCULATOR ==========
 
@@ -44,19 +44,19 @@ export const fetchLedgerSummary = async (filters?: {
   to?: string;
   card_id?: number;
 }): Promise<LedgerSummary> => {
-  const response = await http.get('/api/ledger/', { params: filters });
+  const response = await http.get('/ledger/', { params: filters });
   return response.data;
 };
 
 // Fetch all card balances
 export const fetchCardBalances = async (): Promise<CardBalance[]> => {
-  const response = await http.get('/api/ledger/by-card/');
+  const response = await http.get('/ledger/by-card/');
   return response.data;
 };
 
 // Fetch single card balance
 export const fetchCardBalance = async (cardId: number): Promise<CardBalance> => {
-  const response = await http.get(`/api/cards/${cardId}/balance/`);
+  const response = await http.get(`/cards/${cardId}/balance/`);
   return response.data;
 };
 
@@ -65,7 +65,8 @@ export const fetchExpensesByCategory = async (filters?: {
   from?: string;
   to?: string;
 }): Promise<CategoryExpense[]> => {
-  const response = await http.get('/api/ledger/by-category/', { params: filters });
+  const response = await http.get('/ledger/by-category/', { params: filters });
   return response.data;
 };
+
 

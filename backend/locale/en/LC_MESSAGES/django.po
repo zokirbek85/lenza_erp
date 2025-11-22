@@ -1,0 +1,351 @@
+# English translation for Lenza ERP
+# Copyright (C) 2025 Lenza ERP
+# This file is distributed under the same license as the Lenza ERP package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-22 14:45+0500\n"
+"PO-Revision-Date: 2025-11-22 14:45+0500\n"
+"Last-Translator: Lenza Team\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Invoice template translations
+msgid "Invoice"
+msgstr "Invoice"
+
+msgid "Issued"
+msgstr "Issued"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Dealer"
+msgstr "Dealer"
+
+msgid "Value date"
+msgstr "Value date"
+
+msgid "Created by"
+msgstr "Created by"
+
+msgid "Order type"
+msgstr "Order type"
+
+msgid "Reserve"
+msgstr "Reserve"
+
+msgid "Regular"
+msgstr "Regular"
+
+msgid "Total Items"
+msgstr "Total Items"
+
+msgid "Product"
+msgstr "Product"
+
+msgid "Qty"
+msgstr "Qty"
+
+msgid "Price (USD)"
+msgstr "Price (USD)"
+
+msgid "Line total"
+msgstr "Line total"
+
+msgid "SKU"
+msgstr "SKU"
+
+msgid "No items in this order."
+msgstr "No items in this order."
+
+msgid "Subtotal"
+msgstr "Subtotal"
+
+msgid "Total (USD)"
+msgstr "Total (USD)"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "Authorized signature"
+msgstr "Authorized signature"
+
+# Reconciliation report translations
+msgid "Reconciliation Report"
+msgstr "Reconciliation Report"
+
+msgid "Period"
+msgstr "Period"
+
+msgid "Generated"
+msgstr "Generated"
+
+msgid "Summary"
+msgstr "Summary"
+
+msgid "Total Sales"
+msgstr "Total Sales"
+
+msgid "Total Payments"
+msgstr "Total Payments"
+
+msgid "Net Balance"
+msgstr "Net Balance"
+
+msgid "Dealer Balance Details"
+msgstr "Dealer Balance Details"
+
+msgid "Opening Balance"
+msgstr "Opening Balance"
+
+msgid "Sales Amount"
+msgstr "Sales Amount"
+
+msgid "Payments"
+msgstr "Payments"
+
+msgid "Closing Balance"
+msgstr "Closing Balance"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Amount"
+msgstr "Amount"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "No data available"
+msgstr "No data available"
+
+# Expenses report translations
+msgid "Expenses Report"
+msgstr "Expenses Report"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Category"
+msgstr "Category"
+
+msgid "Method"
+msgstr "Method"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Currency"
+msgstr "Currency"
+
+msgid "Card"
+msgstr "Card"
+
+msgid "Cash"
+msgstr "Cash"
+
+msgid "Bank Transfer"
+msgstr "Bank Transfer"
+
+# Payment report translations
+msgid "Payment Report"
+msgstr "Payment Report"
+
+msgid "Payment Date"
+msgstr "Payment Date"
+
+msgid "Payment Method"
+msgstr "Payment Method"
+
+msgid "Reference"
+msgstr "Reference"
+
+# General
+msgid "Page"
+msgstr "Page"
+
+msgid "of"
+msgstr "of"
+
+msgid "All"
+msgstr "All"
+
+msgid "From"
+msgstr "From"
+
+msgid "To"
+msgstr "To"
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Export"
+msgstr "Export"
+
+msgid "Print"
+msgstr "Print"
+
+# Excel export headers
+msgid "Expenses"
+msgstr "Expenses"
+
+msgid "Monthly Expenses"
+msgstr "Monthly Expenses"
+
+msgid "Total USD"
+msgstr "Total USD"
+
+msgid "Total UZS"
+msgstr "Total UZS"
+
+msgid "Share (%)"
+msgstr "Share (%)"
+
+msgid "Expenses Export"
+msgstr "Expenses Export"
+
+# Additional translations
+msgid "Daily Payments Report"
+msgstr "Daily Payments Report"
+
+msgid "USD Equivalent"
+msgstr "USD Equivalent"
+
+msgid "No payments on this date."
+msgstr "No payments on this date."
+
+msgid "Month"
+msgstr "Month"
+
+msgid "Account"
+msgstr "Account"
+
+msgid "Total (USD)"
+msgstr "Total (USD)"
+
+msgid "Signed via"
+msgstr "Signed via"
+
+msgid "system"
+msgstr "system"
+
+msgid "Scan QR to verify authenticity"
+msgstr "Scan QR to verify authenticity"
+
+# Orders report
+msgid "Orders Summary"
+msgstr "Orders Summary"
+
+msgid "Display #"
+msgstr "Display #"
+
+msgid "No orders available"
+msgstr "No orders available"
+
+# Products report
+msgid "Product Inventory"
+msgstr "Product Inventory"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Brand"
+msgstr "Brand"
+
+msgid "Sell Price"
+msgstr "Sell Price"
+
+msgid "Stock OK"
+msgstr "Stock OK"
+
+msgid "Stock Defect"
+msgstr "Stock Defect"
+
+msgid "No products available"
+msgstr "No products available"
+
+# Returns report
+msgid "Report"
+msgstr "Report"
+
+msgid "Returns"
+msgstr "Returns"
+
+msgid "Total records"
+msgstr "Total records"
+
+msgid "Quantity"
+msgstr "Quantity"
+
+msgid "Reason"
+msgstr "Reason"
+
+msgid "Defective"
+msgstr "Defective"
+
+msgid "Good"
+msgstr "Good"
+
+msgid "No data found"
+msgstr "No data found"
+
+# Dealer balance
+msgid "Dealer Balances"
+msgstr "Dealer Balances"
+
+msgid "Region"
+msgstr "Region"
+
+msgid "Balance (USD)"
+msgstr "Balance (USD)"
+
+msgid "No dealers available"
+msgstr "No dealers available"
+
+# Monthly expenses report
+msgid "Monthly Expenses Report"
+msgstr "Monthly Expenses Report"
+
+msgid "Rate (1 USD)"
+msgstr "Rate (1 USD)"
+
+msgid "som"
+msgstr "som"
+
+msgid "Expense type"
+msgstr "Expense type"
+
+msgid "Rate"
+msgstr "Rate"
+
+# Cards report
+msgid "Payment statistics by card"
+msgstr "Payment statistics by card"
+
+msgid "Card name"
+msgstr "Card name"
+
+msgid "Number"
+msgstr "Number"
+
+msgid "User"
+msgstr "User"
+
+msgid "Payment count"
+msgstr "Payment count"
+
+msgid "Total amount (USD)"
+msgstr "Total amount (USD)"
+
+msgid "Last payment"
+msgstr "Last payment"
+
+msgid "Report generated"
+msgstr "Report generated"

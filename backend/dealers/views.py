@@ -191,5 +191,5 @@ class DealerReconciliationExcelView(APIView):
         dealer_slug = slugify(data['dealer']) or f'dealer-{pk}'
         filename = f"reconciliation_{dealer_slug}.xlsx"
         response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=filename)
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8'
         return response

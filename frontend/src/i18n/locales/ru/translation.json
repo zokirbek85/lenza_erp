@@ -313,6 +313,10 @@
     "edit": "Редактировать",
     "delete": "Удалить",
     "resetPassword": "Сбросить пароль",
+    "addTitle": "Добавить пользователя",
+    "editTitle": "Редактировать пользователя",
+    "activate": "Активировать",
+    "deactivate": "Деактивировать",
     "table": {
       "username": "Логин",
       "fullName": "Полное имя",
@@ -326,7 +330,10 @@
     "form": {
       "username": "Логин",
       "password": "Пароль",
+      "passwordHint": "для изменения",
       "fullName": "Полное имя",
+      "firstName": "Имя",
+      "lastName": "Фамилия",
       "email": "Email",
       "phone": "Телефон",
       "role": "Роль",
@@ -340,15 +347,26 @@
       "director": "Директор",
       "accountant": "Бухгалтер",
       "sales_manager": "Менеджер по продажам",
+      "sales": "Менеджер по продажам",
       "warehouse": "Кладовщик"
     },
     "status": {
       "active": "Активный",
       "inactive": "Неактивный"
     },
+    "filters": {
+      "allRoles": "Все роли"
+    },
     "messages": {
+      "loading": "Загрузка...",
+      "noUsers": "Пользователи не найдены",
+      "loadError": "Ошибка загрузки пользователей",
       "created": "Пользователь создан",
       "updated": "Пользователь обновлён",
+      "saveError": "Ошибка сохранения",
+      "activated": "Пользователь активирован",
+      "deactivated": "Пользователь деактивирован",
+      "statusError": "Ошибка изменения статуса",
       "deleted": "Пользователь удалён",
       "deleteConfirm": "Удалить этого пользователя?",
       "passwordReset": "Пароль сброшен",
@@ -361,6 +379,9 @@
     "new": "Новый регион",
     "edit": "Редактировать",
     "delete": "Удалить",
+    "addTitle": "Добавить регион",
+    "editTitle": "Редактировать регион",
+    "unassigned": "Не назначен",
     "table": {
       "name": "Название",
       "code": "Код",
@@ -373,9 +394,17 @@
       "name": "Название региона",
       "code": "Код региона",
       "description": "Описание",
+      "manager": "Менеджер",
+      "unassigned": "Не назначен",
       "selectManager": "Выберите менеджера"
     },
+    "confirmDelete": "Удалить регион {{name}}?",
     "messages": {
+      "loading": "Загрузка...",
+      "noRegions": "Регионы не найдены",
+      "loadError": "Ошибка загрузки регионов",
+      "saveError": "Ошибка сохранения",
+      "deleteError": "Ошибка удаления",
       "created": "Регион создан",
       "updated": "Регион обновлён",
       "deleted": "Регион удалён",
@@ -445,7 +474,17 @@
       "selectDealer": "Выберите дилера",
       "reason": "Причина возврата",
       "reasonPlaceholder": "Необязательная причина...",
-      "type": "Тип возврата"
+      "type": "Тип возврата",
+      "brand": "Бренд",
+      "brandRequired": "Бренд обязателен",
+      "selectBrand": "Выберите бренд",
+      "category": "Категория",
+      "categoryRequired": "Категория обязательна",
+      "selectCategory": "Выберите категорию",
+      "itemsRequired": "Добавьте хотя бы один товар",
+      "currentDebt": "Текущий долг",
+      "total": "Общая сумма",
+      "statusRequired": "Статус обязателен"
     },
     "type": {
       "good": "Хорошее состояние",
@@ -455,7 +494,9 @@
       "pending": "Ожидание",
       "approved": "Подтверждён",
       "rejected": "Отклонён",
-      "completed": "Завершён"
+      "completed": "Завершён",
+      "healthy": "Исправный",
+      "defect": "Дефект"
     },
     "reasons": {
       "defective": "Дефектный",
@@ -519,6 +560,37 @@
       "security": "Безопасность",
       "backup": "Резервная копия"
     },
+    "companyInfo": {
+      "title": "Информация о компании",
+      "form": {
+        "name": "Название компании",
+        "nameRequired": "Название компании обязательно",
+        "namePlaceholder": "Введите название компании",
+        "slogan": "Слоган",
+        "sloganPlaceholder": "Введите слоган компании",
+        "logo": "Логотип",
+        "uploadLogo": "Загрузить логотип",
+        "logoAlt": "Логотип компании",
+        "address": "Адрес",
+        "addressPlaceholder": "Введите адрес компании",
+        "phone": "Телефон",
+        "phonePlaceholder": "+998 XX XXX XX XX",
+        "email": "Email",
+        "emailPlaceholder": "info@company.uz",
+        "website": "Веб-сайт",
+        "websitePlaceholder": "https://company.uz",
+        "bankName": "Название банка",
+        "accountNumber": "Номер счёта",
+        "inn": "ИНН / STIR",
+        "mfo": "МФО",
+        "director": "Директор"
+      },
+      "messages": {
+        "saved": "Информация о компании сохранена",
+        "saveError": "Ошибка сохранения",
+        "loadError": "Ошибка загрузки"
+      }
+    },
     "company": {
       "name": "Название компании",
       "tin": "ИНН / STIR",
@@ -529,10 +601,30 @@
       "uploadLogo": "Загрузить логотип"
     },
     "telegram": {
+      "title": "Интеграция Telegram",
+      "description": "Подключите Telegram бота",
+      "telegramId": "Telegram ID",
+      "placeholder": "Введите Telegram ID",
+      "connect": "Подключить",
+      "connected": "Подключено",
       "botToken": "Токен бота",
       "chatId": "ID чата",
       "testMessage": "Отправить тестовое сообщение",
-      "enabled": "Telegram включён"
+      "enabled": "Telegram включён",
+      "messages": {
+        "linked": "Telegram подключён",
+        "linkFailed": "Ошибка подключения"
+      }
+    },
+    "system": {
+      "title": "Системные настройки",
+      "lowStockThreshold": "Порог низкого запаса",
+      "backupPath": "Путь резервной копии",
+      "defaultExchangeRate": "Стандартный курс валюты",
+      "messages": {
+        "updated": "Настройки обновлены",
+        "updateFailed": "Ошибка обновления"
+      }
     },
     "notifications": {
       "orderCreated": "Новый заказ",
@@ -567,10 +659,15 @@
     },
     "manager": {
       "title": "Панель менеджера по продажам",
+      "mySales": "Мои продажи",
+      "myPayments": "Мои платежи",
+      "myDealers": "Мои дилеры",
+      "assignedToMe": "Назначено мне",
+      "topDealers": "Топ дилеры",
+      "salesByRegion": "Продажи по регионам",
       "salesTarget": "План",
       "salesAchieved": "Выполнено",
       "achievement": "Выполнение %",
-      "myDealers": "Мои дилеры",
       "newOrders": "Новые заказы",
       "pendingOrders": "В ожидании",
       "myRevenue": "Мои продажи",
@@ -579,6 +676,9 @@
     },
     "warehouse": {
       "title": "Панель кладовщика",
+      "criticalLowStock": "Критически низкий запас",
+      "activeDefects": "Активные дефекты",
+      "lowStockProducts": "Товары с низким запасом",
       "totalProducts": "Всего товаров",
       "lowStock": "Низкий запас",
       "outOfStock": "Закончились",
@@ -624,10 +724,22 @@
     "inventoryTrend": "Тренд склада",
     "expensesBudget": "Расходы vs бюджет",
     "overdueReceivables": "Просроченная дебиторка",
+    "inventory": {
+      "title": "Товары на складе (здоровые)",
+      "unit": "шт",
+      "totalValue": "Общая стоимость"
+    },
     "dealerName": "Дилер",
     "daysOverdue": "Дней просрочки",
     "amountUsd": "Сумма (USD)",
     "totalDebt": "Всего долг",
+    "charts": {
+      "revenue": "Доход (USD)",
+      "stockValue": "Стоимость запасов (USD)",
+      "used": "Использовано",
+      "expenses": "Расходы",
+      "budget": "Бюджет"
+    },
     "filters": {
       "title": "Фильтры",
       "dealers": "Дилеры",
@@ -645,7 +757,9 @@
   "notifications": {
     "title": "Уведомления",
     "empty": "Нет уведомлений",
+    "noNotifications": "Нет уведомлений",
     "markAll": "Отметить все как прочитанные",
+    "markAllRead": "Отметить все прочитанными",
     "markAsRead": "Отметить прочитанным",
     "markAsUnread": "Отметить непрочитанным",
     "all": "Все",
@@ -657,6 +771,15 @@
     "newNotification": "Новое уведомление",
     "emptyMessage": "Дополнительных данных нет",
     "newTag": "Новое",
+    "filters": {
+      "all": "Все",
+      "unread": "Непрочитанные",
+      "read": "Прочитанные"
+    },
+    "stats": {
+      "total": "Всего",
+      "unread": "Непрочитанных"
+    },
     "types": {
       "order": "Заказ",
       "payment": "Платёж",
@@ -735,31 +858,155 @@
   "expenses": {
     "title": "Расходы",
     "subtitle": "Расходы компании и анализ",
-    "newExpense": "Новый расход",
-    "type": "Тип",
-    "method": "Способ оплаты",
-    "card": "Карта",
-    "amount": "Сумма",
-    "usd": "USD",
-    "uzs": "UZS",
-    "status": "Статус",
-    "note": "Описание",
-    "actions": "Действия",
-    "approve": "Подтвердить",
-    "edit": "Изменить",
-    "delete": "Удалить",
-    "confirmDelete": "Вы уверены?",
-    "yes": "Да",
-    "no": "Нет",
-    "pending": "Ожидание",
-    "approved": "Подтверждён",
-    "today": "Сегодня",
-    "week": "Неделя",
-    "month": "Месяц",
-    "total": "Всего",
-    "statistics": "Статистика",
-    "trend": "Тренд",
-    "distribution": "Распределение"
+    "new": "Новый расход",
+    "createTitle": "Добавить новый расход",
+    "editTitle": "Редактировать расход",
+    "exportPdf": "Экспорт PDF",
+    "exportExcel": "Экспорт Excel",
+    "table": {
+      "date": "Дата",
+      "type": "Тип",
+      "method": "Способ оплаты",
+      "card": "Карта",
+      "amount": "Сумма",
+      "status": "Статус",
+      "description": "Описание",
+      "actions": "Действия"
+    },
+    "form": {
+      "date": "Дата",
+      "dateRequired": "Дата обязательна",
+      "type": "Тип расхода",
+      "typeRequired": "Тип расхода обязателен",
+      "typeSelect": "Выберите тип расхода",
+      "method": "Способ оплаты",
+      "methodRequired": "Способ оплаты обязателен",
+      "methodSelect": "Выберите способ оплаты",
+      "card": "Карта",
+      "cardSelect": "Выберите карту",
+      "currency": "Валюта",
+      "currencyRequired": "Валюта обязательна",
+      "amount": "Сумма",
+      "amountRequired": "Сумма обязательна",
+      "amountPositive": "Сумма должна быть положительной",
+      "description": "Описание",
+      "descriptionPlaceholder": "Введите дополнительную информацию"
+    },
+    "filters": {
+      "startDate": "С",
+      "endDate": "По",
+      "type": "Тип",
+      "typeAll": "Все типы",
+      "method": "Способ оплаты",
+      "methodAll": "Все способы",
+      "card": "Карта",
+      "cardAll": "Все карты",
+      "status": "Статус",
+      "statusAll": "Все статусы",
+      "noCards": "Карты недоступны"
+    },
+    "chart": {
+      "expenses": "Расходы",
+      "trend": "Тренд расходов",
+      "distribution": "Распределение по типам расходов"
+    },
+    "stats": {
+      "today": "Сегодня",
+      "week": "За неделю",
+      "month": "За месяц",
+      "total": "Всего"
+    },
+    "method": {
+      "cash": "Наличные",
+      "card": "Карта"
+    },
+    "status": {
+      "pending": "Ожидание",
+      "approved": "Подтверждён"
+    },
+    "actions": {
+      "approve": "Подтвердить",
+      "edit": "Изменить",
+      "delete": "Удалить",
+      "confirmDelete": "Вы действительно хотите удалить этот расход?"
+    },
+    "messages": {
+      "loadError": "Ошибка при загрузке расходов",
+      "created": "Расход успешно добавлен",
+      "updated": "Расход успешно обновлён",
+      "deleted": "Расход удалён",
+      "approved": "Расход подтверждён",
+      "saveError": "Ошибка при сохранении",
+      "deleteError": "Ошибка при удалении",
+      "approveError": "Ошибка при подтверждении",
+      "exportSuccess": "Экспорт успешно завершён",
+      "loadTypesError": "Ошибка при загрузке типов расходов",
+      "loadCardsError": "Ошибка при загрузке карт"
+    }
+  },
+  "expenseTypes": {
+    "title": "Типы расходов",
+    "new": "Новый тип",
+    "addFirst": "Добавить первый тип расхода",
+    "noTypes": "Пока нет типов расходов",
+    "createTitle": "Новый тип расхода",
+    "editTitle": "Редактировать тип расхода",
+    "table": {
+      "name": "Название",
+      "description": "Описание",
+      "status": "Статус"
+    },
+    "status": {
+      "active": "Активный",
+      "inactive": "Неактивный"
+    },
+    "form": {
+      "name": "Название типа",
+      "namePlaceholder": "Например: Транспортные расходы",
+      "nameRequired": "Название типа обязательно",
+      "description": "Описание",
+      "descriptionPlaceholder": "Введите дополнительную информацию",
+      "active": "Активный статус"
+    },
+    "messages": {
+      "loadError": "Ошибка при загрузке типов расходов",
+      "saved": "Тип расхода успешно сохранён",
+      "saveError": "Ошибка при сохранении",
+      "deleted": "Тип расхода удалён",
+      "deleteError": "Ошибка при удалении",
+      "fillRequired": "Пожалуйста, заполните все обязательные поля"
+    },
+    "confirmDelete": {
+      "title": "Удалить тип расхода",
+      "content": "Вы действительно хотите удалить этот тип расхода?"
+    }
+  },
+  "expenseReport": {
+    "title": "Ежемесячный отчёт по расходам",
+    "loading": "Загрузка...",
+    "dateRange": "Период: {{from}} - {{to}}",
+    "selectMonth": "Выберите месяц",
+    "table": {
+      "type": "Тип расхода",
+      "percentage": "Доля (%)",
+      "total": "Всего (USD)",
+      "noExpenses": "Расходов не найдено"
+    },
+    "stats": {
+      "totalUsd": "Всего (USD)",
+      "totalUzs": "Всего (UZS)",
+      "count": "Количество расходов"
+    },
+    "chart": {
+      "typeDistribution": "Распределение по типам расходов (USD)",
+      "monthlyTrend": "Ежемесячный тренд (USD / UZS)",
+      "noData": "Нет данных"
+    },
+    "messages": {
+      "loadError": "Ошибка при загрузке отчёта",
+      "exportSuccess": "Экспорт успешно завершён",
+      "exportError": "Ошибка экспорта"
+    }
   },
   "ledger": {
     "title": "Кассовый журнал",
@@ -840,6 +1087,12 @@
       "panelTitle": "Создание нового заказа"
     },
     "filters": {
+      "dealers": "Дилеры",
+      "type": "Тип заказа",
+      "status": "Статус",
+      "region": "Регион",
+      "dateFrom": "Начало",
+      "dateTo": "Конец",
       "brand": "Бренд",
       "category": "Категория",
       "allBrands": "Все бренды",
@@ -891,16 +1144,43 @@
         "pdf": "PDF"
       },
       "loading": "Загрузка...",
-      "empty": "Заказы не найдены",
-      "detailsTitle": "Состав заказа",
-      "detailsEmpty": "Нет позиций"
+      "empty": "Заказы не найдены"
     },
-    "types": {
+    "type": {
       "regular": "Обычный",
       "reserve": "Бронь"
     },
+    "details": {
+      "items": "Состав заказа",
+      "noItems": "Нет позиций",
+      "product": "Товар"
+    },
     "items": {
       "empty": "Список выбранных товаров пуст."
+    },
+    "history": {
+      "title": "История статусов",
+      "loading": "Загрузка...",
+      "loadError": "Не удалось загрузить историю",
+      "oldStatus": "Старый статус",
+      "newStatus": "Новый статус",
+      "changedBy": "Кто изменил",
+      "changedAt": "Когда",
+      "initialCreation": "Первоначальное создание",
+      "system": "Система",
+      "noHistory": "История статусов отсутствует"
+    },
+    "status": {
+      "created": "Создан",
+      "confirmed": "Подтвержден",
+      "packed": "Упакован",
+      "shipped": "Отгружен",
+      "delivered": "Доставлен",
+      "cancelled": "Отменен",
+      "returned": "Возвращен",
+      "updated": "Статус обновлен",
+      "updateFailed": "Не удалось обновить статус",
+      "notAllowed": "У вас нет прав для изменения на этот статус"
     },
     "table": {
       "product": "Товар",
@@ -921,5 +1201,18 @@
         "edit": "Редактировать"
       }
     }
+  },
+  "currencyRates": {
+    "title": "Курсы валют",
+    "description": "Управление курсами USD/UZS",
+    "form": {
+      "date": "Дата",
+      "usdToUzs": "1 USD (сум)"
+    },
+    "table": {
+      "date": "Дата",
+      "rate": "Курс (UZS)"
+    },
+    "noRates": "Курсы валют отсутствуют"
   }
 }

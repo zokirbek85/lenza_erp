@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+﻿import type { FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -17,7 +17,7 @@ const CurrencyRatesPage = () => {
   const [form, setForm] = useState({ rate_date: '', usd_to_uzs: '' });
 
   const loadRates = useCallback(async () => {
-    const response = await http.get('/api/currency-rates/');
+    const response = await http.get('/currency-rates/');
     setRates(toArray<CurrencyRate>(response.data));
   }, []);
 
@@ -33,7 +33,7 @@ const CurrencyRatesPage = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    await http.post('/api/currency-rates/', {
+    await http.post('/currency-rates/', {
       rate_date: form.rate_date,
       usd_to_uzs: Number(form.usd_to_uzs || 0),
     });
@@ -113,3 +113,4 @@ const CurrencyRatesPage = () => {
 };
 
 export default CurrencyRatesPage;
+

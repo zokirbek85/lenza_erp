@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../auth/useAuthStore';
+import { getApiBase } from '../app/apiBase';
 
 const TwoFactor = () => {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ const TwoFactor = () => {
     }
   }, [needsOtp, pendingCredentials, navigate]);
 
-  const apiBase = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') + '/api';
+  const apiBase = `${getApiBase()}/api`;
 
   const handleGenerate = async () => {
     if (!pendingCredentials) return;

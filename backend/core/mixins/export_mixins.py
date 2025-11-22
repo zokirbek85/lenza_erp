@@ -47,9 +47,13 @@ class ExportMixin:
                 'generated_at': timezone.now(),
             },
         )
-        pdf_bytes = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf()
+        pdf_bytes = HTML(
+            string=html, 
+            base_url=request.build_absolute_uri('/'),
+            encoding='utf-8'
+        ).write_pdf()
         filename = f"{filename_prefix}.pdf"
-        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response = HttpResponse(pdf_bytes, content_type='application/pdf; charset=utf-8')
         response['Content-Disposition'] = f'inline; filename="{filename}"'
         return response
 
@@ -87,7 +91,8 @@ class ExportMixin:
         filename = f"{filename_prefix}.xlsx"
         response = HttpResponse(
             stream.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8',
         )
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8'
         return response

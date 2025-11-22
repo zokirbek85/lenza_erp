@@ -76,7 +76,7 @@ export default function ExpenseReportPage() {
       setLoading(true);
       try {
         const params = { month: month.format('YYYY-MM') };
-        const response = await http.get<ExpenseReportPayload>('/api/expenses/report/', { params });
+        const response = await http.get<ExpenseReportPayload>('/expenses/report/', { params });
         setReport(response.data);
       } catch (err) {
         console.error('Monthly expenses load failed', err);
@@ -199,7 +199,7 @@ export default function ExpenseReportPage() {
       const suffix = monthParam.replace(/-/g, '_');
       const endpoint = format === 'pdf' ? 'pdf' : 'excel';
       const filename = `chiqimlar_${suffix}.${format}`;
-      const url = `/api/expenses/monthly/export/${endpoint}/?month=${monthParam}`;
+      const url = `/expenses/monthly/export/${endpoint}/?month=${monthParam}`;
       await downloadFile(url, filename);
       message.success(t('expenseReport.messages.exportSuccess', { format: format === 'pdf' ? 'PDF' : 'Excel' }));
     } catch (err) {
@@ -307,28 +307,28 @@ export default function ExpenseReportPage() {
 
       <Row gutter={24} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={12}>
-          <Title level={5}>Chiqim turlari bo‘yicha ulush (USD)</Title>
+          <Title level={5}>{t('expenseReport.chart.typeDistribution')}</Title>
           <div style={{ minHeight: 280, position: 'relative' }}>
             {loading && !report ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <Spin />
               </div>
             ) : reportRows.length === 0 ? (
-              <Empty description="Maʼlumot yoʻq" />
+              <Empty description={t('expenseReport.chart.noData')} />
             ) : (
               <Pie data={pieData} options={pieOptions} />
             )}
           </div>
         </Col>
         <Col xs={24} lg={12}>
-          <Title level={5}>Oy bo‘yicha trend (USD / UZS)</Title>
+          <Title level={5}>{t('expenseReport.chart.monthlyTrend')}</Title>
           <div style={{ minHeight: 280, position: 'relative' }}>
             {loading && !report ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                 <Spin />
               </div>
             ) : trendData.length === 0 ? (
-              <Empty description="Maʼlumot yoʻq" />
+              <Empty description={t('expenseReport.chart.noData')} />
             ) : (
               <Line data={lineData} options={lineOptions} />
             )}

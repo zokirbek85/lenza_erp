@@ -1,4 +1,4 @@
-import http from '../app/http';
+﻿import http from '../app/http';
 
 export interface ExpenseType {
   id: number;
@@ -64,86 +64,86 @@ export interface ExpenseFilters {
 
 // ========== EXPENSE TYPES ==========
 export const fetchExpenseTypes = async (): Promise<ExpenseType[]> => {
-  const response = await http.get('/api/expense-types/');
+  const response = await http.get('/expense-types/');
   return Array.isArray(response.data) ? response.data : [];
 };
 
 export const createExpenseType = async (data: Partial<ExpenseType>): Promise<ExpenseType> => {
-  const response = await http.post('/api/expense-types/', data);
+  const response = await http.post('/expense-types/', data);
   return response.data;
 };
 
 export const updateExpenseType = async (id: number, data: Partial<ExpenseType>): Promise<ExpenseType> => {
-  const response = await http.patch(`/api/expense-types/${id}/`, data);
+  const response = await http.patch(`/expense-types/${id}/`, data);
   return response.data;
 };
 
 export const deleteExpenseType = async (id: number): Promise<void> => {
-  await http.delete(`/api/expense-types/${id}/`);
+  await http.delete(`/expense-types/${id}/`);
 };
 
 // ========== EXPENSES ==========
 export const fetchExpenses = async (filters?: ExpenseFilters): Promise<Expense[]> => {
-  console.log('🔍 fetchExpenses called with filters:', filters);
-  const response = await http.get('/api/expenses/', { params: filters });
-  console.log('📥 fetchExpenses response:', response.data);
+  console.log('рџ”Ќ fetchExpenses called with filters:', filters);
+  const response = await http.get('/expenses/', { params: filters });
+  console.log('рџ“Ґ fetchExpenses response:', response.data);
   
   // DRF paginated response - {results: [], count: 0}
   if (response.data && typeof response.data === 'object' && Array.isArray(response.data.results)) {
-    console.log('✅ Found paginated results:', response.data.results.length, 'items');
+    console.log('вњ… Found paginated results:', response.data.results.length, 'items');
     return response.data.results;
   }
   
   // Direct array response
   if (Array.isArray(response.data)) {
-    console.log('✅ Found direct array:', response.data.length, 'items');
+    console.log('вњ… Found direct array:', response.data.length, 'items');
     return response.data;
   }
   
-  console.warn('⚠️ Unexpected response format:', response.data);
+  console.warn('вљ пёЏ Unexpected response format:', response.data);
   return [];
 };
 
 export const createExpense = async (data: Partial<Expense>): Promise<Expense> => {
-  const response = await http.post('/api/expenses/', data);
+  const response = await http.post('/expenses/', data);
   return response.data;
 };
 
 export const updateExpense = async (id: number, data: Partial<Expense>): Promise<Expense> => {
-  const response = await http.patch(`/api/expenses/${id}/`, data);
+  const response = await http.patch(`/expenses/${id}/`, data);
   return response.data;
 };
 
 export const deleteExpense = async (id: number): Promise<void> => {
-  await http.delete(`/api/expenses/${id}/`);
+  await http.delete(`/expenses/${id}/`);
 };
 
 export const approveExpense = async (id: number): Promise<Expense> => {
-  const response = await http.post(`/api/expenses/${id}/approve/`);
+  const response = await http.post(`/expenses/${id}/approve/`);
   return response.data;
 };
 
 // ========== STATISTICS ==========
 export const fetchExpenseStats = async (): Promise<ExpenseStats> => {
-  console.log('📊 fetchExpenseStats called');
-  const response = await http.get('/api/expenses/stats/');
-  console.log('📥 fetchExpenseStats response:', response.data);
+  console.log('рџ“Љ fetchExpenseStats called');
+  const response = await http.get('/expenses/stats/');
+  console.log('рџ“Ґ fetchExpenseStats response:', response.data);
   return response.data;
 };
 
 export const fetchExpenseTrend = async (days: number = 30): Promise<ExpenseTrend[]> => {
-  console.log('📈 fetchExpenseTrend called with days:', days);
-  const response = await http.get('/api/expenses/trend/', { params: { days } });
-  console.log('📥 fetchExpenseTrend response:', response.data);
+  console.log('рџ“€ fetchExpenseTrend called with days:', days);
+  const response = await http.get('/expenses/trend/', { params: { days } });
+  console.log('рџ“Ґ fetchExpenseTrend response:', response.data);
   return Array.isArray(response.data) ? response.data : [];
 };
 
 export const fetchExpenseDistribution = async (
   period: 'day' | 'week' | 'month' | 'all' = 'month'
 ): Promise<ExpenseDistribution[]> => {
-  console.log('🥧 fetchExpenseDistribution called with period:', period);
-  const response = await http.get('/api/expenses/distribution/', { params: { period } });
-  console.log('📥 fetchExpenseDistribution response:', response.data);
+  console.log('рџҐ§ fetchExpenseDistribution called with period:', period);
+  const response = await http.get('/expenses/distribution/', { params: { period } });
+  console.log('рџ“Ґ fetchExpenseDistribution response:', response.data);
   return Array.isArray(response.data) ? response.data : [];
 };
 
@@ -171,3 +171,4 @@ export const exportMonthlyExpensesPdf = async (month: string): Promise<Blob> => 
 export const exportMonthlyExpensesExcel = async (month: string): Promise<Blob> => {
   return fetchExportBlob('/api/expenses/monthly/export/excel/', { month });
 };
+

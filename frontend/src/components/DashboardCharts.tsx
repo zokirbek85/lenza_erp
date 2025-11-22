@@ -12,6 +12,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
 ChartJS.register(
@@ -33,6 +34,7 @@ interface RevenueTrendProps {
 }
 
 export const RevenueTrendChart = ({ data }: RevenueTrendProps) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const { mode } = useTheme();
   const isDark = mode === 'dark';
@@ -41,7 +43,7 @@ export const RevenueTrendChart = ({ data }: RevenueTrendProps) => {
     labels: data.map((d) => d.month),
     datasets: [
       {
-        label: 'Daromad (USD)',
+        label: t('dashboard.charts.revenue'),
         data: data.map((d) => d.total),
         backgroundColor: '#d4af37',
         borderRadius: 8,
@@ -165,6 +167,7 @@ interface InventoryTrendProps {
 }
 
 export const InventoryTrendLine = ({ data }: InventoryTrendProps) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const { mode } = useTheme();
   const isDark = mode === 'dark';
@@ -173,7 +176,7 @@ export const InventoryTrendLine = ({ data }: InventoryTrendProps) => {
     labels: data.map((d) => d.date),
     datasets: [
       {
-        label: 'Stok Qiymati (USD)',
+        label: t('dashboard.charts.stockValue'),
         data: data.map((d) => d.stock_value),
         borderColor: '#d4af37',
         backgroundColor: isDark ? 'rgba(212, 175, 55, 0.1)' : 'rgba(212, 175, 55, 0.05)',
@@ -242,6 +245,7 @@ interface ExpensesGaugeProps {
 }
 
 export const ExpensesGauge = ({ expenses, budget }: ExpensesGaugeProps) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const { mode } = useTheme();
   const isDark = mode === 'dark';
@@ -279,14 +283,14 @@ export const ExpensesGauge = ({ expenses, budget }: ExpensesGaugeProps) => {
             {percentage}%
           </span>
           <span className="text-xs" style={{ color: token.colorTextSecondary }}>
-            Ishlatilgan
+            {t('dashboard.charts.used')}
           </span>
         </div>
       </div>
       <div className="mt-6 grid w-full grid-cols-2 gap-4 text-center">
         <div>
           <p className="text-xs" style={{ color: token.colorTextSecondary }}>
-            Xarajat
+            {t('dashboard.charts.expenses')}
           </p>
           <p className="text-lg font-semibold" style={{ color: token.colorText }}>
             ${expenses.toLocaleString()}
@@ -294,7 +298,7 @@ export const ExpensesGauge = ({ expenses, budget }: ExpensesGaugeProps) => {
         </div>
         <div>
           <p className="text-xs" style={{ color: token.colorTextSecondary }}>
-            Budjet
+            {t('dashboard.charts.budget')}
           </p>
           <p className="text-lg font-semibold" style={{ color: token.colorText }}>
             ${budget.toLocaleString()}

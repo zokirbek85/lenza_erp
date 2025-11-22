@@ -27,6 +27,7 @@ class DealerSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), source='manager_user', allow_null=True, required=False
     )
     balance = serializers.DecimalField(max_digits=14, decimal_places=2, source='balance_usd', read_only=True)
+    debt = serializers.DecimalField(max_digits=14, decimal_places=2, source='debt_usd', read_only=True)
 
     class Meta:
         model = Dealer
@@ -40,6 +41,7 @@ class DealerSerializer(serializers.ModelSerializer):
             'manager_user',
             'manager_user_id',
             'opening_balance_usd',
+            'debt',
             'is_active',
             'balance',
             'created_at',

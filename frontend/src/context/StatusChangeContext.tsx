@@ -49,7 +49,7 @@ export const StatusChangeProvider = ({ children }: StatusChangeProviderProps) =>
             newStatus,
           });
 
-          const response = await http.patch(`/api/orders/${recordId}/status/`, {
+          const response = await http.patch(`/orders/${recordId}/status/`, {
             status: newStatus,
           });
 

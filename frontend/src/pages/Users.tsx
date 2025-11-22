@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -58,7 +58,7 @@ const UsersPage = () => {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/users/', {
+      const response = await http.get('/users/', {
         params: {
           page,
           page_size: pageSize,
@@ -139,10 +139,10 @@ const UsersPage = () => {
     };
     try {
       if (editing) {
-        await http.put(`/api/users/${editing.id}/`, payload);
+        await http.put(`/users/${editing.id}/`, payload);
         toast.success(t('users.messages.updated'));
       } else {
-        await http.post('/api/users/', payload);
+        await http.post('/users/', payload);
         toast.success(t('users.messages.created'));
       }
       setModalOpen(false);
@@ -160,7 +160,7 @@ const UsersPage = () => {
   const toggleActive = async (user: UserRecord) => {
     const path = user.is_active ? 'deactivate' : 'activate';
     try {
-      await http.post(`/api/users/${user.id}/${path}/`);
+      await http.post(`/users/${user.id}/${path}/`);
       toast.success(user.is_active ? t('users.messages.deactivated') : t('users.messages.activated'));
       loadUsers();
     } catch (error) {
@@ -385,3 +385,4 @@ const UsersPage = () => {
 };
 
 export default UsersPage;
+

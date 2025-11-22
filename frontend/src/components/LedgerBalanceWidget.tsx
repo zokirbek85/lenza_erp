@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Card, Statistic, Row, Col, Space, Badge, Spin, Typography } from 'antd';
 import { DollarOutlined, BankOutlined, CreditCardOutlined } from '@ant-design/icons';
 import http from '../app/http';
@@ -30,7 +30,7 @@ const LedgerBalanceWidget = () => {
   const fetchBalances = async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/ledger-accounts/balances/');
+      const response = await http.get('/ledger-accounts/balances/');
       setData(response.data);
     } catch (error) {
       console.error('Failed to fetch ledger balances:', error);
@@ -77,7 +77,7 @@ const LedgerBalanceWidget = () => {
     <Card 
       title={
         <Space>
-          <span>💼 Kassa balans</span>
+          <span>рџ’ј Kassa balans</span>
           <Badge 
             count={data.accounts.filter(a => a.balance_usd > 0).length} 
             style={{ backgroundColor: '#52c41a' }}
@@ -178,3 +178,4 @@ const LedgerBalanceWidget = () => {
 };
 
 export default LedgerBalanceWidget;
+

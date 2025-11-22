@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 
 import http from '../app/http';
 import { toArray } from '../utils/api';
@@ -70,7 +70,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (filters.brandId) params.brand = filters.brandId;
     if (filters.categoryId) params.category = filters.categoryId;
     if (searchText.trim()) params.search = searchText.trim();
-    const response = await http.get('/api/products/', { params });
+    const response = await http.get('/products/', { params });
     set({ products: toArray<OrderProduct>(response.data) });
   },
   addItem: (item) =>
@@ -144,3 +144,4 @@ export const loadDraftOrder = (): OrderItem[] => {
   }
   return [];
 };
+

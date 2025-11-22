@@ -111,6 +111,8 @@ def export_expenses_to_excel(expenses):
 
 def _workbook_to_file(workbook: Workbook, prefix: str):
     stream = BytesIO()
+    # Add UTF-8 BOM for better Excel compatibility with Cyrillic
+    stream.write(b'\xef\xbb\xbf')
     workbook.save(stream)
     stream.seek(0)
     return save_temp_file(stream.getvalue(), prefix, '.xlsx')

@@ -1,7 +1,8 @@
-import { Button, Card, Col, DatePicker, Row, Select, Space, theme } from 'antd';
+﻿import { Button, Card, Col, DatePicker, Row, Select, Space, theme } from 'antd';
 import { useState, useEffect } from 'react';
 import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Dayjs } from 'dayjs';
+import { useTranslation } from 'react-i18next';
 import http from '../app/http';
 
 const { RangePicker } = DatePicker;
@@ -29,23 +30,24 @@ interface OrderFiltersProps {
   onChange: (filters: OrderFiltersType) => void;
 }
 
-const ORDER_TYPES = [
-  { value: 'regular', label: 'Oddiy' },
-  { value: 'reserve', label: 'Bron' },
-];
-
-const ORDER_STATUSES = [
-  { value: 'created', label: 'Yaratilgan' },
-  { value: 'confirmed', label: 'Tasdiqlangan' },
-  { value: 'packed', label: "Yig'ilgan" },
-  { value: 'shipped', label: 'Yuborilgan' },
-  { value: 'delivered', label: 'Yetkazilgan' },
-  { value: 'cancelled', label: 'Bekor qilingan' },
-  { value: 'returned', label: 'Qaytarilgan' },
-];
-
 export default function OrderFilters({ onChange }: OrderFiltersProps) {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
+  
+  const ORDER_TYPES = [
+    { value: 'regular', label: t('orders.type.regular') },
+    { value: 'reserve', label: t('orders.type.reserve') },
+  ];
+
+  const ORDER_STATUSES = [
+    { value: 'created', label: t('common:status.created') },
+    { value: 'confirmed', label: t('common:status.confirmed') },
+    { value: 'packed', label: t('common:status.packed') },
+    { value: 'shipped', label: t('common:status.shipped') },
+    { value: 'delivered', label: t('common:status.delivered') },
+    { value: 'cancelled', label: t('common:status.cancelled') },
+    { value: 'returned', label: t('common:status.returned') },
+  ];
   
   const [dealers, setDealers] = useState<DealerOption[]>([]);
   const [regions, setRegions] = useState<RegionOption[]>([]);
@@ -71,8 +73,8 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
       setLoading(true);
       try {
         const [dealersRes, regionsRes] = await Promise.all([
-          http.get('/api/dealers/', { params: { page_size: 1000 } }),
-          http.get('/api/regions/', { params: { page_size: 1000 } }),
+          http.get('/dealers/', { params: { page_size: 1000 } }),
+          http.get('/regions/', { params: { page_size: 1000 } }),
         ]);
         
         const dealersData = dealersRes.data?.results || dealersRes.data || [];
@@ -142,7 +144,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
       title={
         <Space>
           <FilterOutlined style={{ color: '#d4af37' }} />
-          <span style={{ color: token.colorText }}>Filtrlar</span>
+          <span style={{ color: token.colorText }}>{t('common:filters.title')}</span>
         </Space>
       }
     >
@@ -152,7 +154,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
           <Select
             mode="multiple"
             allowClear
-            placeholder="Dilerlar"
+            placeholder={t('orders.filters.dealers')}
             value={filters.dealer}
             onChange={(v) => handleChange('dealer', v)}
             loading={loading}
@@ -166,7 +168,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
         <Col xs={12} sm={12} md={4}>
           <Select
             allowClear
-            placeholder="Buyurtma turi"
+            placeholder={t('orders.filters.type')}
             value={filters.type}
             options={ORDER_TYPES}
             onChange={(v) => handleChange('type', v)}
@@ -178,7 +180,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
         <Col xs={12} sm={12} md={5}>
           <Select
             allowClear
-            placeholder="Status"
+            placeholder={t('orders.filters.status')}
             value={filters.status}
             options={ORDER_STATUSES}
             onChange={(v) => handleChange('status', v)}
@@ -190,7 +192,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
         <Col xs={12} sm={12} md={4}>
           <Select
             allowClear
-            placeholder="Hudud"
+            placeholder={t('orders.filters.region')}
             value={filters.region}
             onChange={(v) => handleChange('region', v)}
             loading={loading}
@@ -206,7 +208,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
             value={filters.dates}
             onChange={(v) => handleChange('dates', v)}
             style={{ width: '100%' }}
-            placeholder={['Boshlanish', 'Tugash']}
+            placeholder={[t('orders.filters.dateFrom'), t('orders.filters.dateTo')]}
           />
         </Col>
 
@@ -223,13 +225,13 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
                 color: '#1e1e1e',
               }}
             >
-              Qo'llash
+              {t('common:filters.apply')}
             </Button>
             <Button 
               icon={<ReloadOutlined />} 
               onClick={resetFilters}
             >
-              Tozalash
+              {t('common:filters.clear')}
             </Button>
           </Space>
         </Col>
@@ -237,3 +239,4 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
     </Card>
   );
 }
+

@@ -1,8 +1,9 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
   <head>
     <meta charset="UTF-8" />
-    <title>Karta bo‘yicha to‘lovlar statistikasi</title>
+    <title>{% trans 'Payment statistics by card' %}</title>
     <style>
       @page { size: A4; margin: 2cm; }
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; font-size: 11pt; color: #111827; }
@@ -27,18 +28,18 @@
       {% endif %}
     </div>
 
-    <h1>Karta bo‘yicha to‘lovlar statistikasi</h1>
-    <p class="meta">Sana oralig‘i: {{ from_date|default:"-" }} — {{ to_date|default:"-" }}</p>
+    <h1>{% trans 'Payment statistics by card' %}</h1>
+    <p class="meta">{% trans 'Period' %}: {{ from_date|default:"-" }} — {{ to_date|default:"-" }}</p>
     <table>
       <thead>
         <tr>
           <th>#</th>
-          <th>Karta nomi</th>
-          <th>Raqam</th>
-          <th>Foydalanuvchi</th>
-          <th>To‘lovlar soni</th>
-          <th>Umumiy summa (USD)</th>
-          <th>Oxirgi to‘lov</th>
+          <th>{% trans 'Card name' %}</th>
+          <th>{% trans 'Number' %}</th>
+          <th>{% trans 'User' %}</th>
+          <th>{% trans 'Payment count' %}</th>
+          <th>{% trans 'Total amount (USD)' %}</th>
+          <th>{% trans 'Last payment' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -60,24 +61,24 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" class="muted">Ma'lumot topilmadi</td>
+          <td colspan="7" class="muted">{% trans 'No data found' %}</td>
         </tr>
         {% endfor %}
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="5">Jami</td>
+          <td colspan="5">{% trans 'Total' %}</td>
           <td>${{ total_sum|floatformat:2 }}</td>
           <td></td>
         </tr>
       </tfoot>
     </table>
 
-    <p class="meta" style="margin-top: 24px;">Hisobot yaratilgan: {{ generated_at }}</p>
+    <p class="meta" style="margin-top: 24px;">{% trans 'Report generated' %}: {{ generated_at }}</p>
 
     <div style="margin-top: 24px; text-align: center; font-size: 10px; color: #777;">
-      <p>Imzolangan: <strong>{{ company.name|default:"Lenza ERP" }}</strong> tizimi orqali</p>
-      <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+      <p>{% trans 'Signed via' %} <strong>{{ company.name|default:"Lenza ERP" }}</strong> {% trans 'system' %}</p>
+      <p>{% trans 'Scan QR to verify authenticity' %}:</p>
       <img src="{{ qr_code }}" alt="QR" style="height:80px;"/>
       <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
     </div>

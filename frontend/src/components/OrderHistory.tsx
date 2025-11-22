@@ -39,11 +39,11 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await http.get(`/api/orders/${orderId}/history/`);
+        const response = await http.get(`/orders/${orderId}/history/`);
         setLogs(response.data);
       } catch (err) {
         console.error('Failed to fetch order history:', err);
-        setError(t('order.history_fetch_failed'));
+        setError(t('orders.history.loadError'));
       } finally {
         setLoading(false);
       }
@@ -54,43 +54,43 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
 
   const columns = [
     {
-      title: t('order.old_status'),
+      title: t('orders.history.oldStatus'),
       dataIndex: 'old_status',
       key: 'old_status',
       width: '25%',
       render: (status: string | null) => {
         if (!status) {
-          return <Tag color="default">{t('order.initial_creation')}</Tag>;
+          return <Tag color="default">{t('orders.history.initialCreation')}</Tag>;
         }
         return (
           <Tag color={STATUS_COLORS[status] || 'default'}>
-            {t(`order.status.${status}`, { defaultValue: status })}
+            {t(`orders.status.${status}`, { defaultValue: status })}
           </Tag>
         );
       },
     },
     {
-      title: t('order.new_status'),
+      title: t('orders.history.newStatus'),
       dataIndex: 'new_status',
       key: 'new_status',
       width: '25%',
       render: (status: string) => (
         <Tag color={STATUS_COLORS[status] || 'blue'}>
-          {t(`order.status.${status}`, { defaultValue: status })}
+          {t(`orders.status.${status}`, { defaultValue: status })}
         </Tag>
       ),
     },
     {
-      title: t('order.changed_by'),
+      title: t('orders.history.changedBy'),
       dataIndex: 'by_user',
       key: 'by_user',
       width: '25%',
       render: (user: string | null) => (
-        <Typography.Text>{user || t('order.system')}</Typography.Text>
+        <Typography.Text>{user || t('orders.history.system')}</Typography.Text>
       ),
     },
     {
-      title: t('order.changed_at'),
+      title: t('orders.history.changedAt'),
       dataIndex: 'at',
       key: 'at',
       width: '25%',
@@ -109,7 +109,7 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '24px' }}>
-        <Spin tip={t('order.loading_history')} />
+        <Spin size="large" />
       </div>
     );
   }
@@ -117,7 +117,7 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
   if (error) {
     return (
       <Alert
-        message={t('order.error')}
+        message={t('common:messages.error')}
         description={error}
         type="error"
         showIcon
@@ -129,7 +129,7 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
   return (
     <div style={{ marginTop: 24 }}>
       <Typography.Title level={5}>
-        {t('order.status_history')}
+        {t('orders.history.title')}
       </Typography.Title>
       <Table
         size="small"
@@ -138,7 +138,7 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
         rowKey="id"
         pagination={false}
         locale={{
-          emptyText: t('order.no_history'),
+          emptyText: t('orders.history.noHistory'),
         }}
       />
     </div>

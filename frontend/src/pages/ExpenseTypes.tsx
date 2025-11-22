@@ -22,7 +22,7 @@ export default function ExpenseTypes() {
   const fetchData = () => {
     setLoading(true)
     http
-      .get("/api/expense-types/")
+      .get("/expense-types/")
       .then((res) => {
         // Array tekshiruvi - DRF paginated bo'lsa results dan olish
         const rawData = res.data
@@ -62,8 +62,8 @@ export default function ExpenseTypes() {
       .validateFields()
       .then((values) => {
         const req = editing
-          ? http.put(`/api/expense-types/${editing.id}/`, values)
-          : http.post("/api/expense-types/", values)
+          ? http.put(`/expense-types/${editing.id}/`, values)
+          : http.post("/expense-types/", values)
         req
           .then(() => {
             message.success(t('expenseTypes.messages.saved'))
@@ -89,7 +89,7 @@ export default function ExpenseTypes() {
       okButtonProps: { danger: true },
       onOk: () => {
         http
-          .delete(`/api/expense-types/${id}/`)
+          .delete(`/expense-types/${id}/`)
           .then(() => {
             message.success(t('expenseTypes.messages.deleted'))
             fetchData()

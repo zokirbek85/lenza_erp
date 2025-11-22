@@ -1,4 +1,4 @@
-import http from '../app/http';
+﻿import http from '../app/http';
 
 export interface UserManual {
   id: number;
@@ -9,10 +9,11 @@ export interface UserManual {
 }
 
 export const getUserManuals = async (): Promise<UserManual[]> => {
-  const res = await http.get('/api/user-manuals/');
+  const res = await http.get('/user-manuals/');
   const data = res.data;
   if (data && typeof data === 'object' && Array.isArray(data.results)) {
     return data.results as UserManual[];
   }
   return Array.isArray(data) ? (data as UserManual[]) : [];
 };
+

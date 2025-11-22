@@ -1,0 +1,351 @@
+# Russian translation for Lenza ERP
+# Copyright (C) 2025 Lenza ERP
+# This file is distributed under the same license as the Lenza ERP package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-22 14:45+0500\n"
+"PO-Revision-Date: 2025-11-22 14:45+0500\n"
+"Last-Translator: Lenza Team\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+# Invoice template translations
+msgid "Invoice"
+msgstr "Счет-фактура"
+
+msgid "Issued"
+msgstr "Выдан"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Dealer"
+msgstr "Дилер"
+
+msgid "Value date"
+msgstr "Дата"
+
+msgid "Created by"
+msgstr "Создано"
+
+msgid "Order type"
+msgstr "Тип заказа"
+
+msgid "Reserve"
+msgstr "Резерв"
+
+msgid "Regular"
+msgstr "Обычный"
+
+msgid "Total Items"
+msgstr "Всего товаров"
+
+msgid "Product"
+msgstr "Товар"
+
+msgid "Qty"
+msgstr "Кол-во"
+
+msgid "Price (USD)"
+msgstr "Цена (USD)"
+
+msgid "Line total"
+msgstr "Итого"
+
+msgid "SKU"
+msgstr "Артикул"
+
+msgid "No items in this order."
+msgstr "В этом заказе нет товаров."
+
+msgid "Subtotal"
+msgstr "Промежуточный итог"
+
+msgid "Total (USD)"
+msgstr "Итого (USD)"
+
+msgid "Note"
+msgstr "Примечание"
+
+msgid "Authorized signature"
+msgstr "Подпись уполномоченного лица"
+
+# Reconciliation report translations
+msgid "Reconciliation Report"
+msgstr "Отчет о сверке"
+
+msgid "Period"
+msgstr "Период"
+
+msgid "Generated"
+msgstr "Создано"
+
+msgid "Summary"
+msgstr "Резюме"
+
+msgid "Total Sales"
+msgstr "Всего продаж"
+
+msgid "Total Payments"
+msgstr "Всего платежей"
+
+msgid "Net Balance"
+msgstr "Чистый баланс"
+
+msgid "Dealer Balance Details"
+msgstr "Детали баланса дилера"
+
+msgid "Opening Balance"
+msgstr "Начальный баланс"
+
+msgid "Sales Amount"
+msgstr "Сумма продаж"
+
+msgid "Payments"
+msgstr "Платежи"
+
+msgid "Closing Balance"
+msgstr "Конечный баланс"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "Amount"
+msgstr "Сумма"
+
+msgid "Description"
+msgstr "Описание"
+
+msgid "No data available"
+msgstr "Нет данных"
+
+# Expenses report translations
+msgid "Expenses Report"
+msgstr "Отчет о расходах"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Category"
+msgstr "Категория"
+
+msgid "Method"
+msgstr "Метод"
+
+msgid "Total"
+msgstr "Итого"
+
+msgid "Currency"
+msgstr "Валюта"
+
+msgid "Card"
+msgstr "Карта"
+
+msgid "Cash"
+msgstr "Наличные"
+
+msgid "Bank Transfer"
+msgstr "Банковский перевод"
+
+# Payment report translations
+msgid "Payment Report"
+msgstr "Отчет о платежах"
+
+msgid "Payment Date"
+msgstr "Дата платежа"
+
+msgid "Payment Method"
+msgstr "Метод оплаты"
+
+msgid "Reference"
+msgstr "Ссылка"
+
+# General
+msgid "Page"
+msgstr "Страница"
+
+msgid "of"
+msgstr "из"
+
+msgid "All"
+msgstr "Все"
+
+msgid "From"
+msgstr "От"
+
+msgid "To"
+msgstr "До"
+
+msgid "Filter"
+msgstr "Фильтр"
+
+msgid "Export"
+msgstr "Экспорт"
+
+msgid "Print"
+msgstr "Печать"
+
+# Excel export headers
+msgid "Expenses"
+msgstr "Расходы"
+
+msgid "Monthly Expenses"
+msgstr "Ежемесячные расходы"
+
+msgid "Total USD"
+msgstr "Всего USD"
+
+msgid "Total UZS"
+msgstr "Всего UZS"
+
+msgid "Share (%)"
+msgstr "Доля (%)"
+
+msgid "Expenses Export"
+msgstr "Экспорт расходов"
+
+# Additional translations
+msgid "Daily Payments Report"
+msgstr "Ежедневный отчет о платежах"
+
+msgid "USD Equivalent"
+msgstr "Эквивалент USD"
+
+msgid "No payments on this date."
+msgstr "Нет платежей на эту дату."
+
+msgid "Month"
+msgstr "Месяц"
+
+msgid "Account"
+msgstr "Счет"
+
+msgid "Total (USD)"
+msgstr "Итого (USD)"
+
+msgid "Signed via"
+msgstr "Подписано через"
+
+msgid "system"
+msgstr "систему"
+
+msgid "Scan QR to verify authenticity"
+msgstr "Отсканируйте QR для проверки подлинности"
+
+# Orders report
+msgid "Orders Summary"
+msgstr "Сводка заказов"
+
+msgid "Display #"
+msgstr "Номер"
+
+msgid "No orders available"
+msgstr "Заказы отсутствуют"
+
+# Products report
+msgid "Product Inventory"
+msgstr "Инвентаризация товаров"
+
+msgid "Name"
+msgstr "Название"
+
+msgid "Brand"
+msgstr "Бренд"
+
+msgid "Sell Price"
+msgstr "Цена продажи"
+
+msgid "Stock OK"
+msgstr "Хороший товар"
+
+msgid "Stock Defect"
+msgstr "Бракованный товар"
+
+msgid "No products available"
+msgstr "Товары отсутствуют"
+
+# Returns report
+msgid "Report"
+msgstr "Отчет"
+
+msgid "Returns"
+msgstr "Возвраты"
+
+msgid "Total records"
+msgstr "Всего записей"
+
+msgid "Quantity"
+msgstr "Количество"
+
+msgid "Reason"
+msgstr "Причина"
+
+msgid "Defective"
+msgstr "Бракованный"
+
+msgid "Good"
+msgstr "Хороший"
+
+msgid "No data found"
+msgstr "Данные не найдены"
+
+# Dealer balance
+msgid "Dealer Balances"
+msgstr "Балансы дилеров"
+
+msgid "Region"
+msgstr "Регион"
+
+msgid "Balance (USD)"
+msgstr "Баланс (USD)"
+
+msgid "No dealers available"
+msgstr "Дилеры отсутствуют"
+
+# Monthly expenses report
+msgid "Monthly Expenses Report"
+msgstr "Отчет о ежемесячных расходах"
+
+msgid "Rate (1 USD)"
+msgstr "Курс (1 USD)"
+
+msgid "som"
+msgstr "сум"
+
+msgid "Expense type"
+msgstr "Тип расхода"
+
+msgid "Rate"
+msgstr "Курс"
+
+# Cards report
+msgid "Payment statistics by card"
+msgstr "Статистика платежей по картам"
+
+msgid "Card name"
+msgstr "Название карты"
+
+msgid "Number"
+msgstr "Номер"
+
+msgid "User"
+msgstr "Пользователь"
+
+msgid "Payment count"
+msgstr "Количество платежей"
+
+msgid "Total amount (USD)"
+msgstr "Общая сумма (USD)"
+
+msgid "Last payment"
+msgstr "Последний платеж"
+
+msgid "Report generated"
+msgstr "Отчет создан"

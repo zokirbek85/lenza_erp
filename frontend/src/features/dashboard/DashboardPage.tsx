@@ -45,6 +45,8 @@ import {
   fetchCurrencyHistory,
   fetchDashboardSummary,
   fetchCardsKpi,
+  fetchInventoryStats,
+  type InventoryStats,
 } from '../../services/dashboardService';
 import { fetchDebtAnalytics } from '@/services/dashboard';
 
@@ -93,6 +95,7 @@ const DashboardPage = () => {
     Array<{ card_id: number; card_name: string; holder_name: string; total_amount: number; payments_count: number; last_payment_date?: string | null }>
   >([]);
   const [debtAnalytics, setDebtAnalytics] = useState<DebtAnalytics | null>(null);
+  const [inventoryStats, setInventoryStats] = useState<InventoryStats | null>(null);
 
   const canLoadOwnerKpi = role === 'admin' || role === 'owner' || role === 'accountant';
   const canLoadSalesKpi = role === 'admin' || role === 'sales';
@@ -107,7 +110,7 @@ const DashboardPage = () => {
         ? fetchDebtAnalytics().catch(() => ({ data: null }))
         : Promise.resolve({ data: null });
 
-      const [owner, sales, accountant, currency, summary, cards, analytics] = await Promise.all([
+      const [owner, sales, accountant, currency, summary, cards, analytics, inventory] = await Promise.all([
         canLoadOwnerKpi ? fetchDashboardData(filters) : Promise.resolve({ data: null }),
         canLoadSalesKpi ? fetchSalesManagerData(filters) : Promise.resolve({ data: null }),
         canLoadAccountantKpi ? fetchAccountantData(filters) : Promise.resolve({ data: null }),
@@ -128,6 +131,7 @@ const DashboardPage = () => {
         })),
         canLoadCardKpi ? fetchCardsKpi(filters).catch(() => ({ data: [] as any[] })) : Promise.resolve({ data: [] as any[] }),
         debtAnalyticsRequest,
+        fetchInventoryStats().catch(() => ({ data: { total_quantity: 0, total_value_usd: 0 } })),
       ]);
       setOwnerData(owner?.data ?? null);
       setSalesData(sales?.data ?? null);
@@ -137,6 +141,7 @@ const DashboardPage = () => {
       const normalizedCards = Array.isArray(cards?.data) ? (cards?.data as any) : [];
       setCardKpi(normalizedCards);
       setDebtAnalytics((analytics?.data as DebtAnalytics | null) ?? null);
+      setInventoryStats(inventory?.data ?? null);
       saveCache('dashboard-data', {
         owner: owner?.data ?? null,
         sales: sales?.data ?? null,
@@ -145,6 +150,7 @@ const DashboardPage = () => {
         summary,
         cardKpi: normalizedCards,
         analytics: (analytics?.data as DebtAnalytics | null) ?? null,
+        inventoryStats: inventory?.data ?? null,
       });
     } finally {
       setLoading(false);
@@ -161,6 +167,7 @@ const DashboardPage = () => {
         cardKpi: any[] | null;
         summary: DashboardSummary | null;
         analytics: DebtAnalytics | null;
+        inventoryStats: InventoryStats | null;
       }>('dashboard-data');
       if (cached) {
         setOwnerData(cached.owner);
@@ -170,6 +177,7 @@ const DashboardPage = () => {
         setCardKpi(cached.cardKpi || []);
         setDashboardData(cached.summary ?? null);
         setDebtAnalytics(cached.analytics ?? null);
+        setInventoryStats(cached.inventoryStats ?? null);
       }
     });
   }, []);
@@ -293,6 +301,31 @@ const DashboardPage = () => {
             tooltip="Faol dilerlar"
             loading={loading}
           />
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} lg={8}>
+          <Card className="shadow-sm hover:shadow-md transition-shadow" style={{ height: '100%' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.title')}</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                  {loading ? '...' : formatQuantity(inventoryStats?.total_quantity ?? 0)}
+                </p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.unit')}</p>
+              </div>
+              <div className="rounded-full bg-blue-100 p-4 dark:bg-blue-900">
+                <ShoppingOutlined style={{ fontSize: '24px', color: '#3b82f6' }} />
+              </div>
+            </div>
+            <div className="mt-4 border-t pt-4 dark:border-slate-700">
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.totalValue')}</p>
+              <p className="mt-1 text-xl font-semibold text-green-600 dark:text-green-400">
+                ${loading ? '...' : formatCurrency(inventoryStats?.total_value_usd ?? 0)}
+              </p>
+            </div>
+          </Card>
         </Col>
       </Row>
 

@@ -1,8 +1,9 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
 <head>
   <meta charset="utf-8"/>
-  <title>Oylik Chiqimlar Hisoboti</title>
+  <title>{% trans 'Monthly Expenses Report' %}</title>
   <style>
     body { font-family: "Inter", "Helvetica Neue", sans-serif; margin: 24px; color: #111827; }
     header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
@@ -34,20 +35,20 @@
   </header>
 
   <div>
-    <h2 style="margin:0;">Oylik chiqimlar hisobot ({{ month }})</h2>
+    <h2 style="margin:0;">{% trans 'Monthly Expenses Report' %} ({{ month }})</h2>
     <div class="meta filters">
-      <span>Sana oraligʻi: {{ from_date }} – {{ to_date }}</span>
-      <span>Kurs (1 USD): {{ rate|floatformat:2 }} so'm</span>
+      <span>{% trans 'Period' %}: {{ from_date }} – {{ to_date }}</span>
+      <span>{% trans 'Rate (1 USD)' %}: {{ rate|floatformat:2 }} {% trans 'som' %}</span>
     </div>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>Chiqim turi</th>
-        <th>USD</th>
-        <th>UZS</th>
-        <th>Ulush (%)</th>
+        <th>{% trans 'Expense type' %}</th>
+        <th>{% trans 'USD' %}</th>
+        <th>{% trans 'UZS' %}</th>
+        <th>{% trans 'Share (%)' %}</th>
       </tr>
     </thead>
     <tbody>
@@ -65,19 +66,19 @@
   <div class="totals">
     <div>
       <strong>${{ total_usd|floatformat:2 }}</strong>
-      <span>Jami USD</span>
+      <span>{% trans 'Total USD' %}</span>
     </div>
     <div>
-      <strong>{{ total_uzs|floatformat:0 }} so'm</strong>
-      <span>Jami UZS</span>
+      <strong>{{ total_uzs|floatformat:0 }} {% trans 'som' %}</strong>
+      <span>{% trans 'Total UZS' %}</span>
     </div>
     <div>
-      <strong>{{ rate|floatformat:2 }} so'm</strong>
-      <span>Kurs</span>
+      <strong>{{ rate|floatformat:2 }} {% trans 'som' %}</strong>
+      <span>{% trans 'Rate' %}</span>
     </div>
   </div>
   <footer style="font-size:0.75rem; margin-top:16px; color:#475569;">
-    <div>Yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}</div>
+    <div>{% trans 'Generated' %}: {{ generated_at|date:"d.m.Y H:i" }}</div>
   </footer>
 </body>
 </html>

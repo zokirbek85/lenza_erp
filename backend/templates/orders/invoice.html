@@ -1,6 +1,6 @@
-{% load tz %}
+{% load tz i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
   <head>
     <meta charset="utf-8" />
     <style>
@@ -22,7 +22,7 @@
       }
 
       body {
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        font-family: 'DejaVu Sans', 'Arial Unicode MS', 'Inter', 'Segoe UI', Arial, sans-serif;
         font-size: 13px;
         line-height: 1.5;
         color: var(--primary);
@@ -214,32 +214,32 @@
           </div>
         </div>
         <div class="invoice-meta">
-          <span class="meta-label">Invoice</span>
+          <span class="meta-label">{% trans 'Invoice' %}</span>
           <div class="invoice-number">{{ order.display_no }}</div>
-          <div>Issued: {{ order.created_at|date:"d.m.Y H:i" }}</div>
-          <div>Status: {{ order.get_status_display }}</div>
+          <div>{% trans 'Issued' %}: {{ order.created_at|date:"d.m.Y H:i" }}</div>
+          <div>{% trans 'Status' %}: {{ order.get_status_display }}</div>
         </div>
       </header>
 
       <section class="info-cards">
         <div class="info-card">
-          <span class="meta-label">Dealer</span>
+          <span class="meta-label">{% trans 'Dealer' %}</span>
           <strong>{{ order.dealer.name }}</strong>
           <div>{{ order.dealer.phone|default:"—" }}</div>
           <div>{{ order.dealer.address|default:"" }}</div>
         </div>
         <div class="info-card">
-          <span class="meta-label">Value date</span>
+          <span class="meta-label">{% trans 'Value date' %}</span>
           <strong>{{ order.value_date|date:"d.m.Y" }}</strong>
           <div>
-            Created by:
+            {% trans 'Created by' %}:
             {{ order.created_by.get_full_name|default:order.created_by|default:"System" }}
           </div>
         </div>
         <div class="info-card">
-          <span class="meta-label">Order type</span>
-          <strong>{% if order.is_reserve %}Reserve{% else %}Regular{% endif %}</strong>
-          <div>Total Items: {{ items|length }}</div>
+          <span class="meta-label">{% trans 'Order type' %}</span>
+          <strong>{% if order.is_reserve %}{% trans 'Reserve' %}{% else %}{% trans 'Regular' %}{% endif %}</strong>
+          <div>{% trans 'Total Items' %}: {{ items|length }}</div>
         </div>
       </section>
 
@@ -247,10 +247,10 @@
         <thead>
           <tr>
             <th style="width: 40px">#</th>
-            <th>Product</th>
-            <th style="width: 90px">Qty</th>
-            <th style="width: 120px">Price (USD)</th>
-            <th style="width: 120px">Line total</th>
+            <th>{% trans 'Product' %}</th>
+            <th style="width: 90px">{% trans 'Qty' %}</th>
+            <th style="width: 120px">{% trans 'Price (USD)' %}</th>
+            <th style="width: 120px">{% trans 'Line total' %}</th>
           </tr>
         </thead>
         <tbody>
@@ -259,7 +259,7 @@
             <td>{{ forloop.counter }}</td>
             <td>
               <strong>{{ item.product.name|default:"Unnamed product" }}</strong><br />
-              <span style="color: var(--text-muted); font-size: 12px;">SKU: {{ item.product.sku|default:"—" }}</span>
+              <span style="color: var(--text-muted); font-size: 12px;">{% trans 'SKU' %}: {{ item.product.sku|default:"—" }}</span>
             </td>
             <td>{{ item.qty|floatformat:2 }}</td>
             <td>${{ item.price_usd }}</td>
@@ -267,7 +267,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No items in this order.</td>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">{% trans 'No items in this order.' %}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -276,11 +276,11 @@
       <div class="totals">
         <table>
           <tr>
-            <td>Subtotal</td>
+            <td>{% trans 'Subtotal' %}</td>
             <td>${{ order.total_usd }}</td>
           </tr>
           <tr>
-            <td>Total (USD)</td>
+            <td>{% trans 'Total (USD)' %}</td>
             <td>${{ order.total_usd }}</td>
           </tr>
         </table>
@@ -288,13 +288,13 @@
 
       {% if order.note %}
       <div class="notes">
-        <span class="meta-label">Note</span>
+        <span class="meta-label">{% trans 'Note' %}</span>
         {{ order.note }}
       </div>
       {% endif %}
 
       <div class="signature">
-        <div class="line">Authorized signature</div>
+        <div class="line">{% trans 'Authorized signature' %}</div>
       </div>
 
       <div class="footer">

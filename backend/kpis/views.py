@@ -186,3 +186,40 @@ class CardKPIView(APIView):
         data.sort(key=lambda x: x['total_amount'], reverse=True)
 
         return Response(data)
+
+
+class InventoryStatsView(APIView):
+    """Returns inventory statistics: total healthy stock quantity and total value in USD.
+    
+    Returns:
+    - total_quantity: sum of all stock_ok across all products
+    - total_value_usd: sum of (stock_ok * sell_price_usd) for all products
+    """
+    permission_classes = [IsAdmin | IsOwner | IsWarehouse | IsAccountant]
+
+    def get(self, request):
+        from django.db.models import F, DecimalField
+        from django.db.models.functions import Coalesce
+        
+        products = Product.objects.all()
+        
+        # Calculate total quantity (sum of stock_ok)
+        total_quantity = products.aggregate(
+            total=Coalesce(Sum('stock_ok'), Decimal('0'), output_field=DecimalField())
+        )['total'] or Decimal('0')
+        
+        # Calculate total value (sum of stock_ok * sell_price_usd)
+        total_value = products.aggregate(
+            total=Coalesce(
+                Sum(F('stock_ok') * F('sell_price_usd'), output_field=DecimalField()),
+                Decimal('0'),
+                output_field=DecimalField()
+            )
+        )['total'] or Decimal('0')
+        
+        data = {
+            'total_quantity': float(total_quantity),
+            'total_value_usd': float(total_value),
+        }
+        
+        return Response(data)

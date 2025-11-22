@@ -212,9 +212,9 @@ def build_monthly_payload(start_date: date, end_date: date, month_label: str) ->
 
 def render_pdf_response(request, context: dict, month_label: str, template: str = 'expenses/export_monthly_pdf.html') -> HttpResponse:
     html = render_to_string('expenses/report.html', context)
-    pdf_bytes = HTML(string=html).write_pdf()
+    pdf_bytes = HTML(string=html, encoding='utf-8').write_pdf()
     filename = f"monthly_expenses_{month_label}.pdf"
-    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response = HttpResponse(pdf_bytes, content_type='application/pdf; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 

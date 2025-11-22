@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
   <head>
     <meta charset="utf-8" />
     <style>
-      body { font-family: Arial, sans-serif; font-size: 12px; margin: 25px; }
+      body { font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif; font-size: 12px; margin: 25px; }
       .header { display:flex; align-items:center; margin-bottom: 12px; }
       .logo { height: 48px; margin-right: 10px; }
       h1 { text-align: center; }
@@ -23,15 +24,15 @@
         <div style="font-size:10px;">{{ company_address }}{% if company_phone %} | {{ company_phone }}{% endif %}</div>
       </div>
     </div>
-    <h1>Orders Summary</h1>
+    <h1>{% trans 'Orders Summary' %}</h1>
     <table>
       <thead>
         <tr>
-          <th>Display #</th>
-          <th>Dealer</th>
-          <th>Status</th>
-          <th>Total (USD)</th>
-          <th>Date</th>
+          <th>{% trans 'Display #' %}</th>
+          <th>{% trans 'Dealer' %}</th>
+          <th>{% trans 'Status' %}</th>
+          <th>{% trans 'Total (USD)' %}</th>
+          <th>{% trans 'Date' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -44,13 +45,13 @@
           <td>{{ order.value_date }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="5">No orders available.</td></tr>
+        <tr><td colspan="5">{% trans 'No orders available' %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
     <div class="footer">
-      <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
-      <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+      <p>{% trans 'Signed via' %} <strong>{{ company_name }}</strong> {% trans 'system' %}</p>
+      <p>{% trans 'Scan QR to verify authenticity' %}:</p>
       <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
       <a href="{{ verify_url }}">{{ verify_url }}</a>
     </div>

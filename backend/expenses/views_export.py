@@ -7,6 +7,7 @@ from decimal import Decimal
 from django.http import FileResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, Side
 from rest_framework.response import Response
@@ -61,7 +62,7 @@ class ExpenseListPDFExportView(ExpenseExportBaseView):
             'totals': totals,
         }
         html = render_to_string('expenses/export_list_pdf.html', context)
-        pdf_bytes = HTML(string=html).write_pdf()
+        pdf_bytes = HTML(string=html, encoding='utf-8').write_pdf()
         filename = f"expenses_export_{timezone.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
         return FileResponse(BytesIO(pdf_bytes), as_attachment=True, filename=filename)
@@ -75,14 +76,14 @@ class ExpenseListExcelExportView(ExpenseExportBaseView):
 
         workbook = Workbook()
         worksheet = workbook.active
-        worksheet.title = 'Expenses'
+        worksheet.title = _('Expenses')
         small_border = Border(
             left=Side(style='thin'),
             right=Side(style='thin'),
             top=Side(style='thin'),
             bottom=Side(style='thin'),
         )
-        headers = ['Sana', 'Turi', 'USD', 'UZS', 'Usul', 'Holat', 'Izoh']
+        headers = [_('Date'), _('Type'), 'USD', 'UZS', _('Method'), _('Status'), _('Description')]
         header_font = Font(bold=True)
 
         worksheet.append(headers)
@@ -102,9 +103,9 @@ class ExpenseListExcelExportView(ExpenseExportBaseView):
             worksheet.cell(row=row_index, column=7, value=row['description'][:100]).border = small_border
 
         total_row = len(rows) + 2
-        worksheet.cell(row=total_row, column=1, value='Jami USD').font = header_font
+        worksheet.cell(row=total_row, column=1, value=_('Total USD')).font = header_font
         worksheet.cell(row=total_row, column=3, value=totals['usd']).border = small_border
-        worksheet.cell(row=total_row + 1, column=1, value='Jami UZS').font = header_font
+        worksheet.cell(row=total_row + 1, column=1, value=_('Total UZS')).font = header_font
         worksheet.cell(row=total_row + 1, column=4, value=totals['uzs']).border = small_border
 
         for column_cells in worksheet.columns:
@@ -152,8 +153,8 @@ class MonthlyExpenseExcelExportView(ExpenseExportBaseView):
 
         workbook = Workbook()
         worksheet = workbook.active
-        worksheet.title = 'Monthly Expenses'
-        headers = ['Kategoriya', 'USD', 'UZS', 'Ulush (%)']
+        worksheet.title = _('Monthly Expenses')
+        headers = [_('Category'), 'USD', 'UZS', _('Share (%)')]
         worksheet.append(headers)
 
         border = Border(
@@ -176,7 +177,7 @@ class MonthlyExpenseExcelExportView(ExpenseExportBaseView):
             worksheet.cell(row=idx, column=4, value=row['percentage']).border = border
 
         total_row = len(payload['rows']) + 2
-        worksheet.cell(row=total_row, column=1, value='Jami USD').font = Font(bold=True)
+        worksheet.cell(row=total_row, column=1, value=_('Total USD')).font = Font(bold=True)
         worksheet.cell(row=total_row, column=2, value=payload['total_usd']).border = border
         worksheet.cell(row=total_row + 1, column=1, value='Jami UZS').font = Font(bold=True)
         worksheet.cell(row=total_row + 1, column=2, value=payload['total_uzs']).border = border

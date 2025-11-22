@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
@@ -139,7 +139,7 @@ export default function ExpensesPage() {
 
   const loadPaymentCards = async () => {
     try {
-      const response = await http.get('/api/payment-cards/');
+      const response = await http.get('/payment-cards/');
       // Array tekshiruvi - DRF paginated bo'lsa results dan olish
       const rawData = response.data;
       const dataArray = Array.isArray(rawData) 
@@ -158,7 +158,7 @@ export default function ExpensesPage() {
 
   const loadData = async () => {
     setLoading(true);
-    console.log('🔄 loadData started...');
+    console.log('рџ”„ loadData started...');
     try {
       const filters: ExpenseFilters = {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
@@ -168,7 +168,7 @@ export default function ExpensesPage() {
         card: filterCard,
         status: filterStatus,
       };
-      console.log('📋 Filters:', filters);
+      console.log('рџ“‹ Filters:', filters);
 
       const [expensesData, statsData, trendDataResult, distributionDataResult] = await Promise.all([
         fetchExpenses(filters),
@@ -177,7 +177,7 @@ export default function ExpensesPage() {
         fetchExpenseDistribution('month'),
       ]);
       
-      console.log('✅ All data loaded:', {
+      console.log('вњ… All data loaded:', {
         expenses: expensesData.length,
         stats: statsData,
         trend: trendDataResult.length,
@@ -185,7 +185,7 @@ export default function ExpensesPage() {
       });
 
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
-      console.log('📝 Expenses set to state:', expensesData.length, 'items');
+      console.log('рџ“ќ Expenses set to state:', expensesData.length, 'items');
       
       // Fallback - agar backend bo'sh object qaytarsa
       setStats(statsData || {
@@ -199,7 +199,7 @@ export default function ExpensesPage() {
       setDistributionData(distributionDataResult || []);
     } catch (error) {
       message.error(t('expenses.messages.loadError'));
-      console.error('❌ Load data error:', error);
+      console.error('вќЊ Load data error:', error);
       
       // Xatolik bo'lsa ham default qiymatlar
       setExpenses([]);
@@ -213,7 +213,7 @@ export default function ExpensesPage() {
       setDistributionData([]);
     } finally {
       setLoading(false);
-      console.log('✅ loadData finished');
+      console.log('вњ… loadData finished');
     }
   };
 
@@ -712,3 +712,4 @@ export default function ExpensesPage() {
     </section>
   );
 }
+

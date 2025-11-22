@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { create } from 'zustand';
+import { getApiBase } from '../app/apiBase';
 
-export type UserRole = 'admin' | 'accountant' | 'warehouse' | 'sales' | 'owner';
+export type UserRole = 'admin' | 'accountant' | 'warehouse' | 'sales' | 'owner' | 'manager';
 
 interface Credentials {
   username: string;
@@ -95,9 +96,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   needsOtp: false,
   pendingCredentials: null,
   async login({ username, password, otp }) {
-    const base = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
+    const base = getApiBase();
     const apiUrl = `${base}/api/token/`;
-    console.log('Login request sent to:', apiUrl);
     set((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const response = await axios.post(

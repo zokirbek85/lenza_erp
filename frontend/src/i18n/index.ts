@@ -5,6 +5,9 @@ import { initReactI18next } from 'react-i18next';
 import en from './locales/en/translation.json';
 import ru from './locales/ru/translation.json';
 import uz from './locales/uz/translation.json';
+import enCommon from './locales/en/common.json';
+import ruCommon from './locales/ru/common.json';
+import uzCommon from './locales/uz/common.json';
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_OPTIONS,
@@ -13,9 +16,9 @@ import {
 } from './languages';
 
 const resources = {
-  en: { translation: en },
-  ru: { translation: ru },
-  uz: { translation: uz },
+  en: { translation: en, common: enCommon },
+  ru: { translation: ru, common: ruCommon },
+  uz: { translation: uz, common: uzCommon },
 };
 
 const supportedLanguages: SupportedLanguage[] = LANGUAGE_OPTIONS.map((option) => option.code);

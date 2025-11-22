@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -7,14 +7,24 @@ import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import Modal from '../components/Modal';
 import CollapsibleForm from '../components/CollapsibleForm';
+import ProductActions from '../components/products/ProductActions';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import { useIsMobile } from '../hooks/useIsMobile';
+import {
+  adjustProductStock,
+  createProduct,
+  deleteProduct as deleteProductApi,
+  fetchProducts as fetchProductsApi,
+  updateProduct,
+  type Product,
+  type ProductPayload,
+} from '../api/productsApi';
+import ProductsMobileCards from './_mobile/ProductsMobileCards';
+import type { ProductMobilePermissions, ProductsMobileHandlers } from './_mobile/ProductsMobileCards';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
-import { useIsMobile } from '../hooks/useIsMobile';
-import FilterDrawer from '../components/responsive/filters/FilterDrawer';
-import FilterTrigger from '../components/responsive/filters/FilterTrigger';
-import ProductsMobileCards from './_mobile/ProductsMobileCards';
-import type { ProductsMobileHandlers } from './_mobile/ProductsMobileCards';
 
 interface Brand {
   id: number;
@@ -24,20 +34,6 @@ interface Brand {
 interface Category {
   id: number;
   name: string;
-}
-
-interface Product {
-  id: number;
-  sku: string;
-  name: string;
-  brand: Brand | null;
-  category: Category | null;
-  sell_price_usd: number;
-  stock_ok: number;
-  stock_defect: number;
-  availability_status: string;
-  brand_id?: number;
-  category_id?: number;
 }
 
 const emptyForm = {
@@ -92,24 +88,32 @@ const ProductsPage = () => {
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const [adjustForm, setAdjustForm] = useState({ stock_ok: '', stock_defect: '' });
   const [adjustSaving, setAdjustSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { t } = useTranslation();
   const { role } = useAuthStore();
+  const isAdmin = role === 'admin' || role === 'owner';
   const isWarehouse = role === 'warehouse';
-  const canManageProducts = role === 'admin' || role === 'accountant';
+  const isAccountant = role === 'accountant';
+  const canCreateOrEdit = isAdmin;
+  const canDelete = isAdmin;
+  const canExport = isAdmin || isAccountant;
+  const canAdjustStock = isWarehouse;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const formSectionRef = useRef<HTMLDivElement | null>(null);
   const { isMobile } = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const loadLookups = useCallback(async () => {
     try {
-      const [brandRes, categoryRes] = await Promise.all([http.get('/api/brands/'), http.get('/api/categories/')]);
+      const [brandRes, categoryRes] = await Promise.all([http.get('/brands/'), http.get('/categories/')]);
       setBrands(toArray<Brand>(brandRes.data));
       setCategories(toArray<Category>(categoryRes.data));
     } catch (error) {
       console.error(error);
       toast.error(t('messages.error'));
     }
-  }, []);
+  }, [t]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -121,23 +125,16 @@ const ProductsPage = () => {
       if (filters.brandId) params.brand = filters.brandId;
       if (filters.categoryId) params.category = filters.categoryId;
 
-      const response = await http.get('/api/products/', { params });
-      const data = response.data;
-      if (data && typeof data === 'object' && Array.isArray(data.results)) {
-        setProducts(data.results as Product[]);
-        setTotal(Number(data.count) || 0);
-      } else {
-        const fallback = toArray<Product>(data);
-        setProducts(fallback);
-        setTotal(fallback.length);
-      }
+      const { items, total } = await fetchProductsApi(params);
+      setProducts(items);
+      setTotal(total);
     } catch (error) {
       console.error(error);
       toast.error(t('messages.error'));
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, filters.brandId, filters.categoryId]);
+  }, [page, pageSize, filters.brandId, filters.categoryId, t]);
 
   useEffect(() => {
     loadLookups();
@@ -171,11 +168,11 @@ const ProductsPage = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    const payload = {
+    const payload: ProductPayload = {
       sku: formState.sku,
       name: formState.name,
-      brand_id: formState.brand_id || null,
-      category_id: formState.category_id || null,
+      brand_id: formState.brand_id === '' ? null : Number(formState.brand_id),
+      category_id: formState.category_id === '' ? null : Number(formState.category_id),
       sell_price_usd: Number(formState.sell_price_usd || 0),
       cost_usd: Number(formState.sell_price_usd || 0),
       stock_ok: normalizeStockValue(formState.stock_ok),
@@ -183,21 +180,24 @@ const ProductsPage = () => {
     };
     try {
       if (editingId) {
-        await http.put(`/api/products/${editingId}/`, payload);
+        await updateProduct(editingId, payload);
+        toast.success(t('products.messages.updated'));
       } else {
-        await http.post('/api/products/', payload);
+        await createProduct(payload);
+        toast.success(t('products.messages.created'));
       }
       setFormState(emptyForm);
       setEditingId(null);
       setShowForm(false);
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
-      toast.error(t('products.messages.created'));
+      toast.error(t('messages.error'));
     }
   };
 
   const handleEdit = (product: Product) => {
+    if (!canCreateOrEdit) return;
     setEditingId(product.id);
     setFormState({
       sku: product.sku,
@@ -208,14 +208,30 @@ const ProductsPage = () => {
       stock_ok: String(product.stock_ok),
       stock_defect: String(product.stock_defect),
     });
+    setShowForm(true);
+    requestAnimationFrame(() => {
+      formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
-  const handleDelete = async (id: number) => {
-    await http.delete(`/api/products/${id}/`);
-    fetchProducts();
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteProductApi(deleteTarget.id);
+      toast.success(t('products.messages.deleted'));
+      await fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error(t('messages.error'));
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const handleViewProduct = (id: number) => {
+    if (!canCreateOrEdit) return;
     const product = products.find((item) => item.id === id);
     if (product) {
       handleEdit(product);
@@ -223,6 +239,7 @@ const ProductsPage = () => {
   };
 
   const openAdjustModal = (product: Product) => {
+    if (!canAdjustStock) return;
     setAdjusting(product);
     setAdjustForm({
       stock_ok: String(product.stock_ok),
@@ -237,7 +254,7 @@ const ProductsPage = () => {
 
   const handleAdjustSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!adjusting) return;
+    if (!adjusting || !canAdjustStock) return;
     const payload: Record<string, number> = {};
     if (adjustForm.stock_ok !== '') {
       payload.stock_ok = normalizeStockValue(adjustForm.stock_ok);
@@ -251,10 +268,10 @@ const ProductsPage = () => {
     }
     setAdjustSaving(true);
     try {
-      await http.patch(`/api/products/${adjusting.id}/adjust/`, payload);
+      await adjustProductStock(adjusting.id, payload);
       toast.success(t('products.messages.updated'));
       setAdjusting(null);
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error(error);
       toast.error(t('messages.error'));
@@ -288,10 +305,19 @@ const ProductsPage = () => {
   const mobileHandlers: ProductsMobileHandlers = {
     onView: handleViewProduct,
     onEdit: (id) => {
+      if (!canCreateOrEdit) return;
       const product = products.find((item) => item.id === id);
       if (product) handleEdit(product);
     },
-    onDelete: handleDelete,
+    onDelete: (id) => {
+      if (!canDelete) return;
+      const product = products.find((item) => item.id === id);
+      if (product) setDeleteTarget(product);
+    },
+  };
+  const mobilePermissions: ProductMobilePermissions = {
+    canEdit: canCreateOrEdit,
+    canDelete,
   };
 
   const filtersContent = (
@@ -382,7 +408,12 @@ const ProductsPage = () => {
         >
           {filtersContent}
         </FilterDrawer>
-        <ProductsMobileCards data={mobileProducts} pagination={paginationMeta} handlers={mobileHandlers} />
+        <ProductsMobileCards
+          data={mobileProducts}
+          pagination={paginationMeta}
+          handlers={mobileHandlers}
+          permissions={mobilePermissions}
+        />
       </div>
     );
   }
@@ -418,12 +449,12 @@ const ProductsPage = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await http.post('/api/products/import/excel/', formData, {
+      const response = await http.post('/products/import/excel/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const imported = response.data?.imported ?? 0;
       const updated = response.data?.updated ?? 0;
-      toast.success(`✅ Imported: ${imported}, Updated: ${updated}`, { id: toastId });
+      toast.success(`Imported: ${imported}, Updated: ${updated}`, { id: toastId });
       await fetchProducts();
     } catch (error) {
       console.error(error);
@@ -450,20 +481,20 @@ const ProductsPage = () => {
           >
             {t('actions.exportPdf')}
           </button>
-          {canManageProducts && (
+          {canExport && (
             <>
               <button
                 onClick={handleExportExcel}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                📤 {t('actions.exportExcel')}
+                {t('actions.exportExcel')}
               </button>
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                📄 {t('actions.download')} Template
+                {t('actions.download')} Template
               </button>
               <button
                 type="button"
@@ -471,7 +502,7 @@ const ProductsPage = () => {
                 disabled={importing}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
               >
-                {importing ? t('common.loading') : `📥 ${t('actions.import')} Excel`}
+                {importing ? t('common.loading') : `${t('actions.import')} Excel`}
               </button>
               <input
                 ref={fileInputRef}
@@ -503,7 +534,7 @@ const ProductsPage = () => {
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Kategoriya</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.category')}</label>
           <select
             value={filters.categoryId ?? ''}
             onChange={(event) => handleFilterChange('categoryId', event.target.value)}
@@ -526,7 +557,7 @@ const ProductsPage = () => {
         </button>
       </div>
 
-      {canManageProducts && (
+      {canCreateOrEdit && (
         <>
           <div className="flex items-center justify-end">
             <button
@@ -543,10 +574,10 @@ const ProductsPage = () => {
               aria-expanded={showForm}
               aria-controls="product-create-form"
             >
-              {showForm ? `− ${t('products.form.name')}` : `+ ${t('products.new')}`}
+              {showForm ? t('actions.close') : `+ ${t('products.new')}`}
             </button>
           </div>
-          <div className="mt-3">
+          <div className="mt-3" ref={formSectionRef}>
             <CollapsibleForm
               open={showForm}
               onAfterClose={() => {
@@ -586,6 +617,7 @@ const ProductsPage = () => {
             name="brand_id"
             value={formState.brand_id}
             onChange={handleChange}
+            required
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           >
             <option value="">{t('common.select')}</option>
@@ -700,8 +732,8 @@ const ProductsPage = () => {
                   <div className="font-semibold text-slate-900 dark:text-white">{product.name}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">{product.sku}</div>
                 </td>
-                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.brand?.name ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.category?.name ?? '—'}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.brand?.name ?? 'вЂ”'}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.category?.name ?? 'вЂ”'}</td>
                 <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.sell_price_usd)}</td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -726,30 +758,19 @@ const ProductsPage = () => {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    {canManageProducts && (
-                      <button
-                        className="text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                        onClick={() => handleEdit(product)}
-                      >
-                        {t('actions.edit')}
-                      </button>
-                    )}
-                    {isWarehouse && (
-                      <button
-                        className="text-sm font-semibold text-amber-600 hover:text-amber-800 dark:text-amber-300"
-                        onClick={() => openAdjustModal(product)}
-                      >
-                        {t('actions.update')}
-                      </button>
-                    )}
-                    {canManageProducts && (
-                      <button
-                        className="text-sm font-semibold text-rose-600 hover:text-rose-800"
-                        onClick={() => handleDelete(product.id)}
-                      >
-                        {t('actions.delete')}
-                      </button>
-                    )}
+                    <ProductActions
+                      canEdit={canCreateOrEdit}
+                      canDelete={canDelete}
+                      canAdjust={canAdjustStock}
+                      onEdit={() => handleEdit(product)}
+                      onDelete={() => setDeleteTarget(product)}
+                      onAdjust={() => openAdjustModal(product)}
+                      labels={{
+                        edit: t('actions.edit'),
+                        delete: t('actions.delete'),
+                        adjust: t('actions.update'),
+                      }}
+                    />
                   </div>
                 </td>
               </tr>
@@ -792,7 +813,7 @@ const ProductsPage = () => {
             onClick={() => canGoPrev && setPage((prev) => Math.max(1, prev - 1))}
             className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
           >
-            ← {t('pagination.previous')}
+            {t('pagination.previous')}
           </button>
           <span className="text-xs text-slate-400 dark:text-slate-500">
             {t('pagination.page')} {page} / {totalPages}
@@ -803,10 +824,44 @@ const ProductsPage = () => {
             onClick={() => canGoNext && setPage((prev) => prev + 1)}
             className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
           >
-            {t('pagination.next')} →
+            {t('pagination.next')}
           </button>
         </div>
       </div>
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteTarget(null);
+          }
+        }}
+        title={t('actions.delete')}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t('actions.cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60"
+            >
+              {deleting ? t('common.loading') : t('actions.delete')}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600 dark:text-slate-200">
+          {deleteTarget ? `${t('actions.delete')} ${deleteTarget.name}?` : t('table.deleteConfirm')}
+        </p>
+      </Modal>
 
       <Modal
         open={Boolean(adjusting)}
@@ -876,3 +931,4 @@ const ProductsPage = () => {
 };
 
 export default ProductsPage;
+

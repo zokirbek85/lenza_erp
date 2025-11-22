@@ -208,10 +208,11 @@ def generate_ledger_excel(date_from=None, date_to=None, currency='USD'):
     
     # Response
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8'
     )
     filename = f"kassa_{date_from or 'all'}_{date_to or 'all'}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8'
     
     wb.save(response)
     return response

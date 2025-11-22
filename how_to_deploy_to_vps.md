@@ -86,9 +86,10 @@ DJANGO_CSRF_TRUSTED_ORIGINS=https://erp.lenza.uz,https://erp.maxdoors.uz,https:/
 DJANGO_CORS_ALLOWED_ORIGINS=https://erp.lenza.uz,https://erp.maxdoors.uz
 DJANGO_CORS_ALLOW_ALL=False
 USE_POSTGRES=True
+USE_POSTGRES=True
 POSTGRES_DB=lenza_erp
-POSTGRES_USER=lenza_erp_user
-POSTGRES_PASSWORD=bu_faqat_namuna
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=maxdoors123
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 REDIS_HOST=localhost
@@ -118,7 +119,7 @@ cd /opt/lenza_erp/frontend
 npm install        # yoki yarn install
 npm run build      # natija frontend/dist/ papkasida
 ```
-> `npm run build` paytida `frontend/.env.production` avtomatik yuklanadi. Undagi `VITE_API_URL=https://erp.lenza.uz/api` va `VITE_WS_URL=wss://erp.lenza.uz` qiymatlarini VPS domeningizga moslang (kerak bo‘lsa API uchun alohida subdomen yozing).
+> `npm run build` paytida `frontend/.env.production` avtomatik yuklanadi. Undagi `VITE_API_URL=https://erp.lenza.uz` (oxirida `/api` qo‘shmang, aks holda dubl /api/ yo‘li yuz beradi) va `VITE_WS_URL=wss://erp.lenza.uz` qiymatlarini VPS domeningizga moslang (kerak bo‘lsa API uchun alohida subdomen yozing).
 React build keyinchalik Nginx orqali servis qilinadi.
 
 ## 6. Daphne (ASGI) bilan test

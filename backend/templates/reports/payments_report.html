@@ -1,9 +1,10 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
   <head>
     <meta charset="utf-8" />
     <style>
-      body { font-family: Arial, sans-serif; font-size: 12px; }
+      body { font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif; font-size: 12px; }
       h1 { text-align: center; }
       table { width: 100%; border-collapse: collapse; margin-top: 20px; }
       th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
@@ -11,16 +12,16 @@
     </style>
   </head>
   <body>
-    <h1>Daily Payments Report - {{ report_date }}</h1>
+    <h1>{% trans 'Daily Payments Report' %} - {{ report_date }}</h1>
     <table>
       <thead>
         <tr>
-          <th>Dealer</th>
-          <th>Amount</th>
-          <th>Currency</th>
-          <th>USD Equivalent</th>
-          <th>Method</th>
-          <th>Card</th>
+          <th>{% trans 'Dealer' %}</th>
+          <th>{% trans 'Amount' %}</th>
+          <th>{% trans 'Currency' %}</th>
+          <th>{% trans 'USD Equivalent' %}</th>
+          <th>{% trans 'Method' %}</th>
+          <th>{% trans 'Card' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -41,10 +42,10 @@
           </td>
         </tr>
         {% empty %}
-  <tr><td colspan="6">No payments on this date.</td></tr>
+  <tr><td colspan="6">{% trans 'No payments on this date.' %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
-    <p><strong>Total USD:</strong> {{ total }}</p>
+    <p><strong>{% trans 'Total USD' %}:</strong> {{ total }}</p>
   </body>
 </html>

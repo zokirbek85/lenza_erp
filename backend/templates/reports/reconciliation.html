@@ -1,6 +1,6 @@
-{% load tz %}
+﻿{% load tz i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
   <head>
     <meta charset="utf-8" />
     <style>
@@ -8,7 +8,7 @@
         size: A4;
         margin: 20mm 18mm 22mm 18mm;
         @bottom-center {
-          content: "LENZA ERP — Sahifa " counter(page);
+          content: "LENZA ERP — {% trans 'Page' %} " counter(page);
           font-size: 9px;
           color: #94a3b8;
           font-family: 'DejaVu Sans', Arial, sans-serif;
@@ -396,7 +396,7 @@
     </section>
 
     <!-- Document Title -->
-    <h1 class="doc-title">Акт сверка взаиморасчетов</h1>
+    <h1 class="doc-title">Akt Sverka / Акт Сверки Взаиморасчетов</h1>
 
     <!-- Balance Summary -->
     <div class="balance-summary">
@@ -428,7 +428,7 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width: 50px;">№</th>
+                  <th style="width: 50px;">в„–</th>
                   <th>Mahsulot nomi</th>
                   <th class="text-right" style="width: 100px;">Miqdor</th>
                   <th class="text-right" style="width: 100px;">Narx (USD)</th>
@@ -519,7 +519,7 @@
       <thead>
         <tr>
           <th style="width: 150px;">Sana</th>
-          <th>Buyurtma</th>
+          <th>Qaytarish</th>
           <th class="text-right" style="width: 150px;">Summa (USD)</th>
         </tr>
       </thead>
@@ -532,7 +532,36 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="3" class="empty-state">Ma&apos;lumot topilmadi</td>
+          <td colspan="3" class="empty-state">Ma'lumot topilmadi</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Returns Items Section -->
+    <div class="section-header" style="margin-top: 12px;">Qaytarish detali</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 140px;">Sana</th>
+          <th>Mahsulot</th>
+          <th style="width: 160px;">Izoh</th>
+          <th style="width: 120px;" class="text-right">Miqdor</th>
+          <th style="width: 120px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data.returns_items %}
+        <tr>
+          <td>{{ item.return_document__created_at|date:"d.m.Y" }}</td>
+          <td>{{ item.product__name }}</td>
+          <td>{{ item.return_document__general_comment }}</td>
+          <td class="text-right">{{ item.quantity }}</td>
+          <td>{{ item.status }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="empty-state">Ma'lumot topilmadi</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -577,3 +606,4 @@
     <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
   </footer>
 </html>
+

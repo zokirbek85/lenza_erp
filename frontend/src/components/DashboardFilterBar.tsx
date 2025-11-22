@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Button, Card, Collapse, DatePicker, Drawer, Grid, Select, Space, Tooltip } from 'antd';
 import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -63,9 +63,9 @@ const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
       setLoading(true);
       try {
         const [dealersRes, regionsRes, managersRes] = await Promise.all([
-          http.get('/api/dealers/?page_size=1000'),
-          http.get('/api/regions/?page_size=1000'),
-          http.get('/api/users/?role=sales&page_size=1000'),
+          http.get('/dealers/?page_size=1000'),
+          http.get('/regions/?page_size=1000'),
+          http.get('/users/?role=sales&page_size=1000'),
         ]);
         
         console.log('Dealers response:', dealersRes.data);
@@ -241,3 +241,4 @@ const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
 };
 
 export default DashboardFilterBar;
+

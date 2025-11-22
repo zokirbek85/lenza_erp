@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -91,7 +91,7 @@ const DealersPage = () => {
   const loadDealers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/dealers/', {
+      const response = await http.get('/dealers/', {
         params: {
           page,
           page_size: pageSize,
@@ -121,7 +121,7 @@ const DealersPage = () => {
 
   const loadRegions = useCallback(async () => {
     try {
-      const response = await http.get('/api/regions/');
+      const response = await http.get('/regions/');
       setRegions(toArray<Region>(response.data));
     } catch (error) {
       console.error(error);
@@ -130,7 +130,7 @@ const DealersPage = () => {
 
   const loadManagers = useCallback(async () => {
     try {
-      const response = await http.get('/api/users/', { params: { role: 'sales' } });
+      const response = await http.get('/users/', { params: { role: 'sales' } });
       setManagers(toArray<Manager>(response.data));
     } catch (error) {
       console.warn('Unable to load managers', error);
@@ -206,10 +206,10 @@ const DealersPage = () => {
     };
     try {
       if (editing) {
-        await http.put(`/api/dealers/${editing.id}/`, payload);
+        await http.put(`/dealers/${editing.id}/`, payload);
         toast.success(t('dealers.messages.updated'));
       } else {
-        await http.post('/api/dealers/', payload);
+        await http.post('/dealers/', payload);
         toast.success(t('dealers.messages.created'));
       }
       setModalOpen(false);
@@ -227,7 +227,7 @@ const DealersPage = () => {
   const handleDelete = async (dealer: Dealer) => {
     if (!window.confirm(t('dealers.confirmDelete', { name: dealer.name }))) return;
     try {
-      await http.delete(`/api/dealers/${dealer.id}/`);
+      await http.delete(`/dealers/${dealer.id}/`);
       toast.success(t('dealers.messages.deleted'));
       loadDealers();
     } catch (error) {
@@ -242,8 +242,8 @@ const DealersPage = () => {
     setDetailLoading(true);
     try {
       const [ordersRes, paymentsRes] = await Promise.all([
-        http.get('/api/orders/', { params: { dealer: dealer.id, ordering: '-created_at' } }),
-        http.get('/api/payments/', { params: { dealer: dealer.id, ordering: '-pay_date' } }),
+        http.get('/orders/', { params: { dealer: dealer.id, ordering: '-created_at' } }),
+        http.get('/payments/', { params: { dealer: dealer.id, ordering: '-pay_date' } }),
       ]);
       setOrders(toArray<OrderSummary>(ordersRes.data));
       setPayments(toArray<PaymentSummary>(paymentsRes.data));
@@ -255,7 +255,7 @@ const DealersPage = () => {
     }
   };
 
-  const managerLabel = (manager?: Dealer['manager_user']) => manager ?? '—';
+  const managerLabel = (manager?: Dealer['manager_user']) => manager ?? 'вЂ”';
 
   const handleExport = async () => {
     try {
@@ -285,7 +285,7 @@ const DealersPage = () => {
     formData.append('file', importFile);
     setImporting(true);
     try {
-      const response = await http.post('/api/dealers/import/excel/', formData, {
+      const response = await http.post('/dealers/import/excel/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setImportSummary(response.data);
@@ -388,7 +388,7 @@ const DealersPage = () => {
                       <div className="font-semibold text-slate-900 dark:text-white">{dealer.name}</div>
                       <p className="text-xs text-slate-500">{dealer.code}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{dealer.region?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{dealer.region?.name ?? 'вЂ”'}</td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{managerLabel(dealer.manager_user)}</td>
                     <td className={`px-4 py-3 text-right font-semibold ${balanceClass}`}>
                       {formatCurrency(balanceValue ?? 0)}
@@ -647,3 +647,4 @@ const DealersPage = () => {
 };
 
 export default DealersPage;
+

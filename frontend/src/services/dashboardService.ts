@@ -44,13 +44,13 @@ export const fetchDashboardSummary = async (filters: DashboardFilters): Promise<
   }
 
   const queryString = params.toString();
-  const url = queryString ? `/api/dashboard/summary/?${queryString}` : '/api/dashboard/summary/';
+  const url = queryString ? `/dashboard/summary/?${queryString}` : '/dashboard/summary/';
 
   const response = await http.get<DashboardSummary>(url);
   return response.data;
 };
 
-export const fetchDebtAnalytics = () => http.get<DebtAnalytics>('/api/dashboard/debt-analytics/');
+export const fetchDebtAnalytics = () => http.get<DebtAnalytics>('/dashboard/debt-analytics/');
 
 /**
  * Fetch dashboard KPI data with optional filters
@@ -73,7 +73,7 @@ export const fetchDashboardData = async (filters: DashboardFilters) => {
   }
 
   const queryString = params.toString();
-  const url = queryString ? `/api/kpis/owner/?${queryString}` : '/api/kpis/owner/';
+  const url = queryString ? `/kpis/owner/?${queryString}` : '/kpis/owner/';
 
   return http.get(url);
 };
@@ -96,7 +96,7 @@ export const fetchSalesManagerData = async (filters: DashboardFilters) => {
   }
 
   const queryString = params.toString();
-  const url = queryString ? `/api/kpis/sales-manager/?${queryString}` : '/api/kpis/sales-manager/';
+  const url = queryString ? `/kpis/sales-manager/?${queryString}` : '/kpis/sales-manager/';
 
   return http.get(url);
 };
@@ -119,7 +119,7 @@ export const fetchAccountantData = async (filters: DashboardFilters) => {
   }
 
   const queryString = params.toString();
-  const url = queryString ? `/api/kpis/accountant/?${queryString}` : '/api/kpis/accountant/';
+  const url = queryString ? `/kpis/accountant/?${queryString}` : '/kpis/accountant/';
 
   return http.get(url);
 };
@@ -136,7 +136,7 @@ export const fetchCurrencyHistory = async (filters: DashboardFilters) => {
   }
 
   const queryString = params.toString();
-  const url = queryString ? `/api/payments/rates/history/?${queryString}` : '/api/payments/rates/history/';
+  const url = queryString ? `/payments/rates/history/?${queryString}` : '/payments/rates/history/';
 
   return http.get(url);
 };
@@ -160,6 +160,18 @@ export const fetchCardsKpi = async (filters: DashboardFilters) => {
     params.append('to', filters.dateRange[1]);
   }
   const queryString = params.toString();
-  const url = queryString ? `/api/kpi/cards/?${queryString}` : '/api/kpi/cards/';
+  const url = queryString ? `/kpi/cards/?${queryString}` : '/kpi/cards/';
   return http.get<CardKPIItem[]>(url);
+};
+
+/**
+ * Fetch inventory statistics (total healthy stock quantity and value in USD)
+ */
+export interface InventoryStats {
+  total_quantity: number;
+  total_value_usd: number;
+}
+
+export const fetchInventoryStats = async () => {
+  return http.get<InventoryStats>('/kpi/inventory-stats/');
 };

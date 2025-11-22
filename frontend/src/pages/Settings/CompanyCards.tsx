@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Table, Modal, Form, Input, Button, Space, message, Switch, Popconfirm } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import http from '../../app/http';
@@ -22,7 +22,7 @@ export default function CompanyCardsPage() {
   const fetchCards = async () => {
     setLoading(true);
     try {
-  const res = await http.get('/api/payment-cards/');
+  const res = await http.get('/payment-cards/');
       setData(res.data?.results ?? res.data ?? []);
     } catch (e) {
       console.error(e);
@@ -38,7 +38,7 @@ export default function CompanyCardsPage() {
 
   const handleAdd = async (values: any) => {
     try {
-  await http.post('/api/payment-cards/', values);
+  await http.post('/payment-cards/', values);
       message.success("Karta qo'shildi");
       setOpen(false);
       form.resetFields();
@@ -51,7 +51,7 @@ export default function CompanyCardsPage() {
 
   const handleUpdate = async (id: number, values: Partial<PaymentCard>) => {
     try {
-  await http.patch(`/api/payment-cards/${id}/`, values);
+  await http.patch(`/payment-cards/${id}/`, values);
       message.success('Yangilandi');
       fetchCards();
     } catch (e) {
@@ -62,7 +62,7 @@ export default function CompanyCardsPage() {
 
   const handleDelete = async (id: number) => {
     try {
-  await http.delete(`/api/payment-cards/${id}/`);
+  await http.delete(`/payment-cards/${id}/`);
       message.success("O'chirildi");
       fetchCards();
     } catch (e) {
@@ -131,3 +131,4 @@ export default function CompanyCardsPage() {
     </>
   );
 }
+

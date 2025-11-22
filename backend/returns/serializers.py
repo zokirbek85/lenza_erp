@@ -1,82 +1,121 @@
-from rest_framework import serializers
-from django.db import transaction
+from decimal import Decimal
 
-from .models import Return, ReturnItem
-from orders.models import Order, OrderItem
+from django.db import transaction
+from rest_framework import serializers
+
 from catalog.models import Product
+from dealers.models import Dealer
+from .models import Return, ReturnItem
+
 
 class ReturnItemSerializer(serializers.ModelSerializer):
-    product_id = serializers.IntegerField()
+    product_id = serializers.IntegerField(write_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    brand_name = serializers.CharField(source='product.brand.name', read_only=True)
+    category_name = serializers.CharField(source='product.category.name', read_only=True)
 
     class Meta:
         model = ReturnItem
-        fields = ('product_id', 'quantity', 'comment')
+        fields = (
+            'id',
+            'product_id',
+            'product_name',
+            'brand_name',
+            'category_name',
+            'quantity',
+            'status',
+            'comment',
+        )
+        read_only_fields = ('id', 'product_name', 'brand_name', 'category_name')
+
 
 class ReturnSerializer(serializers.ModelSerializer):
     items = ReturnItemSerializer(many=True)
-    order_id = serializers.IntegerField(write_only=True)
+    dealer_name = serializers.CharField(source='dealer.name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Return
-        fields = ('id', 'order_id', 'comment', 'items', 'created_at')
-        read_only_fields = ('id', 'created_at')
+        fields = (
+            'id',
+            'dealer',
+            'dealer_name',
+            'items',
+            'general_comment',
+            'status',
+            'status_display',
+            'total_sum',
+            'created_at',
+        )
+        read_only_fields = ('id', 'status', 'status_display', 'total_sum', 'created_at', 'dealer_name')
 
-    def validate(self, data):
-        order_id = data['order_id']
-        items_data = data['items']
-
-        try:
-            order = Order.objects.get(pk=order_id)
-        except Order.DoesNotExist:
-            raise serializers.ValidationError({'order_id': 'Order not found.'})
-
-        if not items_data:
+    def validate(self, attrs):
+        items = attrs.get('items') or []
+        dealer = attrs.get('dealer')
+        if not dealer:
+            raise serializers.ValidationError({'dealer': 'Dealer is required.'})
+        if not items:
             raise serializers.ValidationError({'items': 'At least one item is required.'})
 
-        product_ids = [item['product_id'] for item in items_data]
+        product_ids = [item['product_id'] for item in items]
         if len(product_ids) != len(set(product_ids)):
             raise serializers.ValidationError({'items': 'Duplicate products are not allowed.'})
 
-        order_items = order.items.filter(product_id__in=product_ids).in_bulk(field_name='product_id')
+        products = {p.id: p for p in Product.objects.filter(id__in=product_ids)}
+        missing = [pid for pid in product_ids if pid not in products]
+        if missing:
+            raise serializers.ValidationError({'items': f"Products not found: {missing}"})
 
-        for item_data in items_data:
-            product_id = item_data['product_id']
-            quantity = item_data['quantity']
-
-            if product_id not in order_items:
-                raise serializers.ValidationError({f'items[{product_id}]': f'Product not found in this order.'})
-
-            order_item = order_items[product_id]
-            if quantity > order_item.qty:
-                raise serializers.ValidationError({f'items[{product_id}]': f'Return quantity ({quantity}) cannot exceed ordered quantity ({order_item.qty}).'})
-
-        data['order'] = order
-        return data
+        for idx, item in enumerate(items):
+            product = products[item['product_id']]
+            quantity = item.get('quantity')
+            status = item.get('status')
+            if quantity is None or Decimal(quantity) <= 0:
+                raise serializers.ValidationError({f'items[{idx}].quantity': 'Quantity must be greater than zero.'})
+            if status not in ReturnItem.Status.values:
+                raise serializers.ValidationError({f'items[{idx}].status': 'Invalid status.'})
+            item['product'] = product
+        attrs['items'] = items
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        order = validated_data.pop('order')
-        
-        return_instance = Return.objects.create(
-            order=order,
+        dealer: Dealer = validated_data['dealer']
+        total_sum = Decimal('0.00')
+
+        for item in items_data:
+            product: Product = item['product']
+            qty = Decimal(item['quantity'])
+            total_sum += (product.sell_price_usd or Decimal('0.00')) * qty
+
+        return_obj = Return.objects.create(
+            status=Return.Status.CONFIRMED,
+            total_sum=total_sum,
+            **validated_data,
             created_by=self.context['request'].user,
-            **validated_data
         )
 
-        for item_data in items_data:
-            product_id = item_data.pop('product_id')
-            product = Product.objects.get(pk=product_id)
-            
-            # Create ReturnItem
+        for item in items_data:
+            product: Product = item['product']
+            qty = Decimal(item['quantity'])
+            status = item['status']
             ReturnItem.objects.create(
-                return_document=return_instance,
+                return_document=return_obj,
                 product=product,
-                **item_data
+                quantity=qty,
+                status=status,
+                comment=item.get('comment', ''),
             )
+            if status == ReturnItem.Status.HEALTHY:
+                product.stock_ok = (product.stock_ok or Decimal('0')) + qty
+                product.save(update_fields=['stock_ok'])
+            else:
+                product.stock_defect = (product.stock_defect or Decimal('0')) + qty
+                product.save(update_fields=['stock_defect'])
 
-            # Adjust stock
-            product.stock += item_data['quantity']
-            product.save(update_fields=['stock'])
+        if hasattr(dealer, 'debt_usd'):
+            dealer.debt_usd = (dealer.debt_usd or Decimal('0.00')) - total_sum
+            dealer.save(update_fields=['debt_usd'])
 
-        return return_instance
+        return return_obj

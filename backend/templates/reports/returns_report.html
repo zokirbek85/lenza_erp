@@ -1,6 +1,6 @@
-{% load tz %}
+{% load tz i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
   <head>
     <meta charset="utf-8" />
     <style>
@@ -18,7 +18,7 @@
       }
 
       body {
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif;
         font-size: 12px;
         color: var(--text);
         background: var(--bg);
@@ -98,13 +98,13 @@
     <section class="header">
       <div>
         <div class="logo">{{ company_name|default:"LENZA ERP" }}</div>
-        <div class="tagline">{{ company_slogan|default:"Qaytishlar hisobot" }}</div>
+        <div class="tagline">{{ company_slogan|default:"Returns Report" }}</div>
         <div class="tagline">{{ company_address }}{% if company_phone %} | {{ company_phone }}{% endif %}</div>
       </div>
       <div style="text-align:right; font-size:12px;">
-        <div><strong>Hisobot:</strong> Qaytishlar</div>
-        <div>Yaratildi: {% now "d.m.Y H:i" %}</div>
-        <div>Jami yozuvlar: {{ returns|length }}</div>
+        <div><strong>{% trans 'Report' %}:</strong> {% trans 'Returns' %}</div>
+        <div>{% trans 'Generated' %}: {% now "d.m.Y H:i" %}</div>
+        <div>{% trans 'Total records' %}: {{ returns|length }}</div>
       </div>
     </section>
 
@@ -112,12 +112,12 @@
       <thead>
         <tr>
           <th style="width: 24px;">#</th>
-          <th>Diler</th>
-          <th>Mahsulot</th>
-          <th style="width: 80px;">Miqdor</th>
-          <th style="width: 110px;">Turi</th>
-          <th>Sabab</th>
-          <th style="width: 110px;">Sana</th>
+          <th>{% trans 'Dealer' %}</th>
+          <th>{% trans 'Product' %}</th>
+          <th style="width: 80px;">{% trans 'Quantity' %}</th>
+          <th style="width: 110px;">{% trans 'Type' %}</th>
+          <th>{% trans 'Reason' %}</th>
+          <th style="width: 110px;">{% trans 'Date' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -129,9 +129,9 @@
           <td>{{ item.quantity|floatformat:2 }}</td>
           <td>
             {% if item.return_type == 'defective' %}
-              <span class="badge defective">Nuqsonli</span>
+              <span class="badge defective">{% trans 'Defective' %}</span>
             {% else %}
-              <span class="badge good">Sog'lom</span>
+              <span class="badge good">{% trans 'Good' %}</span>
             {% endif %}
           </td>
           <td>{{ item.reason|default:'—' }}</td>
@@ -140,7 +140,7 @@
         {% empty %}
         <tr>
           <td colspan="7" style="text-align:center; color: var(--muted); padding: 20px;">
-            Ma'lumot topilmadi
+            {% trans 'No data found' %}
           </td>
         </tr>
         {% endfor %}
@@ -148,9 +148,9 @@
     </table>
 
     <div class="footer">
-      <div>Imzolangan: <strong>{{ company_name|default:"Lenza ERP" }}</strong> tizimi orqali</div>
+      <div>{% trans 'Signed via' %} <strong>{{ company_name|default:"Lenza ERP" }}</strong> {% trans 'system' %}</div>
       <div>
-        <div>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</div>
+        <div>{% trans 'Scan QR to verify authenticity' %}:</div>
         <img src="{{ qr_code }}" alt="QR" style="height:80px;"/>
         <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
       </div>

@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+﻿import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button as AntButton, Card, Form, Input, Upload, message } from 'antd';
@@ -55,7 +55,7 @@ const SettingsPage = () => {
   useEffect(() => {
     const fetchLink = async () => {
       try {
-        const response = await http.get<{ telegram_id: string | null }>('/api/telegram/link/');
+        const response = await http.get<{ telegram_id: string | null }>('/telegram/link/');
         if (response.data.telegram_id) {
           setTelegramId(response.data.telegram_id);
           setConnected(true);
@@ -70,7 +70,7 @@ const SettingsPage = () => {
   useEffect(() => {
     if (!isAdmin) return;
     const loadConfig = async () => {
-      const response = await http.get<SystemConfig>('/api/system/config/');
+      const response = await http.get<SystemConfig>('/system/config/');
       setConfig(response.data);
     };
     loadConfig();
@@ -81,7 +81,7 @@ const SettingsPage = () => {
     const loadCompanyInfo = async () => {
       setCompanyLoading(true);
       try {
-        const response = await http.get<CompanyInfoPayload[] | CompanyInfoPayload>('/api/company-info/');
+        const response = await http.get<CompanyInfoPayload[] | CompanyInfoPayload>('/company-info/');
         const payload: CompanyInfoPayload | undefined = Array.isArray(response.data)
           ? response.data[0]
           : response.data;
@@ -130,7 +130,7 @@ const SettingsPage = () => {
   const handleTelegramSubmit = async (event: FormEvent) => {
     event.preventDefault();
     try {
-      await http.post('/api/telegram/link/', { telegram_id: telegramId });
+      await http.post('/telegram/link/', { telegram_id: telegramId });
       toast.success(t('settings.telegram.messages.linked'));
       setConnected(true);
     } catch (error) {
@@ -142,7 +142,7 @@ const SettingsPage = () => {
     event.preventDefault();
     if (!config) return;
     try {
-      const response = await http.put<SystemConfig>('/api/system/config/', config);
+      const response = await http.put<SystemConfig>('/system/config/', config);
       setConfig(response.data);
       toast.success(t('settings.system.messages.updated'));
     } catch (error) {
@@ -174,8 +174,8 @@ const SettingsPage = () => {
     setSavingCompany(true);
     try {
       const response = companyInfoId
-        ? await http.patch<CompanyInfoPayload>(`/api/company-info/${companyInfoId}/`, formData)
-        : await http.post<CompanyInfoPayload>('/api/company-info/', formData);
+        ? await http.patch<CompanyInfoPayload>(`/company-info/${companyInfoId}/`, formData)
+        : await http.post<CompanyInfoPayload>('/company-info/', formData);
       const payload = response.data;
       setCompanyInfoId(payload.id ?? companyInfoId);
       const nextFields: CompanyInfoFormValues = {
@@ -211,7 +211,7 @@ const SettingsPage = () => {
     <section className="page-wrapper space-y-8">
       {isAdmin && (
         <Card
-          title={`🏢 ${t('settings.companyInfo.title')}`}
+          title={`рџЏў ${t('settings.companyInfo.title')}`}
           className="max-w-3xl border border-slate-200 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           loading={companyLoading}
         >
@@ -237,7 +237,7 @@ const SettingsPage = () => {
                   <img src={logoPreview} alt={t('settings.companyInfo.form.logoAlt')} className="h-16 object-contain" />
                   <div>
                     <AntButton size="small" onClick={() => { setLogoPreview(null); setLogoFile(null); }}>
-                      {t('actions.clear')}
+                      {t('common:actions.clear')}
                     </AntButton>
                   </div>
                 </div>
@@ -271,7 +271,7 @@ const SettingsPage = () => {
               <Input />
             </Form.Item>
             <AntButton type="primary" icon={<SaveOutlined />} htmlType="submit" loading={savingCompany}>
-              {t('actions.save')}
+              {t('common:actions.save')}
             </AntButton>
           </Form>
         </Card>
@@ -328,7 +328,7 @@ const SettingsPage = () => {
               />
             </label>
             <button className="rounded-lg bg-slate-900 px-4 py-2 text-white dark:bg-emerald-500 dark:text-slate-900" type="submit">
-              {t('actions.save')}
+              {t('common:actions.save')}
             </button>
           </form>
         </div>
@@ -338,3 +338,4 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+

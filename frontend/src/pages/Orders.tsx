@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+﻿import type { FormEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Collapse } from 'antd';
@@ -172,7 +172,7 @@ const OrdersPage = () => {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/orders/', { params: { page, page_size: pageSize } });
+      const response = await http.get('/orders/', { params: { page, page_size: pageSize } });
       const data = response.data;
       let normalized: Order[];
       if (data && typeof data === 'object' && Array.isArray(data.results)) {
@@ -202,9 +202,9 @@ const OrdersPage = () => {
 
   const loadRefs = useCallback(async () => {
     const [dealersData, brandsData, categoriesData] = await Promise.all([
-      fetchAllPages<DealerOption>('/api/dealers/'),
-      fetchAllPages<BrandOption>('/api/brands/'),
-      fetchAllPages<CategoryOption>('/api/categories/'),
+      fetchAllPages<DealerOption>('/dealers/'),
+      fetchAllPages<BrandOption>('/brands/'),
+      fetchAllPages<CategoryOption>('/categories/'),
     ]);
     setDealers(dealersData);
     setBrands(brandsData);
@@ -427,7 +427,7 @@ const OrdersPage = () => {
     }));
 
     try {
-      await http.post('/api/orders/', {
+      await http.post('/orders/', {
         dealer: Number(dealerId),
         status: 'created',
         is_reserve: orderType === 'reserve',
@@ -685,7 +685,7 @@ const OrdersPage = () => {
                             const stockLabel = isLow ? '(Zaxira tugagan)' : `(Zaxira: ${stock})`;
                             return (
                               <option key={product.id} value={product.id}>
-                                {product.name} �� {brandLabel} �� {categoryLabel}{' '}
+                                {product.name} пїЅпїЅ {brandLabel} пїЅпїЅ {categoryLabel}{' '}
                                 {stockLabel}
                               </option>
                             );
@@ -710,7 +710,7 @@ const OrdersPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Narx (USD)</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('orders.form.price')}</label>
                         <input
                           type="number"
                           min={0}
@@ -726,12 +726,12 @@ const OrdersPage = () => {
                           onClick={handleAddSelectedProduct}
                           className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
                         >
-                          �? Qo&#39;shish
+                          ➕ {t('common:actions.add')}
                         </button>
                       </div>
                     </div>
                     {productsLoading && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Mahsulotlar yuklanmoqda...</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.form.productsLoading')}</p>
                     )}
                   </div>
 
@@ -748,7 +748,7 @@ const OrdersPage = () => {
                       onClick={handleClearDraft}
                       className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-900/30"
                     >
-                      Draftni tozalash
+                      {t('orders.form.clearDraft')}
                     </button>
                     <button
                       className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
@@ -795,7 +795,7 @@ const OrdersPage = () => {
             {loading && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                  Yuklanmoqda...
+                  {t('common:messages.loading')}
                 </td>
               </tr>
             )}
@@ -810,7 +810,7 @@ const OrdersPage = () => {
                     onClick={() => toggleOrderDetails(order.id)}
                   >
                     <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{order.display_no}</td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{order.dealer?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{order.dealer?.name ?? 'вЂ”'}</td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
@@ -819,7 +819,7 @@ const OrdersPage = () => {
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-200'
                         }`}
                       >
-                        {order.is_reserve ? 'Bron' : 'Oddiy'}
+                        {order.is_reserve ? t('orders.type.reserve') : t('orders.type.regular')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -853,7 +853,7 @@ const OrdersPage = () => {
                       <td colSpan={7} className="bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/60 dark:text-slate-100">
                         {order.items?.length ? (
                           <div className="space-y-2">
-                            <div className="font-semibold text-slate-700 dark:text-white">Tarkibi</div>
+                            <div className="font-semibold text-slate-700 dark:text-white">{t('orders.details.items')}</div>
                             <ul className="space-y-1">
                               {order.items.map((item) => {
                                 const price = Number(item.price_usd);
@@ -864,10 +864,10 @@ const OrdersPage = () => {
                                     className="flex flex-wrap justify-between rounded-lg bg-white px-3 py-2 shadow-sm dark:bg-slate-900"
                                   >
                                     <span className="font-medium text-slate-800 dark:text-slate-100">
-                                      {item.product_detail?.name ?? `Mahsulot #${item.product ?? '—'}`}
+                                      {item.product_detail?.name ?? `${t('orders.details.product')} #${item.product ?? '—'}`}
                                     </span>
                                     <span className="text-slate-600 dark:text-slate-300">
-                                      {formatQuantity(item.qty)} × {formatCurrency(price)} = {formatCurrency(lineTotal)}
+                                      {formatQuantity(item.qty)} Г— {formatCurrency(price)} = {formatCurrency(lineTotal)}
                                     </span>
                                   </li>
                                 );
@@ -875,7 +875,7 @@ const OrdersPage = () => {
                             </ul>
                           </div>
                         ) : (
-                          <div className="text-center text-slate-500 dark:text-slate-300">Tarkib mavjud emas</div>
+                          <div className="text-center text-slate-500 dark:text-slate-300">{t('orders.details.noItems')}</div>
                         )}
                         
                         {/* Status o'zgarishlari tarixi */}
@@ -891,7 +891,7 @@ const OrdersPage = () => {
             {!loading && orderRows.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                  Buyurtmalar topilmadi
+                  {t('orders.list.empty')}
                 </td>
               </tr>
             )}
@@ -913,3 +913,4 @@ const OrdersPage = () => {
 };
 
 export default OrdersPage;
+

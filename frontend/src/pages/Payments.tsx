@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +67,7 @@ const PaymentsPage = () => {
   const loadPayments = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/api/payments/', {
+      const response = await http.get('/payments/', {
         params: {
           page,
           page_size: pageSize,
@@ -89,7 +89,7 @@ const PaymentsPage = () => {
       setPayments(normalized);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load payments');
+      toast.error(t('payments.messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ const PaymentsPage = () => {
 
   useEffect(() => {
     const loadRefs = async () => {
-      const [dealersRes, ratesRes] = await Promise.all([http.get('/api/dealers/'), http.get('/api/currency-rates/')]);
+      const [dealersRes, ratesRes] = await Promise.all([http.get('/dealers/'), http.get('/currency-rates/')]);
       setDealers(toArray<Dealer>(dealersRes.data));
       setRates(toArray<CurrencyRate>(ratesRes.data));
     };
@@ -157,14 +157,14 @@ const PaymentsPage = () => {
       note: form.note,
     };
     try {
-      await http.post('/api/payments/', payload);
-      toast.success('Payment recorded');
+      await http.post('/payments/', payload);
+      toast.success(t('payments.messages.created'));
       setForm(defaultForm);
       setShowForm(false);
       loadPayments();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to create payment');
+      toast.error(t('payments.messages.saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -176,7 +176,7 @@ const PaymentsPage = () => {
   useEffect(() => {
     const loadCards = async () => {
       try {
-  const res = await http.get('/api/payment-cards/', { params: { is_active: true } });
+  const res = await http.get('/payment-cards/', { params: { is_active: true } });
         setCards(toArray(res.data));
       } catch (e) {
         console.error(e);
@@ -279,7 +279,7 @@ const PaymentsPage = () => {
           aria-expanded={showForm}
           aria-controls="payment-create-form"
         >
-          {showForm ? `− ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
+          {showForm ? `в€’ ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
         </button>
       </div>
       <CollapsibleForm
@@ -354,7 +354,7 @@ const PaymentsPage = () => {
               <option value="">{t('payments.select')}</option>
               {rates.map((rate) => (
                 <option key={rate.id} value={rate.id}>
-                  {rate.rate_date} → {rate.usd_to_uzs}
+                  {rate.rate_date} в†’ {rate.usd_to_uzs}
                 </option>
               ))}
             </select>
@@ -386,7 +386,7 @@ const PaymentsPage = () => {
               <option value="">{t('payments.select')}</option>
               {cards.map((c: any) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} — {(c.masked_number) || `${String(c.number).slice(0,4)} **** ${String(c.number).slice(-4)}`} ({c.holder_name})
+                  {c.name} вЂ” {(c.masked_number) || `${String(c.number).slice(0,4)} **** ${String(c.number).slice(-4)}`} ({c.holder_name})
                 </option>
               ))}
             </select>
@@ -408,7 +408,7 @@ const PaymentsPage = () => {
             type="submit"
             disabled={submitting}
           >
-            {submitting ? 'Saving…' : t('actions.save')}
+            {submitting ? 'SavingвЂ¦' : t('actions.save')}
           </button>
         </div>
         </form>
@@ -439,8 +439,8 @@ const PaymentsPage = () => {
               payments.map((payment) => (
                 <tr key={payment.id}>
                 <td className="px-4 py-3">
-                  <div className="font-semibold text-slate-900 dark:text-white">{payment.dealer?.name ?? '—'}</div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{payment.note || '—'}</p>
+                  <div className="font-semibold text-slate-900 dark:text-white">{payment.dealer?.name ?? 'вЂ”'}</div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{payment.note || 'вЂ”'}</p>
                 </td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(payment.pay_date)}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
@@ -452,12 +452,12 @@ const PaymentsPage = () => {
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                   {payment.card ? (
                     <span>
-                      {payment.card.name ? `${payment.card.name} — ` : ''}
+                      {payment.card.name ? `${payment.card.name} вЂ” ` : ''}
                       {payment.card.masked_number || (payment.card.number ? `${String(payment.card.number).slice(0,4)} **** ${String(payment.card.number).slice(-4)}` : '')}
                       {payment.card.holder_name ? ` (${payment.card.holder_name})` : ''}
                     </span>
                   ) : (
-                    '—'
+                    'вЂ”'
                   )}
                 </td>
               </tr>
@@ -487,3 +487,4 @@ const PaymentsPage = () => {
 };
 
 export default PaymentsPage;
+
