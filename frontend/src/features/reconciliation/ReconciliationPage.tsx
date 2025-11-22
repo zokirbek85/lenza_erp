@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import http from '../../app/http';
@@ -61,6 +62,7 @@ const defaultFromDate = () => {
 };
 
 const ReconciliationPage = () => {
+  const { t } = useTranslation();
   const [dealers, setDealers] = useState<DealerOption[]>([]);
   const [selectedDealer, setSelectedDealer] = useState('');
   const [fromDate, setFromDate] = useState(defaultFromDate);
@@ -77,7 +79,7 @@ const ReconciliationPage = () => {
       setDealers(toArray<DealerOption>(response.data));
     } catch (error) {
       console.error(error);
-      toast.error("Dilerlarni yuklab bo'lmadi");
+      toast.error(t('reconciliation.toast.dealersError'));
     }
   }, []);
 
@@ -94,7 +96,7 @@ const ReconciliationPage = () => {
       setReport(response.data);
     } catch (error) {
       console.error(error);
-      toast.error('Akt sverka ma\'lumotlarini olishda xatolik');
+      toast.error(t('reconciliation.toast.loadError'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ const ReconciliationPage = () => {
       setPreviewOpen(true);
     } catch (error) {
       console.error(error);
-      toast.error('PDF yuklanmadi');
+      toast.error(t('reconciliation.toast.previewError'));
     }
   }, [selectedDealer, fromDate, toDate, detailed, pdfBlobUrl]);
 
@@ -132,17 +134,17 @@ const ReconciliationPage = () => {
       toast.error('Avval diler tanlang');
       return;
     }
-    toast.loading('📄 Akt sverka PDF tayyorlanmoqda...', { id: 'reconciliation-pdf' });
+    toast.loading(t('reconciliation.toast.pdfLoading'), { id: 'reconciliation-pdf' });
     try {
       const filename = report ? `Akt_sverka_${report.dealer}.pdf` : 'Akt_sverka.pdf';
       await downloadFile(
         `/dealers/${selectedDealer}/reconciliation/pdf/?from_date=${fromDate}&to_date=${toDate}&detailed=${detailed}`,
         filename
       );
-      toast.success('PDF yuklab olindi', { id: 'reconciliation-pdf' });
+      toast.success(t('reconciliation.toast.pdfSuccess'), { id: 'reconciliation-pdf' });
     } catch (error) {
       console.error(error);
-      toast.error('PDF yaratishda xatolik yuz berdi', { id: 'reconciliation-pdf' });
+      toast.error(t('reconciliation.toast.pdfError'), { id: 'reconciliation-pdf' });
     }
   };
 

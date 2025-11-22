@@ -45,6 +45,58 @@
     "notifications": "Notifications",
     "userManual": "User Manual"
   },
+  "reconciliation": {
+    "title": "Reconciliation Statement",
+    "subtitle": "Dealer order and payment reconciliation reports",
+    "period": "Period",
+    "dealer": "Dealer",
+    "selectDealer": "Select",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "generate": "Generate",
+    "loading": "Loading...",
+    "detailedReport": "Detailed report",
+    "view": "View",
+    "exportPdf": "PDF export",
+    "exportExcel": "Excel export",
+    "openingBalance": "Opening balance",
+    "closingBalance": "Closing balance",
+    "movements": "Movements",
+    "movementsDesc": "Orders, payments and returns",
+    "orders": "Orders",
+    "ordersDetailed": "Orders (detailed)",
+    "ordersDetailedDesc": "Item list for each order",
+    "payments": "Payments",
+    "returns": "Returns",
+    "date": "Date",
+    "name": "Name",
+    "direction": "Direction",
+    "amount": "Amount (USD)",
+    "debit": "Debit",
+    "credit": "Credit",
+    "orderNumber": "Order number",
+    "total": "Total",
+    "product": "Product",
+    "quantity": "Quantity",
+    "price": "Price",
+    "method": "Method / Card",
+    "signature": "Signature",
+    "signatureLine": "Signature: _____________________________",
+    "dateLine": "Date: ___ / ___ / ____",
+    "emptyState": "Select filters first to generate report",
+    "noData": "No data found for selected period",
+    "toast": {
+      "selectDealer": "Please select a dealer first",
+      "loadError": "Error loading reconciliation data",
+      "pdfLoading": "📄 Generating reconciliation PDF...",
+      "pdfSuccess": "PDF downloaded",
+      "pdfError": "Error generating PDF",
+      "excelSuccess": "Excel downloaded",
+      "excelError": "Error exporting Excel",
+      "dealersError": "Failed to load dealers",
+      "previewError": "Failed to load PDF"
+    }
+  },
   "actions": {
     "create": "Create",
     "save": "Save",
@@ -269,41 +321,64 @@
     "title": "Dealers",
     "subtitle": "Customer and dealer management",
     "new": "New dealer",
-    "edit": "Edit",
-    "delete": "Delete",
+    "editTitle": "Edit Dealer",
+    "addTitle": "Add New Dealer",
+    "viewDetails": "View Details",
+    "overview": "Overview",
+    "exportExcel": "Export Excel",
+    "importExcel": "Import from Excel",
+    "importTemplate": "Download Template",
+    "importTitle": "Import Dealers",
+    "importing": "Importing...",
+    "startImport": "Start Import",
+    "recentOrders": "Recent Orders",
+    "recentPayments": "Recent Payments",
+    "confirmDelete": "Delete dealer {{name}}?",
+    "filters": {
+      "allRegions": "All Regions"
+    },
     "table": {
-      "name": "Name",
+      "dealer": "Dealer",
       "region": "Region",
-      "contact": "Contact",
-      "phone": "Phone",
-      "creditLimit": "Credit limit",
-      "balance": "Balance",
-      "status": "Status",
-      "actions": "Actions"
+      "manager": "Manager",
+      "balanceUsd": "Balance (USD)",
+      "name": "Name",
+      "code": "Code",
+      "contact": "Contact"
     },
     "form": {
       "name": "Dealer name",
+      "code": "Dealer code",
       "region": "Region",
-      "contact": "Contact person",
-      "phone": "Phone",
-      "email": "Email",
-      "address": "Address",
-      "creditLimit": "Credit limit (USD)",
-      "tin": "TIN / Tax ID",
-      "notes": "Notes",
-      "selectRegion": "Select region"
+      "manager": "Manager",
+      "contact": "Contact information",
+      "openingBalance": "Opening balance (USD)",
+      "selectRegion": "Select region",
+      "unassigned": "Unassigned",
+      "excelFile": "Excel file"
     },
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive",
-      "blocked": "Blocked"
+    "importSummary": {
+      "created": "Created",
+      "updated": "Updated",
+      "skipped": "Skipped"
     },
     "messages": {
-      "created": "Dealer created",
-      "updated": "Dealer updated",
-      "deleted": "Dealer deleted",
-      "deleteConfirm": "Delete this dealer?",
-      "creditExceeded": "Credit limit exceeded!"
+      "loading": "Loading...",
+      "loadingDetails": "Loading details...",
+      "noDealers": "No dealers found",
+      "noOrders": "No orders",
+      "noPayments": "No payments",
+      "created": "Dealer created successfully",
+      "updated": "Dealer updated successfully",
+      "deleted": "Dealer deleted successfully",
+      "saveError": "Error saving dealer",
+      "deleteError": "Error deleting dealer",
+      "loadHistoryError": "Error loading history",
+      "exportError": "Error exporting data",
+      "importError": "Error importing data",
+      "importSuccess": "Dealers imported successfully",
+      "templateError": "Error downloading template",
+      "selectFile": "Please select a file"
     }
   },
   "users": {
@@ -519,37 +594,7 @@
       "noData": "No data available"
     }
   },
-  "reconciliation": {
-    "title": "Reconciliation",
-    "subtitle": "Financial reconciliation with dealers",
-    "generate": "Generate report",
-    "table": {
-      "dealer": "Dealer",
-      "period": "Period",
-      "startBalance": "Starting balance",
-      "orders": "Orders",
-      "payments": "Payments",
-      "endBalance": "Ending balance",
-      "actions": "Actions"
-    },
-    "form": {
-      "dealer": "Dealer",
-      "startDate": "Start date",
-      "endDate": "End date",
-      "selectDealer": "Select dealer"
-    },
-    "details": {
-      "orders": "Orders",
-      "payments": "Payments",
-      "returns": "Returns",
-      "total": "Total"
-    },
-    "messages": {
-      "generated": "Report generated",
-      "exported": "Report exported",
-      "error": "Error generating report"
-    }
-  },
+
   "settings": {
     "title": "Settings",
     "subtitle": "System settings and configuration",

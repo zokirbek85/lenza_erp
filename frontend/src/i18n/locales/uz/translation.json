@@ -45,6 +45,58 @@
     "notifications": "Bildirishnomalar",
     "userManual": "Qo'llanma"
   },
+  "reconciliation": {
+    "title": "Akt sverka",
+    "subtitle": "Dilerlar bo'yicha buyurtma va to'lovlar muvofiqlashtirish hisobotlari",
+    "period": "Davr",
+    "dealer": "Diler",
+    "selectDealer": "Tanlang",
+    "startDate": "Boshlanish sanasi",
+    "endDate": "Tugash sanasi",
+    "generate": "Ko'rsatish",
+    "loading": "Yuklanmoqda...",
+    "detailedReport": "Batafsil hisobot",
+    "view": "Ko'rish",
+    "exportPdf": "PDF eksport",
+    "exportExcel": "Excel eksport",
+    "openingBalance": "Boshlang'ich balans",
+    "closingBalance": "Yakuniy balans",
+    "movements": "Harakatlar",
+    "movementsDesc": "Buyurtmalar, to'lovlar va qaytarishlar",
+    "orders": "Buyurtmalar",
+    "ordersDetailed": "Buyurtmalar (batafsil)",
+    "ordersDetailedDesc": "Har bir buyurtma uchun itemlar ro'yxati",
+    "payments": "To'lovlar",
+    "returns": "Qaytarishlar",
+    "date": "Sana",
+    "name": "Nomi",
+    "direction": "Yo'nalish",
+    "amount": "Miqdor (USD)",
+    "debit": "Debet",
+    "credit": "Kredit",
+    "orderNumber": "Buyurtma raqami",
+    "total": "Jami",
+    "product": "Mahsulot",
+    "quantity": "Miqdor",
+    "price": "Narx",
+    "method": "Usul / Karta",
+    "signature": "Imzo",
+    "signatureLine": "Imzo: _____________________________",
+    "dateLine": "Sana: ___ / ___ / ____",
+    "emptyState": "Avval filtrlarni tanlab, hisobotni ko'rsating",
+    "noData": "Tanlangan davr uchun ma'lumot topilmadi",
+    "toast": {
+      "selectDealer": "Avval diler tanlang",
+      "loadError": "Akt sverka ma'lumotlarini olishda xatolik",
+      "pdfLoading": "📄 Akt sverka PDF tayyorlanmoqda...",
+      "pdfSuccess": "PDF yuklab olindi",
+      "pdfError": "PDF yaratishda xatolik yuz berdi",
+      "excelSuccess": "Excel yuklab olindi",
+      "excelError": "Excel eksportda xatolik",
+      "dealersError": "Dilerlarni yuklab bo'lmadi",
+      "previewError": "PDF yuklanmadi"
+    }
+  },
   "actions": {
     "create": "Yaratish",
     "save": "Saqlash",
@@ -611,41 +663,64 @@
     "title": "Dilerlar",
     "subtitle": "Mijozlar va diler boshqaruvi",
     "new": "Yangi diler",
-    "edit": "Tahrirlash",
-    "delete": "O'chirish",
+    "editTitle": "Dilerni tahrirlash",
+    "addTitle": "Yangi diler qo'shish",
+    "viewDetails": "Batafsil ko'rish",
+    "overview": "Umumiy ma'lumot",
+    "exportExcel": "Excel yuklash",
+    "importExcel": "Excel orqali import",
+    "importTemplate": "Shablon yuklash",
+    "importTitle": "Dilerlarni import qilish",
+    "importing": "Import qilinmoqda...",
+    "startImport": "Importni boshlash",
+    "recentOrders": "So'nggi buyurtmalar",
+    "recentPayments": "So'nggi to'lovlar",
+    "confirmDelete": "{{name}} dilerni o'chirishni xohlaysizmi?",
+    "filters": {
+      "allRegions": "Barcha hududlar"
+    },
     "table": {
-      "name": "Nomi",
+      "dealer": "Diler",
       "region": "Hudud",
-      "contact": "Kontakt",
-      "phone": "Telefon",
-      "creditLimit": "Kredit limit",
-      "balance": "Balans",
-      "status": "Holat",
-      "actions": "Amallar"
+      "manager": "Menejer",
+      "balanceUsd": "Balans (USD)",
+      "name": "Nomi",
+      "code": "Kod",
+      "contact": "Kontakt"
     },
     "form": {
       "name": "Diler nomi",
+      "code": "Diler kodi",
       "region": "Hudud",
-      "contact": "Kontakt shaxs",
-      "phone": "Telefon",
-      "email": "Email",
-      "address": "Manzil",
-      "creditLimit": "Kredit limit (USD)",
-      "tin": "INN / STIR",
-      "notes": "Izohlar",
-      "selectRegion": "Hudud tanlang"
+      "manager": "Menejer",
+      "contact": "Kontakt ma'lumot",
+      "openingBalance": "Boshlang'ich balans (USD)",
+      "selectRegion": "Hudud tanlang",
+      "unassigned": "Tayinlanmagan",
+      "excelFile": "Excel fayli"
     },
-    "status": {
-      "active": "Faol",
-      "inactive": "Faol emas",
-      "blocked": "Bloklangan"
+    "importSummary": {
+      "created": "Yaratildi",
+      "updated": "Yangilandi",
+      "skipped": "O'tkazib yuborildi"
     },
     "messages": {
-      "created": "Diler yaratildi",
-      "updated": "Diler yangilandi",
-      "deleted": "Diler o'chirildi",
-      "deleteConfirm": "Dilerni o'chirishni xohlaysizmi?",
-      "creditExceeded": "Kredit limit oshib ketdi!"
+      "loading": "Yuklanmoqda...",
+      "loadingDetails": "Batafsil ma'lumotlar yuklanmoqda...",
+      "noDealers": "Dilerlar topilmadi",
+      "noOrders": "Buyurtmalar yo'q",
+      "noPayments": "To'lovlar yo'q",
+      "created": "Diler muvaffaqiyatli yaratildi",
+      "updated": "Diler muvaffaqiyatli yangilandi",
+      "deleted": "Diler muvaffaqiyatli o'chirildi",
+      "saveError": "Dilerni saqlashda xatolik",
+      "deleteError": "Dilerni o'chirishda xatolik",
+      "loadHistoryError": "Tarixni yuklashda xatolik",
+      "exportError": "Eksport qilishda xatolik",
+      "importError": "Import qilishda xatolik",
+      "importSuccess": "Dilerlar muvaffaqiyatli import qilindi",
+      "templateError": "Shablonni yuklashda xatolik",
+      "selectFile": "Iltimos, fayl tanlang"
     }
   },
   "users": {
@@ -860,37 +935,7 @@
       "noData": "Ma'lumot yo'q"
     }
   },
-  "reconciliation": {
-    "title": "Akt sverka",
-    "subtitle": "Dilerlar bilan moliyaviy mutabaqat",
-    "generate": "Akt yaratish",
-    "table": {
-      "dealer": "Diler",
-      "period": "Davr",
-      "startBalance": "Boshlang'ich balans",
-      "orders": "Buyurtmalar",
-      "payments": "To'lovlar",
-      "endBalance": "Yakuniy balans",
-      "actions": "Amallar"
-    },
-    "form": {
-      "dealer": "Diler",
-      "startDate": "Boshlanish",
-      "endDate": "Tugash",
-      "selectDealer": "Diler tanlang"
-    },
-    "details": {
-      "orders": "Buyurtmalar",
-      "payments": "To'lovlar",
-      "returns": "Qaytishlar",
-      "total": "Jami"
-    },
-    "messages": {
-      "generated": "Akt yaratildi",
-      "exported": "Akt eksport qilindi",
-      "error": "Aktni yaratishda xatolik"
-    }
-  },
+
   "settings": {
     "title": "Sozlamalar",
     "subtitle": "Tizim sozlamalari va konfiguratsiya",
