@@ -524,7 +524,8 @@
       "date": "Date",
       "actions": "Actions",
       "items": "Items",
-      "comment": "Comment"
+      "comment": "Comment",
+      "total": "Total"
     },
     "form": {
       "order": "Order",
@@ -557,6 +558,7 @@
       "statusRequired": "Status is required",
       "itemsRequired": "Add at least one item",
       "currentDebt": "Current debt",
+      "total": "Total amount",
       "reason": "Return reason",
       "reasonPlaceholder": "Optional reason...",
       "type": "Return type"

@@ -866,7 +866,8 @@
       "date": "Sana",
       "actions": "Amallar",
       "items": "Mahsulotlar",
-      "comment": "Izoh"
+      "comment": "Izoh",
+      "total": "Jami"
     },
     "form": {
       "order": "Buyurtma",
