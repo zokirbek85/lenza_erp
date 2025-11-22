@@ -645,16 +645,17 @@ const OrdersPage = () => {
 
       <div className="mt-4">{filtersContent}</div>
 
-      <Collapse
-        className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
-        activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
-        onChange={(key) => handleCollapseChange(key as string[] | string)}
-        items={[
-          {
-            key: CREATE_FORM_PANEL_KEY,
-            label: t('orders.header.panelTitle'),
-            children: showCreateForm ? (
-              <Card
+      {!isWarehouse && (
+        <Collapse
+          className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
+          activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
+          onChange={(key) => handleCollapseChange(key as string[] | string)}
+          items={[
+            {
+              key: CREATE_FORM_PANEL_KEY,
+              label: t('orders.header.panelTitle'),
+              children: showCreateForm ? (
+                <Card
                 title={t('orders.header.panelTitle')}
                 className="mt-4 border border-slate-700 bg-slate-900"
                 headStyle={{ color: '#fff', backgroundColor: 'transparent' }}
@@ -854,7 +855,8 @@ const OrdersPage = () => {
             ) : null,
           },
         ]}
-      />
+        />
+      )}
 
       <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
