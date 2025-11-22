@@ -19,6 +19,7 @@ from core.utils.temp_files import cleanup_temp_files, get_tmp_dir
 
 
 IMPORT_TEMPLATE_COLUMNS = [
+    'order_no',         # Order number (optional, for grouping)
     'dealer_name',      # Dealer name (will be matched or created)
     'product_name',     # Product name (will be matched by name)
     'qty',              # Quantity (decimal, min 0.01)
@@ -151,16 +152,39 @@ def generate_import_template() -> str:
     # Create empty DataFrame with predefined columns
     dataframe = pd.DataFrame(columns=IMPORT_TEMPLATE_COLUMNS)
     
-    # Add sample row for reference
-    sample_data = {
-        'dealer_name': 'Example Dealer',
-        'product_name': 'Product Name Example',
-        'qty': 10.00,
-        'price_usd': 25.50,
-        'value_date': timezone.now().date().isoformat(),
-        'is_reserve': 'NO',
-        'note': 'Sample note (optional)',
-    }
+    # Add sample rows for reference
+    sample_data = [
+        {
+            'order_no': '001',
+            'dealer_name': 'Example Dealer',
+            'product_name': 'Product Name Example 1',
+            'qty': 10.00,
+            'price_usd': 25.50,
+            'value_date': timezone.now().date().isoformat(),
+            'is_reserve': 'NO',
+            'note': 'Sample order 1',
+        },
+        {
+            'order_no': '001',
+            'dealer_name': 'Example Dealer',
+            'product_name': 'Product Name Example 2',
+            'qty': 5.00,
+            'price_usd': 30.00,
+            'value_date': timezone.now().date().isoformat(),
+            'is_reserve': 'NO',
+            'note': 'Sample order 1',
+        },
+        {
+            'order_no': '002',
+            'dealer_name': 'Another Dealer',
+            'product_name': 'Product Name Example 3',
+            'qty': 15.00,
+            'price_usd': 20.00,
+            'value_date': timezone.now().date().isoformat(),
+            'is_reserve': 'YES',
+            'note': 'Sample order 2',
+        },
+    ]
     dataframe = pd.DataFrame([sample_data], columns=IMPORT_TEMPLATE_COLUMNS)
     
     filename = f"orders_import_template_{timezone.now():%Y%m%d_%H%M%S}.xlsx"
@@ -196,13 +220,12 @@ def import_orders_from_excel(file_obj, created_by=None) -> dict:
     items_created = 0
     errors = []
     
-    # Group by dealer_name, value_date, note to create single orders
-    df['_group_key'] = (
-        df['dealer_name'].fillna('').astype(str) + '|' +
-        df['value_date'].fillna('').astype(str) + '|' +
-        df['note'].fillna('').astype(str) + '|' +
-        df['is_reserve'].fillna('').astype(str)
-    )
+    # Group by order_no (if provided) or by dealer_name+value_date+note
+    # If order_no is provided, group by order_no; otherwise use old grouping logic
+    df['_group_key'] = df.apply(lambda row: (
+        _to_str(row.get('order_no')) if _to_str(row.get('order_no')) else
+        f"{_to_str(row.get('dealer_name'))}|{_to_str(row.get('value_date'))}|{_to_str(row.get('note'))}|{_to_str(row.get('is_reserve'))}"
+    ), axis=1)
     
     for group_key, group_df in df.groupby('_group_key'):
         # Get order-level data from first row of group
