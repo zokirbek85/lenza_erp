@@ -29,7 +29,7 @@ const ManagerKpiPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await http.get<ManagerKpi>('/api/kpis/sales-manager/', { signal: controller.signal });
+        const response = await http.get<ManagerKpi>('/kpis/sales-manager/', { signal: controller.signal });
         setData(response.data);
       } catch (err) {
         if (axios.isCancel(err)) return;

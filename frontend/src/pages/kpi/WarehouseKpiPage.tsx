@@ -24,7 +24,7 @@ const WarehouseKpiPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await http.get<WarehouseKpi>('/api/kpis/warehouse/', { signal: controller.signal });
+        const response = await http.get<WarehouseKpi>('/kpis/warehouse/', { signal: controller.signal });
         setData(response.data);
       } catch (err) {
         if (axios.isCancel(err)) return;
