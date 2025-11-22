@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import http from '../app/http';
+import { useAuthStore } from '../auth/useAuthStore';
 import { toArray } from '../utils/api';
 
 interface CurrencyRate {
@@ -13,6 +14,8 @@ interface CurrencyRate {
 
 const CurrencyRatesPage = () => {
   const { t } = useTranslation();
+  const role = useAuthStore((state) => state.role);
+  const isSalesManager = role === 'sales';
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [form, setForm] = useState({ rate_date: '', usd_to_uzs: '' });
 
@@ -48,40 +51,42 @@ const CurrencyRatesPage = () => {
         <p className="text-sm text-slate-500 dark:text-slate-400">{t('currencyRates.description')}</p>
       </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3"
-      >
-        <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('currencyRates.form.date')}</label>
-          <input
-            type="date"
-            required
-            value={form.rate_date}
-            onChange={(event) => setForm((prev) => ({ ...prev, rate_date: event.target.value }))}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('currencyRates.form.usdToUzs')}</label>
-          <input
-            required
-            type="number"
-            step="0.01"
-            value={form.usd_to_uzs}
-            onChange={(event) => setForm((prev) => ({ ...prev, usd_to_uzs: event.target.value }))}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          />
-        </div>
-        <div className="flex items-end">
-          <button
-            className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900 dark:hover:bg-emerald-400"
-            type="submit"
-          >
-            {t('actions.save')}
-          </button>
-        </div>
-      </form>
+      {!isSalesManager && (
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3"
+        >
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('currencyRates.form.date')}</label>
+            <input
+              type="date"
+              required
+              value={form.rate_date}
+              onChange={(event) => setForm((prev) => ({ ...prev, rate_date: event.target.value }))}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('currencyRates.form.usdToUzs')}</label>
+            <input
+              required
+              type="number"
+              step="0.01"
+              value={form.usd_to_uzs}
+              onChange={(event) => setForm((prev) => ({ ...prev, usd_to_uzs: event.target.value }))}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900 dark:hover:bg-emerald-400"
+              type="submit"
+            >
+              {t('actions.save')}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
