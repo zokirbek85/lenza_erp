@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import http from '../app/http';
+import { useAuthStore } from '../auth/useAuthStore';
 import StatusBadge from '../components/StatusBadge';
 import OrderStatus from '../components/OrderStatus';
 import Money from '../components/Money';
@@ -123,6 +124,8 @@ const OrdersPage = () => {
   const { t } = useTranslation();
   const { isMobile } = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const role = useAuthStore((state) => state.role);
+  const isWarehouse = role === 'warehouse';
 
   const {
     filters,
@@ -591,50 +594,54 @@ const OrdersPage = () => {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleDownloadTemplate}
-            title={t('orders.import.templateTooltip')}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            📥 {t('orders.import.downloadTemplate')}
-          </button>
-          <label
-            title={t('orders.import.importTooltip')}
-            className="cursor-pointer rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-          >
-            📤 {t('orders.import.uploadFile')}
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleImportOrders}
-              className="hidden"
-            />
-          </label>
-          <button
-            onClick={() => handlePdf()}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-          >
-            {t('actions.exportPdf')}
-          </button>
-          <button
-            onClick={handleExcel}
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-          >
-            {t('actions.exportExcel')}
-          </button>
-        </div>
+        {!isWarehouse && (
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleDownloadTemplate}
+              title={t('orders.import.templateTooltip')}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              📥 {t('orders.import.downloadTemplate')}
+            </button>
+            <label
+              title={t('orders.import.importTooltip')}
+              className="cursor-pointer rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+            >
+              📤 {t('orders.import.uploadFile')}
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImportOrders}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={() => handlePdf()}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+            >
+              {t('actions.exportPdf')}
+            </button>
+            <button
+              onClick={handleExcel}
+              className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+            >
+              {t('actions.exportExcel')}
+            </button>
+          </div>
+        )}
       </header>
 
-      <div className="mb-4 flex justify-end">
-        <Button
-          type={showCreateForm ? 'default' : 'primary'}
-          icon={showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
-          onClick={handleToggleCreateForm}
-        >
-          {t(showCreateForm ? 'orders.header.hideForm' : 'orders.header.showForm')}
-        </Button>
-      </div>
+      {!isWarehouse && (
+        <div className="mb-4 flex justify-end">
+          <Button
+            type={showCreateForm ? 'default' : 'primary'}
+            icon={showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
+            onClick={handleToggleCreateForm}
+          >
+            {t(showCreateForm ? 'orders.header.hideForm' : 'orders.header.showForm')}
+          </Button>
+        </div>
+      )}
 
       <div className="mt-4">{filtersContent}</div>
 
@@ -865,9 +872,11 @@ const OrdersPage = () => {
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
                 {t('orders.list.columns.status')}
               </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.amount')}
-              </th>
+              {!isWarehouse && (
+                <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
+                  {t('orders.list.columns.amount')}
+                </th>
+              )}
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
                 {t('orders.list.columns.date')}
               </th>
@@ -917,9 +926,11 @@ const OrdersPage = () => {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                      <Money value={order.total_usd} currency="USD" />
-                    </td>
+                    {!isWarehouse && (
+                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                        <Money value={order.total_usd} currency="USD" />
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(order.value_date)}</td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -951,9 +962,16 @@ const OrdersPage = () => {
                                     <span className="font-medium text-slate-800 dark:text-slate-100">
                                       {item.product_detail?.name ?? `${t('orders.details.product')} #${item.product ?? '—'}`}
                                     </span>
-                                    <span className="text-slate-600 dark:text-slate-300">
-                                      {formatQuantity(item.qty)} Г— {formatCurrency(price)} = {formatCurrency(lineTotal)}
-                                    </span>
+                                    {!isWarehouse && (
+                                      <span className="text-slate-600 dark:text-slate-300">
+                                        {formatQuantity(item.qty)} × {formatCurrency(price)} = {formatCurrency(lineTotal)}
+                                      </span>
+                                    )}
+                                    {isWarehouse && (
+                                      <span className="text-slate-600 dark:text-slate-300">
+                                        {formatQuantity(item.qty)} {t('common.units.pcs')}
+                                      </span>
+                                    )}
                                   </li>
                                 );
                               })}

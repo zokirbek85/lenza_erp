@@ -111,8 +111,20 @@ def _get_dealer(name: str) -> Dealer | None:
     if dealer:
         return dealer
     
-    # If not found, create new dealer
-    dealer = Dealer.objects.create(name=dealer_name)
+    # If not found, create new dealer with auto-generated code
+    # Generate unique code from name
+    import re
+    base_code = re.sub(r'[^A-Z0-9]', '', dealer_name.upper())[:8] or 'DEALER'
+    code = base_code
+    counter = 1
+    
+    # Ensure unique code
+    while Dealer.objects.filter(code=code).exists():
+        suffix = f"{counter:02d}"
+        code = (base_code[:max(0, 8 - len(suffix))] + suffix) or f"DLR{counter:03d}"
+        counter += 1
+    
+    dealer = Dealer.objects.create(name=dealer_name, code=code)
     return dealer
 
 

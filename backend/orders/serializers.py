@@ -23,6 +23,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ('id', 'product', 'product_detail', 'qty', 'price_usd', 'status')
         read_only_fields = ('status',)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'role') and request.user.role == 'warehouse':
+            data.pop('price_usd', None)
+        return data
+
 
 class OrderStatusLogSerializer(serializers.ModelSerializer):
     by_user = serializers.StringRelatedField()
@@ -118,6 +125,15 @@ class OrderSerializer(serializers.ModelSerializer):
                 self._sync_items(instance, items_data)
             instance.recalculate_totals()
         return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'role') and request.user.role == 'warehouse':
+            # Remove price fields for warehouse users
+            data.pop('total_usd', None)
+            data.pop('total_uzs', None)
+        return data
 
     def _sync_items(self, order, items_data):
         for item in items_data:
