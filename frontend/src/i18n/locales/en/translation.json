@@ -691,6 +691,9 @@
     "subtitle": "Key performance indicators and analysis",
     "owner": {
       "title": "Owner dashboard",
+      "totalSales": "Total sales",
+      "totalPayments": "Total payments",
+      "dealersCount": "Dealers count",
       "totalRevenue": "Total revenue",
       "netProfit": "Net profit",
       "profitMargin": "Profit margin",
@@ -702,7 +705,11 @@
       "topDealers": "Top dealers",
       "cashBalance": "Cash balance",
       "receivables": "Receivables",
-      "payables": "Payables"
+      "payables": "Payables",
+      "balances": "Balances",
+      "balancesDesc": "Dealer balances",
+      "salesDistribution": "Sales distribution",
+      "salesByTopDealers": "Sales by top dealers"
     },
     "manager": {
       "title": "Sales manager dashboard",
@@ -711,7 +718,9 @@
       "myDealers": "My dealers",
       "assignedToMe": "Assigned to me",
       "topDealers": "Top dealers",
+      "topDealersShare": "Top dealers share",
       "salesByRegion": "Sales by region",
+      "myRegions": "My regions",
       "salesTarget": "Target",
       "salesAchieved": "Achieved",
       "achievement": "Achievement %",
@@ -728,12 +737,21 @@
       "lowStockProducts": "Low stock products",
       "totalProducts": "Total products",
       "lowStock": "Low stock",
+      "lowStockDesc": "Products running low",
       "outOfStock": "Out of stock",
       "pendingShipments": "Pending shipments",
       "shippedToday": "Shipped today",
       "returns": "Returns",
       "stockValue": "Stock value",
-      "turnoverRate": "Turnover rate"
+      "turnoverRate": "Turnover rate",
+      "defects": "Defective products",
+      "defectsDesc": "Returned or damaged products",
+      "noHighRisk": "No products with critically low stock",
+      "noDefects": "No defective products",
+      "stockDistribution": "Stock distribution",
+      "stockDistributionDesc": "Stock distribution by products",
+      "stockUnits": "Stock (units)",
+      "noRisks": "No risks"
     },
     "charts": {
       "revenueTrend": "Revenue trend",

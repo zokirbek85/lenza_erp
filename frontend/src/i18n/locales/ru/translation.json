@@ -690,6 +690,9 @@
     "subtitle": "Ключевые показатели эффективности",
     "owner": {
       "title": "Панель владельца",
+      "totalSales": "Всего продаж",
+      "totalPayments": "Всего платежей",
+      "dealersCount": "Количество дилеров",
       "totalRevenue": "Общий доход",
       "netProfit": "Чистая прибыль",
       "profitMargin": "Маржа прибыли",
@@ -701,7 +704,11 @@
       "topDealers": "Топ дилеры",
       "cashBalance": "Остаток в кассе",
       "receivables": "Дебиторка",
-      "payables": "Кредиторка"
+      "payables": "Кредиторка",
+      "balances": "Балансы",
+      "balancesDesc": "Задолженность дилеров",
+      "salesDistribution": "Распределение продаж",
+      "salesByTopDealers": "Продажи по топ дилерам"
     },
     "manager": {
       "title": "Панель менеджера по продажам",
@@ -710,7 +717,9 @@
       "myDealers": "Мои дилеры",
       "assignedToMe": "Назначено мне",
       "topDealers": "Топ дилеры",
+      "topDealersShare": "Доля топ дилеров",
       "salesByRegion": "Продажи по регионам",
+      "myRegions": "Мои регионы",
       "salesTarget": "План",
       "salesAchieved": "Выполнено",
       "achievement": "Выполнение %",
@@ -727,12 +736,21 @@
       "lowStockProducts": "Товары с низким запасом",
       "totalProducts": "Всего товаров",
       "lowStock": "Низкий запас",
+      "lowStockDesc": "Товары на исходе",
       "outOfStock": "Закончились",
       "pendingShipments": "Ожидают отгрузки",
       "shippedToday": "Отгружено сегодня",
       "returns": "Возвраты",
       "stockValue": "Стоимость запасов",
-      "turnoverRate": "Скорость оборота"
+      "turnoverRate": "Скорость оборота",
+      "defects": "Бракованные товары",
+      "defectsDesc": "Возвращённые или повреждённые товары",
+      "noHighRisk": "Нет товаров с критически низким запасом",
+      "noDefects": "Нет бракованных товаров",
+      "stockDistribution": "Распределение запасов",
+      "stockDistributionDesc": "Распределение запасов по товарам",
+      "stockUnits": "Запас (шт)",
+      "noRisks": "Нет рисков"
     },
     "charts": {
       "revenueTrend": "Тренд доходов",
@@ -750,7 +768,14 @@
       "year": "Год",
       "custom": "Другое"
     },
-    "noData": "Данные отсутствуют"
+    "noData": "Данные отсутствуют",
+    "sales": "Продажи",
+    "salesUsd": "Продажи (USD)",
+    "messages": {
+      "loadError": "Ошибка загрузки данных KPI",
+      "pleaseLogin": "Пожалуйста, войдите в систему",
+      "noAccessPage": "Страница KPI для вашей роли не найдена"
+    }
   },
   "dashboard": {
     "ownerKpi": "Общий обзор",

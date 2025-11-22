@@ -1031,6 +1031,9 @@
     "subtitle": "Asosiy ko'rsatkichlar va tahlil",
     "owner": {
       "title": "Egasi paneli",
+      "totalSales": "Jami savdo",
+      "totalPayments": "Jami to'lovlar",
+      "dealersCount": "Dilerlar soni",
       "totalRevenue": "Umumiy daromad",
       "netProfit": "Sof foyda",
       "profitMargin": "Foyda foizi",
@@ -1042,7 +1045,11 @@
       "topDealers": "Top dilerlar",
       "cashBalance": "Kassa qoldig'i",
       "receivables": "Qarzdorlik",
-      "payables": "Kreditorlik"
+      "payables": "Kreditorlik",
+      "balances": "Balanslar",
+      "balancesDesc": "Dilerlar qarzdorligi",
+      "salesDistribution": "Savdo taqsimoti",
+      "salesByTopDealers": "Top dilerlar bo'yicha savdo"
     },
     "manager": {
       "title": "Sotuv menejeri paneli",
@@ -1051,7 +1058,9 @@
       "myDealers": "Mening dilerlarim",
       "assignedToMe": "Menga biriktirilgan",
       "topDealers": "Top dilerlar",
+      "topDealersShare": "Top dilerlar ulushi",
       "salesByRegion": "Hududlar bo'yicha savdo",
+      "myRegions": "Mening hududlarim",
       "salesTarget": "Plan",
       "salesAchieved": "Bajarilgan",
       "achievement": "Bajarilish %",
@@ -1068,12 +1077,21 @@
       "lowStockProducts": "Kam zaxirali mahsulotlar",
       "totalProducts": "Jami mahsulotlar",
       "lowStock": "Kam zaxira",
+      "lowStockDesc": "Tugash arafasidagi mahsulotlar",
       "outOfStock": "Tugagan",
       "pendingShipments": "Jo'natish kutilmoqda",
       "shippedToday": "Bugun jo'natilgan",
       "returns": "Qaytishlar",
       "stockValue": "Zaxira qiymati",
-      "turnoverRate": "Aylanish tezligi"
+      "turnoverRate": "Aylanish tezligi",
+      "defects": "Nuqsonli mahsulotlar",
+      "defectsDesc": "Qaytgan yoki shikastlangan mahsulotlar",
+      "noHighRisk": "Kritik kam zaxirali mahsulot yo'q",
+      "noDefects": "Nuqsonli mahsulot yo'q",
+      "stockDistribution": "Zaxira taqsimoti",
+      "stockDistributionDesc": "Mahsulotlar bo'yicha zaxira taqsimlanishi",
+      "stockUnits": "Zaxira (dona)",
+      "noRisks": "Xavfli holatlar yo'q"
     },
     "charts": {
       "revenueTrend": "Daromad tendentsiyasi",
