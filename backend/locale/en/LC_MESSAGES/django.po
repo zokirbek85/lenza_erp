@@ -349,3 +349,64 @@ msgstr "Last payment"
 
 msgid "Report generated"
 msgstr "Report generated"
+
+# Reconciliation PDF template
+msgid "Reconciliation Statement"
+msgstr "Reconciliation Statement"
+
+msgid "Code"
+msgstr "Code"
+
+msgid "Opening Balance"
+msgstr "Opening Balance"
+
+msgid "Closing Balance"
+msgstr "Closing Balance"
+
+msgid "Orders"
+msgstr "Orders"
+
+msgid "№"
+msgstr "№"
+
+msgid "Product Name"
+msgstr "Product Name"
+
+msgid "Price (USD)"
+msgstr "Price (USD)"
+
+msgid "Total (USD)"
+msgstr "Total (USD)"
+
+msgid "No items available"
+msgstr "No items available"
+
+msgid "Order Number"
+msgstr "Order Number"
+
+msgid "Amount (USD)"
+msgstr "Amount (USD)"
+
+msgid "Method / Card"
+msgstr "Method / Card"
+
+msgid "Return"
+msgstr "Return"
+
+msgid "Return Details"
+msgstr "Return Details"
+
+msgid "Comment"
+msgstr "Comment"
+
+msgid "Total Balance"
+msgstr "Total Balance"
+
+msgid "Accountant"
+msgstr "Accountant"
+
+msgid "Signature"
+msgstr "Signature"
+
+msgid "Scan QR code to verify authenticity"
+msgstr "Scan QR code to verify authenticity"

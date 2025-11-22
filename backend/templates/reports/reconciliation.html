@@ -385,33 +385,33 @@
         </div>
       </div>
       <div class="header-right">
-        <div class="doc-title-small">Akt Sverka</div>
+        <div class="doc-title-small">{% trans 'Reconciliation Statement' %}</div>
         <div class="dealer-info">
           <strong>{{ data.dealer }}</strong>
-          <div>Kod: {{ data.dealer_code }}</div>
-          <div>Davr: {{ data.period }}</div>
-          <div>Sana: {% now "d.m.Y H:i" %}</div>
+          <div>{% trans 'Code' %}: {{ data.dealer_code }}</div>
+          <div>{% trans 'Period' %}: {{ data.period }}</div>
+          <div>{% trans 'Date' %}: {% now "d.m.Y H:i" %}</div>
         </div>
       </div>
     </section>
 
     <!-- Document Title -->
-    <h1 class="doc-title">Akt Sverka / Акт Сверки Взаиморасчетов</h1>
+    <h1 class="doc-title">{% trans 'Reconciliation Statement' %}</h1>
 
     <!-- Balance Summary -->
     <div class="balance-summary">
       <div class="balance-item">
-        <div class="balance-label">Boshlang'ich balans</div>
+        <div class="balance-label">{% trans 'Opening Balance' %}</div>
         <div class="balance-value">${{ data.opening_balance|floatformat:2 }}</div>
       </div>
       <div class="balance-item">
-        <div class="balance-label">Yakuniy balans</div>
+        <div class="balance-label">{% trans 'Closing Balance' %}</div>
         <div class="balance-value highlight">${{ data.closing_balance|floatformat:2 }}</div>
       </div>
     </div>
 
     <!-- Orders Section -->
-    <div class="section-header">📦 Buyurtmalar</div>
+    <div class="section-header">📦 {% trans 'Orders' %}</div>
 
     <div>
       {% if data.detailed %}
@@ -428,11 +428,11 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width: 50px;">в„–</th>
-                  <th>Mahsulot nomi</th>
-                  <th class="text-right" style="width: 100px;">Miqdor</th>
-                  <th class="text-right" style="width: 100px;">Narx (USD)</th>
-                  <th class="text-right" style="width: 120px;">Jami (USD)</th>
+                  <th style="width: 50px;">{% trans '№' %}</th>
+                  <th>{% trans 'Product Name' %}</th>
+                  <th class="text-right" style="width: 100px;">{% trans 'Quantity' %}</th>
+                  <th class="text-right" style="width: 100px;">{% trans 'Price (USD)' %}</th>
+                  <th class="text-right" style="width: 120px;">{% trans 'Total (USD)' %}</th>
                 </tr>
               </thead>
               <tbody>
@@ -446,23 +446,23 @@
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="5" class="empty-state">Itemlar mavjud emas</td>
+                  <td colspan="5" class="empty-state">{% trans 'No items available' %}</td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         {% empty %}
-          <div class="empty-state">Ma&apos;lumot topilmadi</div>
+          <div class="empty-state">{% trans 'No data found' %}</div>
         {% endfor %}
       {% else %}
         <!-- Summary View: Orders list -->
         <table>
           <thead>
             <tr>
-              <th style="width: 150px;">Sana</th>
-              <th>Buyurtma raqami</th>
-              <th class="text-right" style="width: 150px;">Summa (USD)</th>
+              <th style="width: 150px;">{% trans 'Date' %}</th>
+              <th>{% trans 'Order Number' %}</th>
+              <th class="text-right" style="width: 150px;">{% trans 'Amount (USD)' %}</th>
             </tr>
           </thead>
           <tbody>
@@ -474,7 +474,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="3" class="empty-state">Ma&apos;lumot topilmadi</td>
+              <td colspan="3" class="empty-state">{% trans 'No data found' %}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -483,13 +483,13 @@
     </div>
 
     <!-- Payments Section -->
-    <div class="section-header">💵 To&apos;lovlar</div>
+    <div class="section-header">💵 {% trans 'Payments' %}</div>
     <table>
       <thead>
         <tr>
-          <th style="width: 150px;">Sana</th>
-          <th>Usul / Karta</th>
-          <th class="text-right" style="width: 150px;">Summa (USD)</th>
+          <th style="width: 150px;">{% trans 'Date' %}</th>
+          <th>{% trans 'Method / Card' %}</th>
+          <th class="text-right" style="width: 150px;">{% trans 'Amount (USD)' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -514,13 +514,13 @@
     </table>
 
     <!-- Returns Section -->
-    <div class="section-header">↩️ Qaytarishlar</div>
+    <div class="section-header">↩️ {% trans 'Returns' %}</div>
     <table>
       <thead>
         <tr>
-          <th style="width: 150px;">Sana</th>
-          <th>Qaytarish</th>
-          <th class="text-right" style="width: 150px;">Summa (USD)</th>
+          <th style="width: 150px;">{% trans 'Date' %}</th>
+          <th>{% trans 'Return' %}</th>
+          <th class="text-right" style="width: 150px;">{% trans 'Amount (USD)' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -539,15 +539,15 @@
     </table>
 
     <!-- Returns Items Section -->
-    <div class="section-header" style="margin-top: 12px;">Qaytarish detali</div>
+    <div class="section-header" style="margin-top: 12px;">{% trans 'Return Details' %}</div>
     <table>
       <thead>
         <tr>
-          <th style="width: 140px;">Sana</th>
-          <th>Mahsulot</th>
-          <th style="width: 160px;">Izoh</th>
-          <th style="width: 120px;" class="text-right">Miqdor</th>
-          <th style="width: 120px;">Status</th>
+          <th style="width: 140px;">{% trans 'Date' %}</th>
+          <th>{% trans 'Product' %}</th>
+          <th style="width: 160px;">{% trans 'Comment' %}</th>
+          <th style="width: 120px;" class="text-right">{% trans 'Quantity' %}</th>
+          <th style="width: 120px;">{% trans 'Status' %}</th>
         </tr>
       </thead>
       <tbody>
@@ -561,7 +561,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="empty-state">Ma'lumot topilmadi</td>
+          <td colspan="5" class="empty-state">{% trans 'No data found' %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -570,7 +570,7 @@
     <!-- Summary Section -->
     <div class="summary-section">
       <div class="summary-row">
-        <span class="summary-label">Umumiy balans:</span>
+        <span class="summary-label">{% trans 'Total Balance' %}:</span>
         <span class="summary-value">${{ data.closing_balance|floatformat:2 }}</span>
       </div>
     </div>
@@ -578,21 +578,21 @@
     <!-- Signature Section -->
     <div class="signature-section">
       <div class="signature-box">
-        <div class="signature-title">Moliyachi / Accountant</div>
+        <div class="signature-title">{% trans 'Accountant' %}</div>
         <div class="signature-line">
-          <div class="signature-role">Imzo</div>
+          <div class="signature-role">{% trans 'Signature' %}</div>
           <div>_____________________</div>
         </div>
       </div>
       <div class="signature-box">
-        <div class="signature-title">Diler / Dealer</div>
+        <div class="signature-title">{% trans 'Dealer' %}</div>
         <div class="signature-line">
-          <div class="signature-role">Imzo</div>
+          <div class="signature-role">{% trans 'Signature' %}</div>
           <div>_____________________</div>
         </div>
       </div>
       <div class="signature-box">
-        <div class="signature-title">Sana / Date</div>
+        <div class="signature-title">{% trans 'Date' %}</div>
         <div class="signature-line">
           <div class="signature-role">___/___/______</div>
         </div>
@@ -600,8 +600,8 @@
     </div>
   </body>
   <footer style="margin-top: 24px; text-align: center; font-size: 10px; color: #777;">
-    <div>Imzolangan: <strong>{{ company.name|default:"Lenza ERP" }}</strong> tizimi orqali</div>
-    <div>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</div>
+    <div>{% trans 'Signed via' %}: <strong>{{ company.name|default:"Lenza ERP" }}</strong> {% trans 'system' %}</div>
+    <div>{% trans 'Scan QR code to verify authenticity' %}:</div>
     <img src="{{ qr_code }}" alt="QR" style="height:80px;"/>
     <div><a href="{{ verify_url }}">{{ verify_url }}</a></div>
   </footer>

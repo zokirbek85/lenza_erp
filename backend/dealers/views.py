@@ -149,6 +149,12 @@ class DealerReconciliationPDFView(APIView, ExportMixin):
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
     def get(self, request, pk: int):
+        from django.utils import translation
+        
+        # Activate language from Accept-Language header
+        lang = request.headers.get('Accept-Language', 'uz')
+        translation.activate(lang)
+        
         detailed = request.query_params.get('detailed') == 'true'
         data = get_reconciliation_data(
             dealer_id=pk,
@@ -179,6 +185,9 @@ class DealerReconciliationExcelView(APIView):
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
     def get(self, request, pk: int):
+        # Get language from Accept-Language header
+        lang = request.headers.get('Accept-Language', 'uz')
+        
         detailed = request.query_params.get('detailed') == 'true'
         data = get_reconciliation_data(
             dealer_id=pk,
@@ -187,7 +196,7 @@ class DealerReconciliationExcelView(APIView):
             user=request.user,
             detailed=detailed,
         )
-        file_path = Path(export_reconciliation_to_excel(data, detailed=detailed))
+        file_path = Path(export_reconciliation_to_excel(data, detailed=detailed, language=lang))
         dealer_slug = slugify(data['dealer']) or f'dealer-{pk}'
         filename = f"reconciliation_{dealer_slug}.xlsx"
         response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=filename)

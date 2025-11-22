@@ -349,3 +349,64 @@ msgstr "Oxirgi to'lov"
 
 msgid "Report generated"
 msgstr "Hisobot yaratilgan"
+
+# Reconciliation PDF template
+msgid "Reconciliation Statement"
+msgstr "Akt sverka"
+
+msgid "Code"
+msgstr "Kod"
+
+msgid "Opening Balance"
+msgstr "Boshlang'ich balans"
+
+msgid "Closing Balance"
+msgstr "Yakuniy balans"
+
+msgid "Orders"
+msgstr "Buyurtmalar"
+
+msgid "№"
+msgstr "№"
+
+msgid "Product Name"
+msgstr "Mahsulot nomi"
+
+msgid "Price (USD)"
+msgstr "Narx (USD)"
+
+msgid "Total (USD)"
+msgstr "Jami (USD)"
+
+msgid "No items available"
+msgstr "Itemlar mavjud emas"
+
+msgid "Order Number"
+msgstr "Buyurtma raqami"
+
+msgid "Amount (USD)"
+msgstr "Summa (USD)"
+
+msgid "Method / Card"
+msgstr "Usul / Karta"
+
+msgid "Return"
+msgstr "Qaytarish"
+
+msgid "Return Details"
+msgstr "Qaytarish detali"
+
+msgid "Comment"
+msgstr "Izoh"
+
+msgid "Total Balance"
+msgstr "Umumiy balans"
+
+msgid "Accountant"
+msgstr "Moliyachi"
+
+msgid "Signature"
+msgstr "Imzo"
+
+msgid "Scan QR code to verify authenticity"
+msgstr "Haqiqiylikni tekshirish uchun QR kodni skanerlang"

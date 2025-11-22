@@ -349,3 +349,64 @@ msgstr "Последний платеж"
 
 msgid "Report generated"
 msgstr "Отчет создан"
+
+# Reconciliation PDF template
+msgid "Reconciliation Statement"
+msgstr "Акт сверки"
+
+msgid "Code"
+msgstr "Код"
+
+msgid "Opening Balance"
+msgstr "Начальный баланс"
+
+msgid "Closing Balance"
+msgstr "Конечный баланс"
+
+msgid "Orders"
+msgstr "Заказы"
+
+msgid "№"
+msgstr "№"
+
+msgid "Product Name"
+msgstr "Название продукта"
+
+msgid "Price (USD)"
+msgstr "Цена (USD)"
+
+msgid "Total (USD)"
+msgstr "Итого (USD)"
+
+msgid "No items available"
+msgstr "Товары отсутствуют"
+
+msgid "Order Number"
+msgstr "Номер заказа"
+
+msgid "Amount (USD)"
+msgstr "Сумма (USD)"
+
+msgid "Method / Card"
+msgstr "Метод / Карта"
+
+msgid "Return"
+msgstr "Возврат"
+
+msgid "Return Details"
+msgstr "Детали возврата"
+
+msgid "Comment"
+msgstr "Комментарий"
+
+msgid "Total Balance"
+msgstr "Общий баланс"
+
+msgid "Accountant"
+msgstr "Бухгалтер"
+
+msgid "Signature"
+msgstr "Подпись"
+
+msgid "Scan QR code to verify authenticity"
+msgstr "Отсканируйте QR-код для проверки подлинности"

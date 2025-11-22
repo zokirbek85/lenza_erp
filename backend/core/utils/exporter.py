@@ -118,30 +118,98 @@ def _workbook_to_file(workbook: Workbook, prefix: str):
     return save_temp_file(stream.getvalue(), prefix, '.xlsx')
 
 
-def export_reconciliation_to_excel(data: dict, detailed: bool = False):
+def export_reconciliation_to_excel(data: dict, detailed: bool = False, language: str = 'uz'):
     """
     Build an Excel workbook from reconciliation data structure returned by
     services.reconciliation.get_reconciliation_data.
     When detailed=True, include per-order item lines on separate sheets or indented rows.
+    language: 'uz', 'ru', or 'en' for internationalization.
     """
+    # Translation dictionaries
+    translations = {
+        'uz': {
+            'summary': 'Xulosa',
+            'orders': 'Buyurtmalar',
+            'payments': 'To\'lovlar',
+            'returns': 'Qaytarishlar',
+            'order_items': 'Buyurtma detallari',
+            'dealer': 'Diler',
+            'code': 'Kod',
+            'period': 'Davr',
+            'opening_balance': 'Boshlang\'ich balans (USD)',
+            'closing_balance': 'Yakuniy balans (USD)',
+            'date': 'Sana',
+            'order_no': 'Buyurtma raqami',
+            'amount_usd': 'Summa (USD)',
+            'method': 'Usul',
+            'product': 'Mahsulot',
+            'quantity': 'Miqdor',
+            'price_usd': 'Narx (USD)',
+            'line_total_usd': 'Jami (USD)',
+        },
+        'ru': {
+            'summary': 'Сводка',
+            'orders': 'Заказы',
+            'payments': 'Платежи',
+            'returns': 'Возвраты',
+            'order_items': 'Детали заказа',
+            'dealer': 'Дилер',
+            'code': 'Код',
+            'period': 'Период',
+            'opening_balance': 'Начальный баланс (USD)',
+            'closing_balance': 'Конечный баланс (USD)',
+            'date': 'Дата',
+            'order_no': 'Номер заказа',
+            'amount_usd': 'Сумма (USD)',
+            'method': 'Метод',
+            'product': 'Продукт',
+            'quantity': 'Количество',
+            'price_usd': 'Цена (USD)',
+            'line_total_usd': 'Итого (USD)',
+        },
+        'en': {
+            'summary': 'Summary',
+            'orders': 'Orders',
+            'payments': 'Payments',
+            'returns': 'Returns',
+            'order_items': 'Order Items',
+            'dealer': 'Dealer',
+            'code': 'Code',
+            'period': 'Period',
+            'opening_balance': 'Opening Balance (USD)',
+            'closing_balance': 'Closing Balance (USD)',
+            'date': 'Date',
+            'order_no': 'Order #',
+            'amount_usd': 'Amount (USD)',
+            'method': 'Method',
+            'product': 'Product',
+            'quantity': 'Quantity',
+            'price_usd': 'Price (USD)',
+            'line_total_usd': 'Line Total (USD)',
+        },
+    }
+    
+    # Get translations for selected language
+    t = translations.get(language, translations['uz'])
+    
     workbook = Workbook()
     ws_summary = workbook.active
-    ws_summary.title = 'Summary'
+    ws_summary.title = t['summary']
 
     # Header info
-    ws_summary.append(['Dealer', data.get('dealer', '')])
-    ws_summary.append(['Code', data.get('dealer_code', '')])
-    ws_summary.append(['Period', data.get('period', '')])
+    ws_summary.append([t['dealer'], data.get('dealer', '')])
+    ws_summary.append([t['code'], data.get('dealer_code', '')])
+    ws_summary.append([t['period'], data.get('period', '')])
     ws_summary.append([])
 
     # Balances
-    ws_summary.append(['Opening Balance (USD)', float(data.get('opening_balance', 0))])
-    ws_summary.append(['Closing Balance (USD)', float(data.get('closing_balance', 0))])
+    ws_summary.append([t['opening_balance'], float(data.get('opening_balance', 0))])
+    ws_summary.append([t['closing_balance'], float(data.get('closing_balance', 0))])
     ws_summary.append([])
 
     # Orders sheet
-    ws_orders = workbook.create_sheet('Orders')
-    ws_orders.append(['Date', 'Order #', 'Amount USD'])
+    ws_orders = workbook.create_sheet(t['orders'])
+    ws_orders.append([t['date'], t['order_no'], t['amount_usd']])
     for row in data.get('orders', []) or []:
         ws_orders.append([
             row.get('date'),
@@ -150,8 +218,8 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False):
         ])
 
     # Payments sheet
-    ws_payments = workbook.create_sheet('Payments')
-    ws_payments.append(['Date', 'Method', 'Amount USD'])
+    ws_payments = workbook.create_sheet(t['payments'])
+    ws_payments.append([t['date'], t['method'], t['amount_usd']])
     for row in data.get('payments', []) or []:
         ws_payments.append([
             row.get('date'),
@@ -160,8 +228,8 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False):
         ])
 
     # Returns sheet
-    ws_returns = workbook.create_sheet('Returns')
-    ws_returns.append(['Date', 'Order #', 'Amount USD'])
+    ws_returns = workbook.create_sheet(t['returns'])
+    ws_returns.append([t['date'], t['order_no'], t['amount_usd']])
     for row in data.get('returns', []) or []:
         ws_returns.append([
             row.get('date'),
@@ -170,8 +238,8 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False):
         ])
 
     if detailed and data.get('orders_detailed'):
-        ws_details = workbook.create_sheet('Order Items')
-        ws_details.append(['Order #', 'Date', 'Product', 'Quantity', 'Price USD', 'Line Total USD'])
+        ws_details = workbook.create_sheet(t['order_items'])
+        ws_details.append([t['order_no'], t['date'], t['product'], t['quantity'], t['price_usd'], t['line_total_usd']])
         for od in data.get('orders_detailed', []) or []:
             order_no = od.get('order_number')
             order_date = od.get('date')
