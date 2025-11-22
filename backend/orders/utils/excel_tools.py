@@ -149,9 +149,6 @@ def generate_import_template() -> str:
     Generate Excel template for bulk order import.
     Returns path to generated file.
     """
-    # Create empty DataFrame with predefined columns
-    dataframe = pd.DataFrame(columns=IMPORT_TEMPLATE_COLUMNS)
-    
     # Add sample rows for reference
     sample_data = [
         {
@@ -185,7 +182,7 @@ def generate_import_template() -> str:
             'note': 'Sample order 2',
         },
     ]
-    dataframe = pd.DataFrame([sample_data], columns=IMPORT_TEMPLATE_COLUMNS)
+    dataframe = pd.DataFrame(sample_data, columns=IMPORT_TEMPLATE_COLUMNS)
     
     filename = f"orders_import_template_{timezone.now():%Y%m%d_%H%M%S}.xlsx"
     return _write_dataframe(dataframe, filename)
