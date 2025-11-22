@@ -134,7 +134,7 @@ const router = createBrowserRouter([
       {
         path: 'currency',
         element: (
-          <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
+          <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
             <CurrencyRatesPage />
           </ProtectedRoute>
         ),

@@ -85,7 +85,7 @@ const BASE_MENU: MenuItem[] = [
       path: '/currency',
       label: 'nav.currency',
       icon: <RiseOutlined />,
-      roles: ['admin', 'sales', 'warehouse', 'accountant'],
+      roles: ['admin', 'sales', 'accountant'],
     },
     {
       path: '/returns',
