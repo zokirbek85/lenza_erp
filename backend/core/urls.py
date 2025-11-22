@@ -53,7 +53,7 @@ from kpis.views import (
     WarehouseKPIView,
 )
 from notifications.views import NotificationViewSet
-from orders.views import OrderExportExcelView, OrderViewSet
+from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet
 from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from payments.views import (
     CurrencyRateHistoryView,
@@ -117,6 +117,8 @@ urlpatterns = [
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),
     path('api/orders/export/excel/', OrderExportExcelView.as_view(), name='orders-export-excel'),
+    path('api/orders/import/template/', OrderImportTemplateView.as_view(), name='orders-import-template'),
+    path('api/orders/import/excel/', OrderImportExcelView.as_view(), name='orders-import-excel'),
     path('api/orders/report/pdf/', OrderSummaryPDFView.as_view(), name='orders-report-pdf'),
     path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'),
     path('api/products/export/excel/', ProductExportExcelView.as_view(), name='products-export-excel'),

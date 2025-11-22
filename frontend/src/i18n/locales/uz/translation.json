@@ -1555,6 +1555,22 @@
         "view": "Ko'rish",
         "edit": "Tahrirlash"
       }
+    },
+    "import": {
+      "downloadTemplate": "Shablonni yuklash",
+      "uploadFile": "Buyurtmalarni import qilish",
+      "importing": "Import qilinmoqda...",
+      "selectFile": "Excel faylni tanlang",
+      "successTitle": "Import muvaffaqiyatli",
+      "successMessage": "{{orders}} ta buyurtma va {{items}} ta mahsulot yaratildi",
+      "errorTitle": "Import xatosi",
+      "errorMessage": "Buyurtmalarni import qilishda xato yuz berdi",
+      "partialSuccessTitle": "Import xatolar bilan yakunlandi",
+      "partialSuccessMessage": "{{orders}} ta buyurtma yaratildi. Ba'zi qatorlarda xatolar bor.",
+      "noFile": "Iltimos, yuklash uchun fayl tanlang",
+      "invalidFormat": "Noto'g'ri fayl formati. Iltimos, Excel fayl yuklang (.xlsx yoki .xls)",
+      "templateTooltip": "Buyurtmalarni ommaviy import qilish uchun Excel shablonni yuklab oling",
+      "importTooltip": "Excel fayldan tarixiy buyurtmalarni import qilish"
     }
   },
   "currencyRates": {

@@ -1246,6 +1246,22 @@
         "view": "Просмотр",
         "edit": "Редактировать"
       }
+    },
+    "import": {
+      "downloadTemplate": "Скачать шаблон",
+      "uploadFile": "Импорт заказов",
+      "importing": "Импортируем...",
+      "selectFile": "Выберите файл Excel",
+      "successTitle": "Импорт успешен",
+      "successMessage": "Создано {{orders}} заказов с {{items}} позициями",
+      "errorTitle": "Ошибка импорта",
+      "errorMessage": "Не удалось импортировать заказы",
+      "partialSuccessTitle": "Импорт завершён с ошибками",
+      "partialSuccessMessage": "Создано {{orders}} заказов. В некоторых строках были ошибки.",
+      "noFile": "Пожалуйста, выберите файл для загрузки",
+      "invalidFormat": "Неверный формат файла. Пожалуйста, загрузите файл Excel (.xlsx или .xls)",
+      "templateTooltip": "Скачать шаблон Excel для массового импорта заказов",
+      "importTooltip": "Импорт исторических заказов из файла Excel"
     }
   },
   "currencyRates": {

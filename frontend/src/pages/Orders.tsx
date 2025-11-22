@@ -473,6 +473,72 @@ const OrdersPage = () => {
 
   const handleExcel = () => downloadFile('/orders/export/excel/', 'orders.xlsx');
 
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadFile('/orders/import/template/', 'orders_import_template.xlsx');
+      toast.success(t('orders.import.downloadTemplate'));
+    } catch (error) {
+      console.error(error);
+      toast.error(t('orders.import.errorMessage'));
+    }
+  };
+
+  const handleImportOrders = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      toast.error(t('orders.import.noFile'));
+      return;
+    }
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      toast.error(t('orders.import.invalidFormat'));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const loadingToast = toast.loading(t('orders.import.importing'));
+
+    try {
+      const response = await http.post('/orders/import/excel/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = response.data;
+      toast.dismiss(loadingToast);
+
+      if (data.errors && data.errors.length > 0) {
+        toast.success(
+          t('orders.import.partialSuccessMessage', {
+            orders: data.orders_created,
+          }),
+          { duration: 5000 }
+        );
+        console.warn('Import errors:', data.errors);
+      } else {
+        toast.success(
+          t('orders.import.successMessage', {
+            orders: data.orders_created,
+            items: data.items_created,
+          })
+        );
+      }
+
+      // Refresh orders list
+      loadOrders().catch(() => null);
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(loadingToast);
+      toast.error(t('orders.import.errorMessage'));
+    }
+
+    // Reset input
+    event.target.value = '';
+  };
+
   const toggleOrderDetails = (orderId: number) =>
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 
@@ -526,6 +592,25 @@ const OrdersPage = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
         </div>
         <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleDownloadTemplate}
+            title={t('orders.import.templateTooltip')}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+          >
+            📥 {t('orders.import.downloadTemplate')}
+          </button>
+          <label
+            title={t('orders.import.importTooltip')}
+            className="cursor-pointer rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+          >
+            📤 {t('orders.import.uploadFile')}
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleImportOrders}
+              className="hidden"
+            />
+          </label>
           <button
             onClick={() => handlePdf()}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"

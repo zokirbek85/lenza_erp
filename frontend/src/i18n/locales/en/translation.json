@@ -1254,6 +1254,22 @@
         "view": "View",
         "edit": "Edit"
       }
+    },
+    "import": {
+      "downloadTemplate": "Download Template",
+      "uploadFile": "Import Orders",
+      "importing": "Importing...",
+      "selectFile": "Select Excel file",
+      "successTitle": "Import Successful",
+      "successMessage": "{{orders}} orders created with {{items}} items",
+      "errorTitle": "Import Failed",
+      "errorMessage": "Failed to import orders",
+      "partialSuccessTitle": "Import Completed with Errors",
+      "partialSuccessMessage": "{{orders}} orders created. Some rows had errors.",
+      "noFile": "Please select a file to upload",
+      "invalidFormat": "Invalid file format. Please upload an Excel file (.xlsx or .xls)",
+      "templateTooltip": "Download Excel template for bulk order import",
+      "importTooltip": "Import historical orders from Excel file"
     }
   },
   "currencyRates": {

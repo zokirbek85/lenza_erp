@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from django.http import FileResponse, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -13,6 +16,7 @@ from core.mixins.report_mixin import BaseReportMixin
 from .models import Order, OrderItem, OrderStatusLog
 from .returns import process_return
 from .serializers import OrderItemSerializer, OrderSerializer, OrderStatusLogSerializer
+from .utils.excel_tools import generate_import_template, import_orders_from_excel
 
 
 STATUS_FLOW = {
@@ -137,3 +141,46 @@ class OrderExportExcelView(APIView):
         orders = Order.objects.select_related('dealer').all()
         file_path = export_orders_to_excel(orders)
         return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+
+
+class OrderImportTemplateView(APIView):
+    """Generate Excel template for bulk order import."""
+    permission_classes = [IsAdmin | IsOwner | IsSales]
+
+    def get(self, request):
+        file_path = Path(generate_import_template())
+        return FileResponse(
+            open(file_path, 'rb'),
+            as_attachment=True,
+            filename=file_path.name
+        )
+
+
+class OrderImportExcelView(APIView):
+    """Import historical orders from Excel file."""
+    permission_classes = [IsAdmin | IsOwner | IsSales]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {'error': 'No file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file extension
+        if not file_obj.name.endswith(('.xlsx', '.xls')):
+            return Response(
+                {'error': 'Invalid file format. Please upload an Excel file (.xlsx or .xls)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Import orders
+        result = import_orders_from_excel(file_obj, created_by=request.user)
+        
+        return Response({
+            'orders_created': result['orders_created'],
+            'items_created': result['items_created'],
+            'errors': result['errors'],
+        }, status=status.HTTP_200_OK)
