@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
+import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
@@ -50,6 +51,8 @@ const defaultForm = {
 
 const PaymentsPage = () => {
   const navigate = useNavigate();
+  const role = useAuthStore((state) => state.role);
+  const isSalesManager = role === 'sales';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [rates, setRates] = useState<CurrencyRate[]>([]);
@@ -271,18 +274,21 @@ const PaymentsPage = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => setShowForm((prev) => !prev)}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-          aria-expanded={showForm}
-          aria-controls="payment-create-form"
-        >
-          {showForm ? `в€’ ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
-        </button>
-      </div>
-      <CollapsibleForm
+      {!isSalesManager && (
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setShowForm((prev) => !prev)}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+            aria-expanded={showForm}
+            aria-controls="payment-create-form"
+          >
+            {showForm ? `− ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
+          </button>
+        </div>
+      )}
+      {!isSalesManager && (
+        <CollapsibleForm
         open={showForm}
         onAfterClose={() => setForm(defaultForm)}
         className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
@@ -413,6 +419,7 @@ const PaymentsPage = () => {
         </div>
         </form>
       </CollapsibleForm>
+      )}
 
       <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
