@@ -227,9 +227,6 @@ msgstr "Месяц"
 msgid "Account"
 msgstr "Счет"
 
-msgid "Total (USD)"
-msgstr "Итого (USD)"
-
 msgid "Signed via"
 msgstr "Подписано через"
 
@@ -357,12 +354,6 @@ msgstr "Акт сверки"
 msgid "Code"
 msgstr "Код"
 
-msgid "Opening Balance"
-msgstr "Начальный баланс"
-
-msgid "Closing Balance"
-msgstr "Конечный баланс"
-
 msgid "Orders"
 msgstr "Заказы"
 
@@ -371,12 +362,6 @@ msgstr "№"
 
 msgid "Product Name"
 msgstr "Название продукта"
-
-msgid "Price (USD)"
-msgstr "Цена (USD)"
-
-msgid "Total (USD)"
-msgstr "Итого (USD)"
 
 msgid "No items available"
 msgstr "Товары отсутствуют"

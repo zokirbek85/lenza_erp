@@ -227,9 +227,6 @@ msgstr "Month"
 msgid "Account"
 msgstr "Account"
 
-msgid "Total (USD)"
-msgstr "Total (USD)"
-
 msgid "Signed via"
 msgstr "Signed via"
 
@@ -357,12 +354,6 @@ msgstr "Reconciliation Statement"
 msgid "Code"
 msgstr "Code"
 
-msgid "Opening Balance"
-msgstr "Opening Balance"
-
-msgid "Closing Balance"
-msgstr "Closing Balance"
-
 msgid "Orders"
 msgstr "Orders"
 
@@ -371,12 +362,6 @@ msgstr "№"
 
 msgid "Product Name"
 msgstr "Product Name"
-
-msgid "Price (USD)"
-msgstr "Price (USD)"
-
-msgid "Total (USD)"
-msgstr "Total (USD)"
 
 msgid "No items available"
 msgstr "No items available"
