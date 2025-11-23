@@ -5,19 +5,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_FILE = BASE_DIR / '.env'
-PROD_ENV_FILE = BASE_DIR / '.env.production'
+ENV_PATHS = [
+    BASE_DIR.parent / '.env',          # /opt/lenza_erp/.env (container env_file)
+    BASE_DIR / '.env',                 # backend/.env (local dev)
+    BASE_DIR.parent / 'deploy/.env',   # fallback for deploy assets
+]
 
-if ENV_FILE.exists():
-    load_dotenv(ENV_FILE, override=False)
+for env_path in ENV_PATHS:
+    if env_path.exists():
+        load_dotenv(env_path, override=False)
 
-debug_flag = os.getenv('DJANGO_DEBUG', os.getenv('DEBUG', 'true')).lower() == 'true'
-if not debug_flag and PROD_ENV_FILE.exists():
-    load_dotenv(PROD_ENV_FILE, override=True)
-elif debug_flag and ENV_FILE.exists():
-    load_dotenv(ENV_FILE, override=True)
-
-DEBUG = debug_flag
+DEBUG = os.getenv('DJANGO_DEBUG', os.getenv('DEBUG', 'false')).lower() == 'true'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'lenza-erp-dev-secret')
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
@@ -89,7 +87,7 @@ ASGI_APPLICATION = 'core.asgi.application'
 # Database Configuration
 # Local development: SQLite3 (default)
 # Production (VPS): PostgreSQL
-ENV = os.getenv('ENV', 'development').lower()
+ENV = os.getenv('ENV', 'production').lower()
 USE_POSTGRES = ENV == 'production' or os.getenv('USE_POSTGRES', 'false').lower() == 'true'
 
 if USE_POSTGRES:
@@ -99,7 +97,7 @@ if USE_POSTGRES:
             'NAME': os.getenv('POSTGRES_DB', 'lenza_erp'),
             'USER': os.getenv('POSTGRES_USER', 'admin'),
             'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'maxdoors123'),
-            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'HOST': os.getenv('POSTGRES_HOST', 'db'),
             'PORT': os.getenv('POSTGRES_PORT', '5432'),
         }
     }
@@ -213,7 +211,7 @@ COMPANY_SLOGAN = os.getenv('COMPANY_SLOGAN', '')
 COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", '')
 COMPANY_PHONE = os.getenv('COMPANY_PHONE', '')
 
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
 REDIS_PORT = os.getenv('REDIS_PORT', '6379')
 REDIS_DB = os.getenv('REDIS_DB', '0')
 REDIS_URL = os.getenv('REDIS_URL', f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}')

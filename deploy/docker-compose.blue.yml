@@ -3,14 +3,14 @@
 # Lenza ERP Production Deployment
 # ========================================
 
-version: '3.8'
-
 services:
   # PostgreSQL Database (shared between blue/green)
   db:
     image: postgres:15-alpine
     container_name: lenza_db
     restart: unless-stopped
+    env_file:
+      - /opt/lenza_erp/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -31,6 +31,8 @@ services:
     container_name: lenza_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
+    env_file:
+      - /opt/lenza_erp/.env
     volumes:
       - redis_data:/data
     networks:
@@ -44,14 +46,16 @@ services:
   # Django Backend - BLUE
   backend_blue:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: lenza_backend_blue
     restart: unless-stopped
+    env_file:
+      - /opt/lenza_erp/.env
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - ./backend/logs:/app/logs
+      - ../backend/logs:/app/logs
     environment:
       - ENV=production
       - DJANGO_DEBUG=False
@@ -92,12 +96,14 @@ services:
   # React Frontend - BLUE
   frontend_blue:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${FRONTEND_VITE_API_URL:-https://erp.lenza.uz}
     container_name: lenza_frontend_blue
     restart: unless-stopped
+    env_file:
+      - /opt/lenza_erp/.env
     environment:
       - VITE_API_URL=${FRONTEND_VITE_API_URL:-https://erp.lenza.uz}
     depends_on:
