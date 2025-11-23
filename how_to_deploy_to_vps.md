@@ -67,7 +67,7 @@ pip install -r requirements.txt
 ```bash
 sudo -u postgres psql <<'SQL'
 CREATE DATABASE lenza_erp;
-CREATE USER lenza_erp_user WITH ENCRYPTED PASSWORD 'bu_faqat_namuna';
+CREATE USER lenza_erp_user WITH ENCRYPTED PASSWORD 'maxdoors123';
 GRANT ALL PRIVILEGES ON DATABASE lenza_erp TO lenza_erp_user;
 ALTER DATABASE lenza_erp OWNER TO lenza_erp_user;
 GRANT ALL ON SCHEMA public TO lenza_erp_user;
