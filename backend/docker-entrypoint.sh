@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ========================================
-# Lenza ERP Backend Entrypoint Script
-# Handles migrations, static files, and server startup
-# Supports both Gunicorn (WSGI) and Daphne (ASGI) modes
+# Lenza ERP Backend Docker Entrypoint
+# This is the new production entrypoint script
+# Replaces entrypoint.sh with better error handling
 # ========================================
 
 set -e  # Exit immediately if a command exits with a non-zero status

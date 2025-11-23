@@ -1,0 +1,70 @@
+# Ignore Git files
+.git
+.gitignore
+.gitattributes
+
+# Ignore documentation
+*.md
+docs/
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Ignore virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Ignore test files
+tests/
+test_*.py
+*_test.py
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignore local settings
+*.local
+.env.local
+.env.*.local
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore static files (will be collected in container)
+staticfiles/
+static/
+
+# Ignore media files (mounted as volume)
+media/
+
+# Ignore database files
+*.sqlite3
+db.sqlite3
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore deployment files
+deploy/
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Ignore scripts
+*.sh
+
+# Ignore temporary files
+tmp/
+temp/
+*.tmp

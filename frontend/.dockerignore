@@ -1,0 +1,54 @@
+# Ignore Git files
+.git
+.gitignore
+.gitattributes
+
+# Ignore documentation
+*.md
+docs/
+
+# Ignore node_modules (will be installed in container)
+node_modules/
+
+# Ignore build output (will be built in container)
+dist/
+build/
+
+# Ignore environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+tests/
+coverage/
+.coverage
+
+# Ignore deployment files
+deploy/
+docker-compose*.yml
+Dockerfile
+.dockerignore
+nginx.conf
+
+# Ignore scripts
+*.sh
+
+# Ignore temporary files
+tmp/
+temp/
+*.tmp
+
+# Ignore package lock files (use npm ci with package-lock.json only)
+# Keep package-lock.json for reproducible builds

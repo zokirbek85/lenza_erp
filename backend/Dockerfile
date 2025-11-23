@@ -1,40 +1,80 @@
-# Backend Dockerfile for Lenza ERP Django Application
-FROM python:3.11-slim
+# ========================================
+# Lenza ERP Backend Dockerfile
+# Multi-stage build for Django 5.1.2 + Gunicorn
+# Production-ready with health check support
+# ========================================
 
-# Set environment variables
+# Stage 1: Builder - Install dependencies
+FROM python:3.11-slim as builder
+
+# Prevent Python from writing pyc files and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Set work directory
-WORKDIR /app
+WORKDIR /build
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    postgresql-client \
-    gettext \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+# Copy and install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install gunicorn
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels \
+    -r requirements.txt && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels \
+    gunicorn daphne
 
-# Copy project files
+# Stage 2: Runtime
+FROM python:3.11-slim
+
+# Runtime environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=core.settings
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    postgresql-client \
+    gettext \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python wheels from builder and install
+COPY --from=builder /build/wheels /wheels
+RUN pip install --no-cache /wheels/*
+
+# Create non-root user for security
+RUN groupadd -r django && useradd -r -g django django
+
+# Copy application code
 COPY . .
 
-# Make entrypoint executable
-RUN chmod +x /app/entrypoint.sh
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/staticfiles /app/media /app/logs && \
+    chown -R django:django /app
 
-# Create directories for static and media files
-RUN mkdir -p /app/staticfiles /app/media
+# Make entrypoint executable
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Switch to non-root user
+USER django
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health/ || exit 1
 
 # Expose port
 EXPOSE 8000
 
-# Run entrypoint script
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Use entrypoint script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
+# Default command (can be overridden in docker-compose)
+CMD ["gunicorn"]
