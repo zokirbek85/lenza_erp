@@ -394,31 +394,7 @@ const ProductsPage = () => {
     total,
   };
 
-  if (isMobile) {
-    return (
-      <div className="space-y-4 px-4 pb-6">
-        <div className="flex justify-end">
-          <FilterTrigger onClick={() => setFiltersOpen(true)} />
-        </div>
-        <FilterDrawer
-          open={filtersOpen}
-          onClose={() => setFiltersOpen(false)}
-          onApply={handleApplyFilters}
-          onReset={handleResetFilters}
-          title={t('filters.title')}
-        >
-          {filtersContent}
-        </FilterDrawer>
-        <ProductsMobileCards
-          data={mobileProducts}
-          pagination={paginationMeta}
-          handlers={mobileHandlers}
-          permissions={mobilePermissions}
-        />
-      </div>
-    );
-  }
-
+  // Define handlers before conditional rendering to maintain hooks order
   const handleExportPdf = () => downloadFile('/catalog/report/pdf/', 'products.pdf');
   const handleExportExcel = async () => {
     try {
@@ -466,6 +442,33 @@ const ProductsPage = () => {
     }
   };
 
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <div className="flex justify-end">
+          <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        </div>
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
+          title={t('filters.title')}
+        >
+          {filtersContent}
+        </FilterDrawer>
+        <ProductsMobileCards
+          data={mobileProducts}
+          pagination={paginationMeta}
+          handlers={mobileHandlers}
+          permissions={mobilePermissions}
+        />
+      </div>
+    );
+  }
+
+  // Desktop view
   return (
     <section className="page-wrapper space-y-6">
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">

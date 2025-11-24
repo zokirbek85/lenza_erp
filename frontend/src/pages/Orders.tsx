@@ -560,6 +560,17 @@ const OrdersPage = () => {
     onStatusUpdated: handleStatusUpdatedFromCards,
   };
 
+  // Always run useMemo before conditional rendering to maintain hooks order
+  const orderRows = useMemo(
+    () =>
+      orders.map((order) => ({
+        ...order,
+        total: formatCurrency(order.total_usd),
+      })),
+    [orders]
+  );
+
+  // Mobile view
   if (isMobile) {
     return (
       <div className="space-y-4">
@@ -578,15 +589,8 @@ const OrdersPage = () => {
       </div>
     );
   }
-  const orderRows = useMemo(
-    () =>
-      orders.map((order) => ({
-        ...order,
-        total: formatCurrency(order.total_usd),
-      })),
-    [orders]
-  );
 
+  // Desktop view
   return (
     <section className="page-wrapper space-y-6">
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
