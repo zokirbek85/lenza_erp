@@ -47,16 +47,21 @@ interface GroupedProduct {
 }
 
 /**
- * Extract base name from product name by removing width suffix
+ * Extract base name from product name by removing ONLY the trailing width suffix
+ * This regex strictly matches: comma + optional spaces + 2-4 digits + optional мм/mm at the END
+ * 
  * Examples:
+ *   "Классика - 50001, Лакобель белый ПГ, 800мм" -> "Классика - 50001, Лакобель белый ПГ"
  *   "Венеция Ясень белый ПГ, 600мм" -> "Венеция Ясень белый ПГ"
  *   "Porta Prima, 800mm" -> "Porta Prima"
  *   "Door Model, 700" -> "Door Model"
+ * 
+ * Important: Only removes the LAST occurrence of size pattern to preserve full product names
  */
 const extractBaseName = (productName: string): string => {
-  // Regex pattern to match comma + optional spaces + digits (2-4 digits) + optional mm/мм/м
-  // This handles: ", 600мм", ", 800mm", ", 700", ",600", ", 900 мм", etc.
-  const widthPattern = /,\s*\d{2,4}\s*(мм?|mm?)?$/i;
+  // Strict pattern: comma + spaces + 2-4 digits + optional мм/mm at the END of string only
+  // The $ anchor ensures we only match the trailing size, not any numbers in the middle
+  const widthPattern = /,\s*(\d{2,4})\s*(мм|mm)?$/i;
   
   const baseName = productName.replace(widthPattern, '').trim();
   return baseName || productName; // fallback to original if pattern doesn't match
@@ -67,7 +72,8 @@ const extractBaseName = (productName: string): string => {
  * Returns one of: '400', '600', '700', '800', '900', or null
  */
 const extractWidth = (productName: string): string | null => {
-  const match = productName.match(/,\s*(\d{3,4})\s*(мм?|mm?)?$/i);
+  // Match the trailing size pattern
+  const match = productName.match(/,\s*(\d{3,4})\s*(мм|mm)?$/i);
   if (match) {
     const width = match[1];
     // Only return if it's one of our standard widths
@@ -79,7 +85,16 @@ const extractWidth = (productName: string): string | null => {
 };
 
 /**
- * Group products by base name
+ * Group products by base name and aggregate stock by width
+ * 
+ * Backend returns each product variant (e.g., "Product, 600мм") with its own stock object.
+ * The backend's stock object already contains breakdown by width for that specific variant.
+ * 
+ * When grouping, we need to:
+ * 1. Extract base name (remove trailing size)
+ * 2. Aggregate stocks from all variants into one combined stock object
+ * 3. Use the first available image (prefer 400mm if available)
+ * 4. Use the lowest-width price (or first available)
  */
 const groupProducts = (products: CatalogProduct[]): GroupedProduct[] => {
   const groups: Record<string, GroupedProduct> = {};
@@ -89,7 +104,7 @@ const groupProducts = (products: CatalogProduct[]): GroupedProduct[] => {
     const width = extractWidth(product.name);
 
     if (!groups[baseName]) {
-      // Initialize new group
+      // Initialize new group with zero stock for all widths
       groups[baseName] = {
         id: `group-${baseName.replace(/\s+/g, '-').toLowerCase()}`,
         baseName,
@@ -110,21 +125,26 @@ const groupProducts = (products: CatalogProduct[]): GroupedProduct[] => {
     // Add product to group
     groups[baseName].originalProducts.push(product);
 
-    // Update stock for this width
-    if (width && (width in groups[baseName].stock)) {
-      groups[baseName].stock[width as keyof typeof groups[string]['stock']] = product.stock[width as keyof typeof product.stock];
+    // Aggregate stock from this product into the group
+    // The backend returns stock object like { "400": 0, "600": 2, "700": 0, ... }
+    // We need to sum up stocks from all variants
+    widthLabels.forEach((w) => {
+      if (product.stock && typeof product.stock[w] === 'number') {
+        groups[baseName].stock[w] += product.stock[w];
+      }
+    });
+
+    // Image priority: prefer 400mm image, then smallest width, then any available
+    if (width === '400' && product.image) {
+      groups[baseName].image = product.image;
+    } else if (!groups[baseName].image && product.image) {
+      groups[baseName].image = product.image;
     }
 
-    // Prefer image from smallest width or first available
-    if (!groups[baseName].image && product.image) {
-      groups[baseName].image = product.image;
-    } else if (product.image && width === '400') {
-      // Prioritize 400mm image if available
-      groups[baseName].image = product.image;
-    }
-
-    // Use price from smallest width if available
-    if (width === '400' || !groups[baseName].price_usd) {
+    // Price priority: use 400mm price if available, otherwise keep first
+    if (width === '400') {
+      groups[baseName].price_usd = product.price_usd;
+    } else if (!groups[baseName].price_usd) {
       groups[baseName].price_usd = product.price_usd;
     }
   });
