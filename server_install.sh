@@ -101,8 +101,9 @@ log_step "3. Install Nginx"
 log_info "Installing Nginx..."
 apt install -y nginx
 
-# Stop Nginx for now (will be configured later)
+# Stop and disable Nginx (will be configured and started by deploy.sh)
 systemctl stop nginx
+systemctl disable nginx
 
 log_step "4. Install Certbot for SSL"
 
@@ -193,22 +194,18 @@ fi
 # Set secure permissions on .env
 chmod 600 "$PROJECT_DIR/.env"
 
-log_step "9. Copy Nginx Configuration"
+log_step "9. Prepare Nginx Configuration"
 
-# Copy Nginx config
-log_info "Installing Nginx configuration..."
+# Copy Nginx config files (but don't enable yet)
+log_info "Copying Nginx configuration files..."
 cp "$PROJECT_DIR/deploy/nginx/erp.lenza.uz.conf" /etc/nginx/sites-available/erp.lenza.uz
 cp "$PROJECT_DIR/deploy/nginx/active_upstream.conf" /etc/nginx/conf.d/active_upstream.conf
-
-# Create symlink
-ln -sf /etc/nginx/sites-available/erp.lenza.uz /etc/nginx/sites-enabled/
 
 # Remove default Nginx site
 rm -f /etc/nginx/sites-enabled/default
 
-# Test Nginx configuration (will fail on SSL paths, but syntax should be OK)
-log_info "Testing Nginx configuration..."
-nginx -t || log_warn "Nginx test failed (expected before SSL setup)"
+# Don't create symlink yet - will be done in deploy.sh after containers are running
+log_info "Nginx configuration prepared (will be enabled during deployment)"
 
 log_step "10. Docker Network Setup"
 
@@ -226,12 +223,12 @@ ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${BLUE}Installation Summary:${NC}
   • Docker and Docker Compose installed
-  • Nginx installed and configured
+  • Nginx installed (will be configured by deploy.sh)
   • Certbot installed for SSL
   • Firewall (UFW) configured
   • Project cloned to: ${PROJECT_DIR}
   • Environment file created: ${PROJECT_DIR}/.env
-  • Nginx configuration installed
+  • Docker network created
 
 ${YELLOW}Next Steps:${NC}
   1. Review and edit environment variables:
