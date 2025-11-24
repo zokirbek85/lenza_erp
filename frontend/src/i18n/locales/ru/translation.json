@@ -341,7 +341,15 @@
     "stockByWidth": "Остаток по ширине",
     "notAvailable": "Н/Д",
     "inStock": "шт",
-    "noProducts": "Товары не найдены"
+    "noProducts": "Товары не найдены",
+    "exportPdf": "Экспорт в PDF",
+    "exportExcel": "Экспорт в Excel",
+    "exportSuccess": "Экспорт завершен успешно",
+    "exportFailed": "Ошибка экспорта",
+    "viewCards": "Карточки",
+    "viewComfort": "Комфорт",
+    "viewCompact": "Компакт",
+    "viewUltra": "Ультра"
   },
   "dealers": {
     "title": "Дилеры",

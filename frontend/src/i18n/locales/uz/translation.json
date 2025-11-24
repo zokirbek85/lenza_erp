@@ -683,7 +683,15 @@
     "stockByWidth": "Kenglik bo'yicha zaxira",
     "notAvailable": "mavjud emas",
     "inStock": "ta",
-    "noProducts": "Mahsulotlar topilmadi"
+    "noProducts": "Mahsulotlar topilmadi",
+    "exportPdf": "PDF yuklash",
+    "exportExcel": "Excel yuklash",
+    "exportSuccess": "Eksport muvaffaqiyatli yakunlandi",
+    "exportFailed": "Eksport xatosi",
+    "viewCards": "Kartalar",
+    "viewComfort": "Qulay",
+    "viewCompact": "Ixcham",
+    "viewUltra": "Ultra"
   },
   "dealers": {
     "title": "Dilerlar",

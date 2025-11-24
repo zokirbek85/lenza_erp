@@ -341,7 +341,15 @@
     "stockByWidth": "Stock by width",
     "notAvailable": "N/A",
     "inStock": "pcs",
-    "noProducts": "No products found"
+    "noProducts": "No products found",
+    "exportPdf": "Export PDF",
+    "exportExcel": "Export Excel",
+    "exportSuccess": "Export completed successfully",
+    "exportFailed": "Export failed",
+    "viewCards": "Cards",
+    "viewComfort": "Comfort",
+    "viewCompact": "Compact",
+    "viewUltra": "Ultra"
   },
   "dealers": {
     "title": "Dealers",

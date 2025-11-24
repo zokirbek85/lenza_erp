@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Catalog Export - {{ brand_filter }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm 10mm;
+            @bottom-center {
+                content: "Страница " counter(page) " из " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1890ff;
+        }
+
+        .header h1 {
+            font-size: 18pt;
+            color: #1890ff;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 11pt;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .header .meta {
+            font-size: 9pt;
+            color: #999;
+        }
+
+        /* Cards View */
+        .catalog-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10mm;
+            justify-content: space-between;
+        }
+
+        .product-card {
+            width: 48%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+            background: #fafafa;
+        }
+
+        .product-card .image-container {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 3px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .product-card .image-container img {
+            max-width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+        }
+
+        .product-card .no-image {
+            color: #ccc;
+            font-size: 48pt;
+        }
+
+        .product-card .name {
+            font-size: 11pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .product-card .brand {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .product-card .price {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 8px;
+        }
+
+        .product-card .stock-title {
+            font-size: 8pt;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .product-card .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+        }
+
+        .product-card .stock-item {
+            font-size: 8pt;
+            padding: 3px 5px;
+            background: white;
+            border-radius: 2px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .product-card .stock-item .label {
+            color: #888;
+        }
+
+        .product-card .stock-item .value {
+            font-weight: bold;
+        }
+
+        .product-card .stock-item .available {
+            color: #52c41a;
+        }
+
+        .product-card .stock-item .unavailable {
+            color: #ff4d4f;
+        }
+
+        /* Gallery View */
+        .catalog-gallery {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5mm;
+        }
+
+        .gallery-item {
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 5px;
+            page-break-inside: avoid;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        .gallery-item .image-container {
+            width: 100%;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 2px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+
+        .gallery-item .image-container img {
+            max-width: 100%;
+            max-height: 80px;
+            object-fit: contain;
+        }
+
+        .gallery-item .no-image {
+            color: #ccc;
+            font-size: 24pt;
+        }
+
+        .gallery-item .name {
+            font-size: 8pt;
+            font-weight: bold;
+            margin-bottom: 3px;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .gallery-item .brand {
+            font-size: 7pt;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .gallery-item .price {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 4px;
+        }
+
+        .gallery-item .stock-compact {
+            font-size: 7pt;
+            color: #666;
+        }
+
+        .gallery-item .stock-compact .available {
+            color: #52c41a;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>KAPI GROUP / LENZA ERP</h1>
+        <div class="subtitle">Каталог: {{ category }}</div>
+        <div class="subtitle">Бренд: {{ brand_filter }}</div>
+        <div class="meta">Дата экспорта: {{ export_date }}</div>
+    </div>
+
+    {% if view_mode == 'gallery' %}
+        <!-- Gallery View -->
+        <div class="catalog-gallery">
+            {% for product in products %}
+            <div class="gallery-item">
+                <div class="image-container">
+                    {% if product.image %}
+                        <img src="{{ product.image }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="no-image">📦</div>
+                    {% endif %}
+                </div>
+                <div class="name">{{ product.name }}</div>
+                <div class="brand">{{ product.brand_name }}</div>
+                <div class="price">${{ product.price_usd }}</div>
+                <div class="stock-compact">
+                    {% if product.stock.400 > 0 %}400: {{ product.stock.400 }} {% endif %}
+                    {% if product.stock.600 > 0 %}600: {{ product.stock.600 }} {% endif %}
+                    {% if product.stock.700 > 0 %}700: {{ product.stock.700 }} {% endif %}
+                    {% if product.stock.800 > 0 %}800: {{ product.stock.800 }} {% endif %}
+                    {% if product.stock.900 > 0 %}900: {{ product.stock.900 }}{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Cards View (Default) -->
+        <div class="catalog-cards">
+            {% for product in products %}
+            <div class="product-card">
+                <div class="image-container">
+                    {% if product.image %}
+                        <img src="{{ product.image }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="no-image">📦</div>
+                    {% endif %}
+                </div>
+                <div class="name">{{ product.name }}</div>
+                <div class="brand">{{ product.brand_name }}</div>
+                <div class="price">${{ product.price_usd }}</div>
+                <div class="stock-title">Остаток по ширине:</div>
+                <div class="stock-grid">
+                    <div class="stock-item">
+                        <span class="label">400мм:</span>
+                        <span class="value {% if product.stock.400 > 0 %}available{% else %}unavailable{% endif %}">
+                            {% if product.stock.400 > 0 %}{{ product.stock.400 }} та{% else %}Н/Д{% endif %}
+                        </span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="label">600мм:</span>
+                        <span class="value {% if product.stock.600 > 0 %}available{% else %}unavailable{% endif %}">
+                            {% if product.stock.600 > 0 %}{{ product.stock.600 }} та{% else %}Н/Д{% endif %}
+                        </span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="label">700мм:</span>
+                        <span class="value {% if product.stock.700 > 0 %}available{% else %}unavailable{% endif %}">
+                            {% if product.stock.700 > 0 %}{{ product.stock.700 }} та{% else %}Н/Д{% endif %}
+                        </span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="label">800мм:</span>
+                        <span class="value {% if product.stock.800 > 0 %}available{% else %}unavailable{% endif %}">
+                            {% if product.stock.800 > 0 %}{{ product.stock.800 }} та{% else %}Н/Д{% endif %}
+                        </span>
+                    </div>
+                    <div class="stock-item">
+                        <span class="label">900мм:</span>
+                        <span class="value {% if product.stock.900 > 0 %}available{% else %}unavailable{% endif %}">
+                            {% if product.stock.900 > 0 %}{{ product.stock.900 }} та{% else %}Н/Д{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</body>
+</html>

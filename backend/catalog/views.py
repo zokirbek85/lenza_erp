@@ -247,3 +247,152 @@ class CatalogView(APIView):
         
         serializer = CatalogProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
+
+
+class CatalogExportPDFView(APIView, ExportMixin):
+    """
+    Export catalog as PDF with grouped products
+    """
+    permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
+
+    def get(self, request):
+        # Get filter parameters
+        brand_filter = request.query_params.get('brand', 'all')
+        search_query = request.query_params.get('search', '')
+        view_mode = request.query_params.get('view', 'cards')  # cards, gallery
+
+        # Get all catalog products
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+
+        # Apply brand filter
+        if brand_filter and brand_filter != 'all':
+            products = products.filter(brand__name=brand_filter)
+
+        # Serialize products
+        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
+        product_data = serializer.data
+
+        # Prepare context for template
+        from datetime import date
+        context = {
+            'products': product_data,
+            'category': 'Дверное полотно',
+            'brand_filter': brand_filter if brand_filter != 'all' else 'Все бренды',
+            'view_mode': view_mode,
+            'export_date': date.today().strftime('%d.%m.%Y'),
+            'search_query': search_query,
+        }
+
+        # Generate filename
+        brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
+        filename_prefix = f'catalog_{brand_slug}'
+
+        return self.render_pdf_with_qr(
+            'catalog/catalog_export.html',
+            context,
+            filename_prefix=filename_prefix,
+            request=request,
+            doc_type='catalog',
+            doc_id='export',
+        )
+
+
+class CatalogExportExcelView(APIView):
+    """
+    Export catalog as Excel with grouped products
+    """
+    permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
+
+    def get(self, request):
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        from openpyxl.utils import get_column_letter
+        from datetime import date
+        from django.http import HttpResponse
+
+        # Get filter parameters
+        brand_filter = request.query_params.get('brand', 'all')
+        search_query = request.query_params.get('search', '')
+
+        # Get all catalog products
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+
+        # Apply brand filter
+        if brand_filter and brand_filter != 'all':
+            products = products.filter(brand__name=brand_filter)
+
+        # Serialize products
+        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
+        product_data = serializer.data
+
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Catalog'
+
+        # Define headers
+        headers = ['ID', 'Название', 'Бренд', 'Цена (USD)', '400мм', '600мм', '700мм', '800мм', '900мм', 'Всего']
+
+        # Write headers
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # Write data
+        row_num = 2
+        for product in product_data:
+            stock = product.get('stock', {})
+            stock_400 = stock.get('400', 0)
+            stock_600 = stock.get('600', 0)
+            stock_700 = stock.get('700', 0)
+            stock_800 = stock.get('800', 0)
+            stock_900 = stock.get('900', 0)
+            total_stock = stock_400 + stock_600 + stock_700 + stock_800 + stock_900
+
+            ws.cell(row=row_num, column=1, value=product.get('id'))
+            ws.cell(row=row_num, column=2, value=product.get('name'))
+            ws.cell(row=row_num, column=3, value=product.get('brand_name'))
+            ws.cell(row=row_num, column=4, value=float(product.get('price_usd', 0)))
+            ws.cell(row=row_num, column=5, value=stock_400)
+            ws.cell(row=row_num, column=6, value=stock_600)
+            ws.cell(row=row_num, column=7, value=stock_700)
+            ws.cell(row=row_num, column=8, value=stock_800)
+            ws.cell(row=row_num, column=9, value=stock_900)
+            ws.cell(row=row_num, column=10, value=total_stock)
+            row_num += 1
+
+        # Auto-fit columns
+        for col_num in range(1, len(headers) + 1):
+            column_letter = get_column_letter(col_num)
+            max_length = 0
+            for cell in ws[column_letter]:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Freeze header row
+        ws.freeze_panes = 'A2'
+
+        # Generate response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
+        today = date.today().strftime('%Y%m%d')
+        filename = f'catalog_{brand_slug}_{today}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
