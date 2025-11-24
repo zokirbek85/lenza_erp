@@ -204,14 +204,21 @@ const OrdersPage = () => {
   }, [page, pageSize]);
 
   const loadRefs = useCallback(async () => {
-    const [dealersData, brandsData, categoriesData] = await Promise.all([
-      fetchAllPages<DealerOption>('/dealers/'),
-      fetchAllPages<BrandOption>('/brands/'),
-      fetchAllPages<CategoryOption>('/categories/'),
-    ]);
-    setDealers(dealersData);
-    setBrands(brandsData);
-    setCategories(categoriesData);
+    try {
+      console.log('Loading dealers, brands, categories...');
+      const [dealersData, brandsData, categoriesData] = await Promise.all([
+        fetchAllPages<DealerOption>('/dealers/'),
+        fetchAllPages<BrandOption>('/brands/'),
+        fetchAllPages<CategoryOption>('/categories/'),
+      ]);
+      console.log('Loaded data:', { dealers: dealersData.length, brands: brandsData.length, categories: categoriesData.length });
+      setDealers(dealersData);
+      setBrands(brandsData);
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error('Error loading references:', error);
+      throw error;
+    }
   }, [fetchAllPages]);
 
   useEffect(() => {
