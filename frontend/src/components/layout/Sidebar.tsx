@@ -65,6 +65,12 @@ const BASE_MENU: MenuItem[] = [
       roles: ['admin', 'sales', 'accountant', 'owner'],
     },
     {
+      path: '/marketing/documents',
+      label: 'nav.marketing',
+      icon: <FileTextOutlined />,
+      roles: ['admin', 'sales', 'owner'],
+    },
+    {
       path: '/dealers',
       label: 'nav.dealers',
       icon: <BankOutlined />,

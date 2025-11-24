@@ -23,6 +23,13 @@ import { useTranslation } from 'react-i18next';
 import { fetchCatalogProducts, type CatalogProduct } from '../api/productsApi';
 import { matchesSearch } from '../utils/transliteration';
 import http from '../app/http';
+import {
+  type GroupedProduct,
+  groupProducts,
+  widthLabels,
+  getTotalStock,
+  formatStockText
+} from '../utils/catalogGrouper';
 import './Catalog.css';
 
 const { Title, Text } = Typography;
@@ -30,132 +37,6 @@ const { Option } = Select;
 
 // View modes
 type ViewMode = 'cards' | 'gallery-comfort' | 'gallery-compact' | 'gallery-ultra';
-
-const widthLabels = ['400', '600', '700', '800', '900'] as const;
-
-// Types for grouped products
-interface GroupedProduct {
-  id: string; // composite ID for the group
-  baseName: string; // name without width
-  brand_name: string;
-  price_usd: string;
-  image: string | null;
-  stock: {
-    '400': number;
-    '600': number;
-    '700': number;
-    '800': number;
-    '900': number;
-  };
-  originalProducts: CatalogProduct[]; // keep reference to original products for search
-}
-
-/**
- * Extract base name from product name by removing ONLY the trailing width suffix
- * This regex strictly matches: comma + optional spaces + 2-4 digits + optional мм/mm at the END
- * 
- * Examples:
- *   "Классика - 50001, Лакобель белый ПГ, 800мм" -> "Классика - 50001, Лакобель белый ПГ"
- *   "Венеция Ясень белый ПГ, 600мм" -> "Венеция Ясень белый ПГ"
- *   "Porta Prima, 800mm" -> "Porta Prima"
- *   "Door Model, 700" -> "Door Model"
- * 
- * Important: Only removes the LAST occurrence of size pattern to preserve full product names
- */
-const extractBaseName = (productName: string): string => {
-  // Strict pattern: comma + spaces + 2-4 digits + optional мм/mm at the END of string only
-  // The $ anchor ensures we only match the trailing size, not any numbers in the middle
-  const widthPattern = /,\s*(\d{2,4})\s*(мм|mm)?$/i;
-  
-  const baseName = productName.replace(widthPattern, '').trim();
-  return baseName || productName; // fallback to original if pattern doesn't match
-};
-
-/**
- * Extract width from product name
- * Returns one of: '400', '600', '700', '800', '900', or null
- */
-const extractWidth = (productName: string): string | null => {
-  // Match the trailing size pattern
-  const match = productName.match(/,\s*(\d{3,4})\s*(мм|mm)?$/i);
-  if (match) {
-    const width = match[1];
-    // Only return if it's one of our standard widths
-    if (['400', '600', '700', '800', '900'].includes(width)) {
-      return width;
-    }
-  }
-  return null;
-};
-
-/**
- * Group products by base name and aggregate stock by width
- * 
- * Backend returns each product variant (e.g., "Product, 600мм") with its own stock object.
- * The backend's stock object already contains breakdown by width for that specific variant.
- * 
- * When grouping, we need to:
- * 1. Extract base name (remove trailing size)
- * 2. Aggregate stocks from all variants into one combined stock object
- * 3. Use the first available image (prefer 400mm if available)
- * 4. Use the lowest-width price (or first available)
- */
-const groupProducts = (products: CatalogProduct[]): GroupedProduct[] => {
-  const groups: Record<string, GroupedProduct> = {};
-
-  products.forEach((product) => {
-    const baseName = extractBaseName(product.name);
-    const width = extractWidth(product.name);
-
-    if (!groups[baseName]) {
-      // Initialize new group with zero stock for all widths
-      groups[baseName] = {
-        id: `group-${baseName.replace(/\s+/g, '-').toLowerCase()}`,
-        baseName,
-        brand_name: product.brand_name,
-        price_usd: product.price_usd,
-        image: product.image,
-        stock: {
-          '400': 0,
-          '600': 0,
-          '700': 0,
-          '800': 0,
-          '900': 0,
-        },
-        originalProducts: [],
-      };
-    }
-
-    // Add product to group
-    groups[baseName].originalProducts.push(product);
-
-    // Aggregate stock from this product into the group
-    // The backend returns stock object like { "400": 0, "600": 2, "700": 0, ... }
-    // We need to sum up stocks from all variants
-    widthLabels.forEach((w) => {
-      if (product.stock && typeof product.stock[w] === 'number') {
-        groups[baseName].stock[w] += product.stock[w];
-      }
-    });
-
-    // Image priority: prefer 400mm image, then smallest width, then any available
-    if (width === '400' && product.image) {
-      groups[baseName].image = product.image;
-    } else if (!groups[baseName].image && product.image) {
-      groups[baseName].image = product.image;
-    }
-
-    // Price priority: use 400mm price if available, otherwise keep first
-    if (width === '400') {
-      groups[baseName].price_usd = product.price_usd;
-    } else if (!groups[baseName].price_usd) {
-      groups[baseName].price_usd = product.price_usd;
-    }
-  });
-
-  // Convert to array and sort by base name
-  return Object.values(groups).sort((a, b) => a.baseName.localeCompare(b.baseName));
-};
 
 const Catalog = () => {
   const { t } = useTranslation();

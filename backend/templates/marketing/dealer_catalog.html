@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1890ff;
+        }
+        
+        .header h1 {
+            font-size: 16pt;
+            color: #1890ff;
+            margin-bottom: 5px;
+        }
+        
+        .header .dealer-name {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .header .meta {
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        .header .markup-info {
+            font-size: 9pt;
+            color: #ff4d4f;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* Cards View */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10mm;
+            margin-top: 10px;
+        }
+        
+        .product-card {
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 8px;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+        
+        .product-card .image-container {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        
+        .product-card .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .product-card .no-image {
+            color: #bfbfbf;
+            font-size: 8pt;
+        }
+        
+        .product-card .name {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+        
+        .product-card .brand {
+            font-size: 8pt;
+            color: #1890ff;
+            margin-bottom: 6px;
+        }
+        
+        .product-card .price {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #52c41a;
+            margin-bottom: 6px;
+        }
+        
+        .product-card .stock {
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        .product-card .stock-item {
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 2px;
+        }
+        
+        .product-card .stock-item.available {
+            color: #52c41a;
+            font-weight: bold;
+        }
+        
+        .product-card .stock-item.unavailable {
+            color: #d9d9d9;
+        }
+        
+        /* Gallery View */
+        .products-gallery {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5mm;
+            margin-top: 10px;
+        }
+        
+        .gallery-card {
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 6px;
+            background: #fff;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        
+        .gallery-card .image-container {
+            width: 100%;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+        
+        .gallery-card .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .gallery-card .name {
+            font-size: 8pt;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+            line-height: 1.1;
+        }
+        
+        .gallery-card .brand {
+            font-size: 7pt;
+            color: #1890ff;
+            margin-bottom: 4px;
+        }
+        
+        .gallery-card .price {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #52c41a;
+            margin-bottom: 4px;
+        }
+        
+        .gallery-card .stock {
+            font-size: 7pt;
+            color: #666;
+            line-height: 1.2;
+        }
+        
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 7pt;
+            color: #999;
+            padding: 5px;
+            border-top: 1px solid #e8e8e8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <div class="dealer-name">{{ dealer_name }}</div>
+        <div class="meta">
+            {% if brand_filter != 'all' %}Бренд: {{ brand_filter }} | {% endif %}
+            Дата: {{ export_date }}
+        </div>
+        {% if markup_percent > 0 %}
+        <div class="markup-info">Цены с наценкой {{ markup_percent }}%</div>
+        {% endif %}
+    </div>
+    
+    {% if view_mode == 'cards' %}
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <div class="image-container">
+                {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}" />
+                {% else %}
+                    <div class="no-image">Нет изображения</div>
+                {% endif %}
+            </div>
+            <div class="name">{{ product.name }}</div>
+            <div class="brand">{{ product.brand_name }}</div>
+            {% if not hide_price %}
+            <div class="price">${{ product.price_usd }}</div>
+            {% endif %}
+            {% if not hide_stock %}
+            <div class="stock">
+                <div class="stock-item {% if product.stock.400 > 0 %}available{% else %}unavailable{% endif %}">
+                    400: {{ product.stock.400 }}
+                </div>
+                <div class="stock-item {% if product.stock.600 > 0 %}available{% else %}unavailable{% endif %}">
+                    600: {{ product.stock.600 }}
+                </div>
+                <div class="stock-item {% if product.stock.700 > 0 %}available{% else %}unavailable{% endif %}">
+                    700: {{ product.stock.700 }}
+                </div>
+                <div class="stock-item {% if product.stock.800 > 0 %}available{% else %}unavailable{% endif %}">
+                    800: {{ product.stock.800 }}
+                </div>
+                <div class="stock-item {% if product.stock.900 > 0 %}available{% else %}unavailable{% endif %}">
+                    900: {{ product.stock.900 }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="products-gallery">
+        {% for product in products %}
+        <div class="gallery-card">
+            <div class="image-container">
+                {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.name }}" />
+                {% else %}
+                    <div class="no-image">Нет фото</div>
+                {% endif %}
+            </div>
+            <div class="name">{{ product.name }}</div>
+            <div class="brand">{{ product.brand_name }}</div>
+            {% if not hide_price %}
+            <div class="price">${{ product.price_usd }}</div>
+            {% endif %}
+            {% if not hide_stock %}
+            <div class="stock">
+                {% if product.stock.400 > 0 %}400: {{ product.stock.400 }}<br>{% endif %}
+                {% if product.stock.600 > 0 %}600: {{ product.stock.600 }}<br>{% endif %}
+                {% if product.stock.700 > 0 %}700: {{ product.stock.700 }}<br>{% endif %}
+                {% if product.stock.800 > 0 %}800: {{ product.stock.800 }}<br>{% endif %}
+                {% if product.stock.900 > 0 %}900: {{ product.stock.900 }}{% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        {{ title }} | {{ export_date }}
+    </div>
+</body>
+</html>

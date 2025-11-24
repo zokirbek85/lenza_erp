@@ -396,3 +396,520 @@ class CatalogExportExcelView(APIView):
         
         wb.save(response)
         return response
+
+
+# ========================================
+# MARKETING DOCUMENT GENERATOR ENDPOINTS
+# ========================================
+
+class DealerCatalogPDFView(APIView, ExportMixin):
+    """
+    Generate dealer-specific catalog in PDF format with configurable markup and visibility options
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from datetime import date
+        from dealers.models import Dealer
+
+        # Get parameters
+        dealer_id = request.query_params.get('dealer_id')
+        brand_filter = request.query_params.get('brand', 'all')
+        markup_percent = float(request.query_params.get('markup', '0'))
+        hide_price = request.query_params.get('hide_price', 'false') == 'true'
+        hide_stock = request.query_params.get('hide_stock', 'false') == 'true'
+        view_mode = request.query_params.get('view', 'cards')
+
+        # Get dealer
+        dealer = None
+        if dealer_id:
+            try:
+                dealer = Dealer.objects.get(id=dealer_id)
+            except Dealer.DoesNotExist:
+                pass
+
+        # Get products
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+
+        # Apply brand filter
+        if brand_filter and brand_filter != 'all':
+            products = products.filter(brand__name=brand_filter)
+
+        # Serialize products with markup
+        product_data = []
+        for product in products:
+            serializer = CatalogProductSerializer(product, context={'request': request})
+            data = serializer.data
+            
+            # Apply markup to price
+            if markup_percent > 0:
+                original_price = float(data['price_usd'])
+                data['price_usd'] = str(round(original_price * (1 + markup_percent / 100), 2))
+            
+            product_data.append(data)
+
+        # Render PDF
+        context = {
+            'products': product_data,
+            'brand_filter': brand_filter,
+            'hide_price': hide_price,
+            'hide_stock': hide_stock,
+            'view_mode': view_mode,
+            'dealer_name': dealer.company_name if dealer else 'Dealer',
+            'markup_percent': markup_percent,
+            'export_date': date.today().strftime('%d.%m.%Y'),
+            'title': f'Каталог для дилера - {dealer.company_name}' if dealer else 'Каталог для дилера',
+        }
+
+        brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
+        filename = f'dealer_catalog_{dealer.id if dealer else "unknown"}_{brand_slug}_{date.today().strftime("%Y%m%d")}.pdf'
+
+        return self.render_pdf_with_qr(
+            template_path='marketing/dealer_catalog.html',
+            context=context,
+            filename=filename
+        )
+
+
+class DealerCatalogExcelView(APIView):
+    """
+    Generate dealer-specific catalog in Excel format with configurable markup and visibility options
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        from openpyxl.utils import get_column_letter
+        from datetime import date
+        from django.http import HttpResponse
+        from dealers.models import Dealer
+
+        # Get parameters
+        dealer_id = request.query_params.get('dealer_id')
+        brand_filter = request.query_params.get('brand', 'all')
+        markup_percent = float(request.query_params.get('markup', '0'))
+        hide_price = request.query_params.get('hide_price', 'false') == 'true'
+        hide_stock = request.query_params.get('hide_stock', 'false') == 'true'
+
+        # Get dealer
+        dealer = None
+        if dealer_id:
+            try:
+                dealer = Dealer.objects.get(id=dealer_id)
+            except Dealer.DoesNotExist:
+                pass
+
+        # Get products
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+
+        # Apply brand filter
+        if brand_filter and brand_filter != 'all':
+            products = products.filter(brand__name=brand_filter)
+
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Dealer Catalog'
+
+        # Define headers
+        headers = ['Название', 'Бренд']
+        if not hide_price:
+            headers.append(f'Цена (USD){f" +{markup_percent}%" if markup_percent > 0 else ""}')
+        if not hide_stock:
+            headers.extend(['400мм', '600мм', '700мм', '800мм', '900мм', 'Всего'])
+
+        # Write headers
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # Write data
+        row_num = 2
+        for product in products:
+            serializer = CatalogProductSerializer(product, context={'request': request})
+            data = serializer.data
+
+            col_num = 1
+            ws.cell(row=row_num, column=col_num, value=data['name'])
+            col_num += 1
+            ws.cell(row=row_num, column=col_num, value=data['brand_name'])
+            col_num += 1
+
+            if not hide_price:
+                price = float(data['price_usd'])
+                if markup_percent > 0:
+                    price = price * (1 + markup_percent / 100)
+                ws.cell(row=row_num, column=col_num, value=round(price, 2))
+                col_num += 1
+
+            if not hide_stock:
+                stock = data.get('stock', {})
+                stock_400 = stock.get('400', 0)
+                stock_600 = stock.get('600', 0)
+                stock_700 = stock.get('700', 0)
+                stock_800 = stock.get('800', 0)
+                stock_900 = stock.get('900', 0)
+                total_stock = stock_400 + stock_600 + stock_700 + stock_800 + stock_900
+
+                ws.cell(row=row_num, column=col_num, value=stock_400)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_600)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_700)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_800)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_900)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=total_stock)
+
+            row_num += 1
+
+        # Auto-fit columns
+        for col_num in range(1, len(headers) + 1):
+            column_letter = get_column_letter(col_num)
+            max_length = 0
+            for cell in ws[column_letter]:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Freeze header row
+        ws.freeze_panes = 'A2'
+
+        # Generate response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        dealer_name = dealer.company_name.replace(' ', '_') if dealer else 'unknown'
+        brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
+        today = date.today().strftime('%Y%m%d')
+        filename = f'dealer_catalog_{dealer_name}_{brand_slug}_{today}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
+
+
+class BrandCatalogPDFView(APIView, ExportMixin):
+    """
+    Generate brand-specific catalog in PDF format
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from datetime import date
+
+        # Get parameters
+        brand_name = request.query_params.get('brand')
+        hide_price = request.query_params.get('hide_price', 'false') == 'true'
+        hide_stock = request.query_params.get('hide_stock', 'false') == 'true'
+        view_mode = request.query_params.get('view', 'cards')
+
+        if not brand_name or brand_name == 'all':
+            from django.http import JsonResponse
+            return JsonResponse({'error': 'Brand name is required'}, status=400)
+
+        # Get products for this brand only
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            brand__name=brand_name,
+            is_active=True
+        ).select_related('brand', 'category').order_by('name')
+
+        # Serialize products
+        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
+        product_data = serializer.data
+
+        # Render PDF
+        context = {
+            'products': product_data,
+            'brand_name': brand_name,
+            'hide_price': hide_price,
+            'hide_stock': hide_stock,
+            'view_mode': view_mode,
+            'export_date': date.today().strftime('%d.%m.%Y'),
+            'title': f'Каталог бренда - {brand_name}',
+        }
+
+        brand_slug = brand_name.replace(' ', '_')
+        filename = f'brand_catalog_{brand_slug}_{date.today().strftime("%Y%m%d")}.pdf'
+
+        return self.render_pdf_with_qr(
+            template_path='marketing/brand_catalog.html',
+            context=context,
+            filename=filename
+        )
+
+
+class BrandCatalogExcelView(APIView):
+    """
+    Generate brand-specific catalog in Excel format
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        from openpyxl.utils import get_column_letter
+        from datetime import date
+        from django.http import HttpResponse, JsonResponse
+
+        # Get parameters
+        brand_name = request.query_params.get('brand')
+        hide_price = request.query_params.get('hide_price', 'false') == 'true'
+        hide_stock = request.query_params.get('hide_stock', 'false') == 'true'
+
+        if not brand_name or brand_name == 'all':
+            return JsonResponse({'error': 'Brand name is required'}, status=400)
+
+        # Get products for this brand only
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            brand__name=brand_name,
+            is_active=True
+        ).select_related('brand', 'category').order_by('name')
+
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Brand Catalog'
+
+        # Define headers
+        headers = ['Название']
+        if not hide_price:
+            headers.append('Цена (USD)')
+        if not hide_stock:
+            headers.extend(['400мм', '600мм', '700мм', '800мм', '900мм', 'Всего'])
+
+        # Write headers
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # Write data
+        row_num = 2
+        for product in products:
+            serializer = CatalogProductSerializer(product, context={'request': request})
+            data = serializer.data
+
+            col_num = 1
+            ws.cell(row=row_num, column=col_num, value=data['name'])
+            col_num += 1
+
+            if not hide_price:
+                ws.cell(row=row_num, column=col_num, value=float(data['price_usd']))
+                col_num += 1
+
+            if not hide_stock:
+                stock = data.get('stock', {})
+                stock_400 = stock.get('400', 0)
+                stock_600 = stock.get('600', 0)
+                stock_700 = stock.get('700', 0)
+                stock_800 = stock.get('800', 0)
+                stock_900 = stock.get('900', 0)
+                total_stock = stock_400 + stock_600 + stock_700 + stock_800 + stock_900
+
+                ws.cell(row=row_num, column=col_num, value=stock_400)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_600)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_700)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_800)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=stock_900)
+                col_num += 1
+                ws.cell(row=row_num, column=col_num, value=total_stock)
+
+            row_num += 1
+
+        # Auto-fit columns
+        for col_num in range(1, len(headers) + 1):
+            column_letter = get_column_letter(col_num)
+            max_length = 0
+            for cell in ws[column_letter]:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Freeze header row
+        ws.freeze_panes = 'A2'
+
+        # Generate response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        brand_slug = brand_name.replace(' ', '_')
+        today = date.today().strftime('%Y%m%d')
+        filename = f'brand_catalog_{brand_slug}_{today}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
+
+
+class PriceListPDFView(APIView, ExportMixin):
+    """
+    Generate price list in PDF format (simplified, table-focused layout)
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from datetime import date
+
+        # Get parameters
+        brand_filter = request.query_params.get('brand', 'all')
+        hide_stock = request.query_params.get('hide_stock', 'false') == 'true'
+
+        # Get products
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+
+        # Apply brand filter
+        if brand_filter and brand_filter != 'all':
+            products = products.filter(brand__name=brand_filter)
+
+        # Serialize products
+        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
+        product_data = serializer.data
+
+        # Render PDF
+        context = {
+            'products': product_data,
+            'brand_filter': brand_filter,
+            'hide_stock': hide_stock,
+            'export_date': date.today().strftime('%d.%m.%Y'),
+            'title': f'Прайс-лист{f" - {brand_filter}" if brand_filter != "all" else ""}',
+        }
+
+        brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
+        filename = f'pricelist_{brand_slug}_{date.today().strftime("%Y%m%d")}.pdf'
+
+        return self.render_pdf_with_qr(
+            template_path='marketing/pricelist.html',
+            context=context,
+            filename=filename
+        )
+
+
+class PriceListExcelView(APIView):
+    """
+    Generate price list in Excel format (simplified, table-focused layout)
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        from openpyxl.utils import get_column_letter
+        from datetime import date
+        from django.http import HttpResponse
+
+        # Get parameters
+        brand_filter = request.query_params.get('brand', 'all')
+        hide_stock = request.query_params.get('hide_stock', 'false') == 'true'
+
+        # Get products
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+
+        # Apply brand filter
+        if brand_filter and brand_filter != 'all':
+            products = products.filter(brand__name=brand_filter)
+
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Price List'
+
+        # Define headers
+        headers = ['Название', 'Бренд', 'Цена (USD)']
+        if not hide_stock:
+            headers.extend(['400мм', '600мм', '700мм', '800мм', '900мм', 'Всего'])
+
+        # Write headers
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # Write data
+        row_num = 2
+        for product in products:
+            serializer = CatalogProductSerializer(product, context={'request': request})
+            data = serializer.data
+
+            ws.cell(row=row_num, column=1, value=data['name'])
+            ws.cell(row=row_num, column=2, value=data['brand_name'])
+            ws.cell(row=row_num, column=3, value=float(data['price_usd']))
+
+            if not hide_stock:
+                stock = data.get('stock', {})
+                stock_400 = stock.get('400', 0)
+                stock_600 = stock.get('600', 0)
+                stock_700 = stock.get('700', 0)
+                stock_800 = stock.get('800', 0)
+                stock_900 = stock.get('900', 0)
+                total_stock = stock_400 + stock_600 + stock_700 + stock_800 + stock_900
+
+                ws.cell(row=row_num, column=4, value=stock_400)
+                ws.cell(row=row_num, column=5, value=stock_600)
+                ws.cell(row=row_num, column=6, value=stock_700)
+                ws.cell(row=row_num, column=7, value=stock_800)
+                ws.cell(row=row_num, column=8, value=stock_900)
+                ws.cell(row=row_num, column=9, value=total_stock)
+
+            row_num += 1
+
+        # Auto-fit columns
+        for col_num in range(1, len(headers) + 1):
+            column_letter = get_column_letter(col_num)
+            max_length = 0
+            for cell in ws[column_letter]:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+
+        # Freeze header row
+        ws.freeze_panes = 'A2'
+
+        # Generate response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
+        today = date.today().strftime('%Y%m%d')
+        filename = f'pricelist_{brand_slug}_{today}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response

@@ -28,6 +28,7 @@ import ReconciliationPage from '../features/reconciliation/ReconciliationPage';
 import NotificationCenterPage from '../pages/NotificationCenter';
 import UserManualPage from '../pages/UserManual';
 import Unauthorized from '../pages/Unauthorized';
+import DocumentGeneratorPage from '../pages/marketing/DocumentGenerator';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
 const DashboardEntry = () => {
@@ -89,6 +90,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'accountant', 'owner']}>
             <CatalogPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'marketing/documents',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'owner']}>
+            <DocumentGeneratorPage />
           </ProtectedRoute>
         ),
       },

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1890ff;
+        }
+        
+        .header h1 {
+            font-size: 16pt;
+            color: #1890ff;
+            margin-bottom: 8px;
+        }
+        
+        .header .meta {
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        thead {
+            background-color: #f0f0f0;
+        }
+        
+        thead th {
+            padding: 8px 6px;
+            text-align: left;
+            font-size: 9pt;
+            font-weight: bold;
+            border: 1px solid #d9d9d9;
+            color: #333;
+        }
+        
+        tbody td {
+            padding: 6px;
+            border: 1px solid #e8e8e8;
+            font-size: 8pt;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        
+        .name-col {
+            width: 40%;
+        }
+        
+        .brand-col {
+            width: 15%;
+            color: #1890ff;
+        }
+        
+        .price-col {
+            width: 10%;
+            font-weight: bold;
+            color: #52c41a;
+            text-align: right;
+        }
+        
+        .stock-col {
+            width: 7%;
+            text-align: center;
+        }
+        
+        .stock-available {
+            color: #52c41a;
+            font-weight: bold;
+        }
+        
+        .stock-unavailable {
+            color: #d9d9d9;
+        }
+        
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 7pt;
+            color: #999;
+            padding: 5px;
+            border-top: 1px solid #e8e8e8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <div class="meta">
+            {% if brand_filter != 'all' %}Бренд: {{ brand_filter }} | {% endif %}
+            Дата: {{ export_date }}
+        </div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th class="name-col">Название</th>
+                <th class="brand-col">Бренд</th>
+                <th class="price-col">Цена (USD)</th>
+                {% if not hide_stock %}
+                <th class="stock-col">400мм</th>
+                <th class="stock-col">600мм</th>
+                <th class="stock-col">700мм</th>
+                <th class="stock-col">800мм</th>
+                <th class="stock-col">900мм</th>
+                <th class="stock-col">Всего</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td class="name-col">{{ product.name }}</td>
+                <td class="brand-col">{{ product.brand_name }}</td>
+                <td class="price-col">${{ product.price_usd }}</td>
+                {% if not hide_stock %}
+                <td class="stock-col {% if product.stock.400 > 0 %}stock-available{% else %}stock-unavailable{% endif %}">
+                    {{ product.stock.400 }}
+                </td>
+                <td class="stock-col {% if product.stock.600 > 0 %}stock-available{% else %}stock-unavailable{% endif %}">
+                    {{ product.stock.600 }}
+                </td>
+                <td class="stock-col {% if product.stock.700 > 0 %}stock-available{% else %}stock-unavailable{% endif %}">
+                    {{ product.stock.700 }}
+                </td>
+                <td class="stock-col {% if product.stock.800 > 0 %}stock-available{% else %}stock-unavailable{% endif %}">
+                    {{ product.stock.800 }}
+                </td>
+                <td class="stock-col {% if product.stock.900 > 0 %}stock-available{% else %}stock-unavailable{% endif %}">
+                    {{ product.stock.900 }}
+                </td>
+                <td class="stock-col stock-available">
+                    {{ product.stock.400|add:product.stock.600|add:product.stock.700|add:product.stock.800|add:product.stock.900 }}
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        {{ title }} | {{ export_date }}
+    </div>
+</body>
+</html>

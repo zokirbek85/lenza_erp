@@ -16,6 +16,13 @@ from catalog.views import (
     ProductImportTemplateView,
     ProductReportPDFView,
     ProductViewSet,
+    # Marketing document generator views
+    DealerCatalogPDFView,
+    DealerCatalogExcelView,
+    BrandCatalogPDFView,
+    BrandCatalogExcelView,
+    PriceListPDFView,
+    PriceListExcelView,
 )
 from core.views import (
     AuditLogViewSet,
@@ -130,6 +137,13 @@ urlpatterns = [
     path('api/catalog/', CatalogView.as_view(), name='catalog'),
     path('api/catalog/export/pdf/', CatalogExportPDFView.as_view(), name='catalog-export-pdf'),
     path('api/catalog/export/excel/', CatalogExportExcelView.as_view(), name='catalog-export-excel'),
+    # Marketing document generator endpoints
+    path('api/marketing/dealer-catalog/pdf/', DealerCatalogPDFView.as_view(), name='marketing-dealer-catalog-pdf'),
+    path('api/marketing/dealer-catalog/excel/', DealerCatalogExcelView.as_view(), name='marketing-dealer-catalog-excel'),
+    path('api/marketing/brand-catalog/pdf/', BrandCatalogPDFView.as_view(), name='marketing-brand-catalog-pdf'),
+    path('api/marketing/brand-catalog/excel/', BrandCatalogExcelView.as_view(), name='marketing-brand-catalog-excel'),
+    path('api/marketing/pricelist/pdf/', PriceListPDFView.as_view(), name='marketing-pricelist-pdf'),
+    path('api/marketing/pricelist/excel/', PriceListExcelView.as_view(), name='marketing-pricelist-excel'),
     path('api/payments/report/pdf/', PaymentReportPDFView.as_view(), name='payments-report-pdf'),
     path('api/reports/cards/pdf/', cards_pdf_report, name='cards-pdf-report'),
     path('api/payments/export/excel/', PaymentExportExcelView.as_view(), name='payments-export-excel'),
