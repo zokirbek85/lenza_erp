@@ -8,10 +8,15 @@ import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { toArray } from '../utils/api';
 import CollapsibleForm from '../components/CollapsibleForm';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import PaymentsMobileCards from './_mobile/PaymentsMobileCards';
+import type { PaymentsMobileHandlers } from './_mobile/PaymentsMobileCards';
 
 interface Dealer {
   id: number;
@@ -53,12 +58,14 @@ const PaymentsPage = () => {
   const navigate = useNavigate();
   const role = useAuthStore((state) => state.role);
   const isSalesManager = role === 'sales';
+  const { isMobile } = useIsMobile();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [cards, setCards] = useState<any[]>([]);
   const [form, setForm] = useState(defaultForm);
   const [filtersState, setFiltersState] = useState({ dealer: '', from: '', to: '' });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -190,6 +197,141 @@ const PaymentsPage = () => {
     }
   }, [form.method]);
 
+  // Mobile handlers
+  const mobileHandlers: PaymentsMobileHandlers = {
+    onView: (paymentId) => {
+      console.log('View payment:', paymentId);
+    },
+    onEdit: (paymentId) => {
+      // For future implementation
+      console.log('Edit payment:', paymentId);
+    },
+    onDelete: (paymentId) => {
+      if (window.confirm(t('payments.confirmDelete'))) {
+        http.delete(`/payments/${paymentId}/`)
+          .then(() => {
+            toast.success(t('payments.messages.deleted'));
+            loadPayments();
+          })
+          .catch((error) => {
+            console.error(error);
+            toast.error(t('payments.messages.deleteError'));
+          });
+      }
+    },
+    onConfirm: (paymentId) => {
+      if (window.confirm(t('payments.confirmConfirm'))) {
+        http.post(`/payments/${paymentId}/confirm/`)
+          .then(() => {
+            toast.success(t('payments.messages.confirmed'));
+            loadPayments();
+          })
+          .catch((error) => {
+            console.error(error);
+            toast.error(t('payments.messages.confirmError'));
+          });
+      }
+    },
+  };
+
+  const mobilePermissions = {
+    canEdit: !isSalesManager,
+    canDelete: !isSalesManager,
+    canConfirm: !isSalesManager,
+  };
+
+  // Filters content
+  const filtersContent = (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('payments.dealer')}
+        </label>
+        <select
+          name="dealer"
+          value={filtersState.dealer}
+          onChange={handleFilterInput}
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+        >
+          <option value="">{t('payments.allDealers')}</option>
+          {dealers.map((dealer) => (
+            <option key={dealer.id} value={dealer.id}>
+              {dealer.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('payments.from')}
+        </label>
+        <input
+          type="date"
+          name="from"
+          value={filtersState.from}
+          onChange={handleFilterInput}
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+        />
+      </div>
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('payments.to')}
+        </label>
+        <input
+          type="date"
+          name="to"
+          value={filtersState.to}
+          onChange={handleFilterInput}
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+        />
+      </div>
+    </div>
+  );
+
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <header className="flex items-center justify-between py-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('payments.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('payments.subtitle')}</p>
+          </div>
+        </header>
+
+        <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          title={t('payments.filters.title')}
+        >
+          {filtersContent}
+        </FilterDrawer>
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('payments.loading')}
+          </div>
+        ) : (
+          <PaymentsMobileCards
+            data={payments}
+            handlers={mobileHandlers}
+            permissions={mobilePermissions}
+          />
+        )}
+
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
+      </div>
+    );
+  }
+
+  // Desktop view
   return (
     <section className="page-wrapper space-y-6">
   <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">

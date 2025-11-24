@@ -11,6 +11,9 @@ import {
   message,
   Typography,
 } from 'antd';
+import { useIsMobile } from '../hooks/useIsMobile';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import {
   DollarOutlined,
   ArrowUpOutlined,
@@ -57,12 +60,14 @@ const { RangePicker } = DatePicker;
 
 export default function LedgerPage() {
   const { t } = useTranslation();
+  const { isMobile } = useIsMobile();
   
   // ========== STATE ==========
   const [ledgerData, setLedgerData] = useState<LedgerSummary | null>(null);
   const [cardBalances, setCardBalances] = useState<CardBalance[]>([]);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [loading, setLoading] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
@@ -158,6 +163,98 @@ export default function LedgerPage() {
     }).format(value);
   };
 
+  const filtersContent = (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <div>
+        <label className="mb-2 block text-sm font-medium">{t('ledger.currency')}</label>
+        <Select
+          value={currency}
+          onChange={setCurrency}
+          style={{ width: '100%' }}
+          options={[
+            { value: 'USD', label: 'USD' },
+            { value: 'UZS', label: 'UZS' },
+          ]}
+        />
+      </div>
+      <div>
+        <label className="mb-2 block text-sm font-medium">{t('ledger.dateRange')}</label>
+        <RangePicker
+          value={dateRange}
+          onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+          format="YYYY-MM-DD"
+          placeholder={[t('ledger.from'), t('ledger.to')]}
+          style={{ width: '100%' }}
+        />
+      </div>
+    </Space>
+  );
+
+  // ========== MOBILE VIEW ==========
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <header className="py-4">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('ledger.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('ledger.subtitle')}</p>
+        </header>
+
+        <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          title={t('ledger.filters')}
+        >
+          {filtersContent}
+        </FilterDrawer>
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('ledger.loading')}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <Card>
+              <Statistic
+                title={t('ledger.totalIncome')}
+                value={currency === 'USD' ? ledgerData?.total_income_usd || 0 : ledgerData?.total_income_uzs || 0}
+                precision={2}
+                valueStyle={{ color: '#10b981' }}
+                prefix={<ArrowUpOutlined />}
+                suffix={currency}
+              />
+            </Card>
+            <Card>
+              <Statistic
+                title={t('ledger.totalExpense')}
+                value={currency === 'USD' ? ledgerData?.total_expense_usd || 0 : ledgerData?.total_expense_uzs || 0}
+                precision={2}
+                valueStyle={{ color: '#ef4444' }}
+                prefix={<ArrowDownOutlined />}
+                suffix={currency}
+              />
+            </Card>
+            <Card>
+              <Statistic
+                title={t('ledger.balance')}
+                value={
+                  currency === 'USD'
+                    ? (ledgerData?.total_income_usd || 0) - (ledgerData?.total_expense_usd || 0)
+                    : (ledgerData?.total_income_uzs || 0) - (ledgerData?.total_expense_uzs || 0)
+                }
+                precision={2}
+                valueStyle={{ color: '#3b82f6' }}
+                prefix={<WalletOutlined />}
+                suffix={currency}
+              />
+            </Card>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ========== DESKTOP VIEW ==========
   return (
     <section className="page-wrapper space-y-6">
       {/* HEADER */}

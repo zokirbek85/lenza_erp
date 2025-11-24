@@ -8,7 +8,12 @@ import http from '../app/http';
 import Modal from '../components/Modal';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { toArray } from '../utils/api';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import UsersMobileCards from './_mobile/UsersMobileCards';
+import type { UsersMobileHandlers } from './_mobile/UsersMobileCards';
 
 interface UserRecord {
   id: number;
@@ -33,6 +38,7 @@ const emptyForm = {
 const UsersPage = () => {
   const { t } = useTranslation();
   const { role } = useAuthStore();
+  const { isMobile } = useIsMobile();
   
   const ROLE_OPTIONS = [
     { label: t('users.roles.admin'), value: 'admin' },
@@ -45,6 +51,7 @@ const UsersPage = () => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ role: '' });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<UserRecord | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -168,6 +175,99 @@ const UsersPage = () => {
       toast.error(t('users.messages.statusError'));
     }
   };
+
+  const mobileHandlers: UsersMobileHandlers = {
+    onView: (userId: number) => {
+      const user = users.find((u) => u.id === userId);
+      if (user) openModal(user);
+    },
+    onEdit: (userId: number) => {
+      const user = users.find((u) => u.id === userId);
+      if (user) openModal(user);
+    },
+    onDelete: (userId: number) => {
+      const user = users.find((u) => u.id === userId);
+      if (user) toggleActive(user);
+    },
+  };
+
+  const mobilePermissions = {
+    canEdit: canManage,
+    canDelete: canManage,
+  };
+
+  const filtersContent = (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        {t('users.filters.role')}
+      </label>
+      <select
+        value={filters.role}
+        onChange={handleFilterChange}
+        className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+      >
+        <option value="">{t('users.filters.allRoles')}</option>
+        {ROLE_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <header className="flex items-center justify-between py-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('users.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('users.subtitle')}</p>
+          </div>
+          {canManage && (
+            <button
+              onClick={() => openModal()}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+            >
+              {t('users.new')}
+            </button>
+          )}
+        </header>
+
+        <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          title={t('users.filters.title')}
+        >
+          {filtersContent}
+        </FilterDrawer>
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('users.messages.loading')}
+          </div>
+        ) : (
+          <UsersMobileCards
+            data={users.map((u) => ({
+              ...u,
+              full_name: `${u.first_name} ${u.last_name}`.trim() || u.username,
+            }))}
+            handlers={mobileHandlers}
+            permissions={mobilePermissions}
+          />
+        )}
+
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
+      </div>
+    );
+  }
 
   return (
     <section className="page-wrapper space-y-6">

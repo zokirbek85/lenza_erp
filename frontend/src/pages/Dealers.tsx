@@ -8,10 +8,15 @@ import { useAuthStore } from '../auth/useAuthStore';
 import Modal from '../components/Modal';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { toArray } from '../utils/api';
 import { formatCurrency } from '../utils/formatters';
 import { downloadFile } from '../utils/download';
 import Money from '../components/Money';
+import FilterDrawer from '../components/responsive/filters/FilterDrawer';
+import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import DealersMobileCards from './_mobile/DealersMobileCards';
+import type { DealersMobileHandlers } from './_mobile/DealersMobileCards';
 
 interface Region {
   id: number;
@@ -66,10 +71,12 @@ const emptyForm = {
 const DealersPage = () => {
   const { t } = useTranslation();
   const role = useAuthStore((state) => state.role);
+  const { isMobile } = useIsMobile();
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [filter, setFilter] = useState({ region_id: '' });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -306,6 +313,100 @@ const DealersPage = () => {
     setImportSummary(null);
   };
 
+  // Mobile handlers
+  const mobileHandlers: DealersMobileHandlers = {
+    onView: (dealerId) => {
+      const dealer = dealers.find((d) => d.id === dealerId);
+      if (dealer) openDetails(dealer);
+    },
+    onEdit: (dealerId) => {
+      const dealer = dealers.find((d) => d.id === dealerId);
+      if (dealer) openModal(dealer);
+    },
+    onDelete: (dealerId) => {
+      const dealer = dealers.find((d) => d.id === dealerId);
+      if (dealer) handleDelete(dealer);
+    },
+  };
+
+  const mobilePermissions = {
+    canEdit: true,
+    canDelete: true,
+  };
+
+  // Filter content
+  const filtersContent = (
+    <div className="space-y-4">
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+          {t('dealers.filters.region')}
+        </label>
+        <select
+          value={filter.region_id}
+          onChange={handleFilterChange}
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+        >
+          <option value="">{t('dealers.filters.allRegions')}</option>
+          {regions.map((region) => (
+            <option key={region.id} value={region.id}>
+              {region.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
+  // Mobile view
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <header className="flex items-center justify-between py-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('dealers.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('dealers.subtitle')}</p>
+          </div>
+          <button
+            onClick={() => openModal()}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+          >
+            {t('dealers.new')}
+          </button>
+        </header>
+
+        <FilterTrigger onClick={() => setFiltersOpen(true)} />
+        <FilterDrawer
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          title={t('dealers.filters.title')}
+        >
+          {filtersContent}
+        </FilterDrawer>
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('dealers.messages.loading')}
+          </div>
+        ) : (
+          <DealersMobileCards
+            data={dealers}
+            handlers={mobileHandlers}
+            permissions={mobilePermissions}
+          />
+        )}
+
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          setPage={setPage}
+          setPageSize={setPageSize}
+        />
+      </div>
+    );
+  }
+
+  // Desktop view
   return (
     <section className="page-wrapper space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">

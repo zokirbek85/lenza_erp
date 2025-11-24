@@ -3,14 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card, Space, Table, Tag } from 'antd';
 
 import { useAuthStore } from '../auth/useAuthStore';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
 import ReturnCreateModal from './returns/ReturnCreateModal';
 import { fetchReturns, type ReturnRecord } from '../api/returnsApi';
+import ReturnsMobileCards from './_mobile/ReturnsMobileCards';
+import type { ReturnsMobileHandlers } from './_mobile/ReturnsMobileCards';
 
 const ReturnsPage = () => {
   const { t } = useTranslation();
   const role = useAuthStore((state) => state.role);
+  const { isMobile } = useIsMobile();
   const isWarehouse = role === 'warehouse';
   const isSalesManager = role === 'sales';
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
@@ -33,6 +37,47 @@ const ReturnsPage = () => {
 
   const handleExportPdf = () => downloadFile('/returns/export/pdf/', 'returns_report.pdf');
   const handleExportExcel = () => downloadFile('/returns/export/excel/', 'returns.xlsx');
+
+  const mobileHandlers: ReturnsMobileHandlers = {
+    onView: (returnId: number) => {
+      console.log('View return:', returnId);
+    },
+  };
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4 px-4 pb-6">
+        <header className="flex items-center justify-between py-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('returns.title')}</h1>
+          </div>
+          {!isSalesManager && (
+            <Button type="primary" onClick={() => setCreateOpen(true)}>
+              {t('returns.new')}
+            </Button>
+          )}
+        </header>
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('common:loading')}
+          </div>
+        ) : (
+          <ReturnsMobileCards
+            data={returns}
+            handlers={mobileHandlers}
+            showPrice={!isWarehouse}
+          />
+        )}
+
+        <ReturnCreateModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onCreated={() => loadReturns()}
+        />
+      </div>
+    );
+  }
 
   return (
     <Card
