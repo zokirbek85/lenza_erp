@@ -49,6 +49,7 @@ import {
   type InventoryStats,
 } from '../../services/dashboardService';
 import { fetchDebtAnalytics } from '@/services/dashboard';
+import YouTubeAudioPlayer from '../../components/YouTubeAudioPlayer';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
 
@@ -247,6 +248,9 @@ const DashboardPage = () => {
 
   return (
     <section className="page-wrapper space-y-8">
+      {/* YouTube Audio Player - only plays on Dashboard */}
+      <YouTubeAudioPlayer />
+      
       <header>
         <p className="text-sm uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('dashboard.ownerKpi')}</p>
         <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">{t('nav.dashboard')}</h1>
