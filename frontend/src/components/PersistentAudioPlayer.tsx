@@ -222,62 +222,70 @@ const PersistentAudioPlayer = () => {
     transition: 'all 0.3s ease',
   };
 
-  // Collapsed view (mini player)
-  if (isCollapsed) {
-    return (
-      <Tooltip title="Open Radio Player" placement="left">
-        <div
-          style={collapsedStyle}
-          onClick={() => setIsCollapsed(false)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.25)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-          }}
-        >
-          <CustomerServiceOutlined
-            style={{
-              fontSize: '28px',
-              color: isPlaying ? themeToken.colorPrimary : themeToken.colorTextSecondary,
-            }}
-          />
-          {isPlaying && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '-2px',
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                background: '#52c41a',
-                border: `2px solid ${themeToken.colorBgElevated}`,
-                animation: 'pulse 2s infinite',
-              }}
-            />
-          )}
-        </div>
-      </Tooltip>
-    );
-  }
-
-  // Expanded view (full player)
   return (
     <>
-      {/* Add CSS animation for pulse effect */}
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-          }
-        `}
-      </style>
+      {/* Hidden Audio Element - always mounted regardless of collapsed state */}
+      <audio
+        ref={audioRef}
+        src={STATIONS[currentStation].url}
+        preload="none"
+        crossOrigin="anonymous"
+        onError={handleAudioError}
+        onCanPlay={handleAudioCanPlay}
+        style={{ display: 'none' }}
+      />
 
-      <Card
+      {/* Collapsed view (mini player) */}
+      {isCollapsed ? (
+        <Tooltip title="Open Radio Player" placement="left">
+          <div
+            style={collapsedStyle}
+            onClick={() => setIsCollapsed(false)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            }}
+          >
+            <CustomerServiceOutlined
+              style={{
+                fontSize: '28px',
+                color: isPlaying ? themeToken.colorPrimary : themeToken.colorTextSecondary,
+              }}
+            />
+            {isPlaying && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#52c41a',
+                  border: `2px solid ${themeToken.colorBgElevated}`,
+                  animation: 'pulse 2s infinite',
+                }}
+              />
+            )}
+          </div>
+        </Tooltip>
+      ) : (
+        <>
+          {/* Add CSS animation for pulse effect */}
+          <style>
+            {`
+              @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+              }
+            `}
+          </style>
+
+          <Card
         style={expandedStyle}
         styles={{
           body: { padding: '16px' },
@@ -315,15 +323,11 @@ const PersistentAudioPlayer = () => {
             onChange={handleStationChange}
             style={{ width: '100%' }}
             size="large"
+            popupMatchSelectWidth={true}
           >
             {Object.entries(STATIONS).map(([key, station]) => (
-              <Option key={key} value={key}>
-                <div>
-                  <div style={{ fontWeight: 500 }}>{station.name}</div>
-                  <div style={{ fontSize: '12px', color: themeToken.colorTextSecondary }}>
-                    {station.description}
-                  </div>
-                </div>
+              <Option key={key} value={key} title={station.description}>
+                {station.name}
               </Option>
             ))}
           </Select>
@@ -424,17 +428,9 @@ const PersistentAudioPlayer = () => {
             handleStyle={{ borderColor: themeToken.colorPrimary }}
           />
         </div>
-
-        {/* Hidden Audio Element */}
-        <audio
-          ref={audioRef}
-          src={STATIONS[currentStation].url}
-          preload="none"
-          crossOrigin="anonymous"
-          onError={handleAudioError}
-          onCanPlay={handleAudioCanPlay}
-        />
-      </Card>
+          </Card>
+        </>
+      )}
     </>
   );
 };
