@@ -160,7 +160,19 @@ const OrdersPage = () => {
     const collected: T[] = [];
     let nextUrl: string | null = endpoint;
     while (nextUrl) {
-      const url = nextUrl;
+      // Normalize URL: if it's a full URL, extract just the path and query
+      // This ensures we use the http client's baseURL (which has HTTPS)
+      let url = nextUrl;
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        try {
+          const urlObj = new URL(url);
+          // Use pathname + search to get relative URL (e.g., /dealers/?page=2)
+          url = urlObj.pathname + urlObj.search;
+        } catch (e) {
+          console.warn('Failed to parse pagination URL:', url);
+        }
+      }
+      
       const response = await http.get<unknown>(url);
       const payload: unknown = response.data;
       collected.push(...toArray<T>(payload));
