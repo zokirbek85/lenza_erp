@@ -166,7 +166,7 @@ while [ $attempt -lt $MAX_HEALTH_ATTEMPTS ]; do
     attempt=$((attempt + 1))
     
     # Health check using docker exec
-    if docker exec "$BACKEND_CONTAINER" curl -f -s http://localhost:8000/api/health/ > /dev/null 2>&1; then
+    if docker exec "$BACKEND_CONTAINER" curl -f -s http://127.0.0.1:8000/api/health/ -H "Host: erp.lenza.uz" > /dev/null 2>&1; then
         log_info "Health check passed! ($attempt/$MAX_HEALTH_ATTEMPTS)"
         healthy=true
         break
@@ -227,7 +227,7 @@ sleep 3
 log_step "9. Verifying New Stack Under Load"
 
 log_info "Running final health check on active stack..."
-if docker exec "$BACKEND_CONTAINER" curl -f -s http://localhost:8000/api/health/ > /dev/null 2>&1; then
+if docker exec "$BACKEND_CONTAINER" curl -f -s http://127.0.0.1:8000/api/health/ -H "Host: erp.lenza.uz" > /dev/null 2>&1; then
     log_info "${GREEN}✓ Final health check passed${NC}"
 else
     log_error "Final health check failed!"
