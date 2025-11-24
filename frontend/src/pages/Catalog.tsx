@@ -219,11 +219,11 @@ const Catalog = () => {
               title={<Text strong>{group.baseName}</Text>}
               description={
                 <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }} className="catalog-brand-text">
                     {group.brand_name}
                   </Text>
                   <div style={{ marginTop: 8 }}>
-                    <Text strong style={{ fontSize: 18, color: '#1890ff' }}>
+                    <Text strong style={{ fontSize: 18 }} className="catalog-price-text">
                       ${group.price_usd}
                     </Text>
                   </div>
@@ -234,17 +234,22 @@ const Catalog = () => {
                     <div className="catalog-stock-grid">
                       {widthLabels.map((width) => {
                         const stock = group.stock[width];
+                        const inStock = stock > 0;
                         return (
-                          <div key={width} className="catalog-stock-item">
-                            <Text style={{ fontSize: 11, color: '#888' }}>{width}mm:</Text>
+                          <div 
+                            key={width} 
+                            className="catalog-stock-item"
+                            data-in-stock={inStock}
+                          >
+                            <Text type="secondary" style={{ fontSize: 11 }}>{width}mm:</Text>
                             <Text
                               strong
                               style={{
                                 fontSize: 13,
-                                color: stock > 0 ? '#52c41a' : '#ff4d4f',
+                                color: inStock ? '#52c41a' : '#ff4d4f',
                               }}
                             >
-                              {stock > 0 ? `${stock} ${t('catalog.inStock')}` : t('catalog.notAvailable')}
+                              {inStock ? `${stock} ${t('catalog.inStock')}` : t('catalog.notAvailable')}
                             </Text>
                           </div>
                         );
@@ -307,10 +312,10 @@ const Catalog = () => {
           </Text>
           {!isUltra && (
             <>
-              <Text type="secondary" style={{ fontSize: isCompact ? 9 : 10, display: 'block' }}>
+              <Text type="secondary" style={{ fontSize: isCompact ? 9 : 10, display: 'block' }} className="catalog-brand-text">
                 {group.brand_name}
               </Text>
-              <Text strong style={{ fontSize: isCompact ? 13 : 14, color: '#1890ff', display: 'block', marginTop: 4 }}>
+              <Text strong style={{ fontSize: isCompact ? 13 : 14, display: 'block', marginTop: 4 }} className="catalog-price-text">
                 ${group.price_usd}
               </Text>
               {!isCompact && (
