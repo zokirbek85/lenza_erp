@@ -198,7 +198,6 @@ log_step "8. Switching Nginx Upstream"
 
 log_info "Updating Nginx to route traffic to $TARGET_STACK stack..."
 
-# Update active_upstream.conf
 # Determine port based on stack (blue: 8000/3000, green: 8001/3001)
 if [ "$TARGET_STACK" = "blue" ]; then
     BACKEND_PORT=8000
@@ -208,9 +207,9 @@ else
     FRONTEND_PORT=3001
 fi
 
-cat > /etc/nginx/conf.d/active_upstream.conf << EOF
+# Update main Nginx configuration with new upstream
+cat > /etc/nginx/conf.d/lenza_erp.conf << EOF
 # Active stack: ${TARGET_STACK}
-# Updated: $(date)
 upstream active_backend {
     server 127.0.0.1:${BACKEND_PORT};
 }
@@ -218,7 +217,70 @@ upstream active_backend {
 upstream active_frontend {
     server 127.0.0.1:${FRONTEND_PORT};
 }
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # ACME challenge endpoint for Certbot renewals
+    location /.well-known/acme-challenge/ {
+        alias /var/www/letsencrypt/.well-known/acme-challenge/;
+    }
+
+    location /api/ {
+        proxy_pass http://active_backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+        proxy_read_timeout 300;
+    }
+
+    location /admin/ {
+        proxy_pass http://active_backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /static/ {
+        alias /var/www/lenza_erp/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /media/ {
+        alias /var/www/lenza_erp/media/;
+        expires 7d;
+        add_header Cache-Control "public";
+    }
+
+    location / {
+        proxy_pass http://active_frontend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
 EOF
+
+# Remove old active_upstream.conf if it exists
+rm -f /etc/nginx/conf.d/active_upstream.conf
 
 # Test Nginx configuration
 log_info "Testing Nginx configuration..."
