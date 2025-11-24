@@ -166,8 +166,12 @@ const OrdersPage = () => {
       if (url.startsWith('http://') || url.startsWith('https://')) {
         try {
           const urlObj = new URL(url);
-          // Use pathname + search to get relative URL (e.g., /dealers/?page=2)
+          // Use pathname + search to get relative URL (e.g., /api/dealers/?page=2)
           url = urlObj.pathname + urlObj.search;
+          // Remove /api prefix if present since http client baseURL already includes it
+          if (url.startsWith('/api/')) {
+            url = url.substring(4); // Remove '/api' prefix
+          }
         } catch (e) {
           console.warn('Failed to parse pagination URL:', url);
         }
