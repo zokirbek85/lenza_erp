@@ -19,10 +19,9 @@ import {
   PlayCircleOutlined,
   PauseCircleOutlined,
   SoundOutlined,
-  CloseOutlined,
   CustomerServiceOutlined,
   MinusOutlined,
-} from '@ant-icons/icons';
+} from '@ant-design/icons';
 
 const { Text } = Typography;
 const { Option } = Select;
