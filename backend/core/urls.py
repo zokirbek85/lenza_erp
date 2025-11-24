@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from catalog.views import (
     BrandViewSet,
+    CatalogView,
     CategoryViewSet,
     ProductExportExcelView,
     ProductImportExcelView,
@@ -124,6 +125,7 @@ urlpatterns = [
     path('api/products/export/excel/', ProductExportExcelView.as_view(), name='products-export-excel'),
     path('api/products/import/excel/', ProductImportExcelView.as_view(), name='products-import-excel'),
     path('api/products/import/template/', ProductImportTemplateView.as_view(), name='products-import-template'),
+    path('api/catalog/', CatalogView.as_view(), name='catalog'),
     path('api/catalog/export/excel/', ProductExportExcelView.as_view(), name='catalog-export-excel'),
     path('api/catalog/import/excel/', ProductImportExcelView.as_view(), name='catalog-import-excel'),
     path('api/catalog/report/pdf/', ProductReportPDFView.as_view(), name='catalog-report-pdf'),

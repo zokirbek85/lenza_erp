@@ -23,6 +23,7 @@ import {
   RiseOutlined,
   NotificationOutlined,
   BookOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 
 export interface MenuItem {
@@ -56,6 +57,12 @@ const BASE_MENU: MenuItem[] = [
       label: 'nav.products',
       icon: <ShopOutlined />,
       roles: ['admin', 'sales', 'warehouse', 'accountant'],
+    },
+    {
+      path: '/catalog',
+      label: 'nav.catalog',
+      icon: <AppstoreOutlined />,
+      roles: ['admin', 'sales', 'accountant', 'owner'],
     },
     {
       path: '/dealers',

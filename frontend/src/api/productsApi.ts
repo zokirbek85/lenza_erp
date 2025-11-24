@@ -89,3 +89,23 @@ export const removeProductImage = async (productId: number): Promise<Product> =>
   return response.data;
 };
 
+// Catalog API
+export type CatalogProduct = {
+  id: number;
+  name: string;
+  brand_name: string;
+  price_usd: string; // Decimal as string
+  image: string | null;
+  stock: {
+    '400': number;
+    '600': number;
+    '700': number;
+    '800': number;
+    '900': number;
+  };
+};
+
+export const fetchCatalogProducts = async (): Promise<CatalogProduct[]> => {
+  const response = await http.get<CatalogProduct[]>('/catalog/');
+  return Array.isArray(response.data) ? response.data : [];
+};

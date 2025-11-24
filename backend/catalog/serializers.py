@@ -17,6 +17,52 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'description')
 
 
+class CatalogProductSerializer(serializers.ModelSerializer):
+    """Serializer for catalog page - shows products with stock breakdown by width."""
+    brand_name = serializers.CharField(source='brand.name', read_only=True)
+    price_usd = serializers.DecimalField(source='sell_price_usd', max_digits=12, decimal_places=2, read_only=True)
+    stock = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ('id', 'name', 'brand_name', 'price_usd', 'image', 'stock', 'size')
+
+    def get_stock(self, obj):
+        """
+        Parse size field and return stock breakdown by width.
+        Expects size format like: "400", "600mm", "700x2000", etc.
+        Returns dict like: {"400": 2, "600": 0, "700": 12, ...}
+        """
+        widths = ['400', '600', '700', '800', '900']
+        stock_breakdown = {width: 0 for width in widths}
+        
+        # Extract width from size field (e.g., "800mm" -> "800", "800x2000" -> "800")
+        if obj.size:
+            size_str = obj.size.strip().lower()
+            # Extract numeric part before 'mm', 'x', or end of string
+            for width in widths:
+                if size_str.startswith(width):
+                    stock_breakdown[width] = int(obj.stock_ok) if obj.stock_ok else 0
+                    break
+        
+        return stock_breakdown
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        
+        # Convert image field to full URL
+        if instance.image and hasattr(instance.image, 'url'):
+            data['image'] = request.build_absolute_uri(instance.image.url) if request else instance.image.url
+        else:
+            data['image'] = None
+        
+        # Remove size field from output (already used in stock calculation)
+        data.pop('size', None)
+        
+        return data
+
+
 class ProductSerializer(serializers.ModelSerializer):
     brand = BrandSerializer(read_only=True)
     brand_id = serializers.PrimaryKeyRelatedField(queryset=Brand.objects.all(), source='brand', write_only=True)

@@ -29,6 +29,7 @@
     "dashboard": "Bosh panel",
     "orders": "Buyurtmalar",
     "products": "Mahsulotlar",
+    "catalog": "Katalog",
     "dealers": "Dilerlar",
     "users": "Foydalanuvchilar",
     "regions": "Hududlar",
@@ -671,6 +672,18 @@
       "tooLarge": "Rasm juda katta. Maksimal hajm 10 MB.",
       "info": "Mahsulot rasmini yuklang (maks. 10 MB). Fon avtomatik ravishda o'chiriladi."
     }
+  },
+  "catalog": {
+    "title": "Katalog",
+    "subtitle": "Eshik qanoti katalogi",
+    "allBrands": "Barcha brendlar",
+    "selectBrand": "Brendni tanlang",
+    "searchPlaceholder": "Mahsulotlarni qidirish...",
+    "price": "Narxi",
+    "stockByWidth": "Kenglik bo'yicha zaxira",
+    "notAvailable": "mavjud emas",
+    "inStock": "ta",
+    "noProducts": "Mahsulotlar topilmadi"
   },
   "dealers": {
     "title": "Dilerlar",

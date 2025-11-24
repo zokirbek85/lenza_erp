@@ -18,6 +18,7 @@ import ExpenseReportPage from '../pages/ExpenseReport';
 import ExpenseTypesPage from '../pages/ExpenseTypes';
 import LedgerPage from '../pages/Ledger';
 import ProductsPage from '../pages/Products';
+import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
 import SettingsPage from '../pages/SettingsPage';
 import CompanyCardsPage from '../pages/Settings/CompanyCards';
@@ -80,6 +81,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
             <ProductsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'catalog',
+        element: (
+          <ProtectedRoute roles={['admin', 'sales', 'accountant', 'owner']}>
+            <CatalogPage />
           </ProtectedRoute>
         ),
       },

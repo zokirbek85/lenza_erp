@@ -17,7 +17,7 @@ from core.mixins.export_mixins import ExportMixin
 from services.image_processing import process_product_image, delete_product_image, ImageProcessingError
 
 from .models import Brand, Category, Product
-from .serializers import BrandSerializer, CategorySerializer, ProductSerializer
+from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CatalogProductSerializer
 from .utils.excel_tools import export_products_to_excel, generate_import_template, import_products_from_excel
 
 
@@ -229,3 +229,21 @@ class ProductReportPDFView(APIView, ExportMixin):
             doc_type='products-report',
             doc_id='bulk',
         )
+
+
+class CatalogView(APIView):
+    """
+    Catalog page API - returns door panel products grouped by brand with stock breakdown by width.
+    Only shows products from category "Дверное полотно".
+    """
+    permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
+
+    def get(self, request):
+        # Filter products by category "Дверное полотно"
+        products = Product.objects.filter(
+            category__name='Дверное полотно',
+            is_active=True
+        ).select_related('brand', 'category').order_by('brand__name', 'name')
+        
+        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
+        return Response(serializer.data)

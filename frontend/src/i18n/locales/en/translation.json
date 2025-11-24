@@ -29,6 +29,7 @@
     "dashboard": "Dashboard",
     "orders": "Orders",
     "products": "Products",
+    "catalog": "Catalog",
     "dealers": "Dealers",
     "users": "Users",
     "regions": "Regions",
@@ -329,6 +330,18 @@
       "tooLarge": "Image is too large. Maximum size is 10 MB.",
       "info": "Upload product image (max 10 MB). Background will be automatically removed."
     }
+  },
+  "catalog": {
+    "title": "Catalog",
+    "subtitle": "Door panel product catalog",
+    "allBrands": "All brands",
+    "selectBrand": "Select brand",
+    "searchPlaceholder": "Search products...",
+    "price": "Price",
+    "stockByWidth": "Stock by width",
+    "notAvailable": "N/A",
+    "inStock": "pcs",
+    "noProducts": "No products found"
   },
   "dealers": {
     "title": "Dealers",
