@@ -573,19 +573,54 @@ const OrdersPage = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="space-y-4">
-        <div className="flex justify-end px-4 pt-4">
-          <FilterTrigger onClick={() => setFiltersOpen(true)} />
-        </div>
+      <div className="space-y-4 px-4 pb-6">
+        <header className="flex items-center justify-between py-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
+          </div>
+          {!isWarehouse && (
+            <button
+              onClick={handleToggleCreateForm}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+            >
+              {showCreateForm ? t('orders.header.hideForm') : t('orders.header.showForm')}
+            </button>
+          )}
+        </header>
+
+        <FilterTrigger onClick={() => setFiltersOpen(true)} />
         <FilterDrawer
           open={filtersOpen}
           onClose={() => setFiltersOpen(false)}
           onApply={handleApplyFilters}
           onReset={resetFilters}
+          title={t('orders.filters.title')}
         >
           {filtersContent}
         </FilterDrawer>
-        <OrdersMobileCards data={orders} handlers={mobileHandlers} />
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('common:messages.loading')}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('orders.list.empty')}
+          </div>
+        ) : (
+          <OrdersMobileCards data={orders} handlers={mobileHandlers} />
+        )}
+
+        <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <PaginationControls
+            page={page}
+            pageSize={pageSize}
+            total={totalOrders}
+            setPage={setPage}
+            setPageSize={setPageSize}
+          />
+        </div>
       </div>
     );
   }

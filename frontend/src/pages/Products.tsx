@@ -446,9 +446,22 @@ const ProductsPage = () => {
   if (isMobile) {
     return (
       <div className="space-y-4 px-4 pb-6">
-        <div className="flex justify-end">
-          <FilterTrigger onClick={() => setFiltersOpen(true)} />
-        </div>
+        <header className="flex items-center justify-between py-4">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('products.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('products.subtitle')}</p>
+          </div>
+          {canCreateOrEdit && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+            >
+              {showForm ? t('actions.close') : `+ ${t('products.new')}`}
+            </button>
+          )}
+        </header>
+
+        <FilterTrigger onClick={() => setFiltersOpen(true)} />
         <FilterDrawer
           open={filtersOpen}
           onClose={() => setFiltersOpen(false)}
@@ -458,12 +471,68 @@ const ProductsPage = () => {
         >
           {filtersContent}
         </FilterDrawer>
-        <ProductsMobileCards
-          data={mobileProducts}
-          pagination={paginationMeta}
-          handlers={mobileHandlers}
-          permissions={mobilePermissions}
-        />
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('common.loading')}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="py-12 text-center text-sm text-slate-500">
+            {t('table.noData')}
+          </div>
+        ) : (
+          <ProductsMobileCards
+            data={mobileProducts}
+            pagination={paginationMeta}
+            handlers={mobileHandlers}
+            permissions={mobilePermissions}
+          />
+        )}
+
+        <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-300">
+            <div className="flex items-center gap-2">
+              <span>{t('pagination.showing')}:</span>
+              <select
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              >
+                {[10, 25, 50, 100].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+              <span>{t('table.items')} / {t('pagination.page')}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {rangeStart} - {rangeEnd} / {total}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={!canGoPrev}
+                onClick={() => canGoPrev && setPage((prev) => Math.max(1, prev - 1))}
+                className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
+              >
+                {t('pagination.previous')}
+              </button>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                {t('pagination.page')} {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={!canGoNext}
+                onClick={() => canGoNext && setPage((prev) => prev + 1)}
+                className="rounded-md bg-slate-200 px-3 py-1 font-semibold text-slate-700 transition disabled:opacity-40 dark:bg-slate-700 dark:text-white"
+              >
+                {t('pagination.next')}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
