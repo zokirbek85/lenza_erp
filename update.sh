@@ -199,15 +199,24 @@ log_step "8. Switching Nginx Upstream"
 log_info "Updating Nginx to route traffic to $TARGET_STACK stack..."
 
 # Update active_upstream.conf
+# Determine port based on stack (blue: 8000/3000, green: 8001/3001)
+if [ "$TARGET_STACK" = "blue" ]; then
+    BACKEND_PORT=8000
+    FRONTEND_PORT=3000
+else
+    BACKEND_PORT=8001
+    FRONTEND_PORT=3001
+fi
+
 cat > /etc/nginx/conf.d/active_upstream.conf << EOF
 # Active stack: ${TARGET_STACK}
 # Updated: $(date)
 upstream active_backend {
-    server lenza_backend_${TARGET_STACK}:8000;
+    server 127.0.0.1:${BACKEND_PORT};
 }
 
 upstream active_frontend {
-    server lenza_frontend_${TARGET_STACK}:80;
+    server 127.0.0.1:${FRONTEND_PORT};
 }
 EOF
 
