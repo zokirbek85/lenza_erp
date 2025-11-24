@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { Spin } from 'antd';
 import router from './app/router';
 import { ThemeProvider } from './context/ThemeContext';
+import PersistentAudioPlayer from './components/PersistentAudioPlayer';
 
 // Simple fallback while lazy components load
 function LoadingFallback() {
@@ -25,6 +26,9 @@ function LoadingFallback() {
 export default function App() {
   return (
     <ThemeProvider>
+      {/* Persistent Audio Player - mounted at root level, never unmounts */}
+      <PersistentAudioPlayer />
+      
       <Suspense fallback={<LoadingFallback />}>        
         <RouterProvider router={router} />
       </Suspense>
