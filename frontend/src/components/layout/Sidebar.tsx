@@ -160,6 +160,9 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
   const role = useAuthStore((state) => state.role as AppRole | null);
   const menuItems = role ? MENU.filter((item) => item.roles?.includes(role)) : [];
 
+  // Force full-width sidebar in mobile drawer mode - always show text labels
+  const isCollapsed = isMobile ? false : collapsed;
+
   const renderNav = (
     <div className="flex h-full flex-col bg-white dark:bg-[#0E1117] shadow-lg">
       <div className="border-b border-slate-200 px-4 py-5 dark:border-slate-800">
@@ -181,7 +184,7 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
             }
           >
             <span className="text-lg">{item.icon}</span>
-            <span className={clsx(collapsed && 'hidden')}>{t(item.label)}</span>
+            <span className={clsx(isCollapsed && 'hidden')}>{t(item.label)}</span>
           </NavLink>
         ))}
       </nav>
