@@ -22,6 +22,7 @@ export type Product = {
   stock_ok: number;
   stock_defect: number;
   availability_status: string;
+  image: string | null;
 };
 
 type PaginatedResponse<T> = {
@@ -70,5 +71,21 @@ export const fetchProductsByCategory = async (categoryId?: number | string, sear
   if (search) params.search = search;
   const response = await http.get('/products/', { params });
   return toArray<Product>(response.data);
+};
+
+export const uploadProductImage = async (productId: number, imageFile: File): Promise<Product> => {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  const response = await http.post<Product>(`/products/${productId}/upload-image/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const removeProductImage = async (productId: number): Promise<Product> => {
+  const response = await http.delete<Product>(`/products/${productId}/remove-image/`);
+  return response.data;
 };
 

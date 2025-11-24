@@ -357,6 +357,7 @@
     "previous": "Oldingi",
     "loading": "Yuklanmoqda...",
     "saving": "Saqlanmoqda...",
+    "uploading": "Yuklanmoqda...",
     "success": "Muvaffaqiyatli",
     "error": "Xatolik",
     "warning": "Ogohlantirish",
@@ -657,6 +658,18 @@
       "deleted": "Mahsulot o'chirildi",
       "deleteConfirm": "Mahsulotni o'chirishni xohlaysizmi?",
       "lowStockWarning": "Zaxira minimal darajadan past!"
+    },
+    "image": {
+      "title": "Mahsulot rasmi",
+      "upload": "Rasmni yuklash",
+      "remove": "Rasmni o'chirish",
+      "uploaded": "Rasm muvaffaqiyatli yuklandi",
+      "removed": "Rasm o'chirildi",
+      "uploadFailed": "Rasmni yuklashda xatolik",
+      "removeFailed": "Rasmni o'chirishda xatolik",
+      "invalidType": "Noto'g'ri fayl turi. Rasm tanlang.",
+      "tooLarge": "Rasm juda katta. Maksimal hajm 10 MB.",
+      "info": "Mahsulot rasmini yuklang (maks. 10 MB). Fon avtomatik ravishda o'chiriladi."
     }
   },
   "dealers": {

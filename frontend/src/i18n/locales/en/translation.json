@@ -235,6 +235,7 @@
     "previous": "Previous",
     "loading": "Loading...",
     "saving": "Saving...",
+    "uploading": "Uploading...",
     "success": "Success",
     "error": "Error",
     "warning": "Warning",
@@ -315,6 +316,18 @@
       "deleted": "Product deleted",
       "deleteConfirm": "Delete this product?",
       "lowStockWarning": "Stock below minimum level!"
+    },
+    "image": {
+      "title": "Product Image",
+      "upload": "Upload Image",
+      "remove": "Remove Image",
+      "uploaded": "Image uploaded successfully",
+      "removed": "Image removed successfully",
+      "uploadFailed": "Failed to upload image",
+      "removeFailed": "Failed to remove image",
+      "invalidType": "Invalid file type. Please select an image.",
+      "tooLarge": "Image is too large. Maximum size is 10 MB.",
+      "info": "Upload product image (max 10 MB). Background will be automatically removed."
     }
   },
   "dealers": {

@@ -17,6 +17,8 @@ import {
   deleteProduct as deleteProductApi,
   fetchProducts as fetchProductsApi,
   updateProduct,
+  uploadProductImage,
+  removeProductImage,
   type Product,
   type ProductPayload,
 } from '../api/productsApi';
@@ -90,6 +92,9 @@ const ProductsPage = () => {
   const [adjustSaving, setAdjustSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { t } = useTranslation();
   const { role } = useAuthStore();
   const isAdmin = role === 'admin' || role === 'owner';
@@ -208,10 +213,71 @@ const ProductsPage = () => {
       stock_ok: String(product.stock_ok),
       stock_defect: String(product.stock_defect),
     });
+    setImagePreview(product.image || null);
+    setImageFile(null);
     setShowForm(true);
     requestAnimationFrame(() => {
       formSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+  };
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('products.image.invalidType'));
+      return;
+    }
+
+    // Validate file size (10 MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(t('products.image.tooLarge'));
+      return;
+    }
+
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageUpload = async () => {
+    if (!imageFile || !editingId) return;
+    
+    setImageUploading(true);
+    try {
+      const updatedProduct = await uploadProductImage(editingId, imageFile);
+      toast.success(t('products.image.uploaded'));
+      setImagePreview(updatedProduct.image);
+      setImageFile(null);
+      await fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error(t('products.image.uploadFailed'));
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleImageRemove = async () => {
+    if (!editingId) return;
+    
+    try {
+      await removeProductImage(editingId);
+      toast.success(t('products.image.removed'));
+      setImagePreview(null);
+      setImageFile(null);
+      await fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error(t('products.image.removeFailed'));
+    }
   };
 
   const confirmDelete = async () => {
@@ -664,6 +730,52 @@ const ProductsPage = () => {
                 onSubmit={handleSubmit}
                 className="grid gap-4 p-4 md:grid-cols-2"
               >
+        {editingId && (
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.image.title')}</label>
+            <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-start">
+              {imagePreview && (
+                <div className="relative h-32 w-32 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                  <img
+                    src={imagePreview}
+                    alt="Product preview"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="text-sm text-slate-500 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200 dark:text-slate-400 dark:file:bg-slate-700 dark:file:text-slate-200 dark:hover:file:bg-slate-600"
+                />
+                {imageFile && (
+                  <button
+                    type="button"
+                    onClick={handleImageUpload}
+                    disabled={imageUploading}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {imageUploading ? t('common.uploading') : t('products.image.upload')}
+                  </button>
+                )}
+                {imagePreview && !imageFile && (
+                  <button
+                    type="button"
+                    onClick={handleImageRemove}
+                    className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/20"
+                  >
+                    {t('products.image.remove')}
+                  </button>
+                )}
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('products.image.info')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.table.sku')}</label>
           <input

@@ -40,6 +40,7 @@ class Product(models.Model):
     stock_ok = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
     stock_defect = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
     barcode = models.CharField(max_length=32, unique=True, editable=False, blank=True)
+    image = models.ImageField(upload_to='products/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

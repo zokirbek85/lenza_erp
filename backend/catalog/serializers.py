@@ -59,11 +59,12 @@ class ProductSerializer(serializers.ModelSerializer):
             'total_stock',
             'availability_status',
             'barcode',
+            'image',
             'is_active',
             'created_at',
             'updated_at',
         )
-        read_only_fields = ('barcode', 'created_at', 'updated_at')
+        read_only_fields = ('barcode', 'image', 'created_at', 'updated_at')
 
     def get_total_stock(self, obj):
         total = (obj.stock_ok or Decimal('0')) + (obj.stock_defect or Decimal('0'))
@@ -75,6 +76,13 @@ class ProductSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
+        
+        # Convert image field to full URL
+        if instance.image and hasattr(instance.image, 'url'):
+            data['image'] = request.build_absolute_uri(instance.image.url) if request else instance.image.url
+        else:
+            data['image'] = None
+        
         if request and hasattr(request.user, 'role') and request.user.role == 'warehouse':
             # Remove price fields for warehouse users
             data.pop('cost_usd', None)
