@@ -50,8 +50,7 @@ RUN echo '#!/bin/sh' > /docker-entrypoint.d/40-inject-env.sh && \
     echo 'set -e' >> /docker-entrypoint.d/40-inject-env.sh && \
     echo 'if [ -n "$VITE_API_URL" ]; then' >> /docker-entrypoint.d/40-inject-env.sh && \
     echo '  echo "Injecting VITE_API_URL: $VITE_API_URL"' >> /docker-entrypoint.d/40-inject-env.sh && \
-    echo '  find /usr/share/nginx/html -type f -name "*.js" -exec sed -i' >> /docker-entrypoint.d/40-inject-env.sh && \
-    echo '    "s|__VITE_API_URL__|${VITE_API_URL}|g" {} +' >> /docker-entrypoint.d/40-inject-env.sh && \
+    echo '  find /usr/share/nginx/html -type f -name "*.js" -exec sed -i "s|__VITE_API_URL__|'\''${VITE_API_URL}'\''|g" {} +' >> /docker-entrypoint.d/40-inject-env.sh && \
     echo 'fi' >> /docker-entrypoint.d/40-inject-env.sh && \
     chmod +x /docker-entrypoint.d/40-inject-env.sh
 

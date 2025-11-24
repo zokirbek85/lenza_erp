@@ -73,7 +73,7 @@ USER django
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health/ || exit 1
+    CMD curl -f http://127.0.0.1:8000/api/health/ -H "Host: erp.lenza.uz" || exit 1
 
 # Expose port
 EXPOSE 8000
