@@ -18,6 +18,32 @@ class ExportMixin:
     Shared helpers for PDF / XLSX exports with verification QR codes.
     """
 
+    def render_pdf_simple(
+        self,
+        template_path: str,
+        context: dict,
+        filename: str,
+        request,
+    ) -> HttpResponse:
+        """
+        Render PDF without QR code verification (for marketing documents)
+        """
+        html = render_to_string(
+            template_path,
+            {
+                **context,
+                'generated_at': timezone.now(),
+            },
+        )
+        pdf_bytes = HTML(
+            string=html, 
+            base_url=request.build_absolute_uri('/'),
+            encoding='utf-8'
+        ).write_pdf()
+        response = HttpResponse(pdf_bytes, content_type='application/pdf; charset=utf-8')
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+
     def _build_qr_code(self, data: str) -> str:
         qr = qrcode.make(data)
         buffer = BytesIO()

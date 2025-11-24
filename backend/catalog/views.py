@@ -467,10 +467,11 @@ class DealerCatalogPDFView(APIView, ExportMixin):
         brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
         filename = f'dealer_catalog_{dealer.id if dealer else "unknown"}_{brand_slug}_{date.today().strftime("%Y%m%d")}.pdf'
 
-        return self.render_pdf_with_qr(
+        return self.render_pdf_simple(
             template_path='marketing/dealer_catalog.html',
             context=context,
-            filename=filename
+            filename=filename,
+            request=request
         )
 
 
@@ -648,10 +649,11 @@ class BrandCatalogPDFView(APIView, ExportMixin):
         brand_slug = brand_name.replace(' ', '_')
         filename = f'brand_catalog_{brand_slug}_{date.today().strftime("%Y%m%d")}.pdf'
 
-        return self.render_pdf_with_qr(
+        return self.render_pdf_simple(
             template_path='marketing/brand_catalog.html',
             context=context,
-            filename=filename
+            filename=filename,
+            request=request
         )
 
 
@@ -807,10 +809,11 @@ class PriceListPDFView(APIView, ExportMixin):
         brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
         filename = f'pricelist_{brand_slug}_{date.today().strftime("%Y%m%d")}.pdf'
 
-        return self.render_pdf_with_qr(
+        return self.render_pdf_simple(
             template_path='marketing/pricelist.html',
             context=context,
-            filename=filename
+            filename=filename,
+            request=request
         )
 
 
