@@ -65,8 +65,8 @@ const ReconciliationPage = () => {
   const { t } = useTranslation();
   const [dealers, setDealers] = useState<DealerOption[]>([]);
   const [selectedDealer, setSelectedDealer] = useState('');
-  const [fromDate, setFromDate] = useState(defaultFromDate);
-  const [toDate, setToDate] = useState(defaultToDate);
+  const [fromDate, setFromDate] = useState(defaultFromDate());
+  const [toDate, setToDate] = useState(defaultToDate());
   const [report, setReport] = useState<ReconciliationResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
