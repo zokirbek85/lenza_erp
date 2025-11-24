@@ -50,6 +50,8 @@ services:
       dockerfile: Dockerfile
     container_name: lenza_backend_blue
     restart: unless-stopped
+    ports:
+      - "8000:8000"
     env_file:
       - /opt/lenza_erp/.env
     volumes:
@@ -102,6 +104,8 @@ services:
         VITE_API_URL: ${FRONTEND_VITE_API_URL:-https://erp.lenza.uz}
     container_name: lenza_frontend_blue
     restart: unless-stopped
+    ports:
+      - "3000:80"
     env_file:
       - /opt/lenza_erp/.env
     environment:

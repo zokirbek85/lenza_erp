@@ -149,11 +149,11 @@ mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
 cat > /etc/nginx/conf.d/lenza_erp.conf << EOF
 # Active stack: ${INITIAL_STACK}
 upstream active_backend {
-    server lenza_backend_${INITIAL_STACK}:8000;
+    server 127.0.0.1:8000;
 }
 
 upstream active_frontend {
-    server lenza_frontend_${INITIAL_STACK}:80;
+    server 127.0.0.1:3000;
 }
 
 server {
@@ -215,11 +215,11 @@ if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencr
     cat > /etc/nginx/conf.d/lenza_erp.conf << EOF
 # Active stack: ${INITIAL_STACK}
 upstream active_backend {
-    server lenza_backend_${INITIAL_STACK}:8000;
+    server 127.0.0.1:8000;
 }
 
 upstream active_frontend {
-    server lenza_frontend_${INITIAL_STACK}:80;
+    server 127.0.0.1:3000;
 }
 
 server {
