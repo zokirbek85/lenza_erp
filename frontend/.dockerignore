@@ -38,9 +38,7 @@ coverage/
 # Ignore deployment files
 deploy/
 docker-compose*.yml
-Dockerfile
-.dockerignore
-nginx.conf
+# Keep nginx.conf for Docker build
 
 # Ignore scripts
 *.sh
