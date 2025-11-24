@@ -113,6 +113,11 @@ def get_reconciliation_data(
     if start > end:
         raise ValidationError({'detail': 'from_date cannot be greater than to_date.'})
 
+    # Debug: Print query info
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Reconciliation for dealer {dealer.id} ({dealer.name}) from {start} to {end}")
+
     orders = list(
         Order.objects.filter(
             dealer=dealer,
@@ -123,6 +128,7 @@ def get_reconciliation_data(
         .order_by('value_date', 'display_no')
         .values('value_date', 'display_no', 'total_usd')
     )
+    logger.info(f"Found {len(orders)} orders")
 
     payments = list(
         Payment.objects.filter(
@@ -134,6 +140,7 @@ def get_reconciliation_data(
         .order_by('pay_date', '-created_at')
         .values('pay_date', 'method', 'amount_usd', 'card__name', 'card__number', 'card__holder_name')
     )
+    logger.info(f"Found {len(payments)} payments")
 
     returns = list(
         OrderReturn.objects.filter(
@@ -145,6 +152,8 @@ def get_reconciliation_data(
         .order_by('created_at')
         .values('created_at', 'amount_usd', 'order__display_no')
     )
+    logger.info(f"Found {len(returns)} order returns")
+    
     product_returns = list(
         ProductReturn.objects.filter(
             dealer=dealer,
@@ -154,6 +163,8 @@ def get_reconciliation_data(
         .order_by('created_at')
         .values('created_at', 'total_sum', 'general_comment', 'status')
     )
+    logger.info(f"Found {len(product_returns)} product returns")
+    
     product_return_items = list(
         ProductReturnItem.objects.filter(
             return_document__dealer=dealer,
