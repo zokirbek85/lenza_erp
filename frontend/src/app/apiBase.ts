@@ -1,4 +1,8 @@
-const FALLBACK_API = 'http://localhost:8000/api/';
+// Use window.location.origin as fallback for production (same domain as frontend)
+// This ensures HTTPS is used when accessing via HTTPS
+const FALLBACK_API = typeof window !== 'undefined' 
+  ? window.location.origin 
+  : 'http://localhost:8000';
 
 /**
  * Normalize API base URL to avoid trailing slashes or duplicated `/api` segments.
