@@ -3,7 +3,7 @@ import { RouterErrorBoundary } from '../components/ErrorBoundary';
 import NotFound from '../pages/NotFound';
 import Layout from '../components/Layout';
 import DashboardPage from '../features/dashboard/DashboardPage';
-import Currency from '../pages/Currency';
+import CurrencyRatesPage from '../pages/CurrencyRates';
 import DealersPage from '../pages/Dealers';
 import KpiPage from '../pages/KpiPage';
 import OwnerKpiPage from '../pages/kpi/OwnerKpiPage';
@@ -134,8 +134,8 @@ const router = createBrowserRouter([
       {
         path: 'currency',
         element: (
-          <ProtectedRoute roles={['admin', 'sales', 'accountant', 'warehouse', 'owner']}>
-            <Currency />
+          <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
+            <CurrencyRatesPage />
           </ProtectedRoute>
         ),
       },

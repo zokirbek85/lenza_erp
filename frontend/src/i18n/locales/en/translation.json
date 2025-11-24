@@ -503,6 +503,12 @@
     "avgRate": "Average Rate",
     "noData": "No data available",
     "noDataDescription": "Please select a different date range",
+    "cbuWidget": {
+      "title": "Reference Only: Central Bank Rates",
+      "description": "This data is from the Central Bank of Uzbekistan and is for informational purposes only. It does NOT affect calculations in the system. All business logic uses the manually entered rates above.",
+      "divider": "Central Bank Reference Data (Informational Only)",
+      "currentRate": "Current CBU Rate"
+    },
     "errors": {
       "title": "Error",
       "fetchFailed": "Failed to fetch exchange rate data"

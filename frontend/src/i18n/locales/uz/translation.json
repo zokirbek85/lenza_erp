@@ -845,6 +845,12 @@
     "avgRate": "O'rtacha kurs",
     "noData": "Ma'lumot yo'q",
     "noDataDescription": "Boshqa sana oralig'ini tanlang",
+    "cbuWidget": {
+      "title": "Faqat ma'lumot uchun: Markaziy bank kurslari",
+      "description": "Bu ma'lumotlar O'zbekiston Markaziy bankidan olingan va faqat ma'lumot uchun. Ular tizimdagi hisob-kitoblarga TA'SIR QILMAYDI. Barcha biznes logika yuqoridagi qo'lda kiritilgan kurslardan foydalanadi.",
+      "divider": "Markaziy bank ma'lumotnoma ma'lumotlari (faqat ma'lumot uchun)",
+      "currentRate": "Joriy MB kursi"
+    },
     "errors": {
       "title": "Xatolik",
       "fetchFailed": "Kurs ma'lumotlarini olishda xatolik"

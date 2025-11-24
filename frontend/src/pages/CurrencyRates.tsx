@@ -1,10 +1,12 @@
 ﻿import type { FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Divider } from 'antd';
 
 import http from '../app/http';
 import { useAuthStore } from '../auth/useAuthStore';
 import { toArray } from '../utils/api';
+import CbuRateWidget from '../components/CbuRateWidget';
 
 interface CurrencyRate {
   id: number;
@@ -113,6 +115,16 @@ const CurrencyRatesPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Divider between manual rates and CBU widget */}
+      <Divider orientation="left" className="my-8">
+        <span className="text-slate-600 dark:text-slate-400">
+          {t('currency.cbuWidget.divider')}
+        </span>
+      </Divider>
+
+      {/* CBU Rate Widget - Informational Only */}
+      <CbuRateWidget />
     </section>
   );
 };
