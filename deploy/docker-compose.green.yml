@@ -127,4 +127,4 @@ volumes:
 networks:
   lenza_network:
     name: lenza_network
-    driver: bridge
+    external: true
