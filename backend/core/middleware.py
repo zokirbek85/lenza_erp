@@ -49,13 +49,19 @@ class AuditMiddleware(MiddlewareMixin):
         return None
 
     def _extract_payload(self, request):
+        # Skip logging file upload payloads (binary data causes DB errors)
+        content_type = request.META.get('CONTENT_TYPE', '')
+        if 'multipart/form-data' in content_type or 'application/octet-stream' in content_type:
+            return {'_note': 'File upload request - payload not logged'}
+        
         body = getattr(request, 'body', b'')
         if not body:
             return {}
         try:
             return json.loads(body.decode('utf-8'))
         except Exception:
-            return {'raw': body.decode('utf-8', errors='ignore')[:1000]}
+            # Avoid logging binary data that can't be decoded
+            return {'_note': 'Binary or non-JSON payload - not logged'}
 
     def _write_log(self, request):
         if getattr(request, '_audit_logged', False):
