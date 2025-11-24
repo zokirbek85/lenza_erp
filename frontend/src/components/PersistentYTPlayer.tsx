@@ -25,7 +25,6 @@ import {
   PlayCircleOutlined,
   PauseCircleOutlined,
   SoundOutlined,
-  CustomerServiceOutlined,
   MinusOutlined,
   YoutubeOutlined,
 } from '@ant-design/icons';
