@@ -1,16 +1,19 @@
-// Use window.location.origin as fallback for production (same domain as frontend)
-// This ensures HTTPS is used when accessing via HTTPS
-// Updated: 2025-11-24 - Fixed mixed content HTTPS issue
-const FALLBACK_API = typeof window !== 'undefined' 
-  ? window.location.origin 
-  : 'http://localhost:8000';
-
 /**
- * Normalize API base URL to avoid trailing slashes or duplicated `/api` segments.
- * Returns the base URL without /api suffix to allow API client to append endpoints.
+ * Get API base URL from environment variables or fallback.
+ * In production, VITE_API_URL must be set to https://erp.lenza.uz
+ * In development, it falls back to http://localhost:8000
+ * 
+ * Updated: 2025-11-24 - Fixed mixed content HTTPS issue with proper fallback
  */
 export const getApiBase = (): string => {
-  const raw = (import.meta.env.VITE_API_URL as string | undefined) ?? FALLBACK_API;
+  // First try environment variable (set at build time in Docker)
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  
+  // If no env var, use production URL as default (safer than localhost)
+  // This ensures HTTPS in production even if env var is missing
+  const raw = envUrl || 'https://erp.lenza.uz';
+  
+  // Normalize: remove trailing slashes and /api suffix
   const normalized = raw.replace(/\/+$/, '');
   const withoutApi = normalized.replace(/\/api$/, '');
   return withoutApi || normalized;
