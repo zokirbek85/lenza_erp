@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import BinaryIO
 
 from PIL import Image
-from rembg import remove
 
 
 class ImageProcessingError(Exception):
@@ -127,6 +126,9 @@ def _remove_background(img: Image.Image) -> Image.Image:
     Returns:
         PIL Image with transparent background
     """
+    # Lazy import to avoid numba caching issues in Docker
+    from rembg import remove
+    
     # Convert to bytes for rembg
     img_bytes = io.BytesIO()
     img.save(img_bytes, format='PNG')
