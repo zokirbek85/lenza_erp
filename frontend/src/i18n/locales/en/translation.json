@@ -488,25 +488,24 @@
     }
   },
   "currency": {
-    "title": "Currency Rates",
-    "subtitle": "USD/UZS rate history and management",
-    "updateRate": "Update rate",
-    "table": {
-      "date": "Date",
-      "rate": "Rate",
-      "updatedBy": "Updated by",
-      "actions": "Actions"
-    },
-    "form": {
-      "date": "Date",
-      "rate": "USD/UZS rate",
-      "note": "Note"
-    },
-    "messages": {
-      "updated": "Rate updated",
-      "error": "Error updating rate",
-      "confirmUpdate": "Update rate?",
-      "affectNewOnly": "Will affect new operations only"
+    "title": "Exchange Rate",
+    "subtitle": "Central Bank of Uzbekistan data",
+    "usdToUzs": "USD → UZS",
+    "uzs": "UZS",
+    "fromYesterday": "from yesterday",
+    "source": "Data source",
+    "centralBank": "Central Bank of Uzbekistan",
+    "lastUpdated": "Last updated",
+    "historicalData": "Historical Exchange Rates",
+    "rate": "Rate",
+    "minRate": "Minimum Rate",
+    "maxRate": "Maximum Rate",
+    "avgRate": "Average Rate",
+    "noData": "No data available",
+    "noDataDescription": "Please select a different date range",
+    "errors": {
+      "title": "Error",
+      "fetchFailed": "Failed to fetch exchange rate data"
     }
   },
   "returns": {

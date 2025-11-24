@@ -830,25 +830,24 @@
     }
   },
   "currency": {
-    "title": "Valyuta kurslari",
-    "subtitle": "USD/UZS kurs tarixi va boshqaruv",
-    "updateRate": "Kursni yangilash",
-    "table": {
-      "date": "Sana",
-      "rate": "Kurs",
-      "updatedBy": "Yangilagan",
-      "actions": "Amallar"
-    },
-    "form": {
-      "date": "Sana",
-      "rate": "USD/UZS kurs",
-      "note": "Izoh"
-    },
-    "messages": {
-      "updated": "Kurs yangilandi",
-      "error": "Kursni yangilashda xatolik",
-      "confirmUpdate": "Kursni yangilashni xohlaysizmi?",
-      "affectNewOnly": "Yangi operatsiyalarga ta'sir qiladi"
+    "title": "Valyuta kursi",
+    "subtitle": "O'zbekiston Markaziy banki ma'lumotlari",
+    "usdToUzs": "USD → UZS",
+    "uzs": "so'm",
+    "fromYesterday": "kechagidan",
+    "source": "Ma'lumot manbai",
+    "centralBank": "O'zbekiston Markaziy banki",
+    "lastUpdated": "Oxirgi yangilanish",
+    "historicalData": "Kurslar tarixi",
+    "rate": "Kurs",
+    "minRate": "Minimal kurs",
+    "maxRate": "Maksimal kurs",
+    "avgRate": "O'rtacha kurs",
+    "noData": "Ma'lumot yo'q",
+    "noDataDescription": "Boshqa sana oralig'ini tanlang",
+    "errors": {
+      "title": "Xatolik",
+      "fetchFailed": "Kurs ma'lumotlarini olishda xatolik"
     }
   },
   "returns": {
