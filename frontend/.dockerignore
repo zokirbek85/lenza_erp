@@ -14,10 +14,13 @@ node_modules/
 dist/
 build/
 
-# Ignore environment files
+# Ignore environment files (except production/development configs)
 .env
 .env.local
 .env.*.local
+# Allow production and development env files for Vite build
+!.env.production
+!.env.development
 
 # Ignore IDE files
 .vscode/

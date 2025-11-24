@@ -16,12 +16,15 @@ COPY package.json package-lock.json* ./
 # Install dependencies with production optimizations
 RUN npm ci --prefer-offline --no-audit --production=false
 
-# Copy source code
+# Copy source code (including .env.production for Vite)
 COPY . .
 
 # Build argument for API URL (can be overridden at build time)
 ARG VITE_API_URL=https://erp.lenza.uz
 ENV VITE_API_URL=$VITE_API_URL
+
+# Set NODE_ENV to production so Vite uses .env.production
+ENV NODE_ENV=production
 
 # Build the production bundle
 RUN npm run build
