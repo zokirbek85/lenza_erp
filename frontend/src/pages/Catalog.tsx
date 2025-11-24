@@ -26,9 +26,7 @@ import http from '../app/http';
 import {
   type GroupedProduct,
   groupProducts,
-  widthLabels,
-  getTotalStock,
-  formatStockText
+  widthLabels
 } from '../utils/catalogGrouper';
 import './Catalog.css';
 

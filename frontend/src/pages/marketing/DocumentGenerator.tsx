@@ -31,7 +31,7 @@ import {
   Typography,
   Segmented,
 } from 'antd';
-import { DownloadOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
+import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import http from '../../app/http';
 
@@ -47,8 +47,6 @@ interface Brand {
   id: number;
   name: string;
 }
-
-type ViewMode = 'cards' | 'gallery-comfort' | 'gallery-compact' | 'gallery-ultra';
 
 const DocumentGenerator: React.FC = () => {
   const { t } = useTranslation();
