@@ -122,6 +122,7 @@ const DocumentGenerator: React.FC = () => {
 
       const response = await http.get(`/marketing/dealer-catalog/pdf/?${params.toString()}`, {
         responseType: 'blob',
+        timeout: 60000, // 60 seconds for PDF generation
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -195,6 +196,7 @@ const DocumentGenerator: React.FC = () => {
 
       const response = await http.get(`/marketing/brand-catalog/pdf/?${params.toString()}`, {
         responseType: 'blob',
+        timeout: 60000, // 60 seconds for PDF generation
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -263,6 +265,7 @@ const DocumentGenerator: React.FC = () => {
 
       const response = await http.get(`/marketing/pricelist/pdf/?${params.toString()}`, {
         responseType: 'blob',
+        timeout: 60000, // 60 seconds for PDF generation
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
