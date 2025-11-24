@@ -98,6 +98,9 @@ set -a
 source .env
 set +a
 
+# Set domain (should match deploy.sh)
+DOMAIN="${DOMAIN:-erp.lenza.uz}"
+
 log_info "Environment loaded"
 
 log_step "3. Building New Stack Images"
