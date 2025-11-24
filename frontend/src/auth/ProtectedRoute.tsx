@@ -21,6 +21,11 @@ const ProtectedRoute = ({ roles, children }: ProtectedProps) => {
     return null;
   }
 
+  // Auto-redirect warehouse/sales users from root to /orders
+  if (location.pathname === '/' && (role === 'warehouse' || role === 'sales')) {
+    return <Navigate to="/orders" replace />;
+  }
+
   if (roles && !roles.includes(role)) {
     return <Navigate to="/unauthorized" replace state={{ from: location }} />;
   }

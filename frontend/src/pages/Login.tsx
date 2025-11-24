@@ -20,7 +20,13 @@ const Login = () => {
     setFormError(null);
     try {
       await login({ username, password });
-      navigate(from, { replace: true });
+      // Redirect warehouse/sales users to /orders after successful login
+      const currentRole = useAuthStore.getState().role;
+      if (currentRole === 'warehouse' || currentRole === 'sales') {
+        navigate('/orders', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (submitError) {
       console.error(submitError);
       setFormError('auth.loginFailed');
@@ -35,7 +41,12 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      const currentRole = useAuthStore.getState().role;
+      if (currentRole === 'warehouse' || currentRole === 'sales') {
+        navigate('/orders', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [isAuthenticated, navigate]);
 
