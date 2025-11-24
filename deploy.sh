@@ -253,6 +253,26 @@ server {
         proxy_read_timeout 300;
     }
 
+    location /admin/ {
+        proxy_pass http://active_backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /static/ {
+        alias /var/www/lenza_erp/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /media/ {
+        alias /var/www/lenza_erp/media/;
+        expires 7d;
+        add_header Cache-Control "public";
+    }
+
     location / {
         proxy_pass http://active_frontend;
         proxy_set_header Host \$host;
