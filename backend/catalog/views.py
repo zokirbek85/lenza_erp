@@ -458,10 +458,10 @@ class DealerCatalogPDFView(APIView, ExportMixin):
             'hide_price': hide_price,
             'hide_stock': hide_stock,
             'view_mode': view_mode,
-            'dealer_name': dealer.company_name if dealer else 'Dealer',
+            'dealer_name': dealer.name if dealer else 'Dealer',
             'markup_percent': markup_percent,
             'export_date': date.today().strftime('%d.%m.%Y'),
-            'title': f'Каталог для дилера - {dealer.company_name}' if dealer else 'Каталог для дилера',
+            'title': f'Каталог для дилера - {dealer.name}' if dealer else 'Каталог для дилера',
         }
 
         brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
@@ -595,7 +595,7 @@ class DealerCatalogExcelView(APIView):
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        dealer_name = dealer.company_name.replace(' ', '_') if dealer else 'unknown'
+        dealer_name = dealer.name.replace(' ', '_') if dealer else 'unknown'
         brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
         today = date.today().strftime('%Y%m%d')
         filename = f'dealer_catalog_{dealer_name}_{brand_slug}_{today}.xlsx'
