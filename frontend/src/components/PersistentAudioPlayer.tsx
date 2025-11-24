@@ -26,27 +26,27 @@ import {
 const { Text } = Typography;
 const { Option } = Select;
 
-// HTTPS-only radio stations (royalty-free public streams)
+// HTTPS-only radio stations (verified working streams with CORS support)
 const STATIONS = {
   lofi: {
-    url: 'https://play.streamafrica.net/lofi',
-    name: 'Lofi Hip Hop',
-    description: 'Chill beats to work to',
+    url: 'https://streams.ilovemusic.de/iloveradio17.mp3',
+    name: 'Lofi Chill',
+    description: 'Relaxing lofi beats',
   },
   jazz: {
-    url: 'https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3',
-    name: 'Jazz Radio',
-    description: 'Smooth jazz classics',
+    url: 'https://ais-edge09-live365-dal02.cdnstream.com/a47039',
+    name: 'Jazz Groove',
+    description: 'Smooth jazz 24/7',
   },
   ambient: {
-    url: 'https://streams.radioboss.fm:8040/stream',
-    name: 'Ambient',
-    description: 'Ambient soundscapes',
+    url: 'https://stream.0nlineradio.com/chillout',
+    name: 'Ambient Chillout',
+    description: 'Relaxing ambient music',
   },
   chill: {
-    url: 'https://icecast2.play.cz/cfradio128.mp3',
-    name: 'Chill Radio',
-    description: 'Relaxing vibes',
+    url: 'https://streams.ilovemusic.de/iloveradio16.mp3',
+    name: 'Chill Vibes',
+    description: 'Peaceful background music',
   },
 };
 
@@ -72,6 +72,7 @@ const PersistentAudioPlayer = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Persist state to localStorage
   useEffect(() => {
@@ -100,6 +101,7 @@ const PersistentAudioPlayer = () => {
     try {
       setIsLoading(true);
       setHasError(false);
+      setErrorMessage('');
 
       // Reset and load new source
       audioRef.current.load();
@@ -109,8 +111,19 @@ const PersistentAudioPlayer = () => {
       
       setIsPlaying(true);
       setIsLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Audio playback failed:', error);
+      
+      let message = 'Stream temporarily unavailable.';
+      if (error.name === 'NotSupportedError') {
+        message = 'This station format is not supported. Try another station.';
+      } else if (error.name === 'NotAllowedError') {
+        message = 'Browser blocked autoplay. Click play again.';
+      } else if (error.name === 'AbortError') {
+        message = 'Playback was interrupted. Please try again.';
+      }
+      
+      setErrorMessage(message);
       setHasError(true);
       setIsPlaying(false);
       setIsLoading(false);
@@ -137,6 +150,7 @@ const PersistentAudioPlayer = () => {
     setCurrentStation(station);
     setIsPlaying(false);
     setHasError(false);
+    setErrorMessage('');
 
     // Auto-resume if was playing
     if (wasPlaying) {
@@ -147,7 +161,28 @@ const PersistentAudioPlayer = () => {
   };
 
   // Handle audio events
-  const handleAudioError = () => {
+  const handleAudioError = (e: any) => {
+    console.error('Audio error event:', e);
+    
+    let message = 'Stream connection failed. Try another station.';
+    if (audioRef.current?.error) {
+      switch (audioRef.current.error.code) {
+        case 1: // MEDIA_ERR_ABORTED
+          message = 'Playback aborted. Please try again.';
+          break;
+        case 2: // MEDIA_ERR_NETWORK
+          message = 'Network error. Check your internet connection.';
+          break;
+        case 3: // MEDIA_ERR_DECODE
+          message = 'Stream format error. Try another station.';
+          break;
+        case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+          message = 'Station unavailable. Please select another.';
+          break;
+      }
+    }
+    
+    setErrorMessage(message);
     setHasError(true);
     setIsPlaying(false);
     setIsLoading(false);
@@ -327,15 +362,15 @@ const PersistentAudioPlayer = () => {
         {hasError && (
           <div
             style={{
-              padding: '8px',
+              padding: '8px 12px',
               background: 'rgba(255, 77, 79, 0.1)',
               borderRadius: '6px',
               marginBottom: '12px',
               border: '1px solid rgba(255, 77, 79, 0.3)',
             }}
           >
-            <Text type="danger" style={{ fontSize: '12px' }}>
-              Stream unavailable. Try another station.
+            <Text type="danger" style={{ fontSize: '12px', lineHeight: '1.5' }}>
+              {errorMessage || 'Stream unavailable. Try another station.'}
             </Text>
           </div>
         )}
@@ -395,6 +430,7 @@ const PersistentAudioPlayer = () => {
           ref={audioRef}
           src={STATIONS[currentStation].url}
           preload="none"
+          crossOrigin="anonymous"
           onError={handleAudioError}
           onCanPlay={handleAudioCanPlay}
         />
