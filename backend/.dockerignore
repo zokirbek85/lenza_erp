@@ -58,11 +58,10 @@ logs/
 # Ignore deployment files
 deploy/
 docker-compose*.yml
-Dockerfile
-.dockerignore
 
-# Ignore scripts
-*.sh
+# Keep docker-entrypoint.sh for Docker build
+# Ignore other scripts
+# *.sh
 
 # Ignore temporary files
 tmp/
