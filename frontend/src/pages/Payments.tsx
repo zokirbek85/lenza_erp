@@ -17,6 +17,7 @@ import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import PaymentsMobileCards from './_mobile/PaymentsMobileCards';
 import type { PaymentsMobileHandlers } from './_mobile/PaymentsMobileCards';
+import MobilePaymentForm from './_mobile/MobilePaymentForm';
 
 interface Dealer {
   id: number;
@@ -467,7 +468,33 @@ const PaymentsPage = () => {
           {showForm ? `− ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
         </button>
       </div>
-      {(
+
+      {/* Mobile Payment Form */}
+      {isMobile && (
+        <MobilePaymentForm
+          open={showForm}
+          onClose={() => {
+            setShowForm(false);
+            setForm(defaultForm);
+          }}
+          form={form}
+          dealers={dealers}
+          rates={rates}
+          cards={cards}
+          onFormChange={(field, value) => {
+            if (field === 'receipt_image') {
+              setForm({ ...form, [field]: value as File | null });
+            } else {
+              setForm({ ...form, [field]: value as string });
+            }
+          }}
+          onSubmit={() => handleSubmit({} as any)}
+          submitting={submitting}
+        />
+      )}
+
+      {/* Desktop Form */}
+      {!isMobile && (
         <CollapsibleForm
         open={showForm}
         onAfterClose={() => setForm(defaultForm)}

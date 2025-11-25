@@ -24,6 +24,7 @@ import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import OrdersMobileCards from './_mobile/OrdersMobileCards';
 import type { OrdersMobileHandlers } from './_mobile/OrdersMobileCards';
+import MobileOrderForm from './_mobile/MobileOrderForm';
 
 interface DealerOption {
   id: number;
@@ -613,12 +614,47 @@ const OrdersPage = () => {
           )}
         </header>
 
-        {/* Mobile Create Form Overlay */}
-        {!isWarehouse && showCreateForm && (
-          <div
-            className="fixed inset-0 z-[3000] bg-white dark:bg-slate-900"
-            style={{ top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto' }}
-          >
+        {/* Mobile Create Form */}
+        {!isWarehouse && isMobile && (
+          <MobileOrderForm
+            open={showCreateForm}
+            onClose={() => setShowCreateForm(false)}
+            dealerId={dealerId}
+            orderType={orderType}
+            note={note}
+            dealers={dealers}
+            brands={brands}
+            categories={categories}
+            products={availableProducts}
+            selectedItems={selectedItems}
+            brandId={brandId ? Number(brandId) : undefined}
+            categoryId={categoryId ? Number(categoryId) : undefined}
+            productSearch={productSearch}
+            selectedProduct={selectedProduct ?? null}
+            quantityInput={quantityInput}
+            priceInput={priceInput}
+            productsLoading={productsLoading}
+            onDealerChange={setDealerId}
+            onOrderTypeChange={setOrderType}
+            onNoteChange={setNote}
+            onBrandChange={(value) => handleFilterChange('brandId', value)}
+            onCategoryChange={(value) => handleFilterChange('categoryId', value)}
+            onProductSearchChange={setProductSearch}
+            onProductSelect={handleSelectProduct}
+            onQuantityChange={setQuantityInput}
+            onPriceChange={setPriceInput}
+            onAddProduct={handleAddSelectedProduct}
+            onRemoveItem={removeItem}
+            onItemQtyChange={handleItemQtyChange}
+            onItemPriceChange={handleItemPriceChange}
+            onSubmit={() => handleSubmit({} as any)}
+            onClearDraft={handleClearDraft}
+          />
+        )}
+
+        {/* Desktop view continues below */}
+        {(!isMobile || !showCreateForm) && (
+          <div>
             <div className="space-y-4 p-4">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-slate-800">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">

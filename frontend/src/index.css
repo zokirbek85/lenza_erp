@@ -210,8 +210,9 @@ body,
   background-color: var(--lenza-gold);
 }
 
-/* Mobile Order Create Form Overlay */
+/* Mobile Responsive Styles */
 @media (max-width: 768px) {
+  /* Mobile Order Create Form Overlay */
   .order-create-mobile-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -221,6 +222,62 @@ body,
     z-index: 3000 !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile Drawer Form */
+  .mobile-drawer-form {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
+
+  /* Touch-optimized form inputs */
+  .mobile-form-field-input input,
+  .mobile-form-field-input select,
+  .mobile-form-field-input textarea {
+    min-height: 44px !important;
+    font-size: 16px !important; /* Prevents iOS zoom */
+    padding: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Mobile buttons - larger touch targets */
+  .mobile-btn {
+    min-height: 44px !important;
+    padding: 12px 16px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    touch-action: manipulation;
+  }
+
+  /* Mobile card improvements */
+  .mobile-card {
+    margin-bottom: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden !important;
+  }
+
+  /* Page wrapper full width on mobile */
+  .page-wrapper {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Mobile table alternative - hide tables, show cards */
+  .mobile-hide-table table {
+    display: none;
   }
 }
 
@@ -236,4 +293,20 @@ body,
 .ant-modal-root,
 .ant-modal-wrap {
   z-index: 2800 !important;
+}
+
+/* Mobile Form Drawer - highest priority */
+.mobile-drawer-form .ant-drawer-content-wrapper {
+  z-index: 3000 !important;
+}
+
+/* Touch-friendly action buttons */
+.mobile-action-btn {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  user-select: none;
 }

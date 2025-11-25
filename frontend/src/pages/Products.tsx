@@ -24,6 +24,7 @@ import {
 } from '../api/productsApi';
 import ProductsMobileCards from './_mobile/ProductsMobileCards';
 import type { ProductMobilePermissions, ProductsMobileHandlers } from './_mobile/ProductsMobileCards';
+import MobileProductForm from './_mobile/MobileProductForm';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
@@ -537,6 +538,33 @@ const ProductsPage = () => {
         >
           {filtersContent}
         </FilterDrawer>
+
+        {/* Mobile Product Form */}
+        <MobileProductForm
+          open={showForm}
+          onClose={() => {
+            setShowForm(false);
+            setEditingId(null);
+            setFormState(emptyForm);
+            setImageFile(null);
+            setImagePreview(null);
+          }}
+          form={formState}
+          brands={brands}
+          categories={categories}
+          editingId={editingId}
+          imagePreview={imagePreview}
+          imageFile={imageFile}
+          imageUploading={imageUploading}
+          onFormChange={(field, value) => setFormState({ ...formState, [field]: value })}
+          onImageChange={setImageFile}
+          onImageRemove={() => {
+            setImageFile(null);
+            setImagePreview(null);
+          }}
+          onSubmit={() => handleSubmit({} as any)}
+          submitting={loading}
+        />
 
         {loading ? (
           <div className="py-12 text-center text-sm text-slate-500">

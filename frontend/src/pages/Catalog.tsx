@@ -22,7 +22,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchCatalogProducts, type CatalogProduct } from '../api/productsApi';
 import { matchesSearch } from '../utils/transliteration';
+import { useIsMobile } from '../hooks/useIsMobile';
 import http from '../app/http';
+import MobileCatalogCards from './_mobile/MobileCatalogCards';
 import {
   type GroupedProduct,
   groupProducts,
@@ -38,6 +40,7 @@ type ViewMode = 'cards' | 'gallery-comfort' | 'gallery-compact' | 'gallery-ultra
 
 const Catalog = () => {
   const { t } = useTranslation();
+  const { isMobile } = useIsMobile();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -435,6 +438,16 @@ const Catalog = () => {
         </div>
       ) : filteredProducts.length === 0 ? (
         <Empty description={t('catalog.noProducts')} style={{ marginTop: 60 }} />
+      ) : isMobile ? (
+        <div style={{ marginTop: 24 }}>
+          <MobileCatalogCards
+            products={filteredProducts}
+            viewMode={viewMode}
+            onProductClick={(product) => {
+              console.log('Selected product:', product.baseName);
+            }}
+          />
+        </div>
       ) : (
         <Row gutter={[16, 16]} className="catalog-grid" style={{ marginTop: 24 }}>
           {filteredProducts.map((group) => renderProduct(group))}
