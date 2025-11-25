@@ -5,7 +5,6 @@ import { Spin } from 'antd';
 import router from './app/router';
 import { ThemeProvider } from './context/ThemeContext';
 import PersistentYouTubeAudio from './components/PersistentYouTubeAudio';
-import GlobalAudioControlBar from './components/GlobalAudioControlBar';
 
 // Simple fallback while lazy components load
 function LoadingFallback() {
@@ -29,9 +28,6 @@ export default function App() {
     <ThemeProvider>
       {/* Persistent YouTube Audio with Context Provider - mounted at root, never unmounts */}
       <PersistentYouTubeAudio>
-        {/* Global Audio Control Bar - visible on all pages */}
-        <GlobalAudioControlBar />
-        
         <Suspense fallback={<LoadingFallback />}>        
           <RouterProvider router={router} />
         </Suspense>

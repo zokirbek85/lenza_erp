@@ -9,6 +9,7 @@ import { useSidebarStore } from '../store/useSidebarStore';
 import { useTheme } from '../context/ThemeContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './NotificationBell';
+import HeaderAudioPlayer from './HeaderAudioPlayer';
 import Sidebar from './layout/Sidebar';
 import Container from './responsive/Container';
 
@@ -101,6 +102,7 @@ const Layout = () => {
               )}
             </div>
             <div className="flex items-center gap-3">
+              <HeaderAudioPlayer />
               <NotificationBell />
               <LanguageSwitcher />
               <button
