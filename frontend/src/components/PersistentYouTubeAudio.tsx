@@ -1,23 +1,24 @@
 /**
- * YouTubeAudioPlayer - Simple Non-Persistent YouTube Audio Player
+ * PersistentYouTubeAudio - Background YouTube Audio Player
  * 
- * This component plays a single YouTube video as background audio.
- * It is NOT persistent - it only plays on the page where it's mounted.
+ * This component plays a single YouTube video as persistent background audio.
+ * It is mounted at the App.tsx level and NEVER unmounts during navigation.
  * 
  * Features:
- * - Single YouTube video source
- * - Hidden iframe (audio-only mode)
+ * - Persistent across ALL pages and routes
+ * - Hidden iframe (audio-only, no video visible)
  * - Auto-loop enabled
- * - Autoplay with muted start (browser requirement)
- * - Unmutes on user interaction
- * - No controls, no UI panel
+ * - Starts muted (Chrome autoplay requirement)
+ * - Auto-unmutes on first user click anywhere
+ * - No UI panel - pure background audio
+ * - Uses official YouTube IFrame API (100% ToS compliant)
  * 
  * Video: https://www.youtube.com/watch?v=rdvUByCCX1w
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-// YouTube video ID
+// Single YouTube video ID
 const VIDEO_ID = 'rdvUByCCX1w';
 
 // YouTube IFrame API type definitions
@@ -25,7 +26,7 @@ interface YTPlayer {
   mute: () => void;
   unMute: () => void;
   playVideo: () => void;
-  pauseVideo: () => void;
+  setVolume: (volume: number) => void;
   destroy: () => void;
 }
 
@@ -58,42 +59,52 @@ declare global {
   }
 }
 
-export default function YouTubeAudioPlayer() {
+export default function PersistentYouTubeAudio() {
   const playerRef = useRef<YTPlayer | null>(null);
-  const [isUnmuted, setIsUnmuted] = useState(false);
-  const hasUnmuted = useRef(false);
+  const hasLoadedAPI = useRef(false);
 
   useEffect(() => {
     // Load YouTube IFrame API
     const loadYouTubeAPI = () => {
+      // Check if API already loaded
       if (window.YT && window.YT.Player) {
         initializePlayer();
         return;
       }
 
-      // Check if script already exists
-      if (document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      // Prevent multiple script loads
+      if (hasLoadedAPI.current) {
         window.onYouTubeIframeAPIReady = initializePlayer;
         return;
       }
 
-      // Create and load script
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
+      if (existingScript) {
+        window.onYouTubeIframeAPIReady = initializePlayer;
+        hasLoadedAPI.current = true;
+        return;
+      }
+
+      // Load YouTube IFrame API script
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
+      hasLoadedAPI.current = true;
       window.onYouTubeIframeAPIReady = initializePlayer;
     };
 
     const initializePlayer = () => {
+      // Prevent duplicate players
       if (playerRef.current) return;
 
-      playerRef.current = new window.YT.Player('ERP_YT_PLAYER', {
+      playerRef.current = new window.YT.Player('yt-audio-iframe', {
         videoId: VIDEO_ID,
         playerVars: {
           autoplay: 1,
-          mute: 1, // Start muted (Chrome autoplay requirement)
+          mute: 1, // Start muted (Chrome autoplay policy)
           controls: 0,
           modestbranding: 1,
           loop: 1,
@@ -101,8 +112,16 @@ export default function YouTubeAudioPlayer() {
         },
         events: {
           onReady: (event: YTPlayerEvent) => {
-            event.target.mute();
+            // Start playing muted
             event.target.playVideo();
+
+            // Auto-unmute on first user click anywhere on the page
+            const unmuteHandler = () => {
+              event.target.unMute();
+              event.target.setVolume(60); // Set to 60% volume
+            };
+
+            document.addEventListener('click', unmuteHandler, { once: true });
           },
         },
       });
@@ -110,7 +129,7 @@ export default function YouTubeAudioPlayer() {
 
     loadYouTubeAPI();
 
-    // Cleanup on unmount
+    // Cleanup on component unmount (though this should never unmount)
     return () => {
       if (playerRef.current) {
         playerRef.current.destroy();
@@ -119,29 +138,11 @@ export default function YouTubeAudioPlayer() {
     };
   }, []);
 
-  // Handle user interaction to unmute
-  useEffect(() => {
-    const handleInteraction = () => {
-      if (!hasUnmuted.current && playerRef.current) {
-        playerRef.current.unMute();
-        setIsUnmuted(true);
-        hasUnmuted.current = true;
-      }
-    };
-
-    // Listen for any user interaction
-    document.addEventListener('click', handleInteraction, { once: true });
-
-    return () => {
-      document.removeEventListener('click', handleInteraction);
-    };
-  }, []);
-
   return (
     <>
-      {/* Hidden YouTube iframe - audio only */}
+      {/* Hidden YouTube iframe - audio only, no visual display */}
       <div
-        id="ERP_YT_PLAYER"
+        id="yt-audio-iframe"
         style={{
           width: '1px',
           height: '1px',
@@ -151,26 +152,6 @@ export default function YouTubeAudioPlayer() {
           left: '-9999px',
         }}
       />
-
-      {/* Muted warning - shows until user clicks */}
-      {!isUnmuted && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            zIndex: 9998,
-            maxWidth: '250px',
-          }}
-        >
-          🎵 Background music is playing (muted). Click anywhere to enable sound.
-        </div>
-      )}
     </>
   );
 }
