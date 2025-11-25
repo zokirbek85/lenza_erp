@@ -12,10 +12,11 @@ class CurrencyRateAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('dealer', 'amount', 'currency', 'amount_usd', 'method', 'card', 'pay_date')
-    list_filter = ('method', 'currency')
-    search_fields = ('dealer__name',)
-    autocomplete_fields = ('dealer', 'rate', 'card')
+    list_display = ('dealer', 'amount', 'currency', 'amount_usd', 'method', 'card', 'status', 'pay_date', 'created_by', 'approved_by')
+    list_filter = ('method', 'currency', 'status')
+    search_fields = ('dealer__name', 'created_by__username', 'approved_by__username')
+    autocomplete_fields = ('dealer', 'rate', 'card', 'created_by', 'approved_by')
+    readonly_fields = ('amount_usd', 'amount_uzs', 'approved_at', 'created_at')
 
 
 @admin.register(PaymentCard)

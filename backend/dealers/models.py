@@ -65,8 +65,12 @@ class Dealer(models.Model):
             .get('total')
             or Decimal('0')
         )
+        # Only count APPROVED and CONFIRMED payments (backward compatibility)
         payments_total = (
-            Payment.objects.filter(dealer=self)
+            Payment.objects.filter(
+                dealer=self,
+                status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+            )
             .aggregate(total=Sum('amount_usd'))
             .get('total')
             or Decimal('0')

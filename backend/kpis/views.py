@@ -123,7 +123,9 @@ class AccountantKPIView(APIView):
     def get(self, request):
         active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
         sales_total = active_orders.aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
-        payments_total = Payment.objects.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
+        payments_total = Payment.objects.filter(
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        ).aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
         returns_total = OrderReturn.objects.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
         outstanding = sales_total - payments_total
         net_profit = sales_total - returns_total
@@ -151,7 +153,7 @@ class CardKPIView(APIView):
         from_param = request.query_params.get('from')
         to_param = request.query_params.get('to')
 
-        payment_filters = Q(method=Payment.Method.CARD)
+        payment_filters = Q(method=Payment.Method.CARD) & Q(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
         if from_param:
             try:
                 from_date = datetime.fromisoformat(from_param).date()

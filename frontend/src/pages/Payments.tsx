@@ -34,7 +34,16 @@ interface Payment {
   card?: { id: number; name: string; number: string; holder_name: string; masked_number: string } | null;
   pay_date: string;
   note: string;
-  status: 'pending' | 'confirmed';
+  status: 'pending' | 'approved' | 'rejected' | 'confirmed';
+  created_by?: number;
+  created_by_username?: string;
+  created_by_fullname?: string;
+  approved_by?: number;
+  approved_by_username?: string;
+  approved_by_fullname?: string;
+  approved_at?: string;
+  receipt_image?: string;
+  receipt_image_url?: string;
 }
 
 interface CurrencyRate {
@@ -52,6 +61,7 @@ const defaultForm = {
   method: 'cash',
   card_id: '',
   note: '',
+  receipt_image: null as File | null,
 };
 
 const PaymentsPage = () => {
@@ -142,6 +152,11 @@ const PaymentsPage = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    setForm((prev) => ({ ...prev, receipt_image: file }));
+  };
+
   const handleFilterInput = (event: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = event.target;
     setFiltersState((prev) => ({ ...prev, [name]: value }));
@@ -156,18 +171,28 @@ const PaymentsPage = () => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
-    const payload = {
-      dealer: Number(form.dealer),
-      pay_date: form.pay_date || new Date().toISOString().slice(0, 10),
-      amount: Number(form.amount || 0),
-      currency: form.currency,
-      rate_id: form.currency === 'UZS' ? Number(form.rate_id) : null,
-      method: form.method,
-      card_id: form.method === 'card' ? Number(form.card_id) : null,
-      note: form.note,
-    };
+    
+    const formData = new FormData();
+    formData.append('dealer', form.dealer);
+    formData.append('pay_date', form.pay_date || new Date().toISOString().slice(0, 10));
+    formData.append('amount', form.amount);
+    formData.append('currency', form.currency);
+    if (form.currency === 'UZS' && form.rate_id) {
+      formData.append('rate_id', form.rate_id);
+    }
+    formData.append('method', form.method);
+    if (form.method === 'card' && form.card_id) {
+      formData.append('card_id', form.card_id);
+    }
+    formData.append('note', form.note);
+    if (form.receipt_image) {
+      formData.append('receipt_image', form.receipt_image);
+    }
+    
     try {
-      await http.post('/payments/', payload);
+      await http.post('/payments/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       toast.success(t('payments.messages.created'));
       setForm(defaultForm);
       setShowForm(false);
@@ -177,6 +202,30 @@ const PaymentsPage = () => {
       toast.error(t('payments.messages.saveError'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleApprove = async (paymentId: number) => {
+    if (!window.confirm(t('payments.confirmApprove'))) return;
+    try {
+      await http.post(`/payments/${paymentId}/approve/`);
+      toast.success(t('payments.messages.approved'));
+      loadPayments();
+    } catch (error) {
+      console.error(error);
+      toast.error(t('payments.messages.approveError'));
+    }
+  };
+
+  const handleReject = async (paymentId: number) => {
+    if (!window.confirm(t('payments.confirmReject'))) return;
+    try {
+      await http.post(`/payments/${paymentId}/reject/`);
+      toast.success(t('payments.messages.rejected'));
+      loadPayments();
+    } catch (error) {
+      console.error(error);
+      toast.error(t('payments.messages.rejectError'));
     }
   };
 
@@ -196,6 +245,8 @@ const PaymentsPage = () => {
       loadCards();
     }
   }, [form.method]);
+
+  const canApprove = !isSalesManager; // accountant or admin
 
   // Mobile handlers
   const mobileHandlers: PaymentsMobileHandlers = {
@@ -219,25 +270,14 @@ const PaymentsPage = () => {
           });
       }
     },
-    onConfirm: (paymentId) => {
-      if (window.confirm(t('payments.confirmConfirm'))) {
-        http.post(`/payments/${paymentId}/confirm/`)
-          .then(() => {
-            toast.success(t('payments.messages.confirmed'));
-            loadPayments();
-          })
-          .catch((error) => {
-            console.error(error);
-            toast.error(t('payments.messages.confirmError'));
-          });
-      }
-    },
+    onApprove: canApprove ? handleApprove : undefined,
+    onReject: canApprove ? handleReject : undefined,
   };
 
   const mobilePermissions = {
-    canEdit: !isSalesManager,
-    canDelete: !isSalesManager,
-    canConfirm: !isSalesManager,
+    canEdit: canApprove,
+    canDelete: canApprove,
+    canApprove: canApprove,
   };
 
   // Filters content
@@ -416,20 +456,18 @@ const PaymentsPage = () => {
         </div>
       </div>
 
-      {!isSalesManager && (
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={() => setShowForm((prev) => !prev)}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-            aria-expanded={showForm}
-            aria-controls="payment-create-form"
-          >
-            {showForm ? `− ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
-          </button>
-        </div>
-      )}
-      {!isSalesManager && (
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setShowForm((prev) => !prev)}
+          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+          aria-expanded={showForm}
+          aria-controls="payment-create-form"
+        >
+          {showForm ? `− ${t('payments.closeForm')}` : `+ ${t('payments.newPayment')}`}
+        </button>
+      </div>
+      {(
         <CollapsibleForm
         open={showForm}
         onAfterClose={() => setForm(defaultForm)}
@@ -551,6 +589,20 @@ const PaymentsPage = () => {
           />
         </div>
         <div className="md:col-span-3">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Receipt Image (optional)</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+          {form.receipt_image && (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Selected: {form.receipt_image.name}
+            </p>
+          )}
+        </div>
+        <div className="md:col-span-3">
           <button
             className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
             type="submit"
@@ -574,12 +626,15 @@ const PaymentsPage = () => {
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.uzs')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.method')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">{t('payments.card')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Status</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Receipt</th>
+              {canApprove && <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                <td colSpan={canApprove ? 10 : 9} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
                   {t('payments.loading')}
                 </td>
               </tr>
@@ -601,19 +656,63 @@ const PaymentsPage = () => {
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                   {payment.card ? (
                     <span>
-                      {payment.card.name ? `${payment.card.name} вЂ” ` : ''}
+                      {payment.card.name ? `${payment.card.name} вЂ" ` : ''}
                       {payment.card.masked_number || (payment.card.number ? `${String(payment.card.number).slice(0,4)} **** ${String(payment.card.number).slice(-4)}` : '')}
                       {payment.card.holder_name ? ` (${payment.card.holder_name})` : ''}
                     </span>
                   ) : (
-                    'вЂ”'
+                    'вЂ"'
                   )}
                 </td>
+                <td className="px-4 py-3">
+                  <span className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
+                    payment.status === 'approved' || payment.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                    payment.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  }`}>
+                    {payment.status}
+                  </span>
+                  {payment.created_by_fullname && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">By: {payment.created_by_fullname}</p>
+                  )}
+                  {payment.approved_by_fullname && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Approved by: {payment.approved_by_fullname}</p>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {payment.receipt_image_url ? (
+                    <a href={payment.receipt_image_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">
+                      View
+                    </a>
+                  ) : (
+                    'вЂ"'
+                  )}
+                </td>
+                {canApprove && (
+                  <td className="px-4 py-3">
+                    {payment.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApprove(payment.id)}
+                          className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(payment.id)}
+                          className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
             {!loading && payments.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                <td colSpan={canApprove ? 10 : 9} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
                   {t('payments.noPayments')}
                 </td>
               </tr>

@@ -166,7 +166,7 @@ class CardBalanceView(APIView):
         # Faqat tasdiqlangan to'lovlar va approved xarajatlar
         payments_qs = Payment.objects.filter(
             card=card,
-            status=Payment.Status.CONFIRMED
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
         )
         expenses_qs = Expense.objects.filter(
             card=card,
@@ -221,7 +221,7 @@ class LedgerByCardView(APIView):
             # Optimized - har bir karta uchun 2 ta query
             payments_qs = Payment.objects.filter(
                 card=card,
-                status=Payment.Status.CONFIRMED
+                status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
             )
             expenses_qs = Expense.objects.filter(
                 card=card,
@@ -302,7 +302,7 @@ class LedgerBalanceWidgetView(APIView):
         latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
         usd_to_uzs = latest_rate.usd_to_uzs if latest_rate else Decimal('0')
 
-        payments = Payment.objects.filter(status=Payment.Status.CONFIRMED)
+        payments = Payment.objects.filter(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
         expenses = Expense.objects.filter(status=Expense.STATUS_APPROVED)
 
         def sum_usd(queryset):

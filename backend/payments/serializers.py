@@ -38,6 +38,13 @@ class PaymentSerializer(serializers.ModelSerializer):
     card_id = serializers.PrimaryKeyRelatedField(
         queryset=PaymentCard.objects.filter(is_active=True), source='card', write_only=True, allow_null=True, required=False
     )
+    
+    # Approval workflow fields
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    created_by_fullname = serializers.SerializerMethodField()
+    approved_by_username = serializers.CharField(source='approved_by.username', read_only=True)
+    approved_by_fullname = serializers.SerializerMethodField()
+    receipt_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Payment
@@ -56,14 +63,49 @@ class PaymentSerializer(serializers.ModelSerializer):
             'card_id',
             'note',
             'status',
+            'created_by',
+            'created_by_username',
+            'created_by_fullname',
+            'approved_by',
+            'approved_by_username',
+            'approved_by_fullname',
+            'approved_at',
+            'receipt_image',
+            'receipt_image_url',
             'created_at',
         )
-        read_only_fields = ('amount_usd', 'amount_uzs', 'created_at')
+        read_only_fields = (
+            'amount_usd',
+            'amount_uzs',
+            'created_at',
+            'created_by',
+            'approved_by',
+            'approved_at',
+            'status',  # Status controlled via approve/reject actions
+        )
+
+    def get_created_by_fullname(self, obj: Payment) -> str:
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return ''
+
+    def get_approved_by_fullname(self, obj: Payment) -> str:
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return ''
+
+    def get_receipt_image_url(self, obj: Payment) -> str:
+        if obj.receipt_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.receipt_image.url)
+            return obj.receipt_image.url
+        return ''
 
     def validate(self, attrs):
         # When creating/updating, ensure card is present for card payments
         method = attrs.get('method')
         card = attrs.get('card')
         if method == Payment.Method.CARD and not card:
-            raise serializers.ValidationError({'card': "Kartadan to‘lov bo‘lganda karta tanlash majburiy."})
+            raise serializers.ValidationError({'card': "Kartadan to'lov bo'lganda karta tanlash majburiy."})
         return attrs

@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 class PaymentCard(models.Model):
@@ -21,11 +22,13 @@ class PaymentCard(models.Model):
         return self.number or ''
 
     def get_balance_usd(self) -> Decimal:
-        """Kartadagi balans - faqat confirmed to'lovlar va approved chiqimlar"""
+        """Kartadagi balans - faqat approved/confirmed to'lovlar va approved chiqimlar"""
         from decimal import Decimal
         from expenses.models import Expense
         
-        income = self.payments.filter(status=Payment.Status.CONFIRMED).aggregate(
+        income = self.payments.filter(
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        ).aggregate(
             total=models.Sum('amount_usd')
         )['total'] or Decimal('0.00')
         expense = self.expenses.filter(status=Expense.STATUS_APPROVED).aggregate(
@@ -38,7 +41,9 @@ class PaymentCard(models.Model):
         from decimal import Decimal
         from expenses.models import Expense
         
-        income = self.payments.filter(status=Payment.Status.CONFIRMED).aggregate(
+        income = self.payments.filter(
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        ).aggregate(
             total=models.Sum('amount_uzs')
         )['total'] or Decimal('0.00')
         expense = self.expenses.filter(status=Expense.STATUS_APPROVED).aggregate(
@@ -72,7 +77,10 @@ class Payment(models.Model):
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Kutilmoqda'
-        CONFIRMED = 'confirmed', 'Tasdiqlangan'
+        APPROVED = 'approved', 'Tasdiqlangan'
+        REJECTED = 'rejected', 'Rad etilgan'
+        # Keep CONFIRMED for backward compatibility (will be migrated to APPROVED)
+        CONFIRMED = 'confirmed', 'Tasdiqlangan (eski)'
 
     dealer = models.ForeignKey(
         'dealers.Dealer', on_delete=models.CASCADE, related_name='payments', null=True, blank=True
@@ -95,9 +103,35 @@ class Payment(models.Model):
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
-        default=Status.CONFIRMED,
+        default=Status.PENDING,
         verbose_name="Status"
     )
+    
+    # New approval workflow fields
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_payments',
+        verbose_name="Created by"
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_payments',
+        verbose_name="Approved by"
+    )
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="Approved at")
+    receipt_image = models.ImageField(
+        upload_to='payments/receipts/',
+        null=True,
+        blank=True,
+        verbose_name="Receipt image"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

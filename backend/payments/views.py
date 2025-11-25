@@ -29,7 +29,7 @@ class CurrencyRateViewSet(viewsets.ModelViewSet):
 
 
 class PaymentViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
-    queryset = Payment.objects.select_related('dealer', 'rate', 'card').all()
+    queryset = Payment.objects.select_related('dealer', 'rate', 'card', 'created_by', 'approved_by').all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
@@ -38,6 +38,7 @@ class PaymentViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
         'currency': ['exact'],
         'method': ['exact'],
         'pay_date': ['gte', 'lte'],
+        'status': ['exact'],
     }
     search_fields = ('dealer__name', 'note')
     ordering_fields = ('pay_date', 'amount_usd', 'created_at')
@@ -48,24 +49,82 @@ class PaymentViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
     title_prefix = "To'lovlar hisoboti"
     report_template = "payments/report.html"
 
-    def _ensure_writer(self):
+    def _ensure_can_create(self):
+        """Check if user can create payments: sales, accountant, admin"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant', 'sales'}:
+            raise PermissionDenied('Only sales, accountant, or admin can create payments.')
+
+    def _ensure_can_approve(self):
+        """Check if user can approve/reject payments: accountant, admin only"""
         user = self.request.user
         if user.is_superuser:
             return
         if getattr(user, 'role', None) not in {'admin', 'accountant'}:
-            raise PermissionDenied('Only accountant or admin may modify payments.')
+            raise PermissionDenied('Only accountant or admin can approve/reject payments.')
+
+    def _ensure_can_modify(self, payment):
+        """Check if user can edit/delete: admin/accountant, only if pending"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin can modify payments.')
+        if payment.status != Payment.Status.PENDING:
+            raise PermissionDenied('Only pending payments can be modified.')
 
     def perform_create(self, serializer):
-        self._ensure_writer()
-        serializer.save()
+        self._ensure_can_create()
+        # Set created_by and default status to PENDING
+        serializer.save(created_by=self.request.user, status=Payment.Status.PENDING)
 
     def perform_update(self, serializer):
-        self._ensure_writer()
+        self._ensure_can_modify(serializer.instance)
         serializer.save()
 
     def perform_destroy(self, instance):
-        self._ensure_writer()
+        self._ensure_can_modify(instance)
         instance.delete()
+
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        """Approve a payment (accountant/admin only)"""
+        self._ensure_can_approve()
+        payment = self.get_object()
+        
+        if payment.status == Payment.Status.APPROVED:
+            return Response({'detail': 'Payment is already approved.'}, status=400)
+        if payment.status == Payment.Status.REJECTED:
+            return Response({'detail': 'Cannot approve a rejected payment.'}, status=400)
+        
+        payment.status = Payment.Status.APPROVED
+        payment.approved_by = request.user
+        payment.approved_at = timezone.now()
+        payment.save()
+        
+        serializer = self.get_serializer(payment)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject(self, request, pk=None):
+        """Reject a payment (accountant/admin only)"""
+        self._ensure_can_approve()
+        payment = self.get_object()
+        
+        if payment.status == Payment.Status.APPROVED:
+            return Response({'detail': 'Cannot reject an approved payment.'}, status=400)
+        if payment.status == Payment.Status.REJECTED:
+            return Response({'detail': 'Payment is already rejected.'}, status=400)
+        
+        payment.status = Payment.Status.REJECTED
+        payment.approved_by = request.user
+        payment.approved_at = timezone.now()
+        payment.save()
+        
+        serializer = self.get_serializer(payment)
+        return Response(serializer.data)
     
     def get_report_rows(self, queryset):
         """Generate rows for payment report."""
@@ -156,11 +215,14 @@ class PaymentCardViewSet(viewsets.ModelViewSet):
         """
         card = self.get_object()
         
-        # Payments orqali kirim (USD va UZS)
+        # Payments orqali kirim (USD va UZS) - only APPROVED/CONFIRMED
         from django.db.models import Sum, Q, Case, When, DecimalField, Value
         from decimal import Decimal
         
-        payments = Payment.objects.filter(card=card)
+        payments = Payment.objects.filter(
+            card=card,
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        )
         payment_usd = payments.aggregate(
             total=Sum('amount_usd')
         )['total'] or Decimal('0.00')

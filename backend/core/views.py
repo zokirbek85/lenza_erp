@@ -126,14 +126,15 @@ class DashboardSummaryView(APIView):
         orders_month = Order.objects.filter(created_at__date__gte=month_ago).count()
         orders_total = Order.objects.count()
 
-        # Payments statistics
-        payments_today = Payment.objects.filter(pay_date=today).aggregate(
+        # Payments statistics (only APPROVED/CONFIRMED)
+        payment_status_filter = Q(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
+        payments_today = Payment.objects.filter(payment_status_filter, pay_date=today).aggregate(
             total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
         )
-        payments_week = Payment.objects.filter(pay_date__gte=week_ago).aggregate(
+        payments_week = Payment.objects.filter(payment_status_filter, pay_date__gte=week_ago).aggregate(
             total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
         )
-        payments_month = Payment.objects.filter(pay_date__gte=month_ago).aggregate(
+        payments_month = Payment.objects.filter(payment_status_filter, pay_date__gte=month_ago).aggregate(
             total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
         )
 
@@ -244,7 +245,10 @@ class DebtAnalyticsView(APIView):
             .values('total')[:1]
         )
         payment_subquery = (
-            Payment.objects.filter(dealer=OuterRef('pk'))
+            Payment.objects.filter(
+                dealer=OuterRef('pk'),
+                status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+            )
             .values('dealer')
             .annotate(total=Sum('amount_usd'))
             .values('total')[:1]
@@ -311,7 +315,11 @@ class DebtAnalyticsView(APIView):
                 .order_by('month')
             )
             payments_monthly = (
-                Payment.objects.filter(dealer_id__in=dealer_ids, pay_date__gte=start_date)
+                Payment.objects.filter(
+                    dealer_id__in=dealer_ids,
+                    pay_date__gte=start_date,
+                    status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+                )
                 .annotate(month=TruncMonth('pay_date'))
                 .values('month')
                 .annotate(total=Sum('amount_usd'))
