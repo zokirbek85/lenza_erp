@@ -209,3 +209,31 @@ body,
 .lenza-bg-gold {
   background-color: var(--lenza-gold);
 }
+
+/* Mobile Order Create Form Overlay */
+@media (max-width: 768px) {
+  .order-create-mobile-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 3000 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Z-index hierarchy for mobile */
+.layout-header {
+  z-index: 1000;
+}
+
+.ant-drawer {
+  z-index: 2500 !important;
+}
+
+.ant-modal-root,
+.ant-modal-wrap {
+  z-index: 2800 !important;
+}
