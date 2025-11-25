@@ -1,5 +1,5 @@
 /**
- * PersistentYouTubeAudio - Background YouTube Audio Player
+ * PersistentYouTubeAudio - Background YouTube Audio Player with Context
  * 
  * This component plays a single YouTube video as persistent background audio.
  * It is mounted at the App.tsx level and NEVER unmounts during navigation.
@@ -9,14 +9,14 @@
  * - Hidden iframe (audio-only, no video visible)
  * - Auto-loop enabled
  * - Starts muted (Chrome autoplay requirement)
- * - Auto-unmutes on first user click anywhere
- * - No UI panel - pure background audio
+ * - Exposes controls via AudioControlContext
  * - Uses official YouTube IFrame API (100% ToS compliant)
  * 
  * Video: https://www.youtube.com/watch?v=rdvUByCCX1w
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { AudioControlContext } from '../context/AudioControlContext';
 
 // Single YouTube video ID
 const VIDEO_ID = 'rdvUByCCX1w';
@@ -26,7 +26,11 @@ interface YTPlayer {
   mute: () => void;
   unMute: () => void;
   playVideo: () => void;
+  pauseVideo: () => void;
   setVolume: (volume: number) => void;
+  getVolume: () => number;
+  isMuted: () => boolean;
+  getPlayerState: () => number;
   destroy: () => void;
 }
 
@@ -46,6 +50,7 @@ interface YTPlayerOptions {
   };
   events: {
     onReady: (event: YTPlayerEvent) => void;
+    onStateChange?: (event: any) => void;
   };
 }
 
@@ -59,9 +64,15 @@ declare global {
   }
 }
 
-export default function PersistentYouTubeAudio() {
+export default function PersistentYouTubeAudio({ children }: { children?: React.ReactNode }) {
   const playerRef = useRef<YTPlayer | null>(null);
   const hasLoadedAPI = useRef(false);
+  
+  // Player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolumeState] = useState(60);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // Load YouTube IFrame API
@@ -112,16 +123,17 @@ export default function PersistentYouTubeAudio() {
         },
         events: {
           onReady: (event: YTPlayerEvent) => {
+            setIsReady(true);
+            setIsPlaying(true);
+            
             // Start playing muted
             event.target.playVideo();
-
-            // Auto-unmute on first user click anywhere on the page
-            const unmuteHandler = () => {
-              event.target.unMute();
-              event.target.setVolume(60); // Set to 60% volume
-            };
-
-            document.addEventListener('click', unmuteHandler, { once: true });
+            event.target.setVolume(60);
+          },
+          onStateChange: (event: any) => {
+            // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
+            const state = event.data;
+            setIsPlaying(state === 1); // 1 = playing
           },
         },
       });
@@ -138,8 +150,51 @@ export default function PersistentYouTubeAudio() {
     };
   }, []);
 
+  // Context value with control functions
+  const contextValue = useMemo(() => ({
+    play: () => {
+      if (playerRef.current) {
+        playerRef.current.playVideo();
+        setIsPlaying(true);
+      }
+    },
+    pause: () => {
+      if (playerRef.current) {
+        playerRef.current.pauseVideo();
+        setIsPlaying(false);
+      }
+    },
+    setVolume: (vol: number) => {
+      if (playerRef.current) {
+        playerRef.current.setVolume(vol);
+        setVolumeState(vol);
+        if (vol > 0 && isMuted) {
+          playerRef.current.unMute();
+          setIsMuted(false);
+        }
+      }
+    },
+    mute: () => {
+      if (playerRef.current) {
+        playerRef.current.mute();
+        setIsMuted(true);
+      }
+    },
+    unMute: () => {
+      if (playerRef.current) {
+        playerRef.current.unMute();
+        setIsMuted(false);
+      }
+    },
+    isPlaying,
+    volume,
+    isMuted,
+    isReady,
+    title: 'Background Music',
+  }), [isPlaying, volume, isMuted, isReady]);
+
   return (
-    <>
+    <AudioControlContext.Provider value={contextValue}>
       {/* Hidden YouTube iframe - audio only, no visual display */}
       <div
         id="yt-audio-iframe"
@@ -152,6 +207,8 @@ export default function PersistentYouTubeAudio() {
           left: '-9999px',
         }}
       />
-    </>
+      
+      {children}
+    </AudioControlContext.Provider>
   );
 }
