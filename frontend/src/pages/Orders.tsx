@@ -16,7 +16,7 @@ import OrderItemTable from '../features/orders/OrderItemTable';
 import { usePersistedPageSize } from '../hooks/usePageSize';
 import { loadDraftOrder, saveDraftOrder, useOrderStore } from '../store/useOrderStore';
 import { downloadFile } from '../utils/download';
-import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
+import { cleanName, formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
 import { loadCache, saveCache } from '../utils/storage';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -840,7 +840,7 @@ const OrdersPage = () => {
                             const stockLabel = isLow ? '(Zaxira tugagan)' : `(Zaxira: ${stock})`;
                             return (
                               <option key={product.id} value={product.id}>
-                                {product.name} пїЅпїЅ {brandLabel} пїЅпїЅ {categoryLabel}{' '}
+                                {cleanName(product.name)} - {brandLabel} - {categoryLabel}{' '}
                                 {stockLabel}
                               </option>
                             );

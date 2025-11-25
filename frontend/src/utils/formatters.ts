@@ -61,3 +61,18 @@ export const formatDate = (value: string | Date | null | undefined, language?: s
     day: 'numeric',
   }).format(date);
 };
+
+/**
+ * Cleans corrupted UTF-8 characters from product names
+ * Replaces broken characters (пїЅ, �, \uFFFD) with "-"
+ */
+export const cleanName = (name: string | null | undefined): string => {
+  if (!name) return '';
+  return name
+    .replace(/пїЅ/g, '-')
+    .replace(/�/g, '-')
+    .replace(/\uFFFD/g, '-')
+    .replace(/-+/g, '-') // Collapse multiple dashes
+    .replace(/\s+-\s+/g, ' - ') // Clean up spacing around dashes
+    .trim();
+};
