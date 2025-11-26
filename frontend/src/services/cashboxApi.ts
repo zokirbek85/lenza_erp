@@ -57,7 +57,7 @@ export interface CashboxOpeningBalance {
  * Fetch all cashboxes
  */
 export const fetchCashboxes = async (): Promise<Cashbox[]> => {
-  const response = await http.get('/api/cashbox/');
+  const response = await http.get('/cashbox/');
   return response.data;
 };
 
@@ -65,7 +65,7 @@ export const fetchCashboxes = async (): Promise<Cashbox[]> => {
  * Fetch cashbox summary with balance calculations
  */
 export const fetchCashboxSummary = async (): Promise<{ cashboxes: CashboxSummary[]; timestamp: string }> => {
-  const response = await http.get('/api/cashbox/summary/');
+  const response = await http.get('/cashbox/summary/');
   return response.data;
 };
 
@@ -82,7 +82,7 @@ export const fetchCashboxHistory = async (
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
 
-  const response = await http.get(`/api/cashbox/history/?${params.toString()}`);
+  const response = await http.get(`/cashbox/history/?${params.toString()}`);
   return response.data;
 };
 
@@ -90,7 +90,7 @@ export const fetchCashboxHistory = async (
  * Create new cashbox
  */
 export const createCashbox = async (data: Partial<Cashbox>): Promise<Cashbox> => {
-  const response = await http.post('/api/cashbox/', data);
+  const response = await http.post('/cashbox/', data);
   return response.data;
 };
 
@@ -98,7 +98,7 @@ export const createCashbox = async (data: Partial<Cashbox>): Promise<Cashbox> =>
  * Update cashbox
  */
 export const updateCashbox = async (id: number, data: Partial<Cashbox>): Promise<Cashbox> => {
-  const response = await http.patch(`/api/cashbox/${id}/`, data);
+  const response = await http.patch(`/cashbox/${id}/`, data);
   return response.data;
 };
 
@@ -106,14 +106,14 @@ export const updateCashbox = async (id: number, data: Partial<Cashbox>): Promise
  * Delete cashbox
  */
 export const deleteCashbox = async (id: number): Promise<void> => {
-  await http.delete(`/api/cashbox/${id}/`);
+  await http.delete(`/cashbox/${id}/`);
 };
 
 /**
  * Fetch opening balances
  */
 export const fetchOpeningBalances = async (): Promise<CashboxOpeningBalance[]> => {
-  const response = await http.get('/api/cashbox-opening-balances/');
+  const response = await http.get('/cashbox-opening-balances/');
   return response.data;
 };
 
@@ -121,7 +121,7 @@ export const fetchOpeningBalances = async (): Promise<CashboxOpeningBalance[]> =
  * Create opening balance
  */
 export const createOpeningBalance = async (data: Partial<CashboxOpeningBalance>): Promise<CashboxOpeningBalance> => {
-  const response = await http.post('/api/cashbox-opening-balances/', data);
+  const response = await http.post('/cashbox-opening-balances/', data);
   return response.data;
 };
 
@@ -129,7 +129,7 @@ export const createOpeningBalance = async (data: Partial<CashboxOpeningBalance>)
  * Export cashbox summary to Excel
  */
 export const exportCashboxExcel = async (): Promise<Blob> => {
-  const response = await http.get('/api/cashbox/export/excel/', {
+  const response = await http.get('/cashbox/export/excel/', {
     responseType: 'blob',
   });
   return response.data;
@@ -139,7 +139,7 @@ export const exportCashboxExcel = async (): Promise<Blob> => {
  * Export cashbox summary to PDF
  */
 export const exportCashboxPdf = async (): Promise<Blob> => {
-  const response = await http.get('/api/cashbox/export/pdf/', {
+  const response = await http.get('/cashbox/export/pdf/', {
     responseType: 'blob',
   });
   return response.data;
