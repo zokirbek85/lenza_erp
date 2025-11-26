@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
+from dealers.serializers import DealerSerializer
 
 
 class CashboxOpeningBalanceSerializer(serializers.ModelSerializer):
@@ -40,6 +41,13 @@ class PaymentCardSerializer(serializers.ModelSerializer):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
+    dealer = DealerSerializer(read_only=True)
+    dealer_id = serializers.PrimaryKeyRelatedField(
+        queryset=__import__('dealers.models', fromlist=['Dealer']).Dealer.objects.all(),
+        source='dealer',
+        write_only=True,
+        required=True
+    )
     rate = CurrencyRateSerializer(read_only=True)
     rate_id = serializers.PrimaryKeyRelatedField(
         queryset=CurrencyRate.objects.all(), source='rate', write_only=True, allow_null=True
@@ -61,6 +69,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'dealer',
+            'dealer_id',
             'pay_date',
             'amount',
             'currency',

@@ -178,7 +178,7 @@ const PaymentsPage = () => {
     setSubmitting(true);
     
     const formData = new FormData();
-    formData.append('dealer', form.dealer);
+    formData.append('dealer_id', form.dealer);
     formData.append('pay_date', form.pay_date || new Date().toISOString().slice(0, 10));
     formData.append('amount', form.amount);
     formData.append('currency', form.currency);
@@ -639,7 +639,7 @@ const PaymentsPage = () => {
             type="submit"
             disabled={submitting}
           >
-            {submitting ? 'SavingвЂ¦' : t('actions.save')}
+            {submitting ? 'Saving' : t('actions.save')}
           </button>
         </div>
         </form>
