@@ -41,6 +41,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingBasics, setLoadingBasics] = useState(false);
@@ -55,10 +56,15 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
     try {
       const dealerList = await fetchAllDealers<DealerOption>();
       const brandList = await fetchBrands();
+      console.log('Loaded dealers:', dealerList.length, 'brands:', brandList.length);
       setDealers(dealerList);
       setBrands(brandList);
+      if (dealerList.length === 0) {
+        console.warn('No dealers found in response');
+        setBasicsError(t('returns.form.noDealersFound'));
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Error loading basics:', error);
       setBasicsError(t('common:messages.error'));
       message.error(t('common:messages.error'));
     } finally {
@@ -67,22 +73,38 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   }, [t]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // Reset state when modal closes
+      setDealers([]);
+      setBrands([]);
+      setCategories([]);
+      setProducts([]);
+      setCart([]);
+      setDealerId(null);
+      setBrandId(null);
+      setCategoryId(null);
+      setBasicsError(null);
+      form.resetFields();
+      return;
+    }
     loadBasics();
-  }, [open, loadBasics]);
+  }, [open, loadBasics, form]);
 
   useEffect(() => {
     if (!brandId) {
       setCategories([]);
       setCategoryId(null);
+      setCategoriesLoading(false);
       return;
     }
+    setCategoriesLoading(true);
     fetchCategories(brandId)
       .then((res) => setCategories(res))
       .catch((error) => {
         console.error(error);
         message.error(t('common:messages.error'));
-      });
+      })
+      .finally(() => setCategoriesLoading(false));
   }, [brandId, t]);
 
   useEffect(() => {
@@ -112,6 +134,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
     setBrandId(null);
     setCategoryId(null);
     setProducts([]);
+    setCategories([]);
   };
 
   const handleAddToCart = () => {
@@ -238,7 +261,6 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
           rules={[{ required: true, message: t('returns.form.dealerRequired') }]}
         >
           <Select
-            value={dealerId ?? undefined}
             showSearch
             loading={loadingBasics}
             disabled={loadingBasics}
@@ -248,12 +270,10 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             notFoundContent={loadingBasics ? t('common:loading') : basicsError || t('common:messages.noData')}
             onChange={(value) => {
               setDealerId(value);
-              form.setFieldsValue({ dealer: value });
             }}
             options={dealers.map((dealer) => ({
               label: dealer.name,
               value: dealer.id,
-              description: dealer.debt ?? dealer.balance,
             }))}
           />
         </Form.Item>
@@ -286,13 +306,18 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             rules={[{ required: true, message: t('returns.form.brandRequired') }]}
           >
             <Select
+              value={brandId ?? undefined}
               placeholder={t('returns.form.selectBrand')}
               options={brands.map((brand) => ({ label: brand.name, value: brand.id }))}
               onChange={(value) => {
                 setBrandId(value);
                 setCategoryId(null);
-                form.setFieldsValue({ category_id: undefined, product_id: undefined });
+                form.setFieldsValue({ brand_id: value, category_id: undefined, product_id: undefined });
               }}
+              loading={loadingBasics}
+              disabled={loadingBasics}
+              showSearch
+              optionFilterProp="label"
             />
           </Form.Item>
 
@@ -302,13 +327,18 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             rules={[{ required: true, message: t('returns.form.categoryRequired') }]}
           >
             <Select
+              value={categoryId ?? undefined}
               placeholder={t('returns.form.selectCategory')}
               options={categories.map((category) => ({ label: category.name, value: category.id }))}
               onChange={(value) => {
                 setCategoryId(value);
-                form.setFieldsValue({ product_id: undefined });
+                form.setFieldsValue({ category_id: value, product_id: undefined });
               }}
-              disabled={!brandId}
+              disabled={!brandId || loadingBasics || categoriesLoading}
+              loading={categoriesLoading}
+              showSearch
+              optionFilterProp="label"
+              notFoundContent={categoriesLoading ? t('common:loading') : brandId && categories.length === 0 ? t('common:messages.noData') : undefined}
             />
           </Form.Item>
 
@@ -324,7 +354,10 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
                 label: product.name,
                 value: product.id,
               }))}
-              disabled={!categoryId}
+              disabled={!categoryId || productsLoading}
+              showSearch
+              optionFilterProp="label"
+              notFoundContent={productsLoading ? t('common:loading') : categoryId && products.length === 0 ? t('common:messages.noData') : undefined}
             />
           </Form.Item>
 
