@@ -38,7 +38,6 @@ import {
   Filler,
 } from 'chart.js';
 import dayjs, { Dayjs } from 'dayjs';
-import type { RangePickerProps } from 'antd/es/date-picker';
 import type { ColumnsType } from 'antd/es/table';
 import {
   fetchCashboxSummary,
@@ -66,7 +65,6 @@ const { RangePicker } = DatePicker;
 
 export default function CashboxPage() {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [cashboxes, setCashboxes] = useState<CashboxSummary[]>([]);
