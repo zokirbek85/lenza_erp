@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 
 import http from '../../app/http';
 import Modal from '../../components/Modal';
-import { toArray } from '../../utils/api';
 import { downloadFile } from '../../utils/download';
 import { formatCurrency } from '../../utils/formatters';
 
