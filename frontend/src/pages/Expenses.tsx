@@ -48,7 +48,6 @@ import {
   ArcElement,
 } from 'chart.js';
 import dayjs, { Dayjs } from 'dayjs';
-import http from '../app/http';
 import {
   fetchExpenses,
   fetchExpenseTypes,
@@ -70,6 +69,8 @@ import type {
   ExpenseDistribution,
   ExpenseFilters,
 } from '../services/expenseApi';
+import { fetchCashboxes } from '../services/cashboxApi';
+import type { Cashbox } from '../services/cashboxApi';
 import type { ColumnsType } from 'antd/es/table';
 
 // Register Chart.js components
@@ -88,15 +89,6 @@ ChartJS.register(
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
-interface PaymentCard {
-  id: number;
-  name: string;
-  number: string;
-  holder_name: string;
-  is_active: boolean;
-  masked_number?: string;
-}
-
 export default function ExpensesPage() {
   const { t } = useTranslation();
   const { isMobile } = useIsMobile();
@@ -104,7 +96,7 @@ export default function ExpensesPage() {
   // ========== STATE ==========
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
-  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([]);
+  const [cashboxes, setCashboxes] = useState<Cashbox[]>([]);
   const [stats, setStats] = useState<ExpenseStats | null>(null);
   const [trendData, setTrendData] = useState<ExpenseTrend[]>([]);
   const [distributionData, setDistributionData] = useState<ExpenseDistribution[]>([]);
@@ -119,19 +111,18 @@ export default function ExpensesPage() {
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [filterType, setFilterType] = useState<number | undefined>();
-  const [filterMethod, setFilterMethod] = useState<'cash' | 'card' | undefined>();
-  const [filterCard, setFilterCard] = useState<number | undefined>();
+  const [filterCashbox, setFilterCashbox] = useState<number | undefined>();
   const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | undefined>();
 
   // ========== LOAD DATA ==========
   useEffect(() => {
     loadExpenseTypes();
-    loadPaymentCards();
+    loadCashboxes();
   }, []);
 
   useEffect(() => {
     loadData();
-  }, [dateRange, filterType, filterMethod, filterCard, filterStatus]); // currency o'chirildi
+  }, [dateRange, filterType, filterCashbox, filterStatus]);
 
   const loadExpenseTypes = async () => {
     try {
@@ -144,22 +135,14 @@ export default function ExpensesPage() {
     }
   };
 
-  const loadPaymentCards = async () => {
+  const loadCashboxes = async () => {
     try {
-      const response = await http.get('/payment-cards/');
-      // Array tekshiruvi - DRF paginated bo'lsa results dan olish
-      const rawData = response.data;
-      const dataArray = Array.isArray(rawData) 
-        ? rawData 
-        : (Array.isArray(rawData?.results) ? rawData.results : []);
-      
-      // Faqat faol kartalarni filter qilish
-      const activeCards = dataArray.filter((card: PaymentCard) => card.is_active !== false);
-      setPaymentCards(activeCards);
+      const data = await fetchCashboxes();
+      setCashboxes(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to load payment cards:', error);
-      message.error(t('expenses.messages.loadCardsError'));
-      setPaymentCards([]);
+      console.error('Failed to load cashboxes:', error);
+      message.error(t('expenses.messages.loadCashboxesError'));
+      setCashboxes([]);
     }
   };
 
@@ -171,11 +154,10 @@ export default function ExpensesPage() {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
         date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
         type: filterType,
-        method: filterMethod,
-        card: filterCard,
+        cashbox: filterCashbox,
         status: filterStatus,
       };
-      console.log('рџ“‹ Filters:', filters);
+      console.log('📋 Filters:', filters);
 
       const [expensesData, statsData, trendDataResult, distributionDataResult] = await Promise.all([
         fetchExpenses(filters),
@@ -291,8 +273,7 @@ export default function ExpensesPage() {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
         date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
         type: filterType,
-        method: filterMethod,
-        card: filterCard,
+        cashbox: filterCashbox,
         status: filterStatus,
         currency,
       };
@@ -681,31 +662,17 @@ export default function ExpensesPage() {
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Select
-              placeholder={t('expenses.filters.method')}
+              placeholder={t('expenses.filters.cashbox')}
               allowClear
-              value={filterMethod}
-              onChange={setFilterMethod}
+              value={filterCashbox}
+              onChange={setFilterCashbox}
               style={{ width: '100%' }}
-            >
-              <Select.Option value="cash">{t('expenses.method.cash')}</Select.Option>
-              <Select.Option value="card">{t('expenses.method.card')}</Select.Option>
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder={t('expenses.filters.card')}
-              allowClear
-              value={filterCard}
-              onChange={setFilterCard}
-              style={{ width: '100%' }}
-              disabled={filterMethod !== 'card'}
-              notFoundContent={t('expenses.filters.noCards')}
               showSearch
               optionFilterProp="children"
             >
-              {Array.isArray(paymentCards) && paymentCards.map(card => (
-                <Select.Option key={card.id} value={card.id}>
-                  {card.name} {card.masked_number ? `(${card.masked_number})` : ''}
+              {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
+                <Select.Option key={cashbox.id} value={cashbox.id}>
+                  {cashbox.name} ({cashbox.currency})
                 </Select.Option>
               ))}
             </Select>
@@ -781,35 +748,18 @@ export default function ExpensesPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="method" label={t('expenses.form.method')} rules={[{ required: true, message: t('expenses.form.methodRequired') }]}>
-            <Select placeholder={t('expenses.form.selectMethod')}>
-              <Select.Option value="cash">{t('expenses.method.cash')}</Select.Option>
-              <Select.Option value="card">{t('expenses.method.card')}</Select.Option>
+          <Form.Item name="cashbox" label={t('expenses.form.cashbox')} rules={[{ required: true, message: t('expenses.form.cashboxRequired') }]}>
+            <Select 
+              placeholder={t('expenses.form.selectCashbox')}
+              showSearch
+              optionFilterProp="children"
+            >
+              {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
+                <Select.Option key={cashbox.id} value={cashbox.id}>
+                  {cashbox.name} ({cashbox.currency})
+                </Select.Option>
+              ))}
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) => prevValues.method !== currentValues.method}
-          >
-            {({ getFieldValue }) =>
-              getFieldValue('method') === 'card' ? (
-                <Form.Item name="card" label={t('expenses.form.card')} rules={[{ required: true, message: t('expenses.form.cardRequired') }]}>
-                  <Select 
-                    placeholder={t('expenses.form.selectCard')}
-                    notFoundContent={t('expenses.form.noCardsAvailable')}
-                    showSearch
-                    optionFilterProp="children"
-                  >
-                    {Array.isArray(paymentCards) && paymentCards.map(card => (
-                      <Select.Option key={card.id} value={card.id}>
-                        {card.name} {card.masked_number ? `(${card.masked_number})` : ''}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              ) : null
-            }
           </Form.Item>
 
           <Form.Item name="currency" label={t('expenses.form.currency')} rules={[{ required: true, message: t('expenses.form.currencyRequired') }]}>

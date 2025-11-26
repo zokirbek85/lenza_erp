@@ -450,13 +450,13 @@
       "type": "Chiqim turi",
       "typeRequired": "Chiqim turi majburiy",
       "typeSelect": "Chiqim turini tanlang",
-      "method": "To'lov usuli",
-      "methodRequired": "To'lov usuli majburiy",
-      "methodSelect": "To'lov usulini tanlang",
-      "card": "Karta",
-      "cardSelect": "Kartani tanlang",
+      "selectType": "Chiqim turini tanlang",
+      "cashbox": "Kassa/Karta",
+      "cashboxRequired": "Kassa/Karta majburiy",
+      "selectCashbox": "Kassa yoki kartani tanlang",
       "currency": "Valyuta",
       "currencyRequired": "Valyuta majburiy",
+      "selectCurrency": "Valyutani tanlang",
       "amount": "Summa",
       "amountRequired": "Summa majburiy",
       "amountPositive": "Summa musbat bo'lishi kerak",
@@ -468,13 +468,10 @@
       "endDate": "Gacha",
       "type": "Turi",
       "typeAll": "Barcha turlar",
-      "method": "To'lov usuli",
-      "methodAll": "Barcha usullar",
-      "card": "Karta",
-      "cardAll": "Barcha kartalar",
+      "cashbox": "Kassa/Karta",
+      "cashboxAll": "Barcha kassalar",
       "status": "Holat",
-      "statusAll": "Barcha holatlar",
-      "noCards": "Kartalar mavjud emas"
+      "statusAll": "Barcha holatlar"
     },
     "chart": {
       "expenses": "Chiqimlar",
@@ -511,8 +508,9 @@
       "deleteError": "O'chirishda xatolik yuz berdi",
       "approveError": "Tasdiqlashda xatolik yuz berdi",
       "exportSuccess": "Eksport muvaffaqiyatli yakunlandi",
+      "exportError": "Eksport qilishda xatolik",
       "loadTypesError": "Chiqim turlarini yuklashda xatolik",
-      "loadCardsError": "Kartalarni yuklashda xatolik"
+      "loadCashboxesError": "Kassalarni yuklashda xatolik"
     }
   },
   "expenseTypes": {

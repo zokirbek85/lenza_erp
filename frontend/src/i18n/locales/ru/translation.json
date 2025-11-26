@@ -1015,13 +1015,13 @@
       "type": "Тип расхода",
       "typeRequired": "Тип расхода обязателен",
       "typeSelect": "Выберите тип расхода",
-      "method": "Способ оплаты",
-      "methodRequired": "Способ оплаты обязателен",
-      "methodSelect": "Выберите способ оплаты",
-      "card": "Карта",
-      "cardSelect": "Выберите карту",
+      "selectType": "Выберите тип расхода",
+      "cashbox": "Касса/Карта",
+      "cashboxRequired": "Касса/Карта обязательна",
+      "selectCashbox": "Выберите кассу или карту",
       "currency": "Валюта",
       "currencyRequired": "Валюта обязательна",
+      "selectCurrency": "Выберите валюту",
       "amount": "Сумма",
       "amountRequired": "Сумма обязательна",
       "amountPositive": "Сумма должна быть положительной",
@@ -1033,13 +1033,10 @@
       "endDate": "По",
       "type": "Тип",
       "typeAll": "Все типы",
-      "method": "Способ оплаты",
-      "methodAll": "Все способы",
-      "card": "Карта",
-      "cardAll": "Все карты",
+      "cashbox": "Касса/Карта",
+      "cashboxAll": "Все кассы",
       "status": "Статус",
-      "statusAll": "Все статусы",
-      "noCards": "Карты недоступны"
+      "statusAll": "Все статусы"
     },
     "chart": {
       "expenses": "Расходы",
@@ -1076,8 +1073,9 @@
       "deleteError": "Ошибка при удалении",
       "approveError": "Ошибка при подтверждении",
       "exportSuccess": "Экспорт успешно завершён",
+      "exportError": "Ошибка при экспорте",
       "loadTypesError": "Ошибка при загрузке типов расходов",
-      "loadCardsError": "Ошибка при загрузке карт"
+      "loadCashboxesError": "Ошибка при загрузке касс"
     }
   },
   "expenseTypes": {

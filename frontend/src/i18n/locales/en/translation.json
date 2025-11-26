@@ -1016,13 +1016,13 @@
       "type": "Expense Type",
       "typeRequired": "Expense type is required",
       "typeSelect": "Select expense type",
-      "method": "Payment Method",
-      "methodRequired": "Payment method is required",
-      "methodSelect": "Select payment method",
-      "card": "Card",
-      "cardSelect": "Select card",
+      "selectType": "Select expense type",
+      "cashbox": "Cashbox/Card",
+      "cashboxRequired": "Cashbox/Card is required",
+      "selectCashbox": "Select cashbox or card",
       "currency": "Currency",
       "currencyRequired": "Currency is required",
+      "selectCurrency": "Select currency",
       "amount": "Amount",
       "amountRequired": "Amount is required",
       "amountPositive": "Amount must be positive",
@@ -1034,13 +1034,10 @@
       "endDate": "To",
       "type": "Type",
       "typeAll": "All Types",
-      "method": "Payment Method",
-      "methodAll": "All Methods",
-      "card": "Card",
-      "cardAll": "All Cards",
+      "cashbox": "Cashbox/Card",
+      "cashboxAll": "All Cashboxes",
       "status": "Status",
-      "statusAll": "All Statuses",
-      "noCards": "No cards available"
+      "statusAll": "All Statuses"
     },
     "chart": {
       "expenses": "Expenses",
@@ -1077,8 +1074,9 @@
       "deleteError": "Error deleting expense",
       "approveError": "Error approving expense",
       "exportSuccess": "Export completed successfully",
+      "exportError": "Error exporting",
       "loadTypesError": "Error loading expense types",
-      "loadCardsError": "Error loading cards"
+      "loadCashboxesError": "Error loading cashboxes"
     }
   },
   "expenseTypes": {
