@@ -72,7 +72,7 @@ const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string }>({});
+  const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string; searchQuery?: string }>({});
   const [formState, setFormState] = useState<typeof emptyForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -130,6 +130,7 @@ const ProductsPage = () => {
       };
       if (filters.brandId) params.brand = filters.brandId;
       if (filters.categoryId) params.category = filters.categoryId;
+      if (filters.searchQuery) params.search = filters.searchQuery;
 
       const { items, total } = await fetchProductsApi(params);
       setProducts(items);
@@ -140,7 +141,7 @@ const ProductsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, filters.brandId, filters.categoryId, t]);
+  }, [page, pageSize, filters.brandId, filters.categoryId, filters.searchQuery, t]);
 
   useEffect(() => {
     loadLookups();
@@ -347,7 +348,7 @@ const ProductsPage = () => {
     }
   };
 
-  const handleFilterChange = (field: 'brandId' | 'categoryId', value: string) => {
+  const handleFilterChange = (field: 'brandId' | 'categoryId' | 'searchQuery', value: string) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value || undefined,
@@ -390,6 +391,16 @@ const ProductsPage = () => {
 
   const filtersContent = (
     <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Qidirish (Nom, SKU, Artikul)</label>
+        <input
+          type="text"
+          placeholder="Mahsulot nomi, SKU yoki artikul..."
+          value={filters.searchQuery ?? ''}
+          onChange={(event) => handleFilterChange('searchQuery', event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        />
+      </div>
       <div>
         <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.brand')}</label>
         <select
@@ -643,13 +654,25 @@ const ProductsPage = () => {
         </div>
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={handleExportPdf}
+            onClick={() => downloadFile('/products/export/catalog/pdf/', `products_catalog_${new Date().toISOString().slice(0, 10)}.pdf`)}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
           >
-            {t('actions.exportPdf')}
+            📄 Katalog PDF (narxsiz)
+          </button>
+          <button
+            onClick={() => downloadFile('/products/export/catalog/excel/', `products_catalog_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+            className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+          >
+            📊 Katalog Excel (narxsiz)
           </button>
           {canExport && (
             <>
+              <button
+                onClick={handleExportPdf}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+              >
+                {t('actions.exportPdf')}
+              </button>
               <button
                 onClick={handleExportExcel}
                 className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
@@ -685,6 +708,16 @@ const ProductsPage = () => {
       </header>
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Qidirish</label>
+          <input
+            type="text"
+            placeholder="Nom, SKU, Artikul..."
+            value={filters.searchQuery ?? ''}
+            onChange={(event) => handleFilterChange('searchQuery', event.target.value)}
+            className="mt-1 w-64 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.brand')}</label>
           <select

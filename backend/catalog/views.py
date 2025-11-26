@@ -18,7 +18,7 @@ from services.image_processing import process_product_image, delete_product_imag
 
 from .models import Brand, Category, Product
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CatalogProductSerializer
-from .utils.excel_tools import export_products_to_excel, generate_import_template, import_products_from_excel
+from .utils.excel_tools import export_products_to_excel, export_products_to_excel_no_price, generate_import_template, import_products_from_excel
 
 
 class BrandViewSet(viewsets.ModelViewSet):
@@ -48,7 +48,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin | IsAccountant | IsWarehouse | IsSales | IsOwner]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_fields = ('dealer', 'is_active', 'category', 'brand')
-    search_fields = ('sku', 'name', 'barcode')
+    search_fields = ('sku', 'name', 'barcode', 'article')
     ordering_fields = ('name', 'sell_price_usd', 'stock_ok', 'stock_defect')
 
     def get_queryset(self):
@@ -229,6 +229,50 @@ class ProductReportPDFView(APIView, ExportMixin):
             doc_type='products-report',
             doc_id='bulk',
         )
+
+
+class ProductCatalogNoPricePDFView(APIView):
+    """Export products catalog as PDF without prices."""
+    permission_classes = [IsAdmin | IsAccountant | IsSales | IsWarehouse | IsOwner]
+
+    def get(self, request):
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+        from django.utils import timezone
+        
+        products = Product.objects.select_related('brand', 'category').all()
+        context = {
+            'products': [
+                {
+                    'sku': p.sku,
+                    'name': p.name,
+                    'brand_name': p.brand.name if p.brand else '—',
+                    'category_name': p.category.name if p.category else '—',
+                    'stock_ok': float(p.stock_ok or 0),
+                    'stock_defect': float(p.stock_defect or 0),
+                }
+                for p in products
+            ],
+            'export_date': timezone.now().strftime('%d.%m.%Y'),
+        }
+        
+        html_content = render_to_string('catalog/catalog_no_price.html', context)
+        pdf_file = HTML(string=html_content).write_pdf()
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="products_catalog_{timezone.now():%Y%m%d}.pdf"'
+        return response
+
+
+class ProductCatalogNoPriceExcelView(APIView):
+    """Export products catalog as Excel without prices."""
+    permission_classes = [IsAdmin | IsAccountant | IsSales | IsWarehouse | IsOwner]
+
+    def get(self, request):
+        file_path = Path(export_products_to_excel_no_price())
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
+        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        return response
 
 
 class CatalogView(APIView):

@@ -31,6 +31,12 @@ interface DealerOption {
   name: string;
 }
 
+interface UserOption {
+  id: number;
+  full_name: string;
+  username: string;
+}
+
 interface ProductOption {
   id: number;
   name: string;
@@ -106,6 +112,7 @@ const formatQuantityInputValue = (value: string | number, fallback = DEFAULT_QTY
 const OrdersPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [dealers, setDealers] = useState<DealerOption[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
@@ -122,6 +129,10 @@ const OrdersPage = () => {
   const [priceInput, setPriceInput] = useState('');
   const [productsLoading, setProductsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [managerFilter, setManagerFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const { t } = useTranslation();
   const { isMobile } = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -192,7 +203,13 @@ const OrdersPage = () => {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await http.get('/orders/', { params: { page, page_size: pageSize } });
+      const params: Record<string, string | number> = { page, page_size: pageSize };
+      if (statusFilter) params.status = statusFilter;
+      if (managerFilter) params.created_by = managerFilter;
+      if (dateFrom) params.value_date_from = dateFrom;
+      if (dateTo) params.value_date_to = dateTo;
+      
+      const response = await http.get('/orders/', { params });
       const data = response.data;
       let normalized: Order[];
       if (data && typeof data === 'object' && Array.isArray(data.results)) {
@@ -222,14 +239,16 @@ const OrdersPage = () => {
 
   const loadRefs = useCallback(async () => {
     try {
-      console.log('Loading dealers, brands, categories...');
-      const [dealersData, brandsData, categoriesData] = await Promise.all([
+      console.log('Loading dealers, users, brands, categories...');
+      const [dealersData, usersData, brandsData, categoriesData] = await Promise.all([
         fetchAllPages<DealerOption>('/dealers/'),
+        fetchAllPages<UserOption>('/users/'),
         fetchAllPages<BrandOption>('/brands/'),
         fetchAllPages<CategoryOption>('/categories/'),
       ]);
-      console.log('Loaded data:', { dealers: dealersData.length, brands: brandsData.length, categories: categoriesData.length });
+      console.log('Loaded data:', { dealers: dealersData.length, users: usersData.length, brands: brandsData.length, categories: categoriesData.length });
       setDealers(dealersData);
+      setUsers(usersData);
       setBrands(brandsData);
       setCategories(categoriesData);
     } catch (error) {
@@ -243,11 +262,14 @@ const OrdersPage = () => {
       console.error(error);
       toast.error('Failed to load references');
     });
+  }, [loadRefs]);
+
+  useEffect(() => {
     loadOrders().catch(() => {
       const cached = loadCache<Order[]>('orders-data');
       if (cached) setOrders(cached);
     });
-  }, [loadOrders, loadRefs]);
+  }, [loadOrders, statusFilter, managerFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     const handler = () => {
@@ -399,6 +421,59 @@ const OrdersPage = () => {
 
   const filtersContent = (
     <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Holat</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">Barcha holatlar</option>
+            <option value="created">Yaratilgan</option>
+            <option value="confirmed">Tasdiqlangan</option>
+            <option value="packed">Qadoqlangan</option>
+            <option value="shipped">Yuborilgan</option>
+            <option value="delivered">Yetkazilgan</option>
+            <option value="cancelled">Bekor qilingan</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Menejer</label>
+          <select
+            value={managerFilter}
+            onChange={(e) => setManagerFilter(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">Barcha menejerlar</option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.full_name || user.username}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Sana (dan)</label>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Sana (gacha)</label>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+      </div>
       <div>
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('orders.filters.brand')}
@@ -432,6 +507,21 @@ const OrdersPage = () => {
             </option>
           ))}
         </select>
+      </div>
+      <div>
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter('');
+            setManagerFilter('');
+            setDateFrom('');
+            setDateTo('');
+            setFilters({ brandId: undefined, categoryId: undefined });
+          }}
+          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Filtrlarni tozalash
+        </button>
       </div>
     </div>
   );

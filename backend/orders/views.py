@@ -14,6 +14,7 @@ from core.utils.exporter import export_orders_to_excel
 from core.mixins.report_mixin import BaseReportMixin
 
 from .models import Order, OrderItem, OrderStatusLog
+from .filters import OrderFilter
 from .returns import process_return
 from .serializers import OrderItemSerializer, OrderSerializer, OrderStatusLogSerializer
 from .utils.excel_tools import generate_import_template, import_orders_from_excel
@@ -28,11 +29,11 @@ STATUS_FLOW = {
 
 
 class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
-    queryset = Order.objects.prefetch_related('items__product', 'status_logs', 'returns').select_related('dealer')
+    queryset = Order.objects.prefetch_related('items__product', 'status_logs', 'returns').select_related('dealer', 'created_by')
     serializer_class = OrderSerializer
     permission_classes = [IsAdmin | IsSales | IsOwner | IsWarehouse | IsAccountant]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
-    filterset_fields = ('status', 'dealer', 'is_reserve')
+    filterset_class = OrderFilter
     search_fields = ('display_no', 'dealer__name')
     ordering_fields = ('created_at', 'value_date', 'total_usd')
     
@@ -44,6 +45,44 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
 
     def perform_create(self, serializer):
         serializer.save()
+    
+    def perform_update(self, serializer):
+        """Only admin/owner and order creator can edit orders."""
+        order = self.get_object()
+        user = self.request.user
+        
+        # Superuser can do anything
+        if user.is_superuser:
+            serializer.save()
+            return
+        
+        # Admin and owner can edit any order
+        if hasattr(user, 'role') and user.role in ['admin', 'owner']:
+            serializer.save()
+            return
+        
+        # Order creator can edit their own orders
+        if order.created_by == user:
+            serializer.save()
+            return
+        
+        from rest_framework.exceptions import PermissionDenied
+        raise PermissionDenied('Faqat admin, owner va buyurtma yaratuvchi tahrirlashi mumkin.')
+    
+    def perform_destroy(self, instance):
+        """Only admin/owner can delete orders."""
+        user = self.request.user
+        
+        if user.is_superuser:
+            instance.delete()
+            return
+        
+        if hasattr(user, 'role') and user.role in ['admin', 'owner']:
+            instance.delete()
+            return
+        
+        from rest_framework.exceptions import PermissionDenied
+        raise PermissionDenied('Faqat admin va owner o\'chirishi mumkin.')
     
     def get_report_rows(self, queryset):
         """Generate rows for order report."""

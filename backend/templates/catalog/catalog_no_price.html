@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mahsulotlar katalogi</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm 10mm;
+            @bottom-center {
+                content: "Sahifa " counter(page) " / " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1890ff;
+        }
+
+        .header h1 {
+            font-size: 18pt;
+            color: #1890ff;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 11pt;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .header .meta {
+            font-size: 9pt;
+            color: #999;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        thead {
+            background-color: #f0f0f0;
+        }
+
+        th {
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            font-size: 9pt;
+        }
+
+        td {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            font-size: 9pt;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>KAPI GROUP / LENZA ERP</h1>
+        <div class="subtitle">Mahsulotlar katalogi</div>
+        <div class="meta">Sana: {{ export_date }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">Artikul</th>
+                <th style="width: 40%;">Nomi</th>
+                <th style="width: 15%;">Brend</th>
+                <th style="width: 15%;">Kategoriya</th>
+                <th class="text-right" style="width: 10%;">Zaxira OK</th>
+                <th class="text-right" style="width: 10%;">Defekt</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.sku }}</td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.brand_name }}</td>
+                <td>{{ product.category_name }}</td>
+                <td class="text-right">{{ product.stock_ok }}</td>
+                <td class="text-right">{{ product.stock_defect }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

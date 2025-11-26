@@ -105,6 +105,29 @@ def export_products_to_excel() -> str:
     return _write_dataframe(dataframe, filename)
 
 
+def export_products_to_excel_no_price() -> str:
+    """Export products to Excel without price information."""
+    queryset = Product.objects.select_related('brand', 'category').all()
+    data = []
+    for product in queryset:
+        data.append(
+            {
+                'name': product.name,
+                'sku': product.sku,
+                'brand': product.brand.name if product.brand else '',
+                'category': product.category.name if product.category else '',
+                'size': product.size or '',
+                'stock_ok': float(product.stock_ok or 0),
+                'stock_defect': float(product.stock_defect or 0),
+            }
+        )
+
+    columns = ['sku', 'name', 'brand', 'category', 'size', 'stock_ok', 'stock_defect']
+    dataframe = pd.DataFrame(data, columns=columns)
+    filename = f"products_catalog_{timezone.now():%Y%m%d}.xlsx"
+    return _write_dataframe(dataframe, filename)
+
+
 def generate_import_template() -> str:
     dataframe = pd.DataFrame(columns=EXPORT_COLUMNS)
     filename = f"products_import_template_{timezone.now():%Y%m%d}.xlsx"
