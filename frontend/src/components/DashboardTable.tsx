@@ -72,11 +72,12 @@ const DashboardTable = ({ data, loading }: DashboardTableProps) => {
     },
   ];
 
-  const total = data.reduce((sum, item) => sum + item.amount_usd, 0);
+  const safeData = Array.isArray(data) ? data : [];
+  const total = safeData.reduce((sum, item) => sum + item.amount_usd, 0);
 
   return (
     <div>
-      {data.length > 0 && (
+      {safeData.length > 0 && (
         <div className="mb-4 flex items-center justify-end">
           <span className="text-sm font-normal" style={{ color: token.colorTextSecondary }}>
             {t('dashboard.totalDebt')}: <span className="font-bold text-rose-600">${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -85,7 +86,7 @@ const DashboardTable = ({ data, loading }: DashboardTableProps) => {
       )}
       <Table
         columns={columns}
-        dataSource={data}
+        dataSource={safeData}
         rowKey="id"
         loading={loading}
         pagination={{

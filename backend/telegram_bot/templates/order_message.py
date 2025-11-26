@@ -53,7 +53,6 @@ def format_order(order, created: bool, previous_status: str | None = None) -> st
     text = (
         f"{title}\n"
         f"👤 Diler: {order.dealer.name}\n"
-        f"💵 Summa: ${order.total_usd:.2f}\n"
         f"📅 Sana: {created_at.strftime('%d.%m.%Y')}\n"
         f"📦 Pozitsiyalar: {item_count}\n"
         f"{items_text}\n"

@@ -195,16 +195,19 @@ const DashboardPage = () => {
   }, []);
 
   const topDealerChart = useMemo<ChartData<'bar'>>(
-    () => ({
-      labels: ownerData?.top_dealers.map((dealer) => dealer.dealer) ?? [],
-      datasets: [
-        {
-          label: t('dashboard.topDealers'),
-          data: ownerData?.top_dealers.map((dealer) => dealer.total_usd) ?? [],
-          backgroundColor: '#0f172a',
-        },
-      ],
-    }),
+    () => {
+      const dealers = ownerData?.top_dealers ?? [];
+      return {
+        labels: dealers.map((dealer) => dealer.dealer),
+        datasets: [
+          {
+            label: t('dashboard.topDealers'),
+            data: dealers.map((dealer) => dealer.total_usd),
+            backgroundColor: '#0f172a',
+          },
+        ],
+      };
+    },
     [ownerData, t]
   );
 
@@ -230,18 +233,21 @@ const DashboardPage = () => {
   );
 
   const currencyTrendChart = useMemo<ChartData<'line'>>(
-    () => ({
-      labels: currencyHistory.map((rate) => rate.rate_date.slice(5)),
-      datasets: [
-        {
-          label: t('dashboard.currencyTrend'),
-          data: currencyHistory.map((rate) => Number(rate.usd_to_uzs)),
-          borderColor: '#38bdf8',
-          backgroundColor: 'rgba(56,189,248,0.2)',
-          tension: 0.3,
-        },
-      ],
-    }),
+    () => {
+      const history = Array.isArray(currencyHistory) ? currencyHistory : [];
+      return {
+        labels: history.map((rate) => rate.rate_date.slice(5)),
+        datasets: [
+          {
+            label: t('dashboard.currencyTrend'),
+            data: history.map((rate) => Number(rate.usd_to_uzs)),
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56,189,248,0.2)',
+            tension: 0.3,
+          },
+        ],
+      };
+    },
     [currencyHistory, t]
   );
 
@@ -564,7 +570,7 @@ const DashboardPage = () => {
         }}>
           <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600, color: token.colorText }}>{t('dashboard.balances')}</h2>
           <div className="space-y-3">
-            {ownerData && ownerData.balances.length > 0 ? (
+            {ownerData && Array.isArray(ownerData.balances) && ownerData.balances.length > 0 ? (
               ownerData.balances.slice(0, 5).map((balance) => (
                 <div key={balance.dealer} className="flex items-center justify-between">
                   <div>
@@ -612,7 +618,7 @@ const DashboardPage = () => {
             </div>
           </div>
           <div className="mt-4 space-y-2">
-            {salesData && salesData.top_products.length > 0 ? (
+            {salesData && Array.isArray(salesData.top_products) && salesData.top_products.length > 0 ? (
               salesData.top_products.map((product) => (
                 <div
                   key={product.name}

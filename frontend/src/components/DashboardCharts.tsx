@@ -39,12 +39,14 @@ export const RevenueTrendChart = ({ data }: RevenueTrendProps) => {
   const { mode } = useTheme();
   const isDark = mode === 'dark';
 
+  const safeData = Array.isArray(data) ? data : [];
+
   const chartData = {
-    labels: data.map((d) => d.month),
+    labels: safeData.map((d) => d.month),
     datasets: [
       {
         label: t('dashboard.charts.revenue'),
-        data: data.map((d) => d.total),
+        data: safeData.map((d) => d.total),
         backgroundColor: '#d4af37',
         borderRadius: 8,
       },
@@ -109,11 +111,13 @@ export const RevenueSharePie = ({ data }: RevenueShareProps) => {
   const { mode } = useTheme();
   const isDark = mode === 'dark';
 
+  const safeData = Array.isArray(data) ? data : [];
+
   const chartData = {
-    labels: data.map((d) => d.category),
+    labels: safeData.map((d) => d.category),
     datasets: [
       {
-        data: data.map((d) => d.revenue),
+        data: safeData.map((d) => d.revenue),
         backgroundColor: COLORS,
         borderWidth: 2,
         borderColor: token.colorBgContainer,
@@ -172,12 +176,14 @@ export const InventoryTrendLine = ({ data }: InventoryTrendProps) => {
   const { mode } = useTheme();
   const isDark = mode === 'dark';
 
+  const safeData = Array.isArray(data) ? data : [];
+
   const chartData = {
-    labels: data.map((d) => d.date),
+    labels: safeData.map((d) => d.date),
     datasets: [
       {
         label: t('dashboard.charts.stockValue'),
-        data: data.map((d) => d.stock_value),
+        data: safeData.map((d) => d.stock_value),
         borderColor: '#d4af37',
         backgroundColor: isDark ? 'rgba(212, 175, 55, 0.1)' : 'rgba(212, 175, 55, 0.05)',
         borderWidth: 2,
