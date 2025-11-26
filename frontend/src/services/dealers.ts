@@ -12,15 +12,13 @@ export type DealerDto = {
  * Falls back to the standard paginated endpoint if list-all is unavailable.
  */
 export const fetchAllDealers = async <T = DealerDto>(): Promise<T[]> => {
+  // Prefer list-all; fall back silently on any failure/empty payload.
   try {
     const res = await http.get('/dealers/list-all/');
     const normalized = toArray<T>(res.data);
     if (normalized.length) return normalized;
   } catch (error: any) {
-    // Swallow 404 to try fallback; rethrow other errors.
-    if (error?.response?.status !== 404) {
-      throw error;
-    }
+    console.warn('fetchAllDealers: list-all failed, falling back', error?.response?.status || error);
   }
 
   const fallback = await http.get('/dealers/', { params: { page_size: 1000 } });
