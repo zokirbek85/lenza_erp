@@ -118,7 +118,10 @@ const PaymentsPage = () => {
 
   useEffect(() => {
     const loadRefs = async () => {
-      const [dealersRes, ratesRes] = await Promise.all([http.get('/dealers/'), http.get('/currency-rates/')]);
+      const [dealersRes, ratesRes] = await Promise.all([
+        http.get('/dealers/', { params: { page_size: 500 } }),
+        http.get('/currency-rates/')
+      ]);
       setDealers(toArray<Dealer>(dealersRes.data));
       setRates(toArray<CurrencyRate>(ratesRes.data));
     };
