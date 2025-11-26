@@ -1,6 +1,12 @@
 {
+  "title": "Cashbox Balance",
+  "subtitle": "Balance and transactions for all cashboxes",
   "cashboxType": "Cashbox Type",
   "balance": "Balance",
+  "current_balance": "Current Balance",
+  "opening": "Opening",
+  "income": "Income",
+  "expense": "Expense",
   "currency": "Currency",
   "openingDate": "Opening Date",
   "createdAt": "Created At",
@@ -15,6 +21,14 @@
   "totalBalances": "Total: {{count}} records",
   "confirmDelete": "Delete Opening Balance?",
   "confirmDeleteDescription": "This action cannot be undone",
+  "no_data": "No cashboxes available",
+  "balance_history": "Balance History",
+  "recent_transactions": "Recent Transactions",
+  "type": {
+    "card": "Card",
+    "cash_uzs": "Cash (UZS)",
+    "cash_usd": "Cash (USD)"
+  },
   "validation": {
     "cashboxTypeRequired": "Please select cashbox type",
     "balanceRequired": "Please enter balance amount",

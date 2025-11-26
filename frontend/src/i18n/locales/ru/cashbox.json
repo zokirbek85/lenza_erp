@@ -1,6 +1,12 @@
 {
+  "title": "Баланс кассы",
+  "subtitle": "Баланс и транзакции по всем кассам",
   "cashboxType": "Тип кассы",
   "balance": "Баланс",
+  "current_balance": "Текущий баланс",
+  "opening": "Открытие",
+  "income": "Приход",
+  "expense": "Расход",
   "currency": "Валюта",
   "openingDate": "Дата открытия",
   "createdAt": "Создано",
@@ -15,6 +21,14 @@
   "totalBalances": "Всего: {{count}} записей",
   "confirmDelete": "Удалить начальный баланс?",
   "confirmDeleteDescription": "Это действие нельзя отменить",
+  "no_data": "Нет доступных касс",
+  "balance_history": "История баланса",
+  "recent_transactions": "Последние транзакции",
+  "type": {
+    "card": "Карта",
+    "cash_uzs": "Наличные (UZS)",
+    "cash_usd": "Наличные (USD)"
+  },
   "validation": {
     "cashboxTypeRequired": "Выберите тип кассы",
     "balanceRequired": "Введите сумму баланса",

@@ -1,6 +1,12 @@
 {
+  "title": "Kassa Balansi",
+  "subtitle": "Barcha kassalar bo'yicha balans va tranzaksiyalar",
   "cashboxType": "Kassa turi",
   "balance": "Balans",
+  "current_balance": "Joriy balans",
+  "opening": "Ochilish",
+  "income": "Kirim",
+  "expense": "Chiqim",
   "currency": "Valyuta",
   "openingDate": "Ochilish sanasi",
   "createdAt": "Yaratilgan",
@@ -15,6 +21,14 @@
   "totalBalances": "Jami: {{count}} ta yozuv",
   "confirmDelete": "Opening Balance ni o'chirishni tasdiqlaysizmi?",
   "confirmDeleteDescription": "Bu amalni bekor qilib bo'lmaydi",
+  "no_data": "Kassalar mavjud emas",
+  "balance_history": "Balans tarixi",
+  "recent_transactions": "So'nggi tranzaksiyalar",
+  "type": {
+    "card": "Karta",
+    "cash_uzs": "Naqd (UZS)",
+    "cash_usd": "Naqd (USD)"
+  },
   "validation": {
     "cashboxTypeRequired": "Kassa turini tanlang",
     "balanceRequired": "Balans summasini kiriting",

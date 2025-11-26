@@ -83,6 +83,12 @@ const BASE_MENU: MenuItem[] = [
       roles: ['admin', 'sales', 'accountant'],
     },
     {
+      path: '/cashbox',
+      label: 'nav.cashbox',
+      icon: <WalletOutlined />,
+      roles: ['admin', 'accountant', 'owner'],
+    },
+    {
       path: '/expenses',
       label: 'nav.expenses',
       icon: <FileTextOutlined />,

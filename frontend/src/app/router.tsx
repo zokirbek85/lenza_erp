@@ -13,6 +13,7 @@ import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
 import PaymentsPage from '../pages/Payments';
+import CashboxPage from '../pages/Cashbox';
 import ExpensesPage from '../pages/Expenses';
 import ExpenseReportPage from '../pages/ExpenseReport';
 import ExpenseTypesPage from '../pages/ExpenseTypes';
@@ -110,6 +111,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
             <PaymentsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'cashbox',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <CashboxPage />
           </ProtectedRoute>
         ),
       },
