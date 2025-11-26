@@ -43,12 +43,15 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingBasics, setLoadingBasics] = useState(false);
   const [dealerId, setDealerId] = useState<number | null>(null);
   const [brandId, setBrandId] = useState<number | null>(null);
   const [categoryId, setCategoryId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!open) return;
     const loadBasics = async () => {
+      setLoadingBasics(true);
       try {
         const [dealerList, brandList] = await Promise.all([
           fetchAllDealers<DealerOption>(),
@@ -59,10 +62,12 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
       } catch (error) {
         console.error(error);
         message.error(t('common:messages.error'));
+      } finally {
+        setLoadingBasics(false);
       }
     };
     loadBasics();
-  }, [t]);
+  }, [open, t]);
 
   useEffect(() => {
     if (!brandId) {
@@ -233,6 +238,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
           <Select
             value={dealerId ?? undefined}
             showSearch
+            loading={loadingBasics}
             allowClear
             placeholder={t('returns.form.selectDealer')}
             optionFilterProp="label"
