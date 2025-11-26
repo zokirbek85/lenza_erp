@@ -24,18 +24,52 @@ export function RouterErrorBoundary() {
     }
   } else if (error instanceof Error) {
     message = error.message;
+    console.error('Router error details:', error);
+    console.error('Error stack:', error.stack);
   }
 
+  // Log for debugging
+  console.error('RouterErrorBoundary - Full error object:', error);
+
   return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ textAlign: 'center', maxWidth: 600 }}>
         <h1 style={{ fontSize: 28, marginBottom: 8 }}>{title}</h1>
         <p style={{ color: '#666', marginBottom: 16 }}>{message}</p>
-        <div style={{ fontSize: 12, color: '#999', marginBottom: 24 }}>Kod: {status}</div>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <Link to="/">Bosh sahifaga qaytish</Link>
-          <a href={typeof window !== 'undefined' ? window.location.pathname : '/'} onClick={() => window.location.reload()}>Qayta yuklash</a>
+        <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>Kod: {status}</div>
+        {error instanceof Error && error.stack && (
+          <details style={{ marginBottom: 16, textAlign: 'left', fontSize: 11, color: '#999' }}>
+            <summary style={{ cursor: 'pointer', marginBottom: 8, textAlign: 'center' }}>Texnik ma'lumotlar (developers uchun)</summary>
+            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f5f5f5', padding: 12, borderRadius: 4, maxHeight: '300px', overflow: 'auto' }}>
+              {error.stack}
+            </pre>
+          </details>
+        )}
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link to="/" style={{ padding: '8px 16px', background: '#0f172a', color: 'white', borderRadius: '4px', textDecoration: 'none' }}>Bosh sahifaga qaytish</Link>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{ padding: '8px 16px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Qayta yuklash
+          </button>
+          <button 
+            onClick={() => { 
+              localStorage.clear(); 
+              sessionStorage.clear(); 
+              if ('caches' in window) {
+                caches.keys().then(names => names.forEach(name => caches.delete(name)));
+              }
+              setTimeout(() => window.location.reload(), 100);
+            }} 
+            style={{ padding: '8px 16px', background: '#f97316', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Cache tozalash va qayta yuklash
+          </button>
         </div>
+        <p style={{ fontSize: 11, color: '#999', marginTop: 16 }}>
+          Agar muammo davom etsa, brauzer cache'ini to'liq tozalang (Ctrl+Shift+Delete)
+        </p>
       </div>
     </div>
   );
