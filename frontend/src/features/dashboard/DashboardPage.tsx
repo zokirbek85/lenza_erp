@@ -107,31 +107,55 @@ const DashboardPage = () => {
     setLoading(true);
     try {
       const debtAnalyticsRequest = canViewDebtAnalytics
-        ? fetchDebtAnalytics().catch(() => ({ data: null }))
+        ? fetchDebtAnalytics().catch((err) => {
+            console.error('fetchDebtAnalytics error:', err);
+            return { data: null };
+          })
         : Promise.resolve({ data: null });
 
       const [owner, sales, accountant, currency, summary, cards, analytics, inventory] = await Promise.all([
-        canLoadOwnerKpi ? fetchDashboardData(filters) : Promise.resolve({ data: null }),
-        canLoadSalesKpi ? fetchSalesManagerData(filters) : Promise.resolve({ data: null }),
-        canLoadAccountantKpi ? fetchAccountantData(filters) : Promise.resolve({ data: null }),
-        fetchCurrencyHistory(filters).catch(() => ({ data: [] as CurrencyHistory[] })),
-        fetchDashboardSummary(filters).catch(() => ({
-          total_sales: 0,
-          net_profit: 0,
-          cash_balance: 0,
-          open_orders_count: 0,
-          satisfaction_score: 0,
-          total_debt_usd: 0,
-          dealers: 0,
-          overdue_receivables: [],
-          revenue_by_month: [],
-          revenue_by_product: [],
-          inventory_trend: [],
-          expenses_vs_budget: { expenses: 0, budget: 100000 },
-        })),
-        canLoadCardKpi ? fetchCardsKpi(filters).catch(() => ({ data: [] as any[] })) : Promise.resolve({ data: [] as any[] }),
+        canLoadOwnerKpi ? fetchDashboardData(filters).catch((err) => {
+          console.error('fetchDashboardData error:', err);
+          return { data: null };
+        }) : Promise.resolve({ data: null }),
+        canLoadSalesKpi ? fetchSalesManagerData(filters).catch((err) => {
+          console.error('fetchSalesManagerData error:', err);
+          return { data: null };
+        }) : Promise.resolve({ data: null }),
+        canLoadAccountantKpi ? fetchAccountantData(filters).catch((err) => {
+          console.error('fetchAccountantData error:', err);
+          return { data: null };
+        }) : Promise.resolve({ data: null }),
+        fetchCurrencyHistory(filters).catch((err) => {
+          console.error('fetchCurrencyHistory error:', err);
+          return { data: [] as CurrencyHistory[] };
+        }),
+        fetchDashboardSummary(filters).catch((err) => {
+          console.error('fetchDashboardSummary error:', err);
+          return {
+            total_sales: 0,
+            net_profit: 0,
+            cash_balance: 0,
+            open_orders_count: 0,
+            satisfaction_score: 0,
+            total_debt_usd: 0,
+            dealers: 0,
+            overdue_receivables: [],
+            revenue_by_month: [],
+            revenue_by_product: [],
+            inventory_trend: [],
+            expenses_vs_budget: { expenses: 0, budget: 100000 },
+          };
+        }),
+        canLoadCardKpi ? fetchCardsKpi(filters).catch((err) => {
+          console.error('fetchCardsKpi error:', err);
+          return { data: [] as any[] };
+        }) : Promise.resolve({ data: [] as any[] }),
         debtAnalyticsRequest,
-        fetchInventoryStats().catch(() => ({ data: { total_quantity: 0, total_value_usd: 0 } })),
+        fetchInventoryStats().catch((err) => {
+          console.error('fetchInventoryStats error:', err);
+          return { data: { total_quantity: 0, total_value_usd: 0 } };
+        }),
       ]);
       setOwnerData(owner?.data ?? null);
       setSalesData(sales?.data ?? null);
