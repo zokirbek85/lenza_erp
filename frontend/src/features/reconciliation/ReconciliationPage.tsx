@@ -75,7 +75,7 @@ const ReconciliationPage = () => {
 
   const loadDealers = useCallback(async () => {
     try {
-      const dealers = await fetchAllDealers();
+      const dealers = await fetchAllDealers<DealerOption>();
       setDealers(dealers);
     } catch (error) {
       console.error(error);
@@ -487,4 +487,3 @@ const ReconciliationPage = () => {
 };
 
 export default ReconciliationPage;
-

@@ -120,7 +120,7 @@ const PaymentsPage = () => {
   useEffect(() => {
     const loadRefs = async () => {
       const [dealers, ratesRes] = await Promise.all([
-        fetchAllDealers(),
+        fetchAllDealers<Dealer>(),
         http.get('/currency-rates/')
       ]);
       setDealers(dealers);
@@ -766,4 +766,3 @@ const PaymentsPage = () => {
 };
 
 export default PaymentsPage;
-

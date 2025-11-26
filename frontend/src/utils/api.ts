@@ -1,9 +1,9 @@
 import http from '../app/http';
 
-// Unified dealer fetcher
-export const fetchAllDealers = async () => {
+// Unified dealer fetcher (typed)
+export const fetchAllDealers = async <T = any>(): Promise<T[]> => {
   const res = await http.get('/dealers/list-all/');
-  return toArray(res.data);
+  return toArray<T>(res.data);
 };
 export const toArray = <T>(payload: unknown): T[] => {
   if (Array.isArray(payload)) {
