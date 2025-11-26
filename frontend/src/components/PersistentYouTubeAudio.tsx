@@ -19,7 +19,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { AudioControlContext } from '../context/AudioControlContext';
 
 // Single YouTube video ID
-const VIDEO_ID = 'rdvUByCCX1w';
+const VIDEO_ID = 'shftqdbOh-E';
 
 // YouTube IFrame API type definitions
 interface YTPlayer {
@@ -47,10 +47,13 @@ interface YTPlayerOptions {
     modestbranding: number;
     loop: number;
     playlist: string;
+    origin?: string;
+    enablejsapi?: number;
   };
   events: {
     onReady: (event: YTPlayerEvent) => void;
     onStateChange?: (event: any) => void;
+    onError?: (event: any) => void;
   };
 }
 
@@ -111,32 +114,48 @@ export default function PersistentYouTubeAudio({ children }: { children?: React.
       // Prevent duplicate players
       if (playerRef.current) return;
 
-      playerRef.current = new window.YT.Player('yt-audio-iframe', {
-        videoId: VIDEO_ID,
-        playerVars: {
-          autoplay: 1,
-          mute: 1, // Start muted (Chrome autoplay policy)
-          controls: 0,
-          modestbranding: 1,
-          loop: 1,
-          playlist: VIDEO_ID, // Required for loop to work
-        },
-        events: {
-          onReady: (event: YTPlayerEvent) => {
-            setIsReady(true);
-            setIsPlaying(true);
-            
-            // Start playing muted
-            event.target.playVideo();
-            event.target.setVolume(60);
+      // Ensure iframe element exists before initialization
+      const iframeElement = document.getElementById('yt-audio-iframe');
+      if (!iframeElement) {
+        console.error('YouTube iframe element not found');
+        return;
+      }
+
+      try {
+        playerRef.current = new window.YT.Player('yt-audio-iframe', {
+          videoId: VIDEO_ID,
+          playerVars: {
+            autoplay: 1,
+            mute: 1, // Start muted (Chrome autoplay policy)
+            controls: 0,
+            modestbranding: 1,
+            loop: 1,
+            playlist: VIDEO_ID, // Required for loop to work
+            origin: window.location.origin, // Fix postMessage origin error
+            enablejsapi: 1,
           },
-          onStateChange: (event: any) => {
-            // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
-            const state = event.data;
-            setIsPlaying(state === 1); // 1 = playing
+          events: {
+            onReady: (event: YTPlayerEvent) => {
+              setIsReady(true);
+              setIsPlaying(true);
+              
+              // Start playing muted
+              event.target.playVideo();
+              event.target.setVolume(60);
+            },
+            onStateChange: (event: any) => {
+              // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
+              const state = event.data;
+              setIsPlaying(state === 1); // 1 = playing
+            },
+            onError: (event: any) => {
+              console.error('YouTube player error:', event.data);
+            },
           },
-        },
-      });
+        });
+      } catch (error) {
+        console.error('Failed to initialize YouTube player:', error);
+      }
     };
 
     loadYouTubeAPI();
