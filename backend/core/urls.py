@@ -24,7 +24,7 @@ from catalog.views import (
     PriceListPDFView,
     PriceListExcelView,
 )
-from catalog.views_list_all import DealerListAllView
+from dealers.views_list_all import DealerListAllView
 from core.views import (
     AuditLogViewSet,
     CompanyInfoViewSet,
@@ -172,6 +172,8 @@ urlpatterns = [
     path('api/dealers/<int:pk>/reconciliation/', DealerReconciliationView.as_view(), name='dealer-reconciliation'),
     path('api/dealers/<int:pk>/reconciliation/pdf/', DealerReconciliationPDFView.as_view(), name='dealer-reconciliation-pdf'),
     path('api/dealers/<int:pk>/reconciliation/excel/', DealerReconciliationExcelView.as_view(), name='dealer-reconciliation-excel'),
+    # Non-paginated dealer list for dropdowns
+    path('api/dealers/list-all/', DealerListAllView.as_view(), name='dealer-list-all'),
     path('api/payments/rates/history/', CurrencyRateHistoryView.as_view(), name='currency-rate-history'),
     path('api/expenses/report/', MonthlyExpenseReportView.as_view(), name='expenses-report'),
     path('api/expenses/report', MonthlyExpenseReportView.as_view()),
@@ -196,7 +198,6 @@ urlpatterns = [
     path('api/', include(router.urls)),
     # QR verification endpoint
     path('verify/<str:doc_type>/<slug:doc_id>/', verify_document, name='verify-document'),
-    path('api/dealers/list-all/', DealerListAllView.as_view(), name='dealer-list-all'),
 ]
 
 if settings.DEBUG:
