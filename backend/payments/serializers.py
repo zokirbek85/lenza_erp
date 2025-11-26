@@ -1,17 +1,81 @@
 from rest_framework import serializers
 
-from .models import CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
+from .models import Cashbox, CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
 from dealers.serializers import DealerSerializer
+
+
+class CashboxSerializer(serializers.ModelSerializer):
+    """Serializer for Cashbox model"""
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    card_name = serializers.CharField(source='card.name', read_only=True)
+    
+    class Meta:
+        model = Cashbox
+        fields = (
+            'id',
+            'name',
+            'type',
+            'type_display',
+            'currency',
+            'card',
+            'card_name',
+            'is_active',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
 
 
 class CashboxOpeningBalanceSerializer(serializers.ModelSerializer):
     """Serializer for cashbox opening balances"""
-    cashbox_type_display = serializers.CharField(source='get_cashbox_type_display', read_only=True)
-
+    cashbox_name = serializers.CharField(source='cashbox.name', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    
     class Meta:
         model = CashboxOpeningBalance
-        fields = ('id', 'cashbox_type', 'cashbox_type_display', 'balance', 'currency', 'date', 'created_at')
-        read_only_fields = ('created_at',)
+        fields = (
+            'id',
+            'cashbox',
+            'cashbox_name',
+            'amount',
+            'date',
+            'created_by',
+            'created_by_username',
+            'created_at',
+            # Legacy fields
+            'cashbox_type',
+            'balance',
+            'currency',
+        )
+        read_only_fields = ('created_at', 'created_by')
+    
+    def validate(self, attrs):
+        """Ensure cashbox is provided"""
+        if 'cashbox' not in attrs:
+            raise serializers.ValidationError({'cashbox': 'Kassa tanlanishi kerak'})
+        return attrs
+
+
+class CashboxSummarySerializer(serializers.Serializer):
+    """
+    Summary serializer for cashbox balance with history.
+    Used by /api/cashbox/summary/ endpoint.
+    """
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    type = serializers.CharField()
+    type_display = serializers.CharField()
+    currency = serializers.CharField()
+    is_active = serializers.BooleanField()
+    
+    # Balance calculation
+    opening_balance = serializers.DecimalField(max_digits=18, decimal_places=2)
+    income_sum = serializers.DecimalField(max_digits=18, decimal_places=2)
+    expense_sum = serializers.DecimalField(max_digits=18, decimal_places=2)
+    balance = serializers.DecimalField(max_digits=18, decimal_places=2)
+    
+    # Optional: minimal history for chart
+    history = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class CurrencyRateSerializer(serializers.ModelSerializer):

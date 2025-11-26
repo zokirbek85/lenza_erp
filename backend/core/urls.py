@@ -71,6 +71,10 @@ from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from payments.views import (
     CashboxOpeningBalanceViewSet,
     CashboxSummaryView,
+    CashboxHistoryView,
+    CashboxViewSet,
+    CashboxSummaryExportExcelView,
+    CashboxSummaryExportPDFView,
     CurrencyRateHistoryView,
     CurrencyRateViewSet,
     PaymentCardViewSet,
@@ -105,6 +109,7 @@ router.register('products', ProductViewSet, basename='product')
 router.register('orders', OrderViewSet, basename='order')
 router.register('payments', PaymentViewSet, basename='payment')
 router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
+router.register('cashbox', CashboxViewSet, basename='cashbox')
 router.register('expenses', ExpenseViewSet, basename='expense')
 router.register('expense-types', ExpenseTypeViewSet, basename='expense-type')
 # Ledger - dynamic API (no model, no ViewSet)
@@ -125,8 +130,11 @@ urlpatterns = [
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
     path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
-    # Cashbox summary
+    # Cashbox summary and history
     path('api/cashbox/summary/', CashboxSummaryView.as_view(), name='cashbox-summary'),
+    path('api/cashbox/history/', CashboxHistoryView.as_view(), name='cashbox-history'),
+    path('api/cashbox/export/excel/', CashboxSummaryExportExcelView.as_view(), name='cashbox-export-excel'),
+    path('api/cashbox/export/pdf/', CashboxSummaryExportPDFView.as_view(), name='cashbox-export-pdf'),
     path('api/expenses/export/pdf/', ExpenseListPDFExportView.as_view(), name='expense-export-pdf'),
     path('api/expenses/export/pdf', ExpenseListPDFExportView.as_view()),
     path('api/expenses/export/excel/', ExpenseListExcelExportView.as_view(), name='expense-export-excel'),

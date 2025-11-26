@@ -61,6 +61,18 @@ class Expense(models.Model):
         related_name='expenses',
         verbose_name="Turi"
     )
+    
+    # NEW: Cashbox FK (replaces card in balance logic)
+    cashbox = models.ForeignKey(
+        'payments.Cashbox',
+        on_delete=models.PROTECT,
+        related_name='expenses',
+        null=True,
+        blank=True,
+        verbose_name="Kassa"
+    )
+    
+    # LEGACY fields for backward compatibility
     method = models.CharField(
         max_length=10,
         choices=METHOD_CHOICES,
@@ -73,7 +85,7 @@ class Expense(models.Model):
         null=True,
         blank=True,
         related_name='expenses',
-        verbose_name="Karta"
+        verbose_name="Karta (eski)"
     )
     currency = models.CharField(
         max_length=3,
@@ -149,12 +161,26 @@ class Expense(models.Model):
         return f"{self.type.name} - {self.amount} {self.currency} ({self.get_status_display()})"
     
     def clean(self):
-        """Validatsiya: Karta tanlansa method='card' bo'lishi kerak"""
+        """
+        Validatsiya:
+        1. Cashbox tanlanishi kerak
+        2. Currency cashbox currency bilan mos kelishi kerak
+        """
         from django.core.exceptions import ValidationError
+        
+        if not self.cashbox:
+            raise ValidationError("Kassa tanlanishi kerak")
+        
+        if self.cashbox and self.currency != self.cashbox.currency:
+            raise ValidationError(
+                f"Valyuta ({self.currency}) kassaning valyutasi ({self.cashbox.currency}) bilan mos emas"
+            )
+        
+        # Legacy validation (backward compatibility)
         if self.card and self.method != self.METHOD_CARD:
             raise ValidationError("Karta tanlangan bo'lsa, to'lov usuli 'Karta' bo'lishi kerak")
-        if self.method == self.METHOD_CARD and not self.card:
-            raise ValidationError("To'lov usuli 'Karta' bo'lsa, karta tanlanishi kerak")
+        if self.method == self.METHOD_CARD and not self.card and not self.cashbox:
+            raise ValidationError("To'lov usuli 'Karta' bo'lsa, karta yoki kassa tanlanishi kerak")
     
     def save(self, *args, **kwargs):
         """

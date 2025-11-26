@@ -3,6 +3,148 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+
+
+class Cashbox(models.Model):
+    """
+    Unified cashbox model - represents cards, cash UZS, cash USD.
+    Each cashbox has its own balance tracking.
+    """
+    TYPE_CARD = "CARD"
+    TYPE_CASH_UZS = "CASH_UZS"
+    TYPE_CASH_USD = "CASH_USD"
+
+    CASHBOX_TYPES = [
+        (TYPE_CARD, "Card"),
+        (TYPE_CASH_UZS, "Cash UZS"),
+        (TYPE_CASH_USD, "Cash USD"),
+    ]
+
+    CURRENCY_USD = "USD"
+    CURRENCY_UZS = "UZS"
+
+    CURRENCY_CHOICES = [
+        (CURRENCY_USD, "USD"),
+        (CURRENCY_UZS, "UZS"),
+    ]
+
+    name = models.CharField(max_length=100, verbose_name="Nomi")  # e.g. "Karta-1", "Naqd UZS"
+    cashbox_type = models.CharField(max_length=20, choices=CASHBOX_TYPES, verbose_name="Turi", db_column='type')
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, verbose_name="Valyuta")
+    
+    # Link to PaymentCard if type=CARD
+    card = models.OneToOneField(
+        'payments.PaymentCard',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cashbox_link',
+        verbose_name="Bog'langan karta"
+    )
+    
+    is_active = models.BooleanField(default=True, verbose_name="Faolmi")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['cashbox_type', 'name']
+        verbose_name = "Kassa"
+        verbose_name_plural = "Kassalar"
+
+    def __str__(self):
+        return f"{self.name} ({self.get_cashbox_type_display()}) - {self.currency}"
+
+    def clean(self):
+        """Validate that currency matches type"""
+        from django.core.exceptions import ValidationError
+        
+        if self.cashbox_type == self.TYPE_CARD and not self.currency:
+            raise ValidationError("Karta turi uchun valyuta ko'rsatilishi kerak")
+        
+        if self.cashbox_type == self.TYPE_CASH_UZS and self.currency != self.CURRENCY_UZS:
+            raise ValidationError("Naqd UZS turi faqat UZS valyutasi bilan ishlaydi")
+        
+        if self.cashbox_type == self.TYPE_CASH_USD and self.currency != self.CURRENCY_USD:
+            raise ValidationError("Naqd USD turi faqat USD valyutasi bilan ishlaydi")
+
+    def get_latest_opening_balance(self):
+        """Get the most recent opening balance for this cashbox"""
+        return self.opening_balances.order_by('-date', '-created_at').first()
+
+    def calculate_balance(self, up_to_date=None, return_detailed=False):
+        """
+        Calculate current balance:
+        balance = opening_balance + incomes - expenses
+        
+        Args:
+            up_to_date: Calculate balance up to this date (inclusive)
+            return_detailed: If True, return dict with breakdown, else return balance amount
+        """
+        from decimal import Decimal
+        from expenses.models import Expense
+        
+        opening = self.get_latest_opening_balance()
+        
+        if not opening:
+            opening_amount = Decimal('0.00')
+            opening_date = None
+        else:
+            opening_amount = opening.amount
+            opening_date = opening.date
+        
+        # Filter payments (incomes)
+        income_filter = {
+            'cashbox': self,
+            'status__in': [Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        }
+        if opening_date:
+            income_filter['pay_date__gte'] = opening_date
+        if up_to_date:
+            income_filter['pay_date__lte'] = up_to_date
+        
+        # Use correct currency amount field
+        if self.currency == self.CURRENCY_USD:
+            income_sum = Payment.objects.filter(**income_filter).aggregate(
+                total=models.Sum('amount_usd')
+            )['total'] or Decimal('0.00')
+        else:
+            income_sum = Payment.objects.filter(**income_filter).aggregate(
+                total=models.Sum('amount_uzs')
+            )['total'] or Decimal('0.00')
+        
+        # Filter expenses
+        expense_filter = {
+            'cashbox': self,
+            'status': Expense.STATUS_APPROVED
+        }
+        if opening_date:
+            expense_filter['date__gte'] = opening_date
+        if up_to_date:
+            expense_filter['date__lte'] = up_to_date
+        
+        # Use correct currency amount field
+        if self.currency == self.CURRENCY_USD:
+            expense_sum = Expense.objects.filter(**expense_filter).aggregate(
+                total=models.Sum('amount_usd')
+            )['total'] or Decimal('0.00')
+        else:
+            expense_sum = Expense.objects.filter(**expense_filter).aggregate(
+                total=models.Sum('amount_uzs')
+            )['total'] or Decimal('0.00')
+        
+        balance = opening_amount + income_sum - expense_sum
+        
+        if return_detailed:
+            return {
+                'opening_balance': opening_amount,
+                'income_sum': income_sum,
+                'expense_sum': expense_sum,
+                'balance': balance
+            }
+        
+        return balance
+
+
 class PaymentCard(models.Model):
     name = models.CharField(max_length=100)
     number = models.CharField(max_length=32)
@@ -66,50 +208,72 @@ class CurrencyRate(models.Model):
 
 
 class CashboxOpeningBalance(models.Model):
-    """Opening balance for different cashbox types"""
+    """
+    Opening balance for cashboxes.
+    Latest record (by date, then created_at) is used as the opening balance.
+    """
+    cashbox = models.ForeignKey(
+        Cashbox,
+        on_delete=models.CASCADE,
+        related_name='opening_balances',
+        verbose_name="Kassa",
+        null=True,  # Temporarily nullable for migration
+        blank=True
+    )
+    amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        verbose_name="Ochilish balansi",
+        null=True,  # Temporarily nullable for migration
+        blank=True
+    )
+    date = models.DateField(
+        verbose_name="Sana",
+        help_text="Ochilish balansi sanasi"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Yaratuvchi"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    class CashboxType(models.TextChoices):
-        CARD = 'CARD', 'Card'
-        CASH_UZS = 'CASH_UZS', 'Cash UZS'
-        CASH_USD = 'CASH_USD', 'Cash USD'
-
-    class Currency(models.TextChoices):
-        USD = 'USD', 'USD'
-        UZS = 'UZS', 'UZS'
-
+    # Legacy fields for backward compatibility (will be removed after migration)
     cashbox_type = models.CharField(
         max_length=20,
-        choices=CashboxType.choices,
-        verbose_name="Cashbox Type"
+        null=True,
+        blank=True,
+        verbose_name="Eski kassa turi"
     )
     balance = models.DecimalField(
         max_digits=18,
         decimal_places=2,
-        verbose_name="Opening Balance"
+        null=True,
+        blank=True,
+        verbose_name="Eski balans"
     )
     currency = models.CharField(
         max_length=3,
-        choices=Currency.choices,
-        verbose_name="Currency"
+        null=True,
+        blank=True,
+        verbose_name="Eski valyuta"
     )
-    date = models.DateField(
-        verbose_name="Opening Date",
-        help_text="Date when this opening balance is set"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-date', 'cashbox_type']
-        verbose_name = "Cashbox Opening Balance"
-        verbose_name_plural = "Cashbox Opening Balances"
-        unique_together = [['cashbox_type', 'date']]
+        ordering = ['-date', '-created_at']
+        verbose_name = "Kassa ochilish balansi"
+        verbose_name_plural = "Kassa ochilish balanslari"
         indexes = [
             models.Index(fields=['-date']),
-            models.Index(fields=['cashbox_type']),
+            models.Index(fields=['cashbox']),
         ]
 
     def __str__(self) -> str:
-        return f"{self.get_cashbox_type_display()} - {self.balance} {self.currency} ({self.date})"
+        if self.cashbox:
+            return f"{self.cashbox.name} - {self.amount} ({self.date})"
+        return f"Eski: {self.cashbox_type} - {self.balance} {self.currency} ({self.date})"
 
 
 class Payment(models.Model):
@@ -142,7 +306,18 @@ class Payment(models.Model):
     
     rate = models.ForeignKey(CurrencyRate, on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
     method = models.CharField(max_length=20, choices=Method.choices)
-    # Optional company card used for card payments
+    
+    # Cashbox where this payment goes (NEW - replaces card in balance logic)
+    cashbox = models.ForeignKey(
+        Cashbox,
+        on_delete=models.PROTECT,
+        related_name='payments',
+        null=True,
+        blank=True,
+        verbose_name="Kassa"
+    )
+    
+    # Optional company card used for card payments (LEGACY - for backward compatibility)
     card = models.ForeignKey(
         'payments.PaymentCard', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments'
     )

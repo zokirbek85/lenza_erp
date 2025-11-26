@@ -328,57 +328,169 @@ class CashboxOpeningBalanceViewSet(viewsets.ModelViewSet):
 
 class CashboxSummaryView(APIView):
     """
-    Get cashbox summary with opening balances and current totals
-    Calculates total balance in USD and UZS
+    Get cashbox summary with opening balances, incomes, expenses, and current balance
+    Uses new Cashbox model with calculate_balance() method
+    Returns separate balances for each currency (no conversion)
     """
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
-        from decimal import Decimal
-        from payments.utils import rate_on
+        from payments.models import Cashbox
+        from payments.serializers import CashboxSummarySerializer
 
-        # Get today's exchange rate
-        today = timezone.now().date()
-        try:
-            rate = rate_on(today)
-            usd_rate = rate.usd_to_uzs if rate else Decimal('12500')
-        except Exception:
-            usd_rate = Decimal('12500')
+        # Get all cashboxes (cards and cash in UZS/USD)
+        cashboxes = Cashbox.objects.all().order_by('cashbox_type', 'name')
 
-        # Get latest opening balances for each cashbox type
-        card_balance = CashboxOpeningBalance.objects.filter(
-            cashbox_type=CashboxOpeningBalance.CashboxType.CARD
-        ).order_by('-date').first()
-
-        cash_uzs_balance = CashboxOpeningBalance.objects.filter(
-            cashbox_type=CashboxOpeningBalance.CashboxType.CASH_UZS
-        ).order_by('-date').first()
-
-        cash_usd_balance = CashboxOpeningBalance.objects.filter(
-            cashbox_type=CashboxOpeningBalance.CashboxType.CASH_USD
-        ).order_by('-date').first()
-
-        # Extract balance values
-        card_uzs = card_balance.balance if card_balance else Decimal('0')
-        cash_uzs = cash_uzs_balance.balance if cash_uzs_balance else Decimal('0')
-        cash_usd = cash_usd_balance.balance if cash_usd_balance else Decimal('0')
-
-        # Calculate total in UZS
-        total_uzs = card_uzs + cash_uzs + (cash_usd * usd_rate)
-
-        # Calculate total in USD
-        total_usd = (card_uzs + cash_uzs) / usd_rate + cash_usd
+        # Serialize each cashbox with balance calculation
+        data = CashboxSummarySerializer(cashboxes, many=True).data
 
         return Response({
-            'card_uzs': float(card_uzs),
-            'cash_uzs': float(cash_uzs),
-            'cash_usd': float(cash_usd),
-            'usd_rate': float(usd_rate),
-            'total_usd': float(total_usd),
-            'total_uzs': float(total_uzs),
-            'opening_balances': {
-                'card': CashboxOpeningBalanceSerializer(card_balance).data if card_balance else None,
-                'cash_uzs': CashboxOpeningBalanceSerializer(cash_uzs_balance).data if cash_uzs_balance else None,
-                'cash_usd': CashboxOpeningBalanceSerializer(cash_usd_balance).data if cash_usd_balance else None,
-            }
+            'cashboxes': data,
+            'timestamp': timezone.now().isoformat()
         })
+
+
+class CashboxHistoryView(APIView):
+    """
+    Get cashbox balance history over time for charts
+    Returns daily balance data for specified date range and cashbox
+    """
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        from datetime import timedelta
+        from decimal import Decimal
+        from payments.models import Cashbox
+
+        # Get query parameters
+        cashbox_id = request.query_params.get('cashbox_id')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        # Default to last 30 days if not specified
+        if not end_date:
+            end_date = timezone.now().date()
+        else:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        if not start_date:
+            start_date = end_date - timedelta(days=30)
+        else:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+        # Get cashbox
+        if not cashbox_id:
+            return Response({'error': 'cashbox_id is required'}, status=400)
+
+        try:
+            cashbox = Cashbox.objects.get(id=cashbox_id)
+        except Cashbox.DoesNotExist:
+            return Response({'error': 'Cashbox not found'}, status=404)
+
+        # Generate daily balance history
+        history = []
+        current_date = start_date
+        while current_date <= end_date:
+            balance = cashbox.calculate_balance(up_to_date=current_date)
+            history.append({
+                'date': current_date.isoformat(),
+                'balance': float(balance)
+            })
+            current_date += timedelta(days=1)
+
+        return Response({
+            'cashbox_id': cashbox.id,
+            'cashbox_name': cashbox.name,
+            'cashbox_type': cashbox.cashbox_type,
+            'currency': cashbox.currency,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'history': history
+        })
+
+
+class CashboxViewSet(viewsets.ModelViewSet):
+    """
+    CRUD operations for Cashbox (cards and cash in UZS/USD)
+    Permissions: Admin/Accountant/Owner can manage
+    """
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    ordering = ['cashbox_type', 'name']
+    
+    def get_queryset(self):
+        """Filter by cashbox type if specified"""
+        from payments.models import Cashbox
+        queryset = Cashbox.objects.all()
+        
+        cashbox_type = self.request.query_params.get('cashbox_type')
+        if cashbox_type:
+            queryset = queryset.filter(cashbox_type=cashbox_type)
+        
+        return queryset.order_by('cashbox_type', 'name')
+    
+    def get_serializer_class(self):
+        """Use CashboxSerializer"""
+        from payments.serializers import CashboxSerializer
+        return CashboxSerializer
+
+
+class CashboxSummaryExportExcelView(APIView, ExportMixin):
+    """
+    Export cashbox summary to Excel
+    Includes all cashboxes with opening balance, income, expense, and current balance
+    """
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        from payments.models import Cashbox
+        
+        cashboxes = Cashbox.objects.all().order_by('cashbox_type', 'name')
+        
+        rows = []
+        for cashbox in cashboxes:
+            balance_data = cashbox.calculate_balance(return_detailed=True)
+            rows.append({
+                'Kassa turi': cashbox.get_cashbox_type_display(),
+                'Kassa nomi': cashbox.name,
+                'Valyuta': cashbox.currency,
+                'Boshlang\'ich balans': float(balance_data['opening_balance']),
+                'Kirimlar': float(balance_data['income_sum']),
+                'Chiqimlar': float(balance_data['expense_sum']),
+                'Joriy balans': float(balance_data['balance']),
+            })
+        
+        return self.render_xlsx(rows, 'kassa_balans')
+
+
+class CashboxSummaryExportPDFView(APIView, BaseReportMixin):
+    """
+    Export cashbox summary to PDF
+    Includes all cashboxes with opening balance, income, expense, and current balance
+    """
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        from payments.models import Cashbox
+        
+        cashboxes = Cashbox.objects.all().order_by('cashbox_type', 'name')
+        
+        data = []
+        for cashbox in cashboxes:
+            balance_data = cashbox.calculate_balance(return_detailed=True)
+            data.append({
+                'cashbox_type': cashbox.get_cashbox_type_display(),
+                'name': cashbox.name,
+                'currency': cashbox.currency,
+                'opening_balance': balance_data['opening_balance'],
+                'income_sum': balance_data['income_sum'],
+                'expense_sum': balance_data['expense_sum'],
+                'balance': balance_data['balance'],
+            })
+        
+        context = {
+            'title': 'Kassa balansi',
+            'cashboxes': data,
+            'generated_at': timezone.now(),
+        }
+        
+        return self.render_pdf('reports/cashbox_summary.html', context, 'kassa_balans')

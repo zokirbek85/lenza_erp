@@ -20,6 +20,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
     
     # Read-only fields (ma'lumot ko'rsatish uchun)
     type_name = serializers.CharField(source='type.name', read_only=True)
+    cashbox_name = serializers.CharField(source='cashbox.name', read_only=True, allow_null=True)
+    cashbox_currency = serializers.CharField(source='cashbox.currency', read_only=True, allow_null=True)
     card_name = serializers.CharField(source='card.name', read_only=True, allow_null=True)
     created_by_name = serializers.CharField(source='created_by.full_name', read_only=True, allow_null=True)
     approved_by_name = serializers.CharField(source='approved_by.full_name', read_only=True, allow_null=True)
@@ -33,6 +35,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
             'date',
             'type',
             'type_name',
+            'cashbox',
+            'cashbox_name',
+            'cashbox_currency',
             'method',
             'method_display',
             'card',
@@ -64,19 +69,32 @@ class ExpenseSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Cross-field validation"""
+        cashbox = data.get('cashbox')
+        currency = data.get('currency')
         method = data.get('method')
         card = data.get('card')
         
-        # Agar karta tanlansa, method='card' bo'lishi kerak
+        # NEW: Cashbox must be provided
+        if not cashbox:
+            raise serializers.ValidationError({
+                'cashbox': "Kassa tanlanishi kerak"
+            })
+        
+        # NEW: Currency must match cashbox currency
+        if cashbox and currency and currency != cashbox.currency:
+            raise serializers.ValidationError({
+                'currency': f"Valyuta ({currency}) kassaning valyutasi ({cashbox.currency}) bilan mos emas"
+            })
+        
+        # LEGACY: Card validation (backward compatibility)
         if card and method != Expense.METHOD_CARD:
             raise serializers.ValidationError({
                 'method': "Karta tanlangan bo'lsa, to'lov usuli 'Karta' bo'lishi kerak"
             })
         
-        # Agar method='card' bo'lsa, karta tanlanishi kerak
-        if method == Expense.METHOD_CARD and not card:
+        if method == Expense.METHOD_CARD and not card and not cashbox:
             raise serializers.ValidationError({
-                'card': "To'lov usuli 'Karta' bo'lsa, karta tanlanishi kerak"
+                'card': "To'lov usuli 'Karta' bo'lsa, karta yoki kassa tanlanishi kerak"
             })
         
         return data

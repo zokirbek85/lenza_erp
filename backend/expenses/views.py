@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from core.permissions import IsAdmin, IsAccountant, IsOwner
 from payments.models import CurrencyRate
 from .models import Expense, ExpenseType
+from .permissions import IsAdminOrAccountantForExpenses
 from .serializers import (
     ExpenseSerializer,
     ExpenseTypeSerializer,
@@ -49,25 +50,25 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     - Trend analysis
     - Distribution by type
     - Approval workflow
+    
+    Permissions:
+    - Admin/Accountant/Owner: Full access (create, update, delete, approve)
+    - Manager: Read-only access
+    - Sales: No access to expenses
     """
     queryset = Expense.objects.select_related(
         'type',
         'card',
+        'cashbox',
         'created_by',
         'approved_by'
     ).all()
     serializer_class = ExpenseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrAccountantForExpenses]
     filterset_fields = ['status', 'method', 'currency', 'type']
     search_fields = ['description', 'type__name']
     ordering_fields = ['date', 'amount', 'created_at']
     ordering = ['-date', '-created_at']
-    
-    def get_permissions(self):
-        """Ruxsatlar - admin va accountant yozish mumkin"""
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'approve']:
-            return [(IsAdmin | IsAccountant)()]
-        return [IsAuthenticated()]
     
     def get_queryset(self):
         """Filtering - date range, type, method, card, status"""
