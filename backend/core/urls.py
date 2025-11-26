@@ -24,6 +24,7 @@ from catalog.views import (
     PriceListPDFView,
     PriceListExcelView,
 )
+from catalog.views_list_all import DealerListAllView
 from core.views import (
     AuditLogViewSet,
     CompanyInfoViewSet,
@@ -195,6 +196,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     # QR verification endpoint
     path('verify/<str:doc_type>/<slug:doc_id>/', verify_document, name='verify-document'),
+    path('api/dealers/list-all/', DealerListAllView.as_view(), name='dealer-list-all'),
 ]
 
 if settings.DEBUG:

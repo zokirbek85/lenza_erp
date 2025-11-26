@@ -75,8 +75,9 @@ const ReconciliationPage = () => {
 
   const loadDealers = useCallback(async () => {
     try {
-      const response = await http.get('/dealers/', { params: { page_size: 500 } });
-      setDealers(toArray<DealerOption>(response.data));
+      const response = await http.get('/dealers/list-all/');
+      const dealers = Array.isArray(response.data) ? response.data : [];
+      setDealers(dealers);
     } catch (error) {
       console.error(error);
       toast.error(t('reconciliation.toast.dealersError'));
