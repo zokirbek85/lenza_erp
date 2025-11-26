@@ -65,6 +65,53 @@ class CurrencyRate(models.Model):
         return f"{self.rate_date} -> {self.usd_to_uzs}"
 
 
+class CashboxOpeningBalance(models.Model):
+    """Opening balance for different cashbox types"""
+
+    class CashboxType(models.TextChoices):
+        CARD = 'CARD', 'Card'
+        CASH_UZS = 'CASH_UZS', 'Cash UZS'
+        CASH_USD = 'CASH_USD', 'Cash USD'
+
+    class Currency(models.TextChoices):
+        USD = 'USD', 'USD'
+        UZS = 'UZS', 'UZS'
+
+    cashbox_type = models.CharField(
+        max_length=20,
+        choices=CashboxType.choices,
+        verbose_name="Cashbox Type"
+    )
+    balance = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        verbose_name="Opening Balance"
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=Currency.choices,
+        verbose_name="Currency"
+    )
+    date = models.DateField(
+        verbose_name="Opening Date",
+        help_text="Date when this opening balance is set"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', 'cashbox_type']
+        verbose_name = "Cashbox Opening Balance"
+        verbose_name_plural = "Cashbox Opening Balances"
+        unique_together = [['cashbox_type', 'date']]
+        indexes = [
+            models.Index(fields=['-date']),
+            models.Index(fields=['cashbox_type']),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_cashbox_type_display()} - {self.balance} {self.currency} ({self.date})"
+
+
 class Payment(models.Model):
     class Method(models.TextChoices):
         CASH = 'cash', 'Cash'

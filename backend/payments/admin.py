@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CurrencyRate, Payment, PaymentCard
+from .models import CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
 
 
 @admin.register(CurrencyRate)
@@ -24,3 +24,12 @@ class PaymentCardAdmin(admin.ModelAdmin):
     list_display = ('name', 'masked_number', 'holder_name', 'is_active', 'created_at')
     search_fields = ('name', 'number', 'holder_name')
     list_filter = ('is_active',)
+
+
+@admin.register(CashboxOpeningBalance)
+class CashboxOpeningBalanceAdmin(admin.ModelAdmin):
+    list_display = ('cashbox_type', 'balance', 'currency', 'date', 'created_at')
+    list_filter = ('cashbox_type', 'currency', 'date')
+    search_fields = ('cashbox_type',)
+    ordering = ('-date', 'cashbox_type')
+    date_hierarchy = 'date'

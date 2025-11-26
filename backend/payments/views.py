@@ -15,8 +15,8 @@ from core.utils.exporter import export_payments_to_excel
 from core.mixins.report_mixin import BaseReportMixin
 from core.mixins.export_mixins import ExportMixin
 
-from .models import CurrencyRate, Payment, PaymentCard
-from .serializers import CurrencyRateSerializer, PaymentSerializer, PaymentCardSerializer
+from .models import CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
+from .serializers import CashboxOpeningBalanceSerializer, CurrencyRateSerializer, PaymentSerializer, PaymentCardSerializer
 
 
 class CurrencyRateViewSet(viewsets.ModelViewSet):
@@ -314,3 +314,71 @@ class PaymentExportExcelView(APIView, ExportMixin):
             'Izoh': (p.note or ''),
         } for p in qs]
         return self.render_xlsx(rows, 'payments')
+
+
+class CashboxOpeningBalanceViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing cashbox opening balances"""
+    queryset = CashboxOpeningBalance.objects.all()
+    serializer_class = CashboxOpeningBalanceSerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_fields = ('cashbox_type', 'currency', 'date')
+    ordering = ('-date', 'cashbox_type')
+
+
+class CashboxSummaryView(APIView):
+    """
+    Get cashbox summary with opening balances and current totals
+    Calculates total balance in USD and UZS
+    """
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        from decimal import Decimal
+        from payments.utils import rate_on
+
+        # Get today's exchange rate
+        today = timezone.now().date()
+        try:
+            rate = rate_on(today)
+            usd_rate = rate.usd_to_uzs if rate else Decimal('12500')
+        except Exception:
+            usd_rate = Decimal('12500')
+
+        # Get latest opening balances for each cashbox type
+        card_balance = CashboxOpeningBalance.objects.filter(
+            cashbox_type=CashboxOpeningBalance.CashboxType.CARD
+        ).order_by('-date').first()
+
+        cash_uzs_balance = CashboxOpeningBalance.objects.filter(
+            cashbox_type=CashboxOpeningBalance.CashboxType.CASH_UZS
+        ).order_by('-date').first()
+
+        cash_usd_balance = CashboxOpeningBalance.objects.filter(
+            cashbox_type=CashboxOpeningBalance.CashboxType.CASH_USD
+        ).order_by('-date').first()
+
+        # Extract balance values
+        card_uzs = card_balance.balance if card_balance else Decimal('0')
+        cash_uzs = cash_uzs_balance.balance if cash_uzs_balance else Decimal('0')
+        cash_usd = cash_usd_balance.balance if cash_usd_balance else Decimal('0')
+
+        # Calculate total in UZS
+        total_uzs = card_uzs + cash_uzs + (cash_usd * usd_rate)
+
+        # Calculate total in USD
+        total_usd = (card_uzs + cash_uzs) / usd_rate + cash_usd
+
+        return Response({
+            'card_uzs': float(card_uzs),
+            'cash_uzs': float(cash_uzs),
+            'cash_usd': float(cash_usd),
+            'usd_rate': float(usd_rate),
+            'total_usd': float(total_usd),
+            'total_uzs': float(total_uzs),
+            'opening_balances': {
+                'card': CashboxOpeningBalanceSerializer(card_balance).data if card_balance else None,
+                'cash_uzs': CashboxOpeningBalanceSerializer(cash_uzs_balance).data if cash_uzs_balance else None,
+                'cash_usd': CashboxOpeningBalanceSerializer(cash_usd_balance).data if cash_usd_balance else None,
+            }
+        })

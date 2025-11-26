@@ -67,6 +67,8 @@ from notifications.views import NotificationViewSet
 from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet
 from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from payments.views import (
+    CashboxOpeningBalanceViewSet,
+    CashboxSummaryView,
     CurrencyRateHistoryView,
     CurrencyRateViewSet,
     PaymentCardViewSet,
@@ -105,6 +107,7 @@ router.register('expenses', ExpenseViewSet, basename='expense')
 router.register('expense-types', ExpenseTypeViewSet, basename='expense-type')
 # Ledger - dynamic API (no model, no ViewSet)
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
+router.register('cashbox-opening-balances', CashboxOpeningBalanceViewSet, basename='cashbox-opening-balance')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
@@ -120,6 +123,8 @@ urlpatterns = [
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
     path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
+    # Cashbox summary
+    path('api/cashbox/summary/', CashboxSummaryView.as_view(), name='cashbox-summary'),
     path('api/expenses/export/pdf/', ExpenseListPDFExportView.as_view(), name='expense-export-pdf'),
     path('api/expenses/export/pdf', ExpenseListPDFExportView.as_view()),
     path('api/expenses/export/excel/', ExpenseListExcelExportView.as_view(), name='expense-export-excel'),

@@ -1,6 +1,16 @@
 from rest_framework import serializers
 
-from .models import CurrencyRate, Payment, PaymentCard
+from .models import CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
+
+
+class CashboxOpeningBalanceSerializer(serializers.ModelSerializer):
+    """Serializer for cashbox opening balances"""
+    cashbox_type_display = serializers.CharField(source='get_cashbox_type_display', read_only=True)
+
+    class Meta:
+        model = CashboxOpeningBalance
+        fields = ('id', 'cashbox_type', 'cashbox_type_display', 'balance', 'currency', 'date', 'created_at')
+        read_only_fields = ('created_at',)
 
 
 class CurrencyRateSerializer(serializers.ModelSerializer):

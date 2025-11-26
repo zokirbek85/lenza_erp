@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(python manage.py makemigrations:*)",
+      "Bash(.venv/Scripts/python.exe manage.py:*)"
     ],
     "deny": [],
     "ask": []
