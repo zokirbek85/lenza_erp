@@ -622,6 +622,7 @@
       "status": "Status",
       "statusRequired": "Status is required",
       "itemsRequired": "Add at least one item",
+      "noDealersFound": "No dealers found",
       "currentDebt": "Current debt",
       "total": "Total amount",
       "reason": "Return reason",

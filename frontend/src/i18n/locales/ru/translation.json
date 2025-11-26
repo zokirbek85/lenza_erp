@@ -622,7 +622,9 @@
       "category": "Категория",
       "categoryRequired": "Категория обязательна",
       "selectCategory": "Выберите категорию",
+      "status": "Состояние",
       "itemsRequired": "Добавьте хотя бы один товар",
+      "noDealersFound": "Дилеры не найдены",
       "currentDebt": "Текущий долг",
       "total": "Общая сумма",
       "statusRequired": "Статус обязателен"

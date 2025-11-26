@@ -962,7 +962,10 @@
       "category": "Kategoriya",
       "categoryRequired": "Kategoriya tanlanishi shart",
       "selectCategory": "Kategoriya tanlang",
+      "status": "Holat",
+      "statusRequired": "Holat tanlanishi shart",
       "itemsRequired": "Kamida bitta mahsulot qo'shing",
+      "noDealersFound": "Dilerlar topilmadi",
       "currentDebt": "Joriy qarz",
       "total": "Jami summa"
     },
