@@ -7,7 +7,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { fetchBrands, fetchCategories, type BrandOption, type CategoryOption } from '../../api/catalogApi';
 import { fetchProductsByCategory, type Product } from '../../api/productsApi';
 import { createReturn, type ReturnPayload } from '../../api/returnsApi';
-import http from '../../app/http';
+import { fetchAllDealers } from '../../utils/api';
 
 type DealerOption = {
   id: number;
@@ -52,11 +52,11 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   useEffect(() => {
     const loadBasics = async () => {
       try {
-        const [dealerRes, brandList] = await Promise.all([
-          http.get('/dealers/', { params: { limit: 'all' } }),
+        const [dealerList, brandList] = await Promise.all([
+          fetchAllDealers<DealerOption>(),
           fetchBrands(),
         ]);
-        setDealers(dealerRes.data?.results ?? dealerRes.data ?? []);
+        setDealers(dealerList);
         setBrands(brandList);
       } catch (error) {
         console.error(error);
@@ -350,4 +350,3 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
 };
 
 export default ReturnCreateModal;
-
