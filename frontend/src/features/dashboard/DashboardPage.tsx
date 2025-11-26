@@ -744,7 +744,7 @@ const DashboardPage = () => {
             className="shadow-sm hover:shadow-md transition-shadow"
           >
             <DashboardTable 
-              data={dashboardData?.overdue_receivables || []} 
+              data={Array.isArray(dashboardData?.overdue_receivables) ? dashboardData.overdue_receivables : []} 
               loading={loading}
             />
           </Card>
