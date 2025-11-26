@@ -99,6 +99,9 @@ if USE_POSTGRES:
             'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'maxdoors123'),
             'HOST': os.getenv('POSTGRES_HOST', 'db'),
             'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'OPTIONS': {
+                'options': '-c client_encoding=UTF8'
+            }
         }
     }
 else:
@@ -159,6 +162,15 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_RENDERER_CLASSES': (
+        'core.renderers.UTF8JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
     ),
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',

@@ -417,7 +417,7 @@ const ReconciliationPage = () => {
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
                       <div className="font-semibold text-slate-900 dark:text-white">{o.order_number}</div>
                       <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {new Date(o.date).toLocaleDateString()} вЂў Jami: {formatCurrency(o.total_amount)}
+                        {new Date(o.date).toLocaleDateString()} • Jami: {formatCurrency(o.total_amount)}
                       </div>
                     </div>
                     <div className="table-wrapper overflow-x-auto">

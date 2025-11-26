@@ -90,7 +90,7 @@ export default function NotificationCenterPage() {
             onChange={(val) => setFilter(val as 'all' | 'unread' | 'read')}
           />
           <div className="text-xs text-slate-500">
-            {t('notifications.stats.total')}: {total} вЂў {t('notifications.stats.unread')}: {items.filter(i => !i.is_read).length}
+            {t('notifications.stats.total')}: {total} • {t('notifications.stats.unread')}: {items.filter(i => !i.is_read).length}
           </div>
         </div>
         <Divider style={{ margin: '8px 0 16px' }} />

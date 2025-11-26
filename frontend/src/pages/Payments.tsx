@@ -674,8 +674,8 @@ const PaymentsPage = () => {
               payments.map((payment) => (
                 <tr key={payment.id}>
                 <td className="px-4 py-3">
-                  <div className="font-semibold text-slate-900 dark:text-white">{payment.dealer?.name ?? 'вЂ”'}</div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{payment.note || 'вЂ”'}</p>
+                  <div className="font-semibold text-slate-900 dark:text-white">{payment.dealer?.name ?? '-'}</div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{payment.note || '—'}</p>
                 </td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(payment.pay_date)}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">

@@ -1008,7 +1008,7 @@ const OrdersPage = () => {
                     onClick={() => toggleOrderDetails(order.id)}
                   >
                     <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{order.display_no}</td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{order.dealer?.name ?? 'вЂ”'}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{order.dealer?.name ?? '—'}</td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
