@@ -53,10 +53,8 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
     const loadBasics = async () => {
       setLoadingBasics(true);
       try {
-        const [dealerList, brandList] = await Promise.all([
-          fetchAllDealers<DealerOption>(),
-          fetchBrands(),
-        ]);
+        const dealerList = await fetchAllDealers<DealerOption>();
+        const brandList = await fetchBrands();
         setDealers(dealerList);
         setBrands(brandList);
       } catch (error) {
@@ -240,7 +238,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             showSearch
             loading={loadingBasics}
             allowClear
-            placeholder={t('returns.form.selectDealer')}
+            placeholder={loadingBasics ? t('common:loading') : t('returns.form.selectDealer')}
             optionFilterProp="label"
             onChange={(value) => {
               setDealerId(value);

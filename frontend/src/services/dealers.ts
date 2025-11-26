@@ -24,5 +24,10 @@ export const fetchAllDealers = async <T = DealerDto>(): Promise<T[]> => {
   }
 
   const fallback = await http.get('/dealers/', { params: { page_size: 1000 } });
-  return toArray<T>(fallback.data);
+  const fallbackList = toArray<T>(fallback.data);
+  if (fallbackList.length) return fallbackList;
+
+  // Final fallback: try unlimited limit param some backends honor
+  const finalTry = await http.get('/dealers/', { params: { limit: 'all' } });
+  return toArray<T>(finalTry.data);
 };
