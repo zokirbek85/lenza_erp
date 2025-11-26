@@ -31,10 +31,6 @@ import Unauthorized from '../pages/Unauthorized';
 import DocumentGeneratorPage from '../pages/marketing/DocumentGenerator';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
-const DashboardEntry = () => {
-  return <DashboardPage />;
-};
-
 const router = createBrowserRouter([
   {
     path: '/',
@@ -49,7 +45,7 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
-            <DashboardEntry />
+            <DashboardPage />
           </ProtectedRoute>
         ),
       },
