@@ -7,11 +7,9 @@ import { PlusOutlined } from '@ant-design/icons';
 import { fetchBrands, fetchCategories, type BrandOption, type CategoryOption } from '../../api/catalogApi';
 import { fetchProductsByCategory, type Product } from '../../api/productsApi';
 import { createReturn, type ReturnPayload } from '../../api/returnsApi';
-import { fetchAllDealers } from '../../utils/api';
+import { fetchAllDealers, type DealerDto } from '../../services/dealers';
 
-type DealerOption = {
-  id: number;
-  name: string;
+type DealerOption = DealerDto & {
   debt?: number;
   balance?: number;
 };
@@ -145,7 +143,8 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   };
 
   const handleSave = async () => {
-    if (!dealerId) {
+    const selectedDealerId = dealerId ?? form.getFieldValue('dealer');
+    if (!selectedDealerId) {
       message.error(t('returns.form.dealerRequired'));
       return;
     }
@@ -156,7 +155,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
     try {
       setSaving(true);
       const payload: ReturnPayload = {
-        dealer: dealerId,
+        dealer: selectedDealerId,
         items: cart.map((item) => ({
           product_id: item.productId,
           quantity: item.quantity,
@@ -232,10 +231,15 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
           rules={[{ required: true, message: t('returns.form.dealerRequired') }]}
         >
           <Select
+            value={dealerId ?? undefined}
             showSearch
+            allowClear
             placeholder={t('returns.form.selectDealer')}
             optionFilterProp="label"
-            onChange={(value) => setDealerId(value)}
+            onChange={(value) => {
+              setDealerId(value);
+              form.setFieldsValue({ dealer: value });
+            }}
             options={dealers.map((dealer) => ({
               label: dealer.name,
               value: dealer.id,
