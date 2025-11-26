@@ -11,10 +11,10 @@ export type DealerDto = {
  * Fetch all dealers without pagination for dropdowns.
  * Falls back to the standard paginated endpoint if list-all is unavailable.
  */
-export const fetchAllDealers = async (): Promise<DealerDto[]> => {
+export const fetchAllDealers = async <T = DealerDto>(): Promise<T[]> => {
   try {
     const res = await http.get('/dealers/list-all/');
-    const normalized = toArray<DealerDto>(res.data);
+    const normalized = toArray<T>(res.data);
     if (normalized.length) return normalized;
   } catch (error: any) {
     // Swallow 404 to try fallback; rethrow other errors.
@@ -24,5 +24,5 @@ export const fetchAllDealers = async (): Promise<DealerDto[]> => {
   }
 
   const fallback = await http.get('/dealers/', { params: { page_size: 1000 } });
-  return toArray<DealerDto>(fallback.data);
+  return toArray<T>(fallback.data);
 };
