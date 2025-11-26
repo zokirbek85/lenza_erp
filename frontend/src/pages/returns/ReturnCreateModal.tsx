@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -41,31 +41,35 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingBasics, setLoadingBasics] = useState(false);
+  const [basicsError, setBasicsError] = useState<string | null>(null);
   const [dealerId, setDealerId] = useState<number | null>(null);
   const [brandId, setBrandId] = useState<number | null>(null);
   const [categoryId, setCategoryId] = useState<number | null>(null);
 
+  const loadBasics = useCallback(async () => {
+    setLoadingBasics(true);
+    setBasicsError(null);
+    try {
+      const dealerList = await fetchAllDealers<DealerOption>();
+      const brandList = await fetchBrands();
+      setDealers(dealerList);
+      setBrands(brandList);
+    } catch (error) {
+      console.error(error);
+      setBasicsError(t('common:messages.error'));
+      message.error(t('common:messages.error'));
+    } finally {
+      setLoadingBasics(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     if (!open) return;
-    const loadBasics = async () => {
-      setLoadingBasics(true);
-      try {
-        const dealerList = await fetchAllDealers<DealerOption>();
-        const brandList = await fetchBrands();
-        setDealers(dealerList);
-        setBrands(brandList);
-      } catch (error) {
-        console.error(error);
-        message.error(t('common:messages.error'));
-      } finally {
-        setLoadingBasics(false);
-      }
-    };
     loadBasics();
-  }, [open, t]);
+  }, [open, loadBasics]);
 
   useEffect(() => {
     if (!brandId) {
@@ -86,14 +90,14 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
       setProducts([]);
       return;
     }
-    setLoading(true);
+    setProductsLoading(true);
     fetchProductsByCategory(categoryId)
       .then((res) => setProducts(res))
       .catch((error) => {
         console.error(error);
         message.error(t('common:messages.error'));
       })
-      .finally(() => setLoading(false));
+      .finally(() => setProductsLoading(false));
   }, [categoryId, t]);
 
   const resetItemForm = () => {
@@ -237,9 +241,11 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             value={dealerId ?? undefined}
             showSearch
             loading={loadingBasics}
+            disabled={loadingBasics}
             allowClear
             placeholder={loadingBasics ? t('common:loading') : t('returns.form.selectDealer')}
             optionFilterProp="label"
+            notFoundContent={loadingBasics ? t('common:loading') : basicsError || t('common:messages.noData')}
             onChange={(value) => {
               setDealerId(value);
               form.setFieldsValue({ dealer: value });
@@ -251,6 +257,22 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             }))}
           />
         </Form.Item>
+        {!loadingBasics && basicsError && (
+          <div className="mb-2 text-sm text-red-600">
+            {basicsError}{' '}
+            <Button type="link" size="small" onClick={loadBasics}>
+              {t('common:actions.refresh')}
+            </Button>
+          </div>
+        )}
+        {!loadingBasics && !basicsError && dealers.length === 0 && (
+          <div className="mb-2 text-sm text-slate-600">
+            {t('common:messages.noData')}{' '}
+            <Button type="link" size="small" onClick={loadBasics}>
+              {t('common:actions.refresh')}
+            </Button>
+          </div>
+        )}
         {dealerDebt !== null && (
           <div className="mb-4 text-sm text-slate-600">
             {t('returns.form.currentDebt')}: {dealerDebt}
@@ -297,7 +319,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
           >
             <Select
               placeholder={t('returns.form.selectProduct')}
-              loading={loading}
+              loading={productsLoading}
               options={products.map((product) => ({
                 label: product.name,
                 value: product.id,
