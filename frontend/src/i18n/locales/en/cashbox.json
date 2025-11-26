@@ -1,0 +1,32 @@
+{
+  "cashboxType": "Cashbox Type",
+  "balance": "Balance",
+  "currency": "Currency",
+  "openingDate": "Opening Date",
+  "createdAt": "Created At",
+  "selectCashboxType": "Select cashbox type",
+  "selectCurrency": "Select currency",
+  "selectDate": "Select date",
+  "enterBalance": "Enter balance amount",
+  "addOpeningBalance": "Add Opening Balance",
+  "editOpeningBalance": "Edit Opening Balance",
+  "managementTitle": "Cashbox Opening Balances Management",
+  "managementSubtitle": "Manage opening balances for all cashbox types",
+  "totalBalances": "Total: {{count}} records",
+  "confirmDelete": "Delete Opening Balance?",
+  "confirmDeleteDescription": "This action cannot be undone",
+  "validation": {
+    "cashboxTypeRequired": "Please select cashbox type",
+    "balanceRequired": "Please enter balance amount",
+    "balancePositive": "Balance must be positive",
+    "currencyRequired": "Please select currency",
+    "dateRequired": "Please select opening date"
+  },
+  "messages": {
+    "created": "Opening balance created successfully",
+    "updated": "Opening balance updated successfully",
+    "deleted": "Opening balance deleted successfully",
+    "loadError": "Failed to load opening balances",
+    "deleteError": "Failed to delete opening balance"
+  }
+}

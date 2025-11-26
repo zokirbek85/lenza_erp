@@ -10,16 +10,19 @@ import {
   Space,
   message,
   Typography,
+  Collapse,
 } from 'antd';
 import { useIsMobile } from '../hooks/useIsMobile';
 import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
+import CashboxManagementSection from '../components/CashboxManagementSection';
 import {
   DollarOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
   WalletOutlined,
   ReloadOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import {
@@ -376,6 +379,27 @@ export default function LedgerPage() {
           </Row>
         </Card>
       )}
+
+      {/* CASHBOX MANAGEMENT SECTION */}
+      <Collapse
+        items={[
+          {
+            key: 'management',
+            label: (
+              <span>
+                <SettingOutlined style={{ marginRight: 8 }} />
+                <span style={{ fontWeight: 600 }}>Kassa balanslarini boshqarish</span>
+                <span style={{ marginLeft: 8, fontSize: 12, color: '#64748b' }}>
+                  (Opening balances ni qo'shish, o'zgartirish va o'chirish)
+                </span>
+              </span>
+            ),
+            children: <CashboxManagementSection onUpdate={loadAllData} />,
+          },
+        ]}
+        defaultActiveKey={[]}
+        style={{ marginBottom: 24 }}
+      />
 
       {/* STATISTICS CARDS */}
       <Row gutter={[16, 16]}>

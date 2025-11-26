@@ -1,0 +1,32 @@
+{
+  "cashboxType": "Тип кассы",
+  "balance": "Баланс",
+  "currency": "Валюта",
+  "openingDate": "Дата открытия",
+  "createdAt": "Создано",
+  "selectCashboxType": "Выберите тип кассы",
+  "selectCurrency": "Выберите валюту",
+  "selectDate": "Выберите дату",
+  "enterBalance": "Введите сумму баланса",
+  "addOpeningBalance": "Добавить начальный баланс",
+  "editOpeningBalance": "Редактировать начальный баланс",
+  "managementTitle": "Управление начальными балансами касс",
+  "managementSubtitle": "Управление начальными балансами для всех типов касс",
+  "totalBalances": "Всего: {{count}} записей",
+  "confirmDelete": "Удалить начальный баланс?",
+  "confirmDeleteDescription": "Это действие нельзя отменить",
+  "validation": {
+    "cashboxTypeRequired": "Выберите тип кассы",
+    "balanceRequired": "Введите сумму баланса",
+    "balancePositive": "Баланс должен быть положительным",
+    "currencyRequired": "Выберите валюту",
+    "dateRequired": "Выберите дату открытия"
+  },
+  "messages": {
+    "created": "Начальный баланс успешно создан",
+    "updated": "Начальный баланс успешно обновлен",
+    "deleted": "Начальный баланс успешно удален",
+    "loadError": "Ошибка загрузки начальных балансов",
+    "deleteError": "Ошибка удаления начального баланса"
+  }
+}

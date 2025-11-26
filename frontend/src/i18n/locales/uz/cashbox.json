@@ -1,0 +1,32 @@
+{
+  "cashboxType": "Kassa turi",
+  "balance": "Balans",
+  "currency": "Valyuta",
+  "openingDate": "Ochilish sanasi",
+  "createdAt": "Yaratilgan",
+  "selectCashboxType": "Kassa turini tanlang",
+  "selectCurrency": "Valyutani tanlang",
+  "selectDate": "Sanani tanlang",
+  "enterBalance": "Balans summasini kiriting",
+  "addOpeningBalance": "Opening Balance qo'shish",
+  "editOpeningBalance": "Opening Balance ni tahrirlash",
+  "managementTitle": "Kassa Opening Balances Boshqaruvi",
+  "managementSubtitle": "Barcha kassa turlari uchun opening balances ni boshqarish",
+  "totalBalances": "Jami: {{count}} ta yozuv",
+  "confirmDelete": "Opening Balance ni o'chirishni tasdiqlaysizmi?",
+  "confirmDeleteDescription": "Bu amalni bekor qilib bo'lmaydi",
+  "validation": {
+    "cashboxTypeRequired": "Kassa turini tanlang",
+    "balanceRequired": "Balans summasini kiriting",
+    "balancePositive": "Balans musbat bo'lishi kerak",
+    "currencyRequired": "Valyutani tanlang",
+    "dateRequired": "Ochilish sanasini tanlang"
+  },
+  "messages": {
+    "created": "Opening balance muvaffaqiyatli yaratildi",
+    "updated": "Opening balance muvaffaqiyatli yangilandi",
+    "deleted": "Opening balance muvaffaqiyatli o'chirildi",
+    "loadError": "Opening balances ni yuklashda xatolik",
+    "deleteError": "Opening balance ni o'chirishda xatolik"
+  }
+}
