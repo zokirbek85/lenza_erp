@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 
 import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
+import { fetchAllDealers } from '../utils/api';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -118,11 +119,10 @@ const PaymentsPage = () => {
 
   useEffect(() => {
     const loadRefs = async () => {
-      const [dealersRes, ratesRes] = await Promise.all([
-        http.get('/dealers/list-all/'),
+      const [dealers, ratesRes] = await Promise.all([
+        fetchAllDealers(),
         http.get('/currency-rates/')
       ]);
-      const dealers = Array.isArray(dealersRes.data) ? dealersRes.data : [];
       setDealers(dealers);
       setRates(toArray<CurrencyRate>(ratesRes.data));
     };

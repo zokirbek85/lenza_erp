@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import http from '../../app/http';
+import { fetchAllDealers } from '../../utils/api';
 import Modal from '../../components/Modal';
 import { downloadFile } from '../../utils/download';
 import { formatCurrency } from '../../utils/formatters';
@@ -74,8 +75,7 @@ const ReconciliationPage = () => {
 
   const loadDealers = useCallback(async () => {
     try {
-      const response = await http.get('/dealers/list-all/');
-      const dealers = Array.isArray(response.data) ? response.data : [];
+      const dealers = await fetchAllDealers();
       setDealers(dealers);
     } catch (error) {
       console.error(error);
