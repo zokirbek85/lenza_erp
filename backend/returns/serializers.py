@@ -10,6 +10,8 @@ from .models import Return, ReturnItem
 
 class ReturnItemSerializer(serializers.ModelSerializer):
     product_id = serializers.IntegerField(write_only=True)
+    brand_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    category_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
     brand_name = serializers.CharField(source='product.brand.name', read_only=True)
     category_name = serializers.CharField(source='product.category.name', read_only=True)
@@ -19,6 +21,8 @@ class ReturnItemSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'product_id',
+            'brand_id',
+            'category_id',
             'product_name',
             'brand_name',
             'category_name',
@@ -70,10 +74,16 @@ class ReturnSerializer(serializers.ModelSerializer):
             product = products[item['product_id']]
             quantity = item.get('quantity')
             status = item.get('status')
+            brand_id = item.get('brand_id')
+            category_id = item.get('category_id')
             if quantity is None or Decimal(quantity) <= 0:
                 raise serializers.ValidationError({f'items[{idx}].quantity': 'Quantity must be greater than zero.'})
             if status not in ReturnItem.Status.values:
                 raise serializers.ValidationError({f'items[{idx}].status': 'Invalid status.'})
+            if brand_id and product.brand_id and brand_id != product.brand_id:
+                raise serializers.ValidationError({f'items[{idx}].brand_id': 'Brand does not match selected product.'})
+            if category_id and product.category_id and category_id != product.category_id:
+                raise serializers.ValidationError({f'items[{idx}].category_id': 'Category does not match selected product.'})
             item['product'] = product
         attrs['items'] = items
         return attrs

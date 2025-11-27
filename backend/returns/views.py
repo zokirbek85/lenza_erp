@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Return
 from .serializers import ReturnSerializer
+from .permissions import IsReturnEditor
 
 
 class ReturnViewSet(viewsets.ModelViewSet):
@@ -12,7 +13,7 @@ class ReturnViewSet(viewsets.ModelViewSet):
         .all()
     )
     serializer_class = ReturnSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & IsReturnEditor]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

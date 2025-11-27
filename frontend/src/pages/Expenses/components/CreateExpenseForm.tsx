@@ -9,14 +9,12 @@ interface CreateExpenseFormProps {
   categories: ExpenseCategory[];
   onSuccess: () => void;
   onCancel: () => void;
-  onCategoriesReload: () => void;
 }
 
 export default function CreateExpenseForm({
   categories,
   onSuccess,
   onCancel,
-  onCategoriesReload,
 }: CreateExpenseFormProps) {
   const { t } = useTranslation();
 

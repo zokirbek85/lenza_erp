@@ -103,7 +103,6 @@ export default function ExpensesPage() {
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [filterCategory, setFilterCategory] = useState<number | undefined>();
-  const [filterCashbox, setFilterCashbox] = useState<number | undefined>();
   const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | undefined>();
 
   const role = useAuthStore((state) => state.role);
@@ -116,7 +115,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     loadData();
-  }, [dateRange, filterCategory, filterCashbox, filterStatus]);
+  }, [dateRange, filterCategory, filterStatus]);
 
   const loadCategories = async () => {
     try {
@@ -136,7 +135,6 @@ export default function ExpensesPage() {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
         date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
         category: filterCategory,
-        cashbox: filterCashbox,
         status: filterStatus,
       };
 
@@ -223,7 +221,6 @@ export default function ExpensesPage() {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
         date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
         category: filterCategory,
-        cashbox: filterCashbox,
         status: filterStatus,
         currency,
       };
@@ -459,7 +456,6 @@ export default function ExpensesPage() {
             categories={categories}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
-            onCategoriesReload={loadCategories}
           />
         )}
 
@@ -544,7 +540,6 @@ export default function ExpensesPage() {
                   categories={categories}
                   onSuccess={handleFormSuccess}
                   onCancel={handleFormCancel}
-                  onCategoriesReload={loadCategories}
                 />
               ) : null,
             },

@@ -3,6 +3,8 @@ import { toArray } from '../utils/api';
 
 export type ReturnItemPayload = {
   product_id: number;
+  brand_id?: number | null;
+  category_id?: number | null;
   quantity: number;
   status: 'healthy' | 'defect';
   comment?: string;

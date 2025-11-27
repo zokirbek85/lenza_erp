@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, Space, Table, Tag } from 'antd';
+import { Button, Card, Collapse, Space, Table, Tag } from 'antd';
 
 import { useAuthStore } from '../auth/useAuthStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
-import ReturnCreateModal from './returns/ReturnCreateModal';
 import { fetchReturns, type ReturnRecord } from '../api/returnsApi';
 import ReturnsMobileCards from './_mobile/ReturnsMobileCards';
 import type { ReturnsMobileHandlers } from './_mobile/ReturnsMobileCards';
+import CreateReturnForm from './returns/components/CreateReturnForm';
 
 const ReturnsPage = () => {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ const ReturnsPage = () => {
   const isSalesManager = role === 'sales';
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const loadReturns = async () => {
     setLoading(true);
@@ -52,11 +52,21 @@ const ReturnsPage = () => {
             <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('returns.title')}</h1>
           </div>
           {!isSalesManager && (
-            <Button type="primary" onClick={() => setCreateOpen(true)}>
+            <Button type="primary" onClick={() => setShowCreateForm((prev) => !prev)}>
               {t('returns.new')}
             </Button>
           )}
         </header>
+
+        {showCreateForm && !isSalesManager && (
+          <CreateReturnForm
+            onCreated={() => {
+              setShowCreateForm(false);
+              loadReturns();
+            }}
+            onCancel={() => setShowCreateForm(false)}
+          />
+        )}
 
         {loading ? (
           <div className="py-12 text-center text-sm text-slate-500">
@@ -69,12 +79,6 @@ const ReturnsPage = () => {
             showPrice={!isWarehouse}
           />
         )}
-
-        <ReturnCreateModal
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          onCreated={() => loadReturns()}
-        />
       </div>
     );
   }
@@ -88,13 +92,31 @@ const ReturnsPage = () => {
           <Button onClick={handleExportPdf}>{t('common:actions.exportPdf')}</Button>
           <Button onClick={handleExportExcel}>{t('common:actions.exportExcel')}</Button>
           {!isSalesManager && (
-            <Button type="primary" onClick={() => setCreateOpen(true)}>
-              {t('returns.new')}
+            <Button type="primary" onClick={() => setShowCreateForm((prev) => !prev)}>
+              {showCreateForm ? t('common:actions.cancel') : t('returns.new')}
             </Button>
           )}
         </Space>
       }
     >
+      {!isSalesManager && (
+        <Collapse
+          className="mb-4"
+          activeKey={showCreateForm ? ['create'] : []}
+          onChange={(keys) => setShowCreateForm(keys.includes('create'))}
+        >
+          <Collapse.Panel header={t('returns.createTitle')} key="create">
+            <CreateReturnForm
+              onCreated={() => {
+                setShowCreateForm(false);
+                loadReturns();
+              }}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          </Collapse.Panel>
+        </Collapse>
+      )}
+
       <Table<ReturnRecord>
         rowKey="id"
         columns={[
@@ -145,17 +167,6 @@ const ReturnsPage = () => {
         loading={loading}
         pagination={{ pageSize: 10 }}
       />
-
-      {!isSalesManager && (
-        <ReturnCreateModal
-          open={createOpen}
-          onClose={() => setCreateOpen(false)}
-          onCreated={() => {
-            setCreateOpen(false);
-            loadReturns();
-          }}
-        />
-      )}
     </Card>
   );
 };
