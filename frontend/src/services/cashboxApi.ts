@@ -47,9 +47,14 @@ export interface CashboxOpeningBalance {
   id: number;
   cashbox: number;
   cashbox_name?: string;
+  cashbox_type?: 'CARD' | 'CASH_UZS' | 'CASH_USD';
+  cashbox_type_display?: string;
   amount: number;
+  balance?: number; // Legacy field
+  currency?: 'USD' | 'UZS';
   date: string;
   created_by?: number;
+  created_by_username?: string;
   created_at: string;
 }
 
@@ -143,4 +148,22 @@ export const exportCashboxPdf = async (): Promise<Blob> => {
     responseType: 'blob',
   });
   return response.data;
+};
+
+/**
+ * Update opening balance
+ */
+export const updateOpeningBalance = async (
+  id: number,
+  data: Partial<CashboxOpeningBalance>
+): Promise<CashboxOpeningBalance> => {
+  const response = await http.patch(`/cashbox-opening-balances/${id}/`, data);
+  return response.data;
+};
+
+/**
+ * Delete opening balance
+ */
+export const deleteOpeningBalance = async (id: number): Promise<void> => {
+  await http.delete(`/cashbox-opening-balances/${id}/`);
 };

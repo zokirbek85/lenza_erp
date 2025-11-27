@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(python manage.py makemigrations:*)",
-      "Bash(.venv/Scripts/python.exe manage.py:*)"
+      "Bash(.venv/Scripts/python.exe manage.py:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

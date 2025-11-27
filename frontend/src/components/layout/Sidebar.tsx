@@ -15,7 +15,6 @@ import {
   ShopOutlined,
   ShoppingOutlined,
   LineChartOutlined,
-  UnorderedListOutlined,
   SettingOutlined,
   WalletOutlined,
   AuditOutlined,
@@ -83,21 +82,15 @@ const BASE_MENU: MenuItem[] = [
       roles: ['admin', 'sales', 'accountant'],
     },
     {
-      path: '/cashbox',
-      label: 'nav.cashbox',
-      icon: <WalletOutlined />,
-      roles: ['admin', 'accountant', 'owner'],
-    },
-    {
       path: '/expenses',
       label: 'nav.expenses',
       icon: <FileTextOutlined />,
       roles: ['admin', 'accountant', 'owner'],
     },
     {
-      path: '/ledger',
-      label: 'nav.ledger',
-      icon: <LineChartOutlined />,
+      path: '/cashbox',
+      label: 'nav.cashbox',
+      icon: <WalletOutlined />,
       roles: ['admin', 'accountant', 'owner'],
     },
     {
@@ -140,18 +133,6 @@ const BASE_MENU: MenuItem[] = [
       path: '/regions',
       label: 'nav.regions',
       icon: <AuditOutlined />,
-      roles: ['admin'],
-    },
-    {
-      path: '/expenses/report',
-      label: 'nav.expenseReport',
-      icon: <LineChartOutlined />,
-      roles: ['admin'],
-    },
-    {
-      path: '/expenses/categories',
-      label: 'nav.expenseCategories',
-      icon: <UnorderedListOutlined />,
       roles: ['admin'],
     },
     {

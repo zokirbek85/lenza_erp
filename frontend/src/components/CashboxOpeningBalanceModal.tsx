@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Form, InputNumber, Select, DatePicker, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import type { CashboxOpeningBalance } from '../api/cashboxApi';
-import { createOpeningBalance, updateOpeningBalance } from '../api/cashboxApi';
+import type { CashboxOpeningBalance, Cashbox } from '../services/cashboxApi';
+import { createOpeningBalance, updateOpeningBalance, fetchCashboxes } from '../services/cashboxApi';
 
 interface CashboxOpeningBalanceModalProps {
   open: boolean;
@@ -20,33 +20,50 @@ const CashboxOpeningBalanceModal = ({
 }: CashboxOpeningBalanceModalProps) => {
   const { t } = useTranslation(['cashbox', 'common']);
   const [form] = Form.useForm();
+  const [cashboxes, setCashboxes] = useState<Cashbox[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const isEditing = !!editingBalance;
 
   useEffect(() => {
+    if (open) {
+      loadCashboxes();
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (open && editingBalance) {
       form.setFieldsValue({
-        cashbox_type: editingBalance.cashbox_type,
-        balance: editingBalance.balance,
-        currency: editingBalance.currency,
+        cashbox: editingBalance.cashbox,
+        amount: editingBalance.amount || editingBalance.balance,
         date: dayjs(editingBalance.date),
       });
     } else if (open) {
       form.resetFields();
       form.setFieldsValue({
         date: dayjs(),
-        currency: 'UZS',
       });
     }
   }, [open, editingBalance, form]);
+
+  const loadCashboxes = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchCashboxes();
+      setCashboxes(data.filter(cb => cb.is_active));
+    } catch (error) {
+      console.error('Failed to load cashboxes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
       const payload = {
-        cashbox_type: values.cashbox_type,
-        balance: values.balance,
-        currency: values.currency,
+        cashbox: values.cashbox,
+        amount: values.amount,
         date: values.date.format('YYYY-MM-DD'),
       };
 
@@ -88,49 +105,37 @@ const CashboxOpeningBalanceModal = ({
         autoComplete="off"
       >
         <Form.Item
-          name="cashbox_type"
-          label={t('cashbox.cashboxType')}
-          rules={[{ required: true, message: t('cashbox.validation.cashboxTypeRequired') }]}
+          name="cashbox"
+          label={t('cashbox.cashbox')}
+          rules={[{ required: true, message: t('cashbox.validation.cashboxRequired') }]}
         >
           <Select
-            placeholder={t('cashbox.selectCashboxType')}
+            placeholder={t('cashbox.selectCashbox')}
             disabled={isEditing}
-            options={[
-              { value: 'CARD', label: 'Karta (Card)' },
-              { value: 'CASH_UZS', label: 'Naqd pul UZS (Cash UZS)' },
-              { value: 'CASH_USD', label: 'Naqd pul USD (Cash USD)' },
-            ]}
+            loading={loading}
+            showSearch
+            optionFilterProp="label"
+            options={cashboxes.map(cb => ({
+              value: cb.id,
+              label: `${cb.name} (${cb.currency})`,
+            }))}
           />
         </Form.Item>
 
         <Form.Item
-          name="balance"
-          label={t('cashbox.balance')}
+          name="amount"
+          label={t('cashbox.amount')}
           rules={[
-            { required: true, message: t('cashbox.validation.balanceRequired') },
-            { type: 'number', min: 0, message: t('cashbox.validation.balancePositive') },
+            { required: true, message: t('cashbox.validation.amountRequired') },
+            { type: 'number', min: 0, message: t('cashbox.validation.amountPositive') },
           ]}
         >
           <InputNumber
             style={{ width: '100%' }}
-            placeholder={t('cashbox.enterBalance')}
+            placeholder={t('cashbox.enterAmount')}
             min={0}
             step={0.01}
             precision={2}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="currency"
-          label={t('cashbox.currency')}
-          rules={[{ required: true, message: t('cashbox.validation.currencyRequired') }]}
-        >
-          <Select
-            placeholder={t('cashbox.selectCurrency')}
-            options={[
-              { value: 'USD', label: 'USD' },
-              { value: 'UZS', label: 'UZS' },
-            ]}
           />
         </Form.Item>
 

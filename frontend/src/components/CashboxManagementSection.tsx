@@ -5,7 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import CashboxOpeningBalanceModal from './CashboxOpeningBalanceModal';
-import { getOpeningBalances, deleteOpeningBalance, type CashboxOpeningBalance } from '../api/cashboxApi';
+import { fetchOpeningBalances, deleteOpeningBalance, type CashboxOpeningBalance } from '../services/cashboxApi';
 
 interface CashboxManagementSectionProps {
   onUpdate?: () => void;
@@ -21,7 +21,7 @@ const CashboxManagementSection = ({ onUpdate }: CashboxManagementSectionProps) =
   const loadBalances = async () => {
     setLoading(true);
     try {
-      const data = await getOpeningBalances();
+      const data = await fetchOpeningBalances();
       setBalances(data);
     } catch (error) {
       message.error(t('cashbox.messages.loadError'));
@@ -78,23 +78,28 @@ const CashboxManagementSection = ({ onUpdate }: CashboxManagementSectionProps) =
   const columns: ColumnsType<CashboxOpeningBalance> = [
     {
       title: t('cashbox.cashboxType'),
-      dataIndex: 'cashbox_type_display',
+      dataIndex: 'cashbox_name',
       key: 'cashbox_type',
       render: (text: string, record: CashboxOpeningBalance) => (
-        <Tag color={getCashboxTypeColor(record.cashbox_type)}>{text}</Tag>
+        <Tag color={getCashboxTypeColor(record.cashbox_type || 'CARD')}>
+          {record.cashbox_type_display || record.cashbox_name || text}
+        </Tag>
       ),
     },
     {
       title: t('cashbox.balance'),
-      dataIndex: 'balance',
+      dataIndex: 'amount',
       key: 'balance',
-      render: (value: number, record: CashboxOpeningBalance) => (
-        <span style={{ fontWeight: 600 }}>
-          {record.currency === 'USD' ? '$' : ''}
-          {value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          {record.currency === 'UZS' ? ' so\'m' : ''}
-        </span>
-      ),
+      render: (value: number, record: CashboxOpeningBalance) => {
+        const amount = value || record.balance || 0;
+        return (
+          <span style={{ fontWeight: 600 }}>
+            {record.currency === 'USD' ? '$' : ''}
+            {amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {record.currency === 'UZS' ? ' so\'m' : ''}
+          </span>
+        );
+      },
     },
     {
       title: t('cashbox.currency'),
