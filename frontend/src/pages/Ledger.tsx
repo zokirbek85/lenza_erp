@@ -45,7 +45,7 @@ import {
   type CardBalance,
   type CategoryExpense,
 } from '../services/ledgerApi';
-import { getCashboxSummary, type CashboxSummary } from '../api/cashboxApi';
+import { fetchCashboxSummary, type CashboxSummary } from '../services/cashboxApi';
 import { useTranslation } from 'react-i18next';
 
 ChartJS.register(
@@ -70,7 +70,14 @@ export default function LedgerPage() {
   const [ledgerData, setLedgerData] = useState<LedgerSummary | null>(null);
   const [cardBalances, setCardBalances] = useState<CardBalance[]>([]);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
-  const [cashboxSummary, setCashboxSummary] = useState<CashboxSummary | null>(null);
+  const [cashboxSummary, setCashboxSummary] = useState<{
+    card_uzs: number;
+    cash_uzs: number;
+    cash_usd: number;
+    total_usd: number;
+    total_uzs: number;
+    usd_rate?: number;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
@@ -80,6 +87,38 @@ export default function LedgerPage() {
   useEffect(() => {
     loadAllData();
   }, [dateRange]);
+
+  const aggregateCashboxSummary = (items: CashboxSummary[]) => {
+    const summary = {
+      card_uzs: 0,
+      cash_uzs: 0,
+      cash_usd: 0,
+      total_usd: 0,
+      total_uzs: 0,
+      usd_rate: undefined as number | undefined,
+    };
+
+    items.forEach((item) => {
+      const balance = Number(item.balance) || 0;
+      if (item.cashbox_type === 'CARD') {
+        if (item.currency === 'USD') {
+          summary.cash_usd += balance;
+          summary.total_usd += balance;
+        } else {
+          summary.card_uzs += balance;
+          summary.total_uzs += balance;
+        }
+      } else if (item.cashbox_type === 'CASH_USD') {
+        summary.cash_usd += balance;
+        summary.total_usd += balance;
+      } else if (item.cashbox_type === 'CASH_UZS') {
+        summary.cash_uzs += balance;
+        summary.total_uzs += balance;
+      }
+    });
+
+    return summary;
+  };
 
   const loadAllData = async () => {
     setLoading(true);
@@ -93,13 +132,13 @@ export default function LedgerPage() {
         fetchLedgerSummary(filters),
         fetchCardBalances(),
         fetchExpensesByCategory(filters),
-        getCashboxSummary(),
+        fetchCashboxSummary(),
       ]);
 
       setLedgerData(summary);
       setCardBalances(cards);
       setCategories(cats);
-      setCashboxSummary(cashbox);
+      setCashboxSummary(aggregateCashboxSummary(cashbox.cashboxes || []));
     } catch (error) {
       message.error(t('ledger.errorLoading'));
       console.error('Load data error:', error);
@@ -371,9 +410,11 @@ export default function LedgerPage() {
                   valueStyle={{ color: '#6d28d9', fontSize: 24 }}
                   formatter={(value) => formatUZS(value as number)}
                 />
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Kurs: 1 USD = {formatMoney(cashboxSummary.usd_rate)} UZS
-                </Text>
+                {typeof cashboxSummary.usd_rate === 'number' && Number.isFinite(cashboxSummary.usd_rate) && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Kurs: 1 USD = {formatMoney(cashboxSummary.usd_rate)} UZS
+                  </Text>
+                )}
               </Card>
             </Col>
           </Row>
