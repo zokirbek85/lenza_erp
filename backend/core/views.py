@@ -183,15 +183,8 @@ class DashboardSummaryView(APIView):
         payments_total = decimal_or_zero(payments_qs.aggregate(total=Sum('amount_usd'))['total'])
         returns_total = decimal_or_zero(returns_qs.aggregate(total=Sum('amount_usd'))['total'])
 
-        # Inventory totals (filtered by dealer/region/manager)
-        product_filter = Q(is_active=True)
-        if dealer_ids:
-            product_filter &= Q(dealer_id__in=dealer_ids)
-        if region_id:
-            product_filter &= Q(dealer__region_id=region_id)
-        if manager_id:
-            product_filter &= Q(dealer__manager_user_id=manager_id)
-        stock_agg = Product.objects.filter(product_filter).aggregate(
+        # Inventory totals (products are global, show all inventory)
+        stock_agg = Product.objects.filter(is_active=True).aggregate(
             total_stock_good=Coalesce(Sum('stock_ok'), Decimal('0')),
             total_stock_cost=Coalesce(
                 Sum(F('stock_ok') * F('cost_usd'), output_field=DecimalField(max_digits=18, decimal_places=2)),

@@ -32,7 +32,6 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, related_name='products')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
-    dealer = models.ForeignKey('dealers.Dealer', on_delete=models.SET_NULL, null=True, related_name='products')
     size = models.CharField(max_length=64, blank=True)
     unit = models.CharField(max_length=32, default='pcs')
     cost_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)

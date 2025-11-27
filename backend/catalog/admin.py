@@ -15,7 +15,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'name', 'dealer', 'sell_price_usd', 'stock_ok', 'is_active')
-    list_filter = ('is_active', 'dealer', 'brand')
+    list_display = ('sku', 'name', 'brand', 'sell_price_usd', 'stock_ok', 'is_active')
+    list_filter = ('is_active', 'brand', 'category')
     search_fields = ('sku', 'name', 'barcode')
-    autocomplete_fields = ('dealer', 'brand', 'category')
+    autocomplete_fields = ('brand', 'category')

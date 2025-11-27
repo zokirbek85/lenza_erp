@@ -30,9 +30,7 @@ class BrandViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        dealer_id = self.request.query_params.get('dealer_id') or self.request.query_params.get('dealer')
-        if dealer_id:
-            queryset = queryset.filter(products__dealer_id=dealer_id).distinct()
+        # Brands are global - no dealer filtering needed
         return queryset
 
 
@@ -45,22 +43,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         brand_id = self.request.query_params.get('brand_id') or self.request.query_params.get('brand')
-        dealer_id = self.request.query_params.get('dealer_id') or self.request.query_params.get('dealer')
         if brand_id:
-            queryset = queryset.filter(products__brand_id=brand_id)
-        if dealer_id:
-            queryset = queryset.filter(products__dealer_id=dealer_id)
-        if brand_id or dealer_id:
-            queryset = queryset.distinct()
+            queryset = queryset.filter(products__brand_id=brand_id).distinct()
+        # Categories are global - no dealer filtering needed
         return queryset
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.select_related('category', 'brand', 'dealer').all()
+    queryset = Product.objects.select_related('category', 'brand').all()
     serializer_class = ProductSerializer
     permission_classes = [IsAdmin | IsAccountant | IsWarehouse | IsSales | IsOwner]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
-    filterset_fields = ('dealer', 'is_active', 'category', 'brand')
+    filterset_fields = ('is_active', 'category', 'brand')
     search_fields = ('sku', 'name', 'barcode', 'article')
     ordering_fields = ('name', 'sell_price_usd', 'stock_ok', 'stock_defect')
 
@@ -76,13 +70,11 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         brand_id = self.request.query_params.get('brand_id') or self.request.query_params.get('brand')
         category_id = self.request.query_params.get('category_id') or self.request.query_params.get('category')
-        dealer_id = self.request.query_params.get('dealer_id') or self.request.query_params.get('dealer')
+        # Products are global - no dealer filtering
         if brand_id:
             queryset = queryset.filter(brand_id=brand_id)
         if category_id:
             queryset = queryset.filter(category_id=category_id)
-        if dealer_id:
-            queryset = queryset.filter(dealer_id=dealer_id)
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -209,13 +201,16 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 class DealerProductsAPIView(APIView):
     """
-    Return all products available for a given dealer with brand/category info.
+    Return all products with brand/category info.
+    Products are global - not dealer-specific.
+    This endpoint is kept for backward compatibility but returns all active products.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, dealer_id):
+        # Products are global, return all active products
         products = (
-            Product.objects.filter(dealer_id=dealer_id)
+            Product.objects.filter(is_active=True)
             .select_related('brand', 'category')
             .order_by('name')
         )

@@ -95,7 +95,6 @@ class ProductSerializer(serializers.ModelSerializer):
             'brand_id',
             'category',
             'category_id',
-            'dealer',
             'size',
             'unit',
             'cost_usd',
