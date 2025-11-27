@@ -38,6 +38,7 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [dealerProducts, setDealerProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(false);
   const [loadingBrands, setLoadingBrands] = useState(false);
@@ -68,16 +69,39 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
   useEffect(() => {
     if (!dealerId) {
       setBrands([]);
+      setCategories([]);
+      setProducts([]);
       return;
     }
-    setLoadingBrands(true);
-    fetchBrands(dealerId)
-      .then(setBrands)
-      .catch((error) => {
+
+    // Load dealer products and derive brand/category options
+    const loadDealerProducts = async () => {
+      setLoadingBrands(true);
+      setLoadingCategories(true);
+      setLoadingProducts(true);
+      try {
+        const dealerProducts = await fetchProductsByCategory({ dealerId });
+      setDealerProducts(dealerProducts);
+      setProducts(dealerProducts);
+        const uniqBrands: Record<number, BrandOption> = {};
+        const uniqCategories: Record<number, CategoryOption> = {};
+        dealerProducts.forEach((p) => {
+          if (p.brand?.id) uniqBrands[p.brand.id] = { id: p.brand.id, name: p.brand.name || '' };
+          if (p.category?.id) uniqCategories[p.category.id] = { id: p.category.id, name: p.category.name || '' };
+        });
+        setBrands(Object.values(uniqBrands));
+        setCategories(Object.values(uniqCategories));
+      } catch (error) {
         console.error(error);
         message.error(t('common:messages.error'));
-      })
-      .finally(() => setLoadingBrands(false));
+      } finally {
+        setLoadingBrands(false);
+        setLoadingCategories(false);
+        setLoadingProducts(false);
+      }
+    };
+
+    loadDealerProducts();
   }, [dealerId, t]);
 
   useEffect(() => {
@@ -86,14 +110,18 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
       form.setFieldsValue({ category_id: undefined, product_id: undefined });
       return;
     }
+    // Filter categories from loaded products
     setLoadingCategories(true);
-    fetchCategories(brandId, dealerId || undefined)
-      .then(setCategories)
-      .catch((error) => {
-        console.error(error);
-        message.error(t('common:messages.error'));
-      })
-      .finally(() => setLoadingCategories(false));
+    const filtered = products
+      .filter((p) => p.brand?.id === brandId)
+      .map((p) => p.category)
+      .filter(Boolean) as CategoryOption[];
+    const unique: Record<number, CategoryOption> = {};
+    filtered.forEach((c) => {
+      if (c?.id) unique[c.id] = { id: c.id, name: c.name };
+    });
+    setCategories(Object.values(unique));
+    setLoadingCategories(false);
   }, [brandId, dealerId, form, t]);
 
   useEffect(() => {
@@ -103,18 +131,10 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
       return;
     }
     setLoadingProducts(true);
-    fetchProductsByCategory({
-      categoryId,
-      brandId: brandId || undefined,
-      dealerId: dealerId || undefined,
-    })
-      .then(setProducts)
-      .catch((error) => {
-        console.error(error);
-        message.error(t('common:messages.error'));
-      })
-      .finally(() => setLoadingProducts(false));
-  }, [categoryId, brandId, dealerId, form, t]);
+    const filtered = dealerProducts.filter((p) => p.category?.id === categoryId);
+    setProducts(filtered);
+    setLoadingProducts(false);
+  }, [categoryId, brandId, dealerId, form, t, dealerProducts]);
 
   const resetItemFields = () => {
     form.setFieldsValue({

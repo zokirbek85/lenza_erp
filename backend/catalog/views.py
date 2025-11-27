@@ -11,6 +11,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.mixins.export_mixins import ExportMixin
@@ -204,6 +205,30 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             raise ValidationError({'detail': f'Failed to remove image: {str(e)}'})
+
+
+class DealerProductsAPIView(APIView):
+    """
+    Return all products available for a given dealer with brand/category info.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, dealer_id):
+        products = (
+            Product.objects.filter(dealer_id=dealer_id)
+            .select_related('brand', 'category')
+            .order_by('name')
+        )
+        data = [
+            {
+                'id': p.id,
+                'name': p.name,
+                'brand': {'id': p.brand.id, 'name': p.brand.name} if p.brand else None,
+                'category': {'id': p.category.id, 'name': p.category.name} if p.category else None,
+            }
+            for p in products
+        ]
+        return Response(data)
 
 
 class ProductExportExcelView(APIView):

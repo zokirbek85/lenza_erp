@@ -71,10 +71,15 @@ export const fetchProductsByCategory = async (options?: {
   dealerId?: number | string;
   search?: string;
 }) => {
+  // If dealerId provided, prefer dealer-specific endpoint for full cascade
+  if (options?.dealerId) {
+    const response = await http.get(`/dealers/${options.dealerId}/products/`);
+    return toArray<Product>(response.data);
+  }
+
   const params: Record<string, string | number> = { limit: 'all' };
   if (options?.categoryId) params.category_id = options.categoryId;
   if (options?.brandId) params.brand_id = options.brandId;
-  if (options?.dealerId) params.dealer_id = options.dealerId;
   if (options?.search) params.search = options.search;
   const response = await http.get('/products/', { params });
   return toArray<Product>(response.data);
