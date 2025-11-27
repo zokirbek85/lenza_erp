@@ -4,7 +4,7 @@ import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Table,
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
-import { fetchBrands, fetchCategories, type BrandOption, type CategoryOption } from '../../../api/catalogApi';
+import type { BrandOption, CategoryOption } from '../../../api/catalogApi';
 import { fetchProductsByCategory, type Product } from '../../../api/productsApi';
 import { createReturn, type ReturnPayload } from '../../../api/returnsApi';
 import { fetchAllDealers, type DealerDto } from '../../../services/dealers';
