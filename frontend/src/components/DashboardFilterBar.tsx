@@ -4,7 +4,7 @@ import { FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import dayjs, { Dayjs } from 'dayjs';
 import http from '../app/http';
-import { useDashboardStore } from '../store/useDashboardStore';
+import { useDashboardStore, type DashboardFilters } from '../store/useDashboardStore';
 
 const { RangePicker } = DatePicker;
 const { useBreakpoint } = Grid;
@@ -27,7 +27,7 @@ interface Manager {
 }
 
 interface DashboardFilterBarProps {
-  onApply?: () => void;
+  onApply?: (filters: DashboardFilters) => void;
 }
 
 const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
@@ -94,7 +94,7 @@ const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
   }, []);
 
   const handleApply = () => {
-    const newFilters = {
+    const newFilters: DashboardFilters = {
       dealers: localDealers,
       region: localRegion,
       manager: localManager,
@@ -104,7 +104,7 @@ const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
     };
     setFilters(newFilters);
     if (onApply) {
-      onApply();
+      onApply(newFilters);
     }
     if (isMobile) {
       setDrawerVisible(false);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Row, Col, Card, theme, Button } from 'antd';
 import { DownloadOutlined, DollarOutlined, RiseOutlined, WalletOutlined, ShoppingOutlined, SmileOutlined } from '@ant-design/icons';
@@ -27,6 +27,7 @@ import DebtByDealerChart from '@/components/DebtByDealerChart';
 import DebtByRegionPie from '@/components/DebtByRegionPie';
 import DebtTrendChart from '@/components/DebtTrendChart';
 import { useDashboardStore } from '../../store/useDashboardStore';
+import type { DashboardFilters } from '../../store/useDashboardStore';
 import { useAuthStore } from '../../auth/useAuthStore';
 import type { DashboardSummary } from '../../services/dashboardService';
 import type { DebtAnalytics } from '@/types/dashboard';
@@ -129,21 +130,22 @@ const DashboardPage = () => {
   }), [role]);
 
   // Fetch all dashboard data
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async (overrideFilters?: DashboardFilters) => {
+    const effectiveFilters = overrideFilters ?? filters;
     setLoading(true);
     try {
       const [owner, sales, accountant, currency, summary, cards, analytics, inventory] = await Promise.all([
         permissions.canLoadOwnerKpi
-          ? fetchDashboardData(filters).catch(() => ({ data: null }))
+          ? fetchDashboardData(effectiveFilters).catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
         permissions.canLoadSalesKpi
-          ? fetchSalesManagerData(filters).catch(() => ({ data: null }))
+          ? fetchSalesManagerData(effectiveFilters).catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
         permissions.canLoadAccountantKpi
-          ? fetchAccountantData(filters).catch(() => ({ data: null }))
+          ? fetchAccountantData(effectiveFilters).catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
-        fetchCurrencyHistory(filters).catch(() => ({ data: [] })),
-        fetchDashboardSummary(filters).catch(() => ({
+        fetchCurrencyHistory(effectiveFilters).catch(() => ({ data: [] })),
+        fetchDashboardSummary(effectiveFilters).catch(() => ({
           total_sales: 0,
           net_profit: 0,
           cash_balance: 0,
@@ -158,7 +160,7 @@ const DashboardPage = () => {
           expenses_vs_budget: { expenses: 0, budget: 100000 },
         })),
         permissions.canLoadCardKpi
-          ? fetchCardsKpi(filters).catch(() => ({ data: [] }))
+          ? fetchCardsKpi(effectiveFilters).catch(() => ({ data: [] }))
           : Promise.resolve({ data: [] }),
         permissions.canViewDebtAnalytics
           ? fetchDebtAnalytics().catch(() => ({ data: null }))
@@ -187,19 +189,19 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, permissions]);
 
   // Initial data load
   useEffect(() => {
     fetchAll();
-  }, []);
+  }, [fetchAll]);
 
   // Event listeners for real-time updates
   useEffect(() => {
     const events = ['orders:refresh', 'payments:refresh', 'currency:refresh'];
     events.forEach(event => window.addEventListener(event, fetchAll));
     return () => events.forEach(event => window.removeEventListener(event, fetchAll));
-  }, []);
+  }, [fetchAll]);
 
   // Chart data builders
   const topDealerChart = useMemo<ChartData<'bar'>>(() => ({
