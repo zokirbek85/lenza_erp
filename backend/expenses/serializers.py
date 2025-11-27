@@ -33,12 +33,6 @@ class ExpenseSerializer(serializers.ModelSerializer):
     type_name = serializers.CharField(source='type.name', read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=ExpenseCategory.objects.all(), allow_null=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
-    # Make cashbox writable so it can be set during create/update
-    cashbox = serializers.PrimaryKeyRelatedField(
-        queryset=None,  # Will be set in __init__
-        allow_null=True,
-        required=False
-    )
     cashbox_name = serializers.CharField(source='cashbox.name', read_only=True, allow_null=True)
     cashbox_currency = serializers.CharField(source='cashbox.currency', read_only=True, allow_null=True)
     card_name = serializers.CharField(source='card.name', read_only=True, allow_null=True)
@@ -47,11 +41,18 @@ class ExpenseSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     method_display = serializers.CharField(source='get_method_display', read_only=True)
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Set cashbox queryset dynamically to avoid circular import
+    def get_fields(self):
+        """Override to set cashbox queryset dynamically and avoid circular import"""
+        fields = super().get_fields()
+        # Import here to avoid circular import at module load time
         from payments.models import Cashbox
-        self.fields['cashbox'].queryset = Cashbox.objects.filter(is_active=True)
+        # Make cashbox field writable with proper queryset
+        fields['cashbox'] = serializers.PrimaryKeyRelatedField(
+            queryset=Cashbox.objects.filter(is_active=True),
+            allow_null=True,
+            required=False
+        )
+        return fields
     
     class Meta:
         model = Expense
@@ -154,12 +155,19 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 class ExpenseCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating expenses via modal/API"""
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Set cashbox queryset dynamically
+
+    def get_fields(self):
+        """Override to set cashbox queryset dynamically and avoid circular import"""
+        fields = super().get_fields()
+        # Import here to avoid circular import at module load time
         from payments.models import Cashbox
-        self.fields['cashbox'].queryset = Cashbox.objects.filter(is_active=True)
+        # Make cashbox field writable with proper queryset
+        fields['cashbox'] = serializers.PrimaryKeyRelatedField(
+            queryset=Cashbox.objects.filter(is_active=True),
+            allow_null=False,
+            required=True
+        )
+        return fields
 
     class Meta:
         model = Expense
