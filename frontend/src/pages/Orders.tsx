@@ -235,7 +235,7 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize]);
+  }, [dateFrom, dateTo, managerFilter, page, pageSize, statusFilter]);
 
   const loadRefs = useCallback(async () => {
     try {
