@@ -1,7 +1,7 @@
 """
 Ledger Views - Dynamic Balance Calculator
 NOTE: Ledger — bu alohida model emas, balki Payment'dan real-time hisoblangan data.
-(Expenses module removed)
+(Expenses module removed - only tracks payment income)
 """
 from datetime import date, timedelta
 from decimal import Decimal
@@ -18,7 +18,7 @@ from payments.models import Payment, PaymentCard, CurrencyRate
 
 class LedgerSummaryView(APIView):
     """
-    Ledger Summary - Birlashtirilgan balans va moliyaviy tahlil
+    Ledger Summary - Payment income tracking (expenses module removed)
     
     GET /api/ledger/?from=2025-01-01&to=2025-12-31&card_id=1
     
@@ -26,21 +26,11 @@ class LedgerSummaryView(APIView):
     {
         "total_income_usd": 10000,
         "total_income_uzs": 126000000,
-        "total_expense_usd": 5000,
-        "total_expense_uzs": 63000000,
-        "balance_usd": 5000,
-        "balance_uzs": 63000000,
-        "history": [
-            {
-                "date": "2025-11-15",
-                "income_usd": 1000,
-                "income_uzs": 12600000,
-                "expense_usd": 500,
-                "expense_uzs": 6300000,
-                "balance_usd": 500,
-                "balance_uzs": 6300000
-            }
-        ]
+        "total_expense_usd": 0,
+        "total_expense_uzs": 0,
+        "balance_usd": 10000,
+        "balance_uzs": 126000000,
+        "history": [...]
     }
     """
     permission_classes = [IsAuthenticated]
@@ -51,8 +41,10 @@ class LedgerSummaryView(APIView):
         date_to = request.query_params.get('to')
         card_id = request.query_params.get('card_id')
         
-        # Base querysets - faqat tasdiqlangan to'lovlar (expenses module removed)
-        payments_qs = Payment.objects.filter(status=Payment.Status.CONFIRMED).select_related('dealer', 'card')
+        # Base querysets - faqat tasdiqlangan to'lovlar
+        payments_qs = Payment.objects.filter(
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        ).select_related('dealer', 'card')
         
         # Filtrlash
         if date_from:
@@ -64,9 +56,10 @@ class LedgerSummaryView(APIView):
         if card_id:
             payments_qs = payments_qs.filter(card_id=card_id)
         
-        # Jami summa hisoblash (optimized - bitta query)
+        # Jami summa hisoblash
         total_income_usd = payments_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
         total_income_uzs = payments_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+        
         # Expenses module removed
         total_expense_usd = Decimal('0.00')
         total_expense_uzs = Decimal('0.00')
@@ -74,7 +67,7 @@ class LedgerSummaryView(APIView):
         balance_usd = total_income_usd
         balance_uzs = total_income_uzs
         
-        # Kunlik taqsimot (history) - Python'da guruhlaymiz (SQLite TruncDate muammosi)
+        # Kunlik taqsimot (history)
         daily_dict = {}
         
         # To'lovlarni kunlik guruhga ajratish
@@ -90,8 +83,6 @@ class LedgerSummaryView(APIView):
                 }
             daily_dict[day]['income_usd'] += float(payment['amount_usd'] or 0)
             daily_dict[day]['income_uzs'] += float(payment['amount_uzs'] or 0)
-        
-        # Expenses module removed - no expense tracking
         
         # Calculate daily cumulative balances
         history = []
@@ -121,7 +112,7 @@ class LedgerSummaryView(APIView):
 
 class CardBalanceView(APIView):
     """
-    Karta balansi - faqat shu karta orqali qilingan to'lovlar va chiqimlar
+    Karta balansi - faqat shu karta orqali qilingan to'lovlar (expenses removed)
     
     GET /api/cards/1/balance/
     
@@ -131,10 +122,10 @@ class CardBalanceView(APIView):
         "card_name": "Uzcard - Asosiy",
         "income_usd": 5000,
         "income_uzs": 63000000,
-        "expense_usd": 2000,
-        "expense_uzs": 25200000,
-        "balance_usd": 3000,
-        "balance_uzs": 37800000
+        "expense_usd": 0,
+        "expense_uzs": 0,
+        "balance_usd": 5000,
+        "balance_uzs": 63000000
     }
     """
     permission_classes = [IsAuthenticated]
@@ -148,21 +139,19 @@ class CardBalanceView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Faqat tasdiqlangan to'lovlar va approved xarajatlar
+        # Faqat tasdiqlangan to'lovlar
         payments_qs = Payment.objects.filter(
             card=card,
             status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
-        )
-        expenses_qs = Expense.objects.filter(
-            card=card,
-            status=Expense.STATUS_APPROVED
         )
         
         # Aggregate
         income_usd = payments_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
         income_uzs = payments_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
-        expense_usd = expenses_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
-        expense_uzs = expenses_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+        
+        # Expenses module removed
+        expense_usd = Decimal('0.00')
+        expense_uzs = Decimal('0.00')
         
         return Response({
             'card_id': card.id,
@@ -171,14 +160,14 @@ class CardBalanceView(APIView):
             'income_uzs': float(income_uzs),
             'expense_usd': float(expense_usd),
             'expense_uzs': float(expense_uzs),
-            'balance_usd': float(income_usd - expense_usd),
-            'balance_uzs': float(income_uzs - expense_uzs),
+            'balance_usd': float(income_usd),
+            'balance_uzs': float(income_uzs),
         })
 
 
 class LedgerByCardView(APIView):
     """
-    Barcha kartalardagi balanslar ro'yxati
+    Barcha kartalardagi balanslar ro'yxati (only payment income, expenses removed)
     
     GET /api/ledger/by-card/
     
@@ -189,10 +178,10 @@ class LedgerByCardView(APIView):
             "card_name": "Uzcard - Asosiy",
             "income_usd": 5000,
             "income_uzs": 63000000,
-            "expense_usd": 2000,
-            "expense_uzs": 25200000,
-            "balance_usd": 3000,
-            "balance_uzs": 37800000
+            "expense_usd": 0,
+            "expense_uzs": 0,
+            "balance_usd": 5000,
+            "balance_uzs": 63000000
         }
     ]
     """
@@ -203,20 +192,18 @@ class LedgerByCardView(APIView):
         results = []
         
         for card in cards:
-            # Optimized - har bir karta uchun 2 ta query
+            # Optimized - har bir karta uchun 1 ta query
             payments_qs = Payment.objects.filter(
                 card=card,
                 status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
             )
-            expenses_qs = Expense.objects.filter(
-                card=card,
-                status=Expense.STATUS_APPROVED
-            )
             
             income_usd = payments_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
             income_uzs = payments_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
-            expense_usd = expenses_qs.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0.00')
-            expense_uzs = expenses_qs.aggregate(total=Sum('amount_uzs'))['total'] or Decimal('0.00')
+            
+            # Expenses module removed
+            expense_usd = Decimal('0.00')
+            expense_uzs = Decimal('0.00')
             
             results.append({
                 'card_id': card.id,
@@ -225,8 +212,8 @@ class LedgerByCardView(APIView):
                 'income_uzs': float(income_uzs),
                 'expense_usd': float(expense_usd),
                 'expense_uzs': float(expense_uzs),
-                'balance_usd': float(income_usd - expense_usd),
-                'balance_uzs': float(income_uzs - expense_uzs),
+                'balance_usd': float(income_usd),
+                'balance_uzs': float(income_uzs),
             })
         
         return Response(results)
@@ -234,74 +221,47 @@ class LedgerByCardView(APIView):
 
 class LedgerByCategoryView(APIView):
     """
-    Kategoriya (Expense Type) bo'yicha chiqimlar tahlili
+    Kategoriya bo'yicha tahlil - Expenses module removed, returns empty list
     
     GET /api/ledger/by-category/
     
-    Response:
-    [
-        {
-            "category": "Transport",
-            "total_usd": 1000,
-            "total_uzs": 12600000,
-            "count": 10
-        }
-    ]
+    Response: []
     """
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        date_from = request.query_params.get('from')
-        date_to = request.query_params.get('to')
-        
-        expenses_qs = Expense.objects.filter(status=Expense.STATUS_APPROVED).select_related('type')
-        
-        if date_from:
-            expenses_qs = expenses_qs.filter(date__gte=date_from)
-        if date_to:
-            expenses_qs = expenses_qs.filter(date__lte=date_to)
-        
-        # Kategoriya bo'yicha guruh
-        by_category = expenses_qs.values('type__name').annotate(
-            total_usd=Sum('amount_usd'),
-            total_uzs=Sum('amount_uzs'),
-            count=Count('id')
-        ).order_by('-total_usd')
-        
-        results = []
-        for item in by_category:
-            results.append({
-                'category': item['type__name'] or 'Unknown',
-                'total_usd': float(item['total_usd'] or 0),
-                'total_uzs': float(item['total_uzs'] or 0),
-                'count': item['count']
-            })
-        
-        return Response(results)
+        # Expenses module removed - return empty list
+        return Response([])
 
 
 class LedgerBalanceWidgetView(APIView):
+    """
+    Ledger balance widget - only tracks payment income (expenses removed)
+    
+    GET /api/ledger-accounts/balances/
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         latest_rate = CurrencyRate.objects.order_by('-rate_date').first()
         usd_to_uzs = latest_rate.usd_to_uzs if latest_rate else Decimal('0')
 
-        payments = Payment.objects.filter(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
-        expenses = Expense.objects.filter(status=Expense.STATUS_APPROVED)
+        payments = Payment.objects.filter(
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        )
 
         def sum_usd(queryset):
             return queryset.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
 
+        # Cash income (expenses removed)
         cash_income = sum_usd(payments.filter(method=Payment.Method.CASH))
-        cash_expense = sum_usd(expenses.filter(method=Expense.METHOD_CASH))
-        cash_balance = cash_income - cash_expense
+        cash_balance = cash_income
 
+        # Bank income (expenses removed)
         bank_income = sum_usd(payments.filter(method=Payment.Method.TRANSFER)) + sum_usd(
             payments.filter(method=Payment.Method.CARD, card__isnull=True)
         )
-        bank_expense = sum_usd(expenses.filter(method=Expense.METHOD_CARD, card__isnull=True))
-        bank_balance = bank_income - bank_expense
+        bank_balance = bank_income
 
         accounts = [
             {
@@ -325,8 +285,7 @@ class LedgerBalanceWidgetView(APIView):
         card_total = Decimal('0')
         for card in PaymentCard.objects.filter(is_active=True):
             income = sum_usd(payments.filter(card=card))
-            expense = sum_usd(expenses.filter(card=card))
-            balance = income - expense
+            balance = income  # No expenses
             card_total += balance
             accounts.append(
                 {
