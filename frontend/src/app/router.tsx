@@ -5,6 +5,8 @@ import Layout from '../components/Layout';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import CurrencyRatesPage from '../pages/CurrencyRates';
 import DealersPage from '../pages/Dealers';
+import FinanceSourcesPage from '../pages/FinanceSources';
+import ExpensesPage from '../pages/Expenses';
 import KpiPage from '../pages/KpiPage';
 import OwnerKpiPage from '../pages/kpi/OwnerKpiPage';
 import ManagerKpiPage from '../pages/kpi/ManagerKpiPage';
@@ -106,6 +108,22 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
             <PaymentsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'finance-sources',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'sales']}>
+            <FinanceSourcesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'expenses',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'sales']}>
+            <ExpensesPage />
           </ProtectedRoute>
         ),
       },

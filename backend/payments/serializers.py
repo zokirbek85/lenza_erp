@@ -1,6 +1,9 @@
 from rest_framework import serializers
 
-from .models import Cashbox, CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
+from .models import (
+    Cashbox, CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard,
+    FinanceSource, Expense, ExpenseCategory, FinanceLog
+)
 from dealers.serializers import DealerSerializer
 
 
@@ -213,4 +216,174 @@ class PaymentSerializer(serializers.ModelSerializer):
         card = attrs.get('card')
         if method == Payment.Method.CARD and not card:
             raise serializers.ValidationError({'card': "Kartadan to'lov bo'lganda karta tanlash majburiy."})
+        
+        # Validate finance source currency matches payment currency
+        source = attrs.get('source')
+        currency = attrs.get('currency')
+        if source and currency and source.currency != currency:
+            raise serializers.ValidationError({
+                'source': f"Moliya manbai valyutasi ({source.currency}) to'lov valyutasiga ({currency}) mos kelishi kerak"
+            })
+        
         return attrs
+
+
+# ============================================================================
+# FINANCE SOURCE SERIALIZERS
+# ============================================================================
+
+class FinanceSourceSerializer(serializers.ModelSerializer):
+    """Serializer for FinanceSource model"""
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    currency_display = serializers.CharField(source='get_currency_display', read_only=True)
+    
+    class Meta:
+        model = FinanceSource
+        fields = (
+            'id',
+            'name',
+            'type',
+            'type_display',
+            'currency',
+            'currency_display',
+            'balance',
+            'is_active',
+            'description',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('balance', 'created_at', 'updated_at')
+
+
+class ExpenseCategorySerializer(serializers.ModelSerializer):
+    """Serializer for ExpenseCategory model"""
+    
+    class Meta:
+        model = ExpenseCategory
+        fields = (
+            'id',
+            'name',
+            'description',
+            'is_active',
+            'created_at',
+        )
+        read_only_fields = ('created_at',)
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    """Serializer for Expense model"""
+    source_name = serializers.CharField(source='source.name', read_only=True)
+    source_balance = serializers.DecimalField(
+        source='source.balance',
+        max_digits=18,
+        decimal_places=2,
+        read_only=True
+    )
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    currency_display = serializers.CharField(source='get_currency_display', read_only=True)
+    
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    created_by_fullname = serializers.SerializerMethodField()
+    approved_by_username = serializers.CharField(source='approved_by.username', read_only=True)
+    approved_by_fullname = serializers.SerializerMethodField()
+    
+    receipt_image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Expense
+        fields = (
+            'id',
+            'source',
+            'source_name',
+            'source_balance',
+            'category',
+            'category_name',
+            'amount',
+            'currency',
+            'currency_display',
+            'description',
+            'expense_date',
+            'status',
+            'status_display',
+            'created_by',
+            'created_by_username',
+            'created_by_fullname',
+            'approved_by',
+            'approved_by_username',
+            'approved_by_fullname',
+            'approved_at',
+            'rejection_reason',
+            'receipt_image',
+            'receipt_image_url',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = (
+            'created_at',
+            'updated_at',
+            'created_by',
+            'approved_by',
+            'approved_at',
+            'status',  # Status controlled via approve/reject actions
+        )
+    
+    def get_created_by_fullname(self, obj: Expense) -> str:
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return ''
+    
+    def get_approved_by_fullname(self, obj: Expense) -> str:
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return ''
+    
+    def get_receipt_image_url(self, obj: Expense) -> str:
+        if obj.receipt_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.receipt_image.url)
+            return obj.receipt_image.url
+        return ''
+    
+    def validate(self, attrs):
+        # Auto-set currency from source
+        source = attrs.get('source')
+        if source and not attrs.get('currency'):
+            attrs['currency'] = source.currency
+        
+        # Validate currency matches source
+        currency = attrs.get('currency')
+        if source and currency and source.currency != currency:
+            raise serializers.ValidationError({
+                'currency': f"Valyuta moliya manbai valyutasiga mos kelishi kerak ({source.currency})"
+            })
+        
+        return attrs
+
+
+class FinanceLogSerializer(serializers.ModelSerializer):
+    """Serializer for FinanceLog model - audit trail"""
+    source_name = serializers.CharField(source='source.name', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    
+    class Meta:
+        model = FinanceLog
+        fields = (
+            'id',
+            'source',
+            'source_name',
+            'type',
+            'type_display',
+            'amount',
+            'old_balance',
+            'new_balance',
+            'reference_type',
+            'reference_id',
+            'description',
+            'created_at',
+            'created_by',
+            'created_by_username',
+        )
+        read_only_fields = ('created_at',)

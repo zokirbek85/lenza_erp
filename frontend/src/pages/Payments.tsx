@@ -687,12 +687,12 @@ const PaymentsPage = () => {
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                   {payment.card ? (
                     <span>
-                      {payment.card.name ? `${payment.card.name} вЂ" ` : ''}
+                      {payment.card.name ? `${payment.card.name}` : ''}
                       {payment.card.masked_number || (payment.card.number ? `${String(payment.card.number).slice(0,4)} **** ${String(payment.card.number).slice(-4)}` : '')}
                       {payment.card.holder_name ? ` (${payment.card.holder_name})` : ''}
                     </span>
                   ) : (
-                    'вЂ"'
+                    '—'
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -716,7 +716,7 @@ const PaymentsPage = () => {
                       View
                     </a>
                   ) : (
-                    'вЂ"'
+                    '—'
                   )}
                 </td>
                 {canApprove && (

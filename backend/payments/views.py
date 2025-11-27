@@ -15,8 +15,26 @@ from core.utils.exporter import export_payments_to_excel
 from core.mixins.report_mixin import BaseReportMixin
 from core.mixins.export_mixins import ExportMixin
 
-from .models import CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
-from .serializers import CashboxOpeningBalanceSerializer, CurrencyRateSerializer, PaymentSerializer, PaymentCardSerializer
+from .models import (
+    CashboxOpeningBalance,
+    CurrencyRate,
+    Expense,
+    ExpenseCategory,
+    FinanceLog,
+    FinanceSource,
+    Payment,
+    PaymentCard,
+)
+from .serializers import (
+    CashboxOpeningBalanceSerializer,
+    CurrencyRateSerializer,
+    ExpenseSerializer,
+    ExpenseCategorySerializer,
+    FinanceLogSerializer,
+    FinanceSourceSerializer,
+    PaymentSerializer,
+    PaymentCardSerializer,
+)
 
 
 class CurrencyRateViewSet(viewsets.ModelViewSet):
@@ -382,5 +400,217 @@ class CashboxViewSet(viewsets.ModelViewSet):
             return [IsAdmin() | IsAccountant() | IsOwner()]
         return super().get_permissions()
 
+
+# ============================================================================
+# FINANCE SOURCE VIEWSETS
+# ============================================================================
+
+class FinanceSourceViewSet(viewsets.ModelViewSet):
+    """
+    CRUD operations for FinanceSource (cash/card/bank accounts)
+    Permissions: Admin/Accountant can create/edit, all can view
+    """
+    queryset = FinanceSource.objects.all()
+    serializer_class = FinanceSourceSerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = ('type', 'currency', 'is_active')
+    search_fields = ('name', 'description')
+    ordering_fields = ('name', 'balance', 'created_at')
+    ordering = ('name',)
+    
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdmin() | IsAccountant()]
+        return super().get_permissions()
+
+
+class ExpenseCategoryViewSet(viewsets.ModelViewSet):
+    """
+    CRUD operations for ExpenseCategory
+    Permissions: Admin/Accountant can create/edit, all can view
+    """
+    queryset = ExpenseCategory.objects.filter(is_active=True)
+    serializer_class = ExpenseCategorySerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter)
+    search_fields = ('name', 'description')
+    ordering = ('name',)
+    
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdmin() | IsAccountant()]
+        return super().get_permissions()
+
+
+class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
+    """
+    CRUD operations for Expense with approval workflow
+    Permissions:
+      - Create: sales, accountant, admin
+      - Approve/Reject: accountant, admin only
+      - Edit/Delete: admin/accountant, only if pending
+    """
+    queryset = Expense.objects.select_related(
+        'source',
+        'category',
+        'created_by',
+        'approved_by'
+    ).all()
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = {
+        'source': ['exact'],
+        'category': ['exact'],
+        'currency': ['exact'],
+        'expense_date': ['gte', 'lte'],
+        'status': ['exact'],
+    }
+    search_fields = ('description',)
+    ordering_fields = ('expense_date', 'amount', 'created_at')
+    ordering = ('-expense_date', '-created_at')
+    
+    # BaseReportMixin configuration
+    date_field = "expense_date"
+    filename_prefix = "expenses"
+    title_prefix = "Xarajatlar hisoboti"
+    report_template = "expenses/report.html"
+    
+    def _ensure_can_create(self):
+        """Check if user can create expenses: sales, accountant, admin"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant', 'sales'}:
+            raise PermissionDenied('Only sales, accountant, or admin can create expenses.')
+    
+    def _ensure_can_approve(self):
+        """Check if user can approve/reject expenses: accountant, admin only"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin can approve/reject expenses.')
+    
+    def _ensure_can_modify(self, expense):
+        """Check if user can edit/delete: admin/accountant, only if pending"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin can modify expenses.')
+        if expense.status != Expense.Status.PENDING:
+            raise PermissionDenied('Only pending expenses can be modified.')
+    
+    def perform_create(self, serializer):
+        self._ensure_can_create()
+        # Set created_by and default status to PENDING
+        serializer.save(created_by=self.request.user, status=Expense.Status.PENDING)
+    
+    def perform_update(self, serializer):
+        self._ensure_can_modify(serializer.instance)
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        self._ensure_can_modify(instance)
+        instance.delete()
+    
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        """Approve an expense (accountant/admin only)"""
+        self._ensure_can_approve()
+        expense = self.get_object()
+        
+        if expense.status == Expense.Status.APPROVED:
+            return Response({'detail': 'Expense is already approved.'}, status=400)
+        if expense.status == Expense.Status.REJECTED:
+            return Response({'detail': 'Cannot approve a rejected expense.'}, status=400)
+        
+        expense.status = Expense.Status.APPROVED
+        expense.approved_by = request.user
+        expense.approved_at = timezone.now()
+        expense.save()
+        
+        serializer = self.get_serializer(expense)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject(self, request, pk=None):
+        """Reject an expense (accountant/admin only)"""
+        self._ensure_can_approve()
+        expense = self.get_object()
+        
+        if expense.status == Expense.Status.APPROVED:
+            return Response({'detail': 'Cannot reject an approved expense.'}, status=400)
+        if expense.status == Expense.Status.REJECTED:
+            return Response({'detail': 'Expense is already rejected.'}, status=400)
+        
+        rejection_reason = request.data.get('rejection_reason', '')
+        
+        expense.status = Expense.Status.REJECTED
+        expense.approved_by = request.user
+        expense.approved_at = timezone.now()
+        expense.rejection_reason = rejection_reason
+        expense.save()
+        
+        serializer = self.get_serializer(expense)
+        return Response(serializer.data)
+    
+    def get_report_rows(self, queryset):
+        """Generate rows for expense report."""
+        rows = []
+        for e in queryset.order_by('expense_date', 'id'):
+            rows.append({
+                'Sana': e.expense_date.strftime('%d.%m.%Y') if e.expense_date else '',
+                'Manba': e.source.name if e.source else '',
+                'Kategoriya': e.category.name if e.category else '',
+                'Miqdor': f"{float(e.amount):,.2f}",
+                'Valyuta': e.currency,
+                'Holat': e.get_status_display(),
+                'Izoh': e.description or '',
+            })
+        return rows
+    
+    def get_report_total(self, queryset):
+        """Calculate total amount."""
+        total = queryset.aggregate(models.Sum('amount'))['amount__sum'] or 0
+        return total
+    
+    @action(detail=False, methods=['get'])
+    def export(self, request):
+        """Unified export for expenses: ?format=pdf|xlsx"""
+        fmt = request.query_params.get('format', 'xlsx')
+        qs = self.filter_queryset(self.get_queryset())
+        rows = [{
+            'Sana': (e.expense_date.isoformat() if e.expense_date else ''),
+            'Manba': (e.source.name if e.source else ''),
+            'Kategoriya': (e.category.name if e.category else ''),
+            'Miqdor': float(e.amount),
+            'Valyuta': e.currency,
+            'Holat': e.get_status_display(),
+            'Izoh': e.description or '',
+        } for e in qs.order_by('expense_date', 'id')]
+        
+        if fmt == 'xlsx':
+            return self.export_excel(rows, 'Xarajatlar', 'xarajatlar')
+        elif fmt == 'pdf':
+            return self.export_pdf_report(qs)
+        else:
+            return Response({'error': 'format must be pdf or xlsx'}, status=400)
+
+
+class FinanceLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only view for FinanceLog (audit trail)
+    Permissions: Admin/Accountant/Owner can view
+    """
+    queryset = FinanceLog.objects.select_related('source', 'created_by').all()
+    serializer_class = FinanceLogSerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_fields = ('source', 'type', 'reference_type')
+    ordering_fields = ('created_at',)
+    ordering = ('-created_at',)
 
 
