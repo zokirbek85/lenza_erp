@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'orders.apps.OrdersConfig',
     'inventory.apps.InventoryConfig',
     'payments.apps.PaymentsConfig',
-    'ledger.apps.LedgerConfig',
     'kpis',
     'notifications.apps.NotificationsConfig',
     'returns.apps.ReturnsConfig',

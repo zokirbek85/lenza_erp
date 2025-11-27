@@ -48,8 +48,6 @@ export const ROUTE_ACCESS: Record<AppRole, string[]> = {
     '/catalog',
     '/dealers',
     '/payments',
-    '/expenses',
-    '/ledger',
     '/currency',
     '/returns',
     '/reconciliation',
@@ -57,7 +55,7 @@ export const ROUTE_ACCESS: Record<AppRole, string[]> = {
     '/notifications',
     '/manuals',
   ],
-  owner: ['/', '/expenses', '/ledger', '/kpi', '/catalog', '/marketing', '/manuals'],
+  owner: ['/', '/kpi', '/catalog', '/marketing', '/manuals'],
 };
 
 export const canAccessRoute = (role: UserRole | null, pathname: string): boolean => {

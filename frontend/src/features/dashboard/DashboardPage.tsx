@@ -20,7 +20,6 @@ import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { loadCache, saveCache } from '../../utils/storage';
 import DashboardFilterBar from '../../components/DashboardFilterBar';
 import KpiCard from '../../components/KpiCard';
-import LedgerBalanceWidget from '../../components/LedgerBalanceWidget';
 import { RevenueTrendChart, RevenueSharePie, InventoryTrendLine } from '../../components/DashboardCharts';
 import DashboardTable from '../../components/DashboardTable';
 import DebtByDealerChart from '@/components/DebtByDealerChart';
@@ -129,7 +128,6 @@ const DashboardPage = () => {
     canLoadCardKpi: ['admin', 'accountant', 'owner'].includes(role ?? ''),
     canViewDebtAnalytics: role !== 'warehouse',
     showCardKpi: ['accountant', 'owner', 'admin'].includes(role ?? ''),
-    showLedgerBalance: ['accountant', 'owner'].includes(role ?? ''),
   }), [role]);
 
   // Fetch all dashboard data
@@ -490,10 +488,8 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      {/* Ledger Balance & Currency Trend */}
+      {/* Currency Trend */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {permissions.showLedgerBalance && <LedgerBalanceWidget />}
-
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600, color: token.colorText }}>
             {t('dashboard.currencyTrend')}

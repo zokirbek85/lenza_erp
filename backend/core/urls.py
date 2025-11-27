@@ -80,8 +80,6 @@ from payments.views import (
     PaymentReportPDFView,
     PaymentViewSet,
 )
-from ledger.views import LedgerSummaryView, CardBalanceView, LedgerByCardView, LedgerByCategoryView, LedgerBalanceWidgetView
-from ledger.views_export import ledger_export_view
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import TelegramLinkView, UserViewSet
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
@@ -100,7 +98,6 @@ router.register('payments', PaymentViewSet, basename='payment')
 router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
 router.register('cashbox', CashboxViewSet, basename='cashbox')
 router.register('cashboxes', CashboxViewSet, basename='cashboxes')
-# Ledger - dynamic API (no model, no ViewSet)
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('cashbox-opening-balances', CashboxOpeningBalanceViewSet, basename='cashbox-opening-balance')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
@@ -153,14 +150,6 @@ urlpatterns = [
     # Explicit mapping for payments report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/payments/report/', PaymentViewSet.as_view({'get': 'report'}), name='payments-report'),
     path('api/payments/report', PaymentViewSet.as_view({'get': 'report'})),
-    # Ledger export - standalone function-based view
-    path('api/ledger/export/', ledger_export_view, name='ledger-export'),
-    # Ledger - dynamic balance calculator (no model, no ViewSet)
-    path('api/ledger/', LedgerSummaryView.as_view(), name='ledger-summary'),
-    path('api/ledger/by-card/', LedgerByCardView.as_view(), name='ledger-by-card'),
-    path('api/ledger/by-category/', LedgerByCategoryView.as_view(), name='ledger-by-category'),
-    path('api/ledger-accounts/balances/', LedgerBalanceWidgetView.as_view(), name='ledger-balances'),
-    path('api/cards/<int:card_id>/balance/', CardBalanceView.as_view(), name='card-balance'),
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
