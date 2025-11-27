@@ -100,11 +100,15 @@ const DashboardPage = () => {
     currency: [],
     summary: {
       total_sales: 0,
+      total_payments: 0,
       net_profit: 0,
       cash_balance: 0,
       open_orders_count: 0,
       satisfaction_score: 0,
-      total_debt_usd: 0,
+      total_debt: 0,
+      total_dealers: 0,
+      total_stock_good: 0,
+      total_stock_cost: 0,
       dealers: 0,
       overdue_receivables: [],
       revenue_by_month: [],
@@ -147,11 +151,15 @@ const DashboardPage = () => {
         fetchCurrencyHistory(effectiveFilters).catch(() => ({ data: [] })),
         fetchDashboardSummary(effectiveFilters).catch(() => ({
           total_sales: 0,
+          total_payments: 0,
           net_profit: 0,
           cash_balance: 0,
           open_orders_count: 0,
           satisfaction_score: 0,
-          total_debt_usd: 0,
+          total_debt: 0,
+          total_dealers: 0,
+          total_stock_good: 0,
+          total_stock_cost: 0,
           dealers: 0,
           overdue_receivables: [],
           revenue_by_month: [],
@@ -259,7 +267,7 @@ const DashboardPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             title="Jami savdolar"
-            value={data.owner?.total_sales_usd || 0}
+            value={data.summary?.total_sales || 0}
             prefix="$"
             precision={2}
             icon={<DollarOutlined />}
@@ -270,7 +278,7 @@ const DashboardPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             title="Jami to'lovlar"
-            value={data.owner?.total_payments_usd || 0}
+            value={data.summary?.total_payments || 0}
             prefix="$"
             precision={2}
             icon={<WalletOutlined />}
@@ -282,7 +290,7 @@ const DashboardPage = () => {
           <Col xs={24} sm={12} lg={6}>
             <KpiCard
               title="Umumiy qarzdorlik"
-              value={data.analytics?.total_debt ?? data.summary?.total_debt_usd ?? 0}
+              value={data.analytics?.total_debt ?? data.summary?.total_debt ?? 0}
               prefix="$"
               precision={2}
               icon={<DollarOutlined />}
@@ -295,7 +303,7 @@ const DashboardPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             title="Dilerlar soni"
-            value={data.summary?.dealers ?? 0}
+            value={data.summary?.total_dealers ?? data.summary?.dealers ?? 0}
             precision={0}
             icon={<ShoppingOutlined />}
             tooltip="Faol dilerlar"
@@ -312,7 +320,7 @@ const DashboardPage = () => {
               <div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.title')}</p>
                 <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                  {loading ? '...' : formatQuantity(data.inventoryStats?.total_quantity ?? 0)}
+                  {loading ? '...' : formatQuantity(data.summary?.total_stock_good ?? data.inventoryStats?.total_quantity ?? 0)}
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.unit')}</p>
               </div>
@@ -323,7 +331,7 @@ const DashboardPage = () => {
             <div className="mt-4 border-t pt-4 dark:border-slate-700">
               <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.totalValue')}</p>
               <p className="mt-1 text-xl font-semibold text-green-600 dark:text-green-400">
-                ${loading ? '...' : formatCurrency(data.inventoryStats?.total_value_usd ?? 0)}
+                ${loading ? '...' : formatCurrency(data.summary?.total_stock_cost ?? data.inventoryStats?.total_value_usd ?? 0)}
               </p>
             </div>
           </Card>
@@ -345,7 +353,7 @@ const DashboardPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <KpiCard
             title="Kassa balansi"
-            value={data.owner?.total_payments_usd || 0}
+            value={data.summary?.total_payments || 0}
             prefix="$"
             precision={2}
             icon={<WalletOutlined />}

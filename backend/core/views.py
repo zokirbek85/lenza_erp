@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db import connections
-from django.db.models import Count, DecimalField, OuterRef, Q, Subquery, Sum, Value
+from django.db.models import Count, DecimalField, F, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce, TruncMonth
 from django.db.utils import OperationalError
 from django.http import FileResponse
@@ -29,6 +29,7 @@ from .models import CompanyInfo, UserManual
 from .serializers import (
     AuditLogSerializer,
     CompanyInfoSerializer,
+    DashboardSummarySerializer,
     DebtAnalyticsSerializer,
     UserManualSerializer,
 )
@@ -116,109 +117,111 @@ class DashboardSummaryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        today = timezone.now().date()
-        week_ago = today - timedelta(days=7)
-        month_ago = today - timedelta(days=30)
+        params = request.query_params
 
-        # Orders statistics
-        orders_today = Order.objects.filter(created_at__date=today).count()
-        orders_week = Order.objects.filter(created_at__date__gte=week_ago).count()
-        orders_month = Order.objects.filter(created_at__date__gte=month_ago).count()
-        orders_total = Order.objects.count()
+        def parse_ids(value: str | None) -> list[int]:
+            if not value:
+                return []
+            return [int(v) for v in value.split(',') if v.strip().isdigit()]
 
-        # Payments statistics (only APPROVED/CONFIRMED)
-        payment_status_filter = Q(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
-        payments_today = Payment.objects.filter(payment_status_filter, pay_date=today).aggregate(
-            total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
-        )
-        payments_week = Payment.objects.filter(payment_status_filter, pay_date__gte=week_ago).aggregate(
-            total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
-        )
-        payments_month = Payment.objects.filter(payment_status_filter, pay_date__gte=month_ago).aggregate(
-            total_usd=Sum('amount_usd'), total_uzs=Sum('amount_uzs')
-        )
+        def parse_date(value: str | None):
+            if not value:
+                return None
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                return None
 
-        # Expenses statistics
-        from django.db.models import Case, When, DecimalField
-        
-        expenses_today = Expense.objects.filter(date=today, status='approved').aggregate(
-            total_usd=Sum(
-                Case(
-                    When(currency='USD', then='amount'),
-                    default=0,
-                    output_field=DecimalField()
-                )
+        dealer_ids = parse_ids(params.get('dealer_id') or params.get('dealer'))
+        region_id = params.get('region_id') or params.get('region')
+        manager_id = params.get('manager_id') or params.get('manager')
+        start_date = parse_date(params.get('start_date') or params.get('from'))
+        end_date = parse_date(params.get('end_date') or params.get('to'))
+
+        dealer_filter = Q()
+        if dealer_ids:
+            dealer_filter &= Q(id__in=dealer_ids)
+        if region_id:
+            dealer_filter &= Q(region_id=region_id)
+        if manager_id:
+            dealer_filter &= Q(manager_user_id=manager_id)
+
+        filtered_dealers = Dealer.objects.filter(dealer_filter)
+
+        order_filter = Q(dealer__in=filtered_dealers)
+        if start_date:
+            order_filter &= Q(value_date__gte=start_date)
+        if end_date:
+            order_filter &= Q(value_date__lte=end_date)
+
+        orders_qs = Order.objects.filter(order_filter).exclude(status=Order.Status.CANCELLED)
+
+        payment_filter = Q(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
+        if dealer_ids:
+            payment_filter &= Q(dealer_id__in=dealer_ids)
+        if region_id:
+            payment_filter &= Q(dealer__region_id=region_id)
+        if manager_id:
+            payment_filter &= Q(dealer__manager_user_id=manager_id)
+        if start_date:
+            payment_filter &= Q(pay_date__gte=start_date)
+        if end_date:
+            payment_filter &= Q(pay_date__lte=end_date)
+        payments_qs = Payment.objects.filter(payment_filter)
+
+        return_filter = Q(order__in=orders_qs)
+        if start_date:
+            return_filter &= Q(created_at__date__gte=start_date)
+        if end_date:
+            return_filter &= Q(created_at__date__lte=end_date)
+        returns_qs = OrderReturn.objects.filter(return_filter)
+
+        opening_balance = decimal_or_zero(
+            filtered_dealers.aggregate(total=Sum('opening_balance_usd'))['total']
+        )
+        orders_total = decimal_or_zero(orders_qs.aggregate(total=Sum('total_usd'))['total'])
+        payments_total = decimal_or_zero(payments_qs.aggregate(total=Sum('amount_usd'))['total'])
+        returns_total = decimal_or_zero(returns_qs.aggregate(total=Sum('amount_usd'))['total'])
+
+        # Inventory totals (filtered by dealer/region/manager)
+        product_filter = Q(is_active=True)
+        if dealer_ids:
+            product_filter &= Q(dealer_id__in=dealer_ids)
+        if region_id:
+            product_filter &= Q(dealer__region_id=region_id)
+        if manager_id:
+            product_filter &= Q(dealer__manager_user_id=manager_id)
+        stock_agg = Product.objects.filter(product_filter).aggregate(
+            total_stock_good=Coalesce(Sum('stock_ok'), Decimal('0')),
+            total_stock_cost=Coalesce(
+                Sum(F('stock_ok') * F('cost_usd'), output_field=DecimalField(max_digits=18, decimal_places=2)),
+                Decimal('0'),
             ),
-            total_uzs=Sum(
-                Case(
-                    When(currency='UZS', then='amount'),
-                    default=0,
-                    output_field=DecimalField()
-                )
-            )
-        )
-        expenses_month = Expense.objects.filter(date__gte=month_ago, status='approved').aggregate(
-            total_usd=Sum(
-                Case(
-                    When(currency='USD', then='amount'),
-                    default=0,
-                    output_field=DecimalField()
-                )
-            ),
-            total_uzs=Sum(
-                Case(
-                    When(currency='UZS', then='amount'),
-                    default=0,
-                    output_field=DecimalField()
-                )
-            )
         )
 
-        # Products and Dealers
-        total_products = Product.objects.count()
-        total_dealers = Dealer.objects.count()
-
-        opening_balance = decimal_or_zero(Dealer.objects.aggregate(total=Sum('opening_balance_usd'))['total'])
-        orders_total = decimal_or_zero(Order.objects.aggregate(total=Sum('total_usd'))['total'])
-        payments_total = decimal_or_zero(Payment.objects.aggregate(total=Sum('amount_usd'))['total'])
-        returns_total = decimal_or_zero(OrderReturn.objects.aggregate(total=Sum('amount_usd'))['total'])
         total_debt = opening_balance + orders_total - payments_total - returns_total
 
-        return Response({
-            'orders': {
-                'today': orders_today,
-                'week': orders_week,
-                'month': orders_month,
-                'total': orders_total,
-            },
-            'payments': {
-                'today': {
-                    'usd': payments_today.get('total_usd') or 0,
-                    'uzs': payments_today.get('total_uzs') or 0,
-                },
-                'week': {
-                    'usd': payments_week.get('total_usd') or 0,
-                    'uzs': payments_week.get('total_uzs') or 0,
-                },
-                'month': {
-                    'usd': payments_month.get('total_usd') or 0,
-                    'uzs': payments_month.get('total_uzs') or 0,
-                },
-            },
-            'expenses': {
-                'today': {
-                    'usd': expenses_today.get('total_usd') or 0,
-                    'uzs': expenses_today.get('total_uzs') or 0,
-                },
-                'month': {
-                    'usd': expenses_month.get('total_usd') or 0,
-                    'uzs': expenses_month.get('total_uzs') or 0,
-                },
-            },
-            'products': total_products,
-            'dealers': total_dealers,
-            'total_debt_usd': float(total_debt),
-        })
+        payload = {
+            'total_sales': orders_total,
+            'total_payments': payments_total,
+            'total_debt': total_debt,
+            'total_dealers': filtered_dealers.count(),
+            'total_stock_good': stock_agg['total_stock_good'] or Decimal('0'),
+            'total_stock_cost': stock_agg['total_stock_cost'] or Decimal('0'),
+            # Legacy/front-end compatibility fields
+            'net_profit': orders_total - payments_total,
+            'cash_balance': payments_total,
+            'open_orders_count': orders_qs.count(),
+            'satisfaction_score': Decimal('0'),
+            'overdue_receivables': [],
+            'revenue_by_month': [],
+            'revenue_by_product': [],
+            'inventory_trend': [],
+            'expenses_vs_budget': {'expenses': 0, 'budget': 100000},
+        }
+
+        serializer = DashboardSummarySerializer(payload)
+        return Response(serializer.data)
 
 
 class DebtAnalyticsView(APIView):

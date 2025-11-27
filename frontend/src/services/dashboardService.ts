@@ -4,13 +4,17 @@ import type { DebtAnalytics } from '@/types/dashboard';
 
 export interface DashboardSummary {
   total_sales: number;
+  total_payments: number;
+  total_debt: number;
   net_profit: number;
   cash_balance: number;
   open_orders_count: number;
   satisfaction_score: number;
-  total_debt_usd: number;
-  products?: number;
-  dealers?: number;
+  total_dealers: number;
+  total_stock_good: number;
+  total_stock_cost: number;
+  products?: number; // backward compatibility
+  dealers?: number; // backward compatibility
   overdue_receivables: Array<{
     id: number;
     dealer_name: string;
@@ -28,12 +32,16 @@ export interface DashboardSummary {
  */
 const normalizeDashboardSummary = (data: any): DashboardSummary => {
   return {
-    total_sales: typeof data?.total_sales === 'number' ? data.total_sales : 0,
-    net_profit: typeof data?.net_profit === 'number' ? data.net_profit : 0,
-    cash_balance: typeof data?.cash_balance === 'number' ? data.cash_balance : 0,
-    open_orders_count: typeof data?.open_orders_count === 'number' ? data.open_orders_count : 0,
-    satisfaction_score: typeof data?.satisfaction_score === 'number' ? data.satisfaction_score : 0,
-    total_debt_usd: typeof data?.total_debt_usd === 'number' ? data.total_debt_usd : 0,
+    total_sales: Number(data?.total_sales) || 0,
+    total_payments: Number(data?.total_payments) || 0,
+    total_debt: Number(data?.total_debt ?? data?.total_debt_usd) || 0,
+    net_profit: Number(data?.net_profit) || 0,
+    cash_balance: Number(data?.cash_balance) || 0,
+    open_orders_count: Number(data?.open_orders_count) || 0,
+    satisfaction_score: Number(data?.satisfaction_score) || 0,
+    total_dealers: Number(data?.total_dealers ?? data?.dealers) || 0,
+    total_stock_good: Number(data?.total_stock_good) || 0,
+    total_stock_cost: Number(data?.total_stock_cost) || 0,
     products: typeof data?.products === 'number' ? data.products : 0,
     dealers: typeof data?.dealers === 'number' ? data.dealers : 0,
     overdue_receivables: Array.isArray(data?.overdue_receivables) ? data.overdue_receivables : [],
@@ -51,17 +59,17 @@ export const fetchDashboardSummary = async (filters: DashboardFilters): Promise<
   const params = new URLSearchParams();
 
   if (filters.dealers.length > 0) {
-    params.append('dealer', filters.dealers.join(','));
+    params.append('dealer_id', filters.dealers.join(','));
   }
   if (filters.region !== undefined) {
-    params.append('region', String(filters.region));
+    params.append('region_id', String(filters.region));
   }
   if (filters.manager !== undefined) {
-    params.append('manager', String(filters.manager));
+    params.append('manager_id', String(filters.manager));
   }
   if (filters.dateRange && filters.dateRange.length === 2) {
-    params.append('from', filters.dateRange[0]);
-    params.append('to', filters.dateRange[1]);
+    params.append('start_date', filters.dateRange[0]);
+    params.append('end_date', filters.dateRange[1]);
   }
 
   const queryString = params.toString();

@@ -44,3 +44,22 @@ class DebtAnalyticsSerializer(serializers.Serializer):
     by_dealers = DealerDebtSerializer(many=True)
     by_regions = RegionDebtSerializer(many=True)
     monthly = MonthlyDebtSerializer(many=True)
+
+
+class DashboardSummarySerializer(serializers.Serializer):
+    total_sales = serializers.DecimalField(max_digits=18, decimal_places=2)
+    total_payments = serializers.DecimalField(max_digits=18, decimal_places=2)
+    total_debt = serializers.DecimalField(max_digits=18, decimal_places=2)
+    total_dealers = serializers.IntegerField()
+    total_stock_good = serializers.DecimalField(max_digits=18, decimal_places=2)
+    total_stock_cost = serializers.DecimalField(max_digits=18, decimal_places=2)
+    # Backward-compatible fields used by frontend widgets
+    net_profit = serializers.DecimalField(max_digits=18, decimal_places=2, required=False)
+    cash_balance = serializers.DecimalField(max_digits=18, decimal_places=2, required=False)
+    open_orders_count = serializers.IntegerField(required=False)
+    satisfaction_score = serializers.DecimalField(max_digits=5, decimal_places=2, required=False)
+    overdue_receivables = serializers.ListField(child=serializers.DictField(), required=False)
+    revenue_by_month = serializers.ListField(child=serializers.DictField(), required=False)
+    revenue_by_product = serializers.ListField(child=serializers.DictField(), required=False)
+    inventory_trend = serializers.ListField(child=serializers.DictField(), required=False)
+    expenses_vs_budget = serializers.DictField(required=False)
