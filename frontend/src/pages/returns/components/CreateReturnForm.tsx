@@ -106,13 +106,21 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
 
   useEffect(() => {
     if (!brandId) {
-      setCategories([]);
+      // Reset to all categories from dealer when brand is cleared
+      const allCategories = dealerProducts
+        .map((p) => p.category)
+        .filter(Boolean) as CategoryOption[];
+      const unique: Record<number, CategoryOption> = {};
+      allCategories.forEach((c) => {
+        if (c?.id) unique[c.id] = { id: c.id, name: c.name };
+      });
+      setCategories(Object.values(unique));
       form.setFieldsValue({ category_id: undefined, product_id: undefined });
       return;
     }
-    // Filter categories from loaded products
+    // Filter categories from dealer products based on selected brand
     setLoadingCategories(true);
-    const filtered = products
+    const filtered = dealerProducts
       .filter((p) => p.brand?.id === brandId)
       .map((p) => p.category)
       .filter(Boolean) as CategoryOption[];
@@ -121,20 +129,30 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
       if (c?.id) unique[c.id] = { id: c.id, name: c.name };
     });
     setCategories(Object.values(unique));
+    form.setFieldsValue({ category_id: undefined, product_id: undefined });
     setLoadingCategories(false);
-  }, [brandId, dealerId, form, t]);
+  }, [brandId, dealerProducts, form]);
 
   useEffect(() => {
     if (!categoryId) {
-      setProducts([]);
+      // Reset to all products filtered by brand (if brand selected) or all dealer products
+      const filtered = brandId
+        ? dealerProducts.filter((p) => p.brand?.id === brandId)
+        : dealerProducts;
+      setProducts(filtered);
       form.setFieldsValue({ product_id: undefined });
       return;
     }
     setLoadingProducts(true);
-    const filtered = dealerProducts.filter((p) => p.category?.id === categoryId);
+    // Filter products by both brand (if selected) and category
+    let filtered = dealerProducts.filter((p) => p.category?.id === categoryId);
+    if (brandId) {
+      filtered = filtered.filter((p) => p.brand?.id === brandId);
+    }
     setProducts(filtered);
+    form.setFieldsValue({ product_id: undefined });
     setLoadingProducts(false);
-  }, [categoryId, brandId, dealerId, form, t, dealerProducts]);
+  }, [categoryId, brandId, dealerProducts, form]);
 
   const resetItemFields = () => {
     form.setFieldsValue({
@@ -265,10 +283,12 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
                 placeholder={t('returns.form.selectDealer')}
                 optionFilterProp="label"
                 onChange={() => {
+                  // Clear dependent fields when dealer changes
                   form.setFieldsValue({ brand_id: undefined, category_id: undefined, product_id: undefined });
                   setBrands([]);
                   setCategories([]);
                   setProducts([]);
+                  setDealerProducts([]);
                 }}
                 options={dealers.map((dealer) => ({ label: dealer.name, value: dealer.id }))}
               />
@@ -285,6 +305,10 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
                 loading={loadingBrands}
                 placeholder={t('returns.form.selectBrand')}
                 optionFilterProp="label"
+                onChange={() => {
+                  // Clear dependent fields when brand changes
+                  form.setFieldsValue({ category_id: undefined, product_id: undefined });
+                }}
                 options={brands.map((brand) => ({ label: brand.name, value: brand.id }))}
               />
             </Form.Item>
@@ -300,6 +324,10 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
                 loading={loadingCategories}
                 placeholder={t('returns.form.selectCategory')}
                 optionFilterProp="label"
+                onChange={() => {
+                  // Clear product field when category changes
+                  form.setFieldsValue({ product_id: undefined });
+                }}
                 options={categories.map((category) => ({ label: category.name, value: category.id }))}
               />
             </Form.Item>

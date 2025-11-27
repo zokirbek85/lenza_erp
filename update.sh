@@ -151,6 +151,20 @@ sleep 10
 # Database migrations are handled automatically by entrypoint
 log_info "Backend started (migrations run automatically)"
 
+log_step "Running Database Migrations (if needed)"
+
+log_info "Checking for new migrations..."
+
+# Check for pending migrations inside backend container
+if docker exec "$BACKEND_CONTAINER" python manage.py showmigrations --plan | grep "\[ \]" >/dev/null 2>&1; then
+    log_info "New migrations detected — applying..."
+    docker exec "$BACKEND_CONTAINER" python manage.py migrate --noinput
+    log_info "${GREEN}✓ Migrations applied successfully${NC}"
+else
+    log_info "${YELLOW}No new migrations found — skipping${NC}"
+fi
+
+
 log_info "Starting frontend_${TARGET_STACK}..."
 docker compose -f "deploy/docker-compose.${TARGET_STACK}.yml" up -d frontend_${TARGET_STACK}
 

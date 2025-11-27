@@ -33,7 +33,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
     type_name = serializers.CharField(source='type.name', read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=ExpenseCategory.objects.all(), allow_null=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
-    cashbox = serializers.PrimaryKeyRelatedField(read_only=True, allow_null=True)
+    # Make cashbox writable so it can be set during create/update
+    cashbox = serializers.PrimaryKeyRelatedField(
+        queryset=None,  # Will be set in __init__
+        allow_null=True,
+        required=False
+    )
     cashbox_name = serializers.CharField(source='cashbox.name', read_only=True, allow_null=True)
     cashbox_currency = serializers.CharField(source='cashbox.currency', read_only=True, allow_null=True)
     card_name = serializers.CharField(source='card.name', read_only=True, allow_null=True)
@@ -41,6 +46,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
     approved_by_name = serializers.CharField(source='approved_by.full_name', read_only=True, allow_null=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     method_display = serializers.CharField(source='get_method_display', read_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set cashbox queryset dynamically to avoid circular import
+        from payments.models import Cashbox
+        self.fields['cashbox'].queryset = Cashbox.objects.filter(is_active=True)
     
     class Meta:
         model = Expense
@@ -143,6 +154,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 class ExpenseCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating expenses via modal/API"""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set cashbox queryset dynamically
+        from payments.models import Cashbox
+        self.fields['cashbox'].queryset = Cashbox.objects.filter(is_active=True)
 
     class Meta:
         model = Expense

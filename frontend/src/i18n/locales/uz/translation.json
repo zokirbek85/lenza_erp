@@ -439,23 +439,38 @@
       "type": "Turi",
       "method": "To'lov usuli",
       "card": "Karta",
+      "cashbox": "Kassa/Karta",
       "amount": "Summa",
       "status": "Holat",
       "description": "Izoh",
       "actions": "Amallar"
     },
     "form": {
+      "title": "Yangi chiqim yaratish",
       "date": "Sana",
       "dateRequired": "Sana majburiy",
       "type": "Chiqim turi",
+      "category": "Kategoriya",
+      "categoryRequired": "Kategoriya majburiy",
+      "categoryPlaceholder": "Kategoriyani tanlang",
       "typeRequired": "Chiqim turi majburiy",
       "typeSelect": "Chiqim turini tanlang",
       "selectType": "Chiqim turini tanlang",
       "cashbox": "Kassa/Karta",
       "cashboxRequired": "Kassa/Karta majburiy",
+      "cashboxPlaceholder": "Kassa yoki kartani tanlang",
       "selectCashbox": "Kassa yoki kartani tanlang",
+      "createCashbox": "Kassa yaratish",
+      "cashboxName": "Kassa nomi",
+      "cashboxNameRequired": "Kassa nomini kiriting",
+      "cashboxNamePlaceholder": "Masalan, Naqd UZS",
+      "cashboxType": "Kassa turi",
+      "cashUzs": "Naqd UZS",
+      "cashUsd": "Naqd USD",
+      "card": "Karta",
       "currency": "Valyuta",
       "currencyRequired": "Valyuta majburiy",
+      "currencyHint": "Valyuta kassa tanlangandan keyin avtomatik o'rnatiladi",
       "selectCurrency": "Valyutani tanlang",
       "amount": "Summa",
       "amountRequired": "Summa majburiy",
@@ -499,8 +514,10 @@
       "confirmDelete": "Haqiqatan ham bu chiqimni o'chirmoqchimisiz?"
     },
     "messages": {
+      "loading": "Yuklanmoqda...",
       "loadError": "Chiqimlarni yuklashda xatolik",
       "created": "Chiqim muvaffaqiyatli qo'shildi",
+      "createError": "Chiqim yaratishda xatolik",
       "updated": "Chiqim muvaffaqiyatli yangilandi",
       "deleted": "Chiqim o'chirildi",
       "approved": "Chiqim tasdiqlandi",
@@ -510,8 +527,21 @@
       "exportSuccess": "Eksport muvaffaqiyatli yakunlandi",
       "exportError": "Eksport qilishda xatolik",
       "loadTypesError": "Chiqim turlarini yuklashda xatolik",
-      "loadCashboxesError": "Kassalarni yuklashda xatolik"
-    }
+      "loadCashboxesError": "Kassalarni yuklashda xatolik",
+      "cashboxNameRequired": "Kassa nomini kiriting",
+      "cashboxCreated": "Kassa muvaffaqiyatli yaratildi",
+      "cashboxCreateError": "Kassa yaratishda xatolik",
+      "cashboxLoadFailed": "Kassalarni yuklashda xatolik"
+    },
+    "validation": {
+      "dateRequired": "Sana majburiy",
+      "categoryRequired": "Kategoriya majburiy",
+      "cashboxRequired": "Kassa majburiy",
+      "amountRequired": "Summa majburiy va noldan katta bo'lishi kerak",
+      "currencyMismatch": "Valyuta kassaning valyutasi bilan mos kelmaydi"
+    },
+    "hideForm": "Formani yashirish",
+    "confirmDelete": "Haqiqatan ham bu chiqimni o'chirmoqchimisiz?"
   },
   "cashbox": {
     "addNew": "Yangi kassa qo'shish",
