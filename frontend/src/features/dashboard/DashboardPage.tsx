@@ -199,8 +199,9 @@ const DashboardPage = () => {
   // Event listeners for real-time updates
   useEffect(() => {
     const events = ['orders:refresh', 'payments:refresh', 'currency:refresh'];
-    events.forEach(event => window.addEventListener(event, fetchAll));
-    return () => events.forEach(event => window.removeEventListener(event, fetchAll));
+    const handler = () => void fetchAll();
+    events.forEach((event) => window.addEventListener(event, handler));
+    return () => events.forEach((event) => window.removeEventListener(event, handler));
   }, [fetchAll]);
 
   // Chart data builders

@@ -112,13 +112,19 @@ const DashboardFilterBar = ({ onApply }: DashboardFilterBarProps) => {
   };
 
   const handleReset = () => {
+    const clearedFilters: DashboardFilters = {
+      dealers: [],
+      region: undefined,
+      manager: undefined,
+      dateRange: undefined,
+    };
     setLocalDealers([]);
     setLocalRegion(undefined);
     setLocalManager(undefined);
     setLocalDateRange(undefined);
     resetFilters();
     if (onApply) {
-      onApply();
+      onApply(clearedFilters);
     }
     if (isMobile) {
       setDrawerVisible(false);
