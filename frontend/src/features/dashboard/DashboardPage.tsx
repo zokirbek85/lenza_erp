@@ -21,7 +21,7 @@ import { loadCache, saveCache } from '../../utils/storage';
 import DashboardFilterBar from '../../components/DashboardFilterBar';
 import KpiCard from '../../components/KpiCard';
 import LedgerBalanceWidget from '../../components/LedgerBalanceWidget';
-import { RevenueTrendChart, RevenueSharePie, InventoryTrendLine, ExpensesGauge } from '../../components/DashboardCharts';
+import { RevenueTrendChart, RevenueSharePie, InventoryTrendLine } from '../../components/DashboardCharts';
 import DashboardTable from '../../components/DashboardTable';
 import DebtByDealerChart from '@/components/DebtByDealerChart';
 import DebtByRegionPie from '@/components/DebtByRegionPie';
@@ -630,19 +630,6 @@ const DashboardPage = () => {
             styles={{ body: { padding: '16px' } }}
           >
             <InventoryTrendLine data={data.summary?.inventory_trend || []} loading={loading} />
-          </Card>
-        </Col>
-        <Col xs={24} lg={12}>
-          <Card
-            title={t('dashboard.expensesBudget')}
-            className="shadow-sm hover:shadow-md transition-shadow"
-            styles={{ body: { padding: '16px' } }}
-          >
-            <ExpensesGauge
-              expenses={data.summary?.expenses_vs_budget?.expenses || 0}
-              budget={data.summary?.expenses_vs_budget?.budget || 100000}
-              loading={loading}
-            />
           </Card>
         </Col>
       </Row>

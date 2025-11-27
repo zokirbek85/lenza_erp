@@ -13,10 +13,6 @@ import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
 import PaymentsPage from '../pages/Payments';
-import CashboxPage from '../pages/Cashbox';
-import ExpensesPage from '../pages/Expenses';
-import ExpenseReportPage from '../pages/ExpenseReport';
-import ExpenseTypesPage from '../pages/ExpenseTypes';
 import ProductsPage from '../pages/Products';
 import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
@@ -110,38 +106,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
             <PaymentsPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'cashbox',
-        element: (
-          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
-            <CashboxPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'expenses',
-        element: (
-          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
-            <ExpensesPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'expenses/report',
-        element: (
-          <ProtectedRoute roles={['admin', 'accountant']}>
-            <ExpenseReportPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'expenses/categories',
-        element: (
-          <ProtectedRoute roles={['admin']}>
-            <ExpenseTypesPage />
           </ProtectedRoute>
         ),
       },

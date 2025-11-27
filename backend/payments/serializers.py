@@ -100,56 +100,6 @@ class CashboxOpeningBalanceSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class CashboxSummarySerializer(serializers.Serializer):
-    """
-    Summary serializer for cashbox balance with history.
-    Used by /api/cashbox/summary/ endpoint.
-    """
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-    cashbox_type = serializers.CharField(source='cashbox_type')
-    type = serializers.CharField(source='cashbox_type')
-    type_display = serializers.SerializerMethodField()
-    currency = serializers.CharField()
-    is_active = serializers.BooleanField()
-
-    # Balance calculation
-    opening_balance = serializers.DecimalField(max_digits=18, decimal_places=2)
-    income_sum = serializers.DecimalField(max_digits=18, decimal_places=2)
-    expense_sum = serializers.DecimalField(max_digits=18, decimal_places=2)
-    balance = serializers.DecimalField(max_digits=18, decimal_places=2)
-
-    # Optional: minimal history for chart
-    history = serializers.ListField(child=serializers.DictField(), required=False)
-
-    def get_type_display(self, obj):
-        """Get human-readable cashbox type"""
-        return obj.get_cashbox_type_display()
-
-    def to_representation(self, instance):
-        """Calculate balance and add to representation"""
-        # Calculate balance breakdown
-        balance_data = instance.calculate_balance(return_detailed=True)
-
-        # Build representation
-        data = {
-            'id': instance.id,
-            'name': instance.name,
-            'cashbox_type': instance.cashbox_type,
-            'type': instance.cashbox_type,  # Alias for frontend compatibility
-            'type_display': instance.get_cashbox_type_display(),
-            'currency': instance.currency,
-            'is_active': instance.is_active,
-            'opening_balance': balance_data['opening_balance'],
-            'income_sum': balance_data['income_sum'],
-            'expense_sum': balance_data['expense_sum'],
-            'balance': balance_data['balance'],
-            'history': []  # Populated separately if needed
-        }
-
-        return data
-
-
 class CurrencyRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyRate

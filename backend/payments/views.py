@@ -230,19 +230,13 @@ class PaymentCardViewSet(viewsets.ModelViewSet):
             total=Sum('amount_uzs')
         )['total'] or Decimal('0.00')
         
-        # Expenses orqali chiqim (USD va UZS)
-        from expenses.models import Expense
-        expenses = Expense.objects.filter(card=card, status='approved')
-        expense_usd = expenses.aggregate(
-            total=Sum('amount_usd')
-        )['total'] or Decimal('0.00')
-        expense_uzs = expenses.aggregate(
-            total=Sum('amount_uzs')
-        )['total'] or Decimal('0.00')
+        # Note: Expenses module removed - balance is now only based on payments
+        expense_usd = Decimal('0.00')
+        expense_uzs = Decimal('0.00')
         
         # Balans hisoblash
-        balance_usd = payment_usd - expense_usd
-        balance_uzs = payment_uzs - expense_uzs
+        balance_usd = payment_usd
+        balance_uzs = payment_uzs
         
         return Response({
             'card_id': card.id,
@@ -328,84 +322,34 @@ class CashboxOpeningBalanceViewSet(viewsets.ModelViewSet):
 
 class CashboxSummaryView(APIView):
     """
-    Get cashbox summary with opening balances, incomes, expenses, and current balance
-    Uses new Cashbox model with calculate_balance() method
-    Returns separate balances for each currency (no conversion)
+    Get cashbox summary - used by Ledger page
+    Returns aggregated balance data for all cashboxes
     """
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
         from payments.models import Cashbox
-        from payments.serializers import CashboxSummarySerializer
+        from payments.serializers import CashboxSerializer
 
-        # Get all cashboxes (cards and cash in UZS/USD)
         cashboxes = Cashbox.objects.all().order_by('cashbox_type', 'name')
-
-        # Serialize each cashbox with balance calculation
-        data = CashboxSummarySerializer(cashboxes, many=True).data
+        data = []
+        
+        for cashbox in cashboxes:
+            balance_data = cashbox.calculate_balance(return_detailed=True)
+            data.append({
+                'id': cashbox.id,
+                'name': cashbox.name,
+                'cashbox_type': cashbox.cashbox_type,
+                'currency': cashbox.currency,
+                'balance': balance_data['balance'],
+                'opening_balance': balance_data['opening_balance'],
+                'income_sum': balance_data['income_sum'],
+                'expense_sum': balance_data['expense_sum'],
+            })
 
         return Response({
             'cashboxes': data,
             'timestamp': timezone.now().isoformat()
-        })
-
-
-class CashboxHistoryView(APIView):
-    """
-    Get cashbox balance history over time for charts
-    Returns daily balance data for specified date range and cashbox
-    """
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
-
-    def get(self, request):
-        from datetime import timedelta
-        from decimal import Decimal
-        from payments.models import Cashbox
-
-        # Get query parameters
-        cashbox_id = request.query_params.get('cashbox_id')
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-
-        # Default to last 30 days if not specified
-        if not end_date:
-            end_date = timezone.now().date()
-        else:
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-
-        if not start_date:
-            start_date = end_date - timedelta(days=30)
-        else:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-
-        # Get cashbox
-        if not cashbox_id:
-            return Response({'error': 'cashbox_id is required'}, status=400)
-
-        try:
-            cashbox = Cashbox.objects.get(id=cashbox_id)
-        except Cashbox.DoesNotExist:
-            return Response({'error': 'Cashbox not found'}, status=404)
-
-        # Generate daily balance history
-        history = []
-        current_date = start_date
-        while current_date <= end_date:
-            balance = cashbox.calculate_balance(up_to_date=current_date)
-            history.append({
-                'date': current_date.isoformat(),
-                'balance': float(balance)
-            })
-            current_date += timedelta(days=1)
-
-        return Response({
-            'cashbox_id': cashbox.id,
-            'cashbox_name': cashbox.name,
-            'cashbox_type': cashbox.cashbox_type,
-            'currency': cashbox.currency,
-            'start_date': start_date.isoformat(),
-            'end_date': end_date.isoformat(),
-            'history': history
         })
 
 
@@ -439,63 +383,4 @@ class CashboxViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
 
-class CashboxSummaryExportExcelView(APIView, ExportMixin):
-    """
-    Export cashbox summary to Excel
-    Includes all cashboxes with opening balance, income, expense, and current balance
-    """
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
-    def get(self, request):
-        from payments.models import Cashbox
-        
-        cashboxes = Cashbox.objects.all().order_by('cashbox_type', 'name')
-        
-        rows = []
-        for cashbox in cashboxes:
-            balance_data = cashbox.calculate_balance(return_detailed=True)
-            rows.append({
-                'Kassa turi': cashbox.get_cashbox_type_display(),
-                'Kassa nomi': cashbox.name,
-                'Valyuta': cashbox.currency,
-                'Boshlang\'ich balans': float(balance_data['opening_balance']),
-                'Kirimlar': float(balance_data['income_sum']),
-                'Chiqimlar': float(balance_data['expense_sum']),
-                'Joriy balans': float(balance_data['balance']),
-            })
-        
-        return self.render_xlsx(rows, 'kassa_balans')
-
-
-class CashboxSummaryExportPDFView(APIView, BaseReportMixin):
-    """
-    Export cashbox summary to PDF
-    Includes all cashboxes with opening balance, income, expense, and current balance
-    """
-    permission_classes = [IsAdmin | IsAccountant | IsOwner]
-
-    def get(self, request):
-        from payments.models import Cashbox
-        
-        cashboxes = Cashbox.objects.all().order_by('cashbox_type', 'name')
-        
-        data = []
-        for cashbox in cashboxes:
-            balance_data = cashbox.calculate_balance(return_detailed=True)
-            data.append({
-                'cashbox_type': cashbox.get_cashbox_type_display(),
-                'name': cashbox.name,
-                'currency': cashbox.currency,
-                'opening_balance': balance_data['opening_balance'],
-                'income_sum': balance_data['income_sum'],
-                'expense_sum': balance_data['expense_sum'],
-                'balance': balance_data['balance'],
-            })
-        
-        context = {
-            'title': 'Kassa balansi',
-            'cashboxes': data,
-            'generated_at': timezone.now(),
-        }
-        
-        return self.render_pdf('reports/cashbox_summary.html', context, 'kassa_balans')

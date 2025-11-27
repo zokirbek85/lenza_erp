@@ -18,7 +18,6 @@ from catalog.serializers import ProductSerializer
 from core.permissions import IsAdmin, IsOwner
 from dealers.models import Dealer
 from dealers.serializers import DealerSerializer
-from expenses.models import Expense
 from orders.models import Order, OrderReturn
 from orders.serializers import OrderSerializer
 from payments.models import Payment

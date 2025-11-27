@@ -72,25 +72,13 @@ from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from payments.views import (
     CashboxOpeningBalanceViewSet,
     CashboxSummaryView,
-    CashboxHistoryView,
     CashboxViewSet,
-    CashboxSummaryExportExcelView,
-    CashboxSummaryExportPDFView,
     CurrencyRateHistoryView,
     CurrencyRateViewSet,
     PaymentCardViewSet,
     PaymentExportExcelView,
     PaymentReportPDFView,
     PaymentViewSet,
-)
-from expenses.views import ExpenseCategoryViewSet, ExpenseTypeViewSet, ExpenseViewSet
-from expenses.report_view import MonthlyExpenseReportView
-from expenses.views_export import (
-    ExpenseListExcelExportView,
-    ExpenseListPDFExportView,
-    LegacyExpenseExportView,
-    MonthlyExpenseExcelExportView,
-    MonthlyExpensePDFExportView,
 )
 from ledger.views import LedgerSummaryView, CardBalanceView, LedgerByCardView, LedgerByCategoryView, LedgerBalanceWidgetView
 from ledger.views_export import ledger_export_view
@@ -112,9 +100,6 @@ router.register('payments', PaymentViewSet, basename='payment')
 router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
 router.register('cashbox', CashboxViewSet, basename='cashbox')
 router.register('cashboxes', CashboxViewSet, basename='cashboxes')
-router.register('expenses', ExpenseViewSet, basename='expense')
-router.register('expense-types', ExpenseTypeViewSet, basename='expense-type')
-router.register('expense-categories', ExpenseCategoryViewSet, basename='expense-category')
 # Ledger - dynamic API (no model, no ViewSet)
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('cashbox-opening-balances', CashboxOpeningBalanceViewSet, basename='cashbox-opening-balance')
@@ -133,17 +118,10 @@ urlpatterns = [
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
     path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
-    # Cashbox summary and history
+    # Cashbox summary for Ledger page
     path('api/cashbox/summary/', CashboxSummaryView.as_view(), name='cashbox-summary'),
-    path('api/cashbox/history/', CashboxHistoryView.as_view(), name='cashbox-history'),
-    path('api/cashbox/export/excel/', CashboxSummaryExportExcelView.as_view(), name='cashbox-export-excel'),
-    path('api/cashbox/export/pdf/', CashboxSummaryExportPDFView.as_view(), name='cashbox-export-pdf'),
-    path('api/expenses/export/pdf/', ExpenseListPDFExportView.as_view(), name='expense-export-pdf'),
-    path('api/expenses/export/pdf', ExpenseListPDFExportView.as_view()),
-    path('api/expenses/export/excel/', ExpenseListExcelExportView.as_view(), name='expense-export-excel'),
-    path('api/expenses/export/excel', ExpenseListExcelExportView.as_view()),
-    path('api/expenses/export/', LegacyExpenseExportView.as_view(), name='expense-export'),
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),
+
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),
     path('api/orders/export/excel/', OrderExportExcelView.as_view(), name='orders-export-excel'),
     path('api/orders/import/template/', OrderImportTemplateView.as_view(), name='orders-import-template'),
@@ -196,12 +174,6 @@ urlpatterns = [
     # Non-paginated dealer list for dropdowns
     path('api/dealers/list-all/', DealerListAllView.as_view(), name='dealer-list-all'),
     path('api/payments/rates/history/', CurrencyRateHistoryView.as_view(), name='currency-rate-history'),
-    path('api/expenses/report/', MonthlyExpenseReportView.as_view(), name='expenses-report'),
-    path('api/expenses/report', MonthlyExpenseReportView.as_view()),
-    path('api/expenses/monthly/export/pdf/', MonthlyExpensePDFExportView.as_view(), name='expense-monthly-export-pdf'),
-    path('api/expenses/monthly/export/pdf', MonthlyExpensePDFExportView.as_view()),
-    path('api/expenses/monthly/export/excel/', MonthlyExpenseExcelExportView.as_view(), name='expense-monthly-export-excel'),
-    path('api/expenses/monthly/export/excel', MonthlyExpenseExcelExportView.as_view()),
     path('api/system/config/', SystemConfigView.as_view(), name='system-config'),
     path('api/system/backup/', SystemBackupView.as_view(), name='system-backup'),
     path('api/kpis/owner/', OwnerKPIView.as_view(), name='kpi-owner'),

@@ -75,14 +75,14 @@ class Cashbox(models.Model):
     def calculate_balance(self, up_to_date=None, return_detailed=False):
         """
         Calculate current balance:
-        balance = opening_balance + incomes - expenses
+        balance = opening_balance + incomes
+        (Note: Expenses module removed)
         
         Args:
             up_to_date: Calculate balance up to this date (inclusive)
             return_detailed: If True, return dict with breakdown, else return balance amount
         """
         from decimal import Decimal
-        from expenses.models import Expense
         
         opening = self.get_latest_opening_balance()
         
@@ -113,27 +113,10 @@ class Cashbox(models.Model):
                 total=models.Sum('amount_uzs')
             )['total'] or Decimal('0.00')
         
-        # Filter expenses
-        expense_filter = {
-            'cashbox': self,
-            'status': Expense.STATUS_APPROVED
-        }
-        if opening_date:
-            expense_filter['date__gte'] = opening_date
-        if up_to_date:
-            expense_filter['date__lte'] = up_to_date
+        # No expenses - expenses module removed
+        expense_sum = Decimal('0.00')
         
-        # Use correct currency amount field
-        if self.currency == self.CURRENCY_USD:
-            expense_sum = Expense.objects.filter(**expense_filter).aggregate(
-                total=models.Sum('amount_usd')
-            )['total'] or Decimal('0.00')
-        else:
-            expense_sum = Expense.objects.filter(**expense_filter).aggregate(
-                total=models.Sum('amount_uzs')
-            )['total'] or Decimal('0.00')
-        
-        balance = opening_amount + income_sum - expense_sum
+        balance = opening_amount + income_sum
         
         if return_detailed:
             return {
@@ -165,34 +148,28 @@ class PaymentCard(models.Model):
         return self.number or ''
 
     def get_balance_usd(self) -> Decimal:
-        """Kartadagi balans - faqat approved/confirmed to'lovlar va approved chiqimlar"""
+        """Kartadagi balans - faqat approved/confirmed to'lovlar (expenses module removed)"""
         from decimal import Decimal
-        from expenses.models import Expense
         
         income = self.payments.filter(
             status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
         ).aggregate(
             total=models.Sum('amount_usd')
         )['total'] or Decimal('0.00')
-        expense = self.expenses.filter(status=Expense.STATUS_APPROVED).aggregate(
-            total=models.Sum('amount_usd')
-        )['total'] or Decimal('0.00')
-        return income - expense
+        # Expenses module removed
+        return income
 
     def get_balance_uzs(self) -> Decimal:
-        """Kartadagi balans UZS"""
+        """Kartadagi balans UZS (expenses module removed)"""
         from decimal import Decimal
-        from expenses.models import Expense
         
         income = self.payments.filter(
             status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
         ).aggregate(
             total=models.Sum('amount_uzs')
         )['total'] or Decimal('0.00')
-        expense = self.expenses.filter(status=Expense.STATUS_APPROVED).aggregate(
-            total=models.Sum('amount_uzs')
-        )['total'] or Decimal('0.00')
-        return income - expense
+        # Expenses module removed
+        return income
 
 
 

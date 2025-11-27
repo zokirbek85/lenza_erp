@@ -1,63 +1,41 @@
+/**
+ * Cashbox API service - minimal version for Ledger page
+ * Note: Standalone "Cashbox Balance" page has been removed
+ * This file provides only the APIs needed for embedded cashbox management in Ledger
+ */
+
 import http from '../app/http';
 
 export interface Cashbox {
   id: number;
-  cashbox_type: 'CARD' | 'CASH_UZS' | 'CASH_USD';
-  type?: 'card' | 'cash_uzs' | 'cash_usd';
-  cashbox_type_display?: string;
   name: string;
-  currency: 'USD' | 'UZS';
-  description?: string;
+  cashbox_type: 'card' | 'cash';
+  currency: 'UZS' | 'USD';
   is_active: boolean;
-  card?: number;
-  card_name?: string;
-  created_at: string;
-  updated_at: string;
+  balance?: number;
+  opening_balance?: number;
+  income_sum?: number;
+  expense_sum?: number;
 }
 
 export interface CashboxSummary {
   id: number;
-  cashbox_type: string;
   name: string;
+  cashbox_type: string;
   currency: string;
-  is_active: boolean;
+  balance: number;
   opening_balance: number;
   income_sum: number;
   expense_sum: number;
-  balance: number;
-  history: Array<{
-    date: string;
-    type: string;
-    amount: number;
-    description: string;
-  }>;
-}
-
-export interface CashboxHistory {
-  cashbox_id: number;
-  cashbox_name: string;
-  cashbox_type: string;
-  currency: string;
-  start_date: string;
-  end_date: string;
-  history: Array<{
-    date: string;
-    balance: number;
-  }>;
 }
 
 export interface CashboxOpeningBalance {
   id: number;
-  cashbox: number;
-  cashbox_name?: string;
-  cashbox_type?: 'CARD' | 'CASH_UZS' | 'CASH_USD';
-  cashbox_type_display?: string;
-  amount: number;
-  balance?: number; // Legacy field
-  currency?: 'USD' | 'UZS';
+  cashbox_type: 'card' | 'cash';
+  currency: 'UZS' | 'USD';
   date: string;
-  created_by?: number;
-  created_by_username?: string;
+  opening_balance_usd: number;
+  opening_balance_uzs: number;
   created_at: string;
 }
 
@@ -66,51 +44,27 @@ export interface CashboxOpeningBalance {
  */
 export const fetchCashboxes = async (): Promise<Cashbox[]> => {
   const response = await http.get('/cashboxes/');
-  return response.data;
+  return response.data.results || response.data;
 };
 
 /**
- * Fetch cashbox summary with balance calculations
+ * Fetch cashbox summary with balances (used by Ledger page)
  */
-export const fetchCashboxSummary = async (): Promise<{ cashboxes: CashboxSummary[]; timestamp: string }> => {
+export const fetchCashboxSummary = async (): Promise<{ cashboxes: CashboxSummary[] }> => {
   const response = await http.get('/cashbox/summary/');
   return response.data;
 };
 
 /**
- * Fetch cashbox history for chart
+ * Create a new cashbox
  */
-export const fetchCashboxHistory = async (
-  cashboxId: number,
-  startDate?: string,
-  endDate?: string
-): Promise<CashboxHistory> => {
-  const params = new URLSearchParams();
-  params.append('cashbox_id', cashboxId.toString());
-  if (startDate) params.append('start_date', startDate);
-  if (endDate) params.append('end_date', endDate);
-
-  const response = await http.get(`/cashbox/history/?${params.toString()}`);
-  return response.data;
-};
-
-/**
- * Create new cashbox
- */
-export const createCashbox = async (data: Partial<Cashbox>): Promise<Cashbox> => {
-  const payload = {
-    name: data.name,
-    type: data.type || data.cashbox_type,
-    cashbox_type: data.cashbox_type,
-    currency: data.currency,
-    description: data.description || '',
-  };
+export const createCashbox = async (payload: Partial<Cashbox>): Promise<Cashbox> => {
   const response = await http.post('/cashboxes/', payload);
   return response.data;
 };
 
 /**
- * Update cashbox
+ * Update an existing cashbox
  */
 export const updateCashbox = async (id: number, data: Partial<Cashbox>): Promise<Cashbox> => {
   const response = await http.patch(`/cashboxes/${id}/`, data);
@@ -118,22 +72,22 @@ export const updateCashbox = async (id: number, data: Partial<Cashbox>): Promise
 };
 
 /**
- * Delete cashbox
+ * Delete a cashbox
  */
 export const deleteCashbox = async (id: number): Promise<void> => {
   await http.delete(`/cashboxes/${id}/`);
 };
 
 /**
- * Fetch opening balances
+ * Fetch all opening balances
  */
 export const fetchOpeningBalances = async (): Promise<CashboxOpeningBalance[]> => {
   const response = await http.get('/cashbox-opening-balances/');
-  return response.data;
+  return response.data.results || response.data;
 };
 
 /**
- * Create opening balance
+ * Create a new opening balance
  */
 export const createOpeningBalance = async (data: Partial<CashboxOpeningBalance>): Promise<CashboxOpeningBalance> => {
   const response = await http.post('/cashbox-opening-balances/', data);
@@ -141,38 +95,15 @@ export const createOpeningBalance = async (data: Partial<CashboxOpeningBalance>)
 };
 
 /**
- * Export cashbox summary to Excel
+ * Update an existing opening balance
  */
-export const exportCashboxExcel = async (): Promise<Blob> => {
-  const response = await http.get('/cashbox/export/excel/', {
-    responseType: 'blob',
-  });
-  return response.data;
-};
-
-/**
- * Export cashbox summary to PDF
- */
-export const exportCashboxPdf = async (): Promise<Blob> => {
-  const response = await http.get('/cashbox/export/pdf/', {
-    responseType: 'blob',
-  });
-  return response.data;
-};
-
-/**
- * Update opening balance
- */
-export const updateOpeningBalance = async (
-  id: number,
-  data: Partial<CashboxOpeningBalance>
-): Promise<CashboxOpeningBalance> => {
+export const updateOpeningBalance = async (id: number, data: Partial<CashboxOpeningBalance>): Promise<CashboxOpeningBalance> => {
   const response = await http.patch(`/cashbox-opening-balances/${id}/`, data);
   return response.data;
 };
 
 /**
- * Delete opening balance
+ * Delete an opening balance
  */
 export const deleteOpeningBalance = async (id: number): Promise<void> => {
   await http.delete(`/cashbox-opening-balances/${id}/`);
