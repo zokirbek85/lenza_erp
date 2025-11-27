@@ -30,9 +30,24 @@ class CashboxSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
     def validate(self, attrs):
-        # Map alias "type" to cashbox_type if provided
-        if attrs.get('type') and not attrs.get('cashbox_type'):
-            attrs['cashbox_type'] = attrs['type']
+        """
+        Support alias "type" from frontend and normalize casing.
+        Removes the alias so it does not get passed to model constructor.
+        """
+        alias = attrs.pop('type', None)
+        if alias and not attrs.get('cashbox_type'):
+            attrs['cashbox_type'] = alias
+
+        # Normalize lowercase variants coming from UI
+        mapping = {
+            'cash_uzs': 'CASH_UZS',
+            'cash_usd': 'CASH_USD',
+            'card': 'CARD',
+        }
+        cashbox_type = attrs.get('cashbox_type')
+        if cashbox_type in mapping:
+            attrs['cashbox_type'] = mapping[cashbox_type]
+
         return super().validate(attrs)
 
 
