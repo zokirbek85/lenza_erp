@@ -47,6 +47,25 @@ class CashboxSerializer(serializers.ModelSerializer):
         cashbox_type = attrs.get('cashbox_type')
         if cashbox_type in mapping:
             attrs['cashbox_type'] = mapping[cashbox_type]
+        
+        # Validate currency matches cashbox type
+        currency = attrs.get('currency')
+        cashbox_type = attrs.get('cashbox_type')
+        
+        if cashbox_type == 'CASH_UZS' and currency != 'UZS':
+            raise serializers.ValidationError({
+                'currency': "Naqd UZS turi faqat UZS valyutasi bilan ishlaydi"
+            })
+        
+        if cashbox_type == 'CASH_USD' and currency != 'USD':
+            raise serializers.ValidationError({
+                'currency': "Naqd USD turi faqat USD valyutasi bilan ishlaydi"
+            })
+        
+        if cashbox_type == 'CARD' and not currency:
+            raise serializers.ValidationError({
+                'currency': "Karta turi uchun valyuta ko'rsatilishi kerak"
+            })
 
         return super().validate(attrs)
 
