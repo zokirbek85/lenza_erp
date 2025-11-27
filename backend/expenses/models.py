@@ -72,7 +72,9 @@ class Expense(models.Model):
         ExpenseCategory,
         on_delete=models.PROTECT,
         related_name='expenses',
-        verbose_name="Kategoriya"
+        verbose_name="Kategoriya",
+        null=True,
+        blank=True,
     )
     # Legacy field for older code paths. We keep it in sync with category.
     type = models.ForeignKey(
@@ -89,8 +91,8 @@ class Expense(models.Model):
         'payments.Cashbox',
         on_delete=models.PROTECT,
         related_name='expenses',
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         verbose_name="Kassa"
     )
     
