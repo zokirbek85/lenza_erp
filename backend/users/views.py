@@ -12,7 +12,7 @@ User = get_user_model()
 
 
 class UserAccessPermission(permissions.BasePermission):
-    safe_roles = {'admin', 'owner', 'accountant', 'warehouse'}
+    safe_roles = {'admin', 'owner', 'accountant', 'warehouse', 'sales'}
     write_roles = {'admin', 'owner'}
 
     def has_permission(self, request, view):  # type: ignore[override]

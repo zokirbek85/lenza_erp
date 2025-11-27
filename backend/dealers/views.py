@@ -50,6 +50,25 @@ class DealerViewSet(viewsets.ModelViewSet):
     ordering_fields = ('name', 'created_at')
     filter_backends = (filters.DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter)
 
+    def get_queryset(self):
+        """
+        Sales (menejer) roli faqat o'ziga tayinlangan dilerlarni ko'radi.
+        Boshqa rollar barcha dilerlarni ko'radi.
+        """
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        # Superuser va admin/owner/accountant barcha dilerlarni ko'radi
+        if user.is_superuser or getattr(user, 'role', None) in ['admin', 'owner', 'accountant']:
+            return queryset
+        
+        # Sales (menejer) faqat o'ziga tayinlangan dilerlarni ko'radi
+        if getattr(user, 'role', None) == 'sales':
+            return queryset.filter(manager_user=user)
+        
+        # Warehouse hamma dilerlarni ko'radi (order delivery uchun kerak)
+        return queryset
+
 
 class DealerExportExcelView(APIView):
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
