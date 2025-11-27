@@ -55,10 +55,8 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
     setBasicsError(null);
     try {
       const dealerList = await fetchAllDealers<DealerOption>();
-      const brandList = await fetchBrands();
-      console.log('Loaded dealers:', dealerList.length, 'brands:', brandList.length);
+      console.log('Loaded dealers:', dealerList.length);
       setDealers(dealerList);
-      setBrands(brandList);
       if (dealerList.length === 0) {
         console.warn('No dealers found in response');
         setBasicsError(t('returns.form.noDealersFound'));
@@ -91,6 +89,16 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
   }, [open, loadBasics, form]);
 
   useEffect(() => {
+    if (!dealerId) return;
+    fetchBrands(dealerId)
+      .then(setBrands)
+      .catch((error) => {
+        console.error(error);
+        message.error(t('common:messages.error'));
+      });
+  }, [dealerId, t]);
+
+  useEffect(() => {
     if (!brandId) {
       setCategories([]);
       setCategoryId(null);
@@ -98,7 +106,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
       return;
     }
     setCategoriesLoading(true);
-    fetchCategories(brandId)
+    fetchCategories(brandId, dealerId || undefined)
       .then((res) => setCategories(res))
       .catch((error) => {
         console.error(error);
@@ -113,7 +121,11 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
       return;
     }
     setProductsLoading(true);
-    fetchProductsByCategory(categoryId)
+    fetchProductsByCategory({
+      categoryId,
+      brandId: brandId || undefined,
+      dealerId: dealerId || undefined,
+    })
       .then((res) => setProducts(res))
       .catch((error) => {
         console.error(error);
@@ -141,6 +153,10 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
     form
       .validateFields(['brand_id', 'category_id', 'product_id', 'quantity', 'status'])
       .then((values) => {
+        if (!dealerId) {
+          message.error(t('returns.form.dealerRequired'));
+          return;
+        }
         const product = products.find((p) => p.id === values.product_id);
         if (!product) {
           message.error(t('returns.form.productRequired'));
@@ -270,6 +286,12 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
             notFoundContent={loadingBasics ? t('common:loading') : basicsError || t('common:messages.noData')}
             onChange={(value) => {
               setDealerId(value);
+              setBrandId(null);
+              setCategoryId(null);
+              setBrands([]);
+              setCategories([]);
+              setProducts([]);
+              form.setFieldsValue({ brand_id: undefined, category_id: undefined, product_id: undefined });
             }}
             options={dealers.map((dealer) => ({
               label: dealer.name,
@@ -315,7 +337,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
                 form.setFieldsValue({ brand_id: value, category_id: undefined, product_id: undefined });
               }}
               loading={loadingBasics}
-              disabled={loadingBasics}
+              disabled={loadingBasics || !dealerId}
               showSearch
               optionFilterProp="label"
             />
@@ -334,7 +356,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
                 setCategoryId(value);
                 form.setFieldsValue({ category_id: value, product_id: undefined });
               }}
-              disabled={!brandId || loadingBasics || categoriesLoading}
+              disabled={!dealerId || !brandId || loadingBasics || categoriesLoading}
               loading={categoriesLoading}
               showSearch
               optionFilterProp="label"
@@ -354,7 +376,7 @@ const ReturnCreateModal = ({ open, onClose, onCreated }: ReturnCreateModalProps)
                 label: product.name,
                 value: product.id,
               }))}
-              disabled={!categoryId || productsLoading}
+              disabled={!dealerId || !brandId || !categoryId || productsLoading}
               showSearch
               optionFilterProp="label"
               notFoundContent={productsLoading ? t('common:loading') : categoryId && products.length === 0 ? t('common:messages.noData') : undefined}

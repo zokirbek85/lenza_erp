@@ -27,6 +27,13 @@ class BrandViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdmin | IsWarehouse | IsSales | IsAccountant | IsOwner]
     search_fields = ('name',)
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        dealer_id = self.request.query_params.get('dealer_id') or self.request.query_params.get('dealer')
+        if dealer_id:
+            queryset = queryset.filter(products__dealer_id=dealer_id).distinct()
+        return queryset
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -36,9 +43,14 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        brand_id = self.request.query_params.get('brand')
+        brand_id = self.request.query_params.get('brand_id') or self.request.query_params.get('brand')
+        dealer_id = self.request.query_params.get('dealer_id') or self.request.query_params.get('dealer')
         if brand_id:
-            queryset = queryset.filter(products__brand_id=brand_id).distinct()
+            queryset = queryset.filter(products__brand_id=brand_id)
+        if dealer_id:
+            queryset = queryset.filter(products__dealer_id=dealer_id)
+        if brand_id or dealer_id:
+            queryset = queryset.distinct()
         return queryset
 
 
@@ -60,6 +72,16 @@ class ProductViewSet(viewsets.ModelViewSet):
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(name__icontains=search)
+
+        brand_id = self.request.query_params.get('brand_id') or self.request.query_params.get('brand')
+        category_id = self.request.query_params.get('category_id') or self.request.query_params.get('category')
+        dealer_id = self.request.query_params.get('dealer_id') or self.request.query_params.get('dealer')
+        if brand_id:
+            queryset = queryset.filter(brand_id=brand_id)
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        if dealer_id:
+            queryset = queryset.filter(dealer_id=dealer_id)
         return queryset
 
     def list(self, request, *args, **kwargs):

@@ -65,10 +65,17 @@ export const adjustProductStock = async (
   return response.data;
 };
 
-export const fetchProductsByCategory = async (categoryId?: number | string, search?: string) => {
+export const fetchProductsByCategory = async (options?: {
+  categoryId?: number | string;
+  brandId?: number | string;
+  dealerId?: number | string;
+  search?: string;
+}) => {
   const params: Record<string, string | number> = { limit: 'all' };
-  if (categoryId) params.category = categoryId;
-  if (search) params.search = search;
+  if (options?.categoryId) params.category_id = options.categoryId;
+  if (options?.brandId) params.brand_id = options.brandId;
+  if (options?.dealerId) params.dealer_id = options.dealerId;
+  if (options?.search) params.search = options.search;
   const response = await http.get('/products/', { params });
   return toArray<Product>(response.data);
 };

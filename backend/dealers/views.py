@@ -8,6 +8,7 @@ from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.utils.company_info import get_company_info
@@ -68,6 +69,16 @@ class DealerViewSet(viewsets.ModelViewSet):
         
         # Warehouse hamma dilerlarni ko'radi (order delivery uchun kerak)
         return queryset
+
+    @action(detail=False, methods=['get'], url_path='list-all')
+    def list_all(self, request):
+        """
+        Unpaginated dealer list for dropdowns.
+        Respects role-based visibility from get_queryset.
+        """
+        queryset = self.filter_queryset(self.get_queryset()).order_by('name')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class DealerExportExcelView(APIView):
