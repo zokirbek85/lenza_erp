@@ -6,7 +6,8 @@
       "Bash(.venv/Scripts/python.exe manage.py:*)",
       "Bash(cat:*)",
       "Bash(find:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git -C /d/Project/new/lenza_erp log --oneline --graph --all -20)"
     ],
     "deny": [],
     "ask": []
