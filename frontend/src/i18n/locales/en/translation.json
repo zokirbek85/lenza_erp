@@ -579,6 +579,36 @@
     "subtitle": "Product returns and processing",
     "new": "New return",
     "createTitle": "Create return",
+    "form": {
+      "dealer": "Dealer",
+      "dealerRequired": "Dealer is required",
+      "selectDealer": "Select dealer",
+      "brand": "Brand",
+      "brandRequired": "Brand is required",
+      "selectBrand": "Select brand",
+      "category": "Category",
+      "categoryRequired": "Category is required",
+      "selectCategory": "Select category",
+      "product": "Product",
+      "productRequired": "Product is required",
+      "selectProduct": "Select product",
+      "quantity": "Quantity",
+      "quantityRequired": "Quantity is required",
+      "status": "Status",
+      "statusRequired": "Status is required",
+      "comment": "Comment",
+      "generalComment": "General comment",
+      "commentPlaceholder": "Optional comment...",
+      "addItem": "Add item"
+    },
+    "status": {
+      "healthy": "Healthy",
+      "defect": "Defective"
+    },
+    "messages": {
+      "created": "Return created",
+      "createError": "Failed to create return"
+    },
     "table": {
       "order": "Order",
       "dealer": "Dealer",
@@ -1106,6 +1136,30 @@
       "dateRequired": "Please select a date",
       "categoryRequired": "Please select an expense category",
       "cashboxRequired": "Please select a cashbox"
+    }
+  },
+  "cashbox": {
+    "addNew": "Add new cashbox",
+    "createTitle": "Create cashbox",
+    "form": {
+      "name": "Name",
+      "nameRequired": "Cashbox name is required",
+      "namePlaceholder": "e.g., Cash UZS",
+      "type": "Type",
+      "typeRequired": "Type is required",
+      "types": {
+        "cashUzs": "Cash UZS",
+        "cashUsd": "Cash USD",
+        "card": "Card"
+      },
+      "currency": "Currency",
+      "currencyRequired": "Currency is required",
+      "description": "Note",
+      "descriptionPlaceholder": "Optional description"
+    },
+    "messages": {
+      "created": "Cashbox created successfully",
+      "createError": "Error creating cashbox"
     }
   },
   "expenseTypes": {

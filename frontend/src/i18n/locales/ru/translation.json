@@ -576,6 +576,36 @@
     "subtitle": "Возврат товаров и обработка",
     "new": "Новый возврат",
     "createTitle": "Создать возврат",
+    "form": {
+      "dealer": "Дилер",
+      "dealerRequired": "Выберите дилера",
+      "selectDealer": "Выберите дилера",
+      "brand": "Бренд",
+      "brandRequired": "Выберите бренд",
+      "selectBrand": "Выберите бренд",
+      "category": "Категория",
+      "categoryRequired": "Выберите категорию",
+      "selectCategory": "Выберите категорию",
+      "product": "Товар",
+      "productRequired": "Выберите товар",
+      "selectProduct": "Выберите товар",
+      "quantity": "Количество",
+      "quantityRequired": "Укажите количество",
+      "status": "Состояние",
+      "statusRequired": "Укажите состояние",
+      "comment": "Комментарий",
+      "generalComment": "Общий комментарий",
+      "commentPlaceholder": "Необязательный комментарий...",
+      "addItem": "Добавить товар"
+    },
+    "status": {
+      "healthy": "Состояние: исправен",
+      "defect": "Состояние: дефект"
+    },
+    "messages": {
+      "created": "Возврат создан",
+      "createError": "Ошибка при создании возврата"
+    },
     "table": {
       "order": "Заказ",
       "dealer": "Дилер",
@@ -1075,6 +1105,30 @@
       "exportError": "Ошибка при экспорте",
       "loadTypesError": "Ошибка при загрузке типов расходов",
       "loadCashboxesError": "Ошибка при загрузке касс"
+    }
+  },
+  "cashbox": {
+    "addNew": "Добавить кассу",
+    "createTitle": "Создать кассу",
+    "form": {
+      "name": "Название",
+      "nameRequired": "Укажите название кассы",
+      "namePlaceholder": "Напр., Naqd UZS",
+      "type": "Тип",
+      "typeRequired": "Выберите тип кассы",
+      "types": {
+        "cashUzs": "Наличные UZS",
+        "cashUsd": "Наличные USD",
+        "card": "Карта"
+      },
+      "currency": "Валюта",
+      "currencyRequired": "Укажите валюту",
+      "description": "Комментарий",
+      "descriptionPlaceholder": "Необязательный комментарий"
+    },
+    "messages": {
+      "created": "Касса создана",
+      "createError": "Ошибка при создании кассы"
     }
   },
   "expenseTypes": {

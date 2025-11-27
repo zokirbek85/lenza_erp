@@ -513,6 +513,30 @@
       "loadCashboxesError": "Kassalarni yuklashda xatolik"
     }
   },
+  "cashbox": {
+    "addNew": "Yangi kassa qo'shish",
+    "createTitle": "Kassa yaratish",
+    "form": {
+      "name": "Nomi",
+      "nameRequired": "Kassa nomini kiriting",
+      "namePlaceholder": "Masalan, Naqd UZS",
+      "type": "Turi",
+      "typeRequired": "Kassa turini tanlang",
+      "types": {
+        "cashUzs": "Naqd UZS",
+        "cashUsd": "Naqd USD",
+        "card": "Karta"
+      },
+      "currency": "Valyuta",
+      "currencyRequired": "Valyuta tanlang",
+      "description": "Izoh",
+      "descriptionPlaceholder": "Ixtiyoriy izoh"
+    },
+    "messages": {
+      "created": "Kassa yaratildi",
+      "createError": "Kassa yaratishda xatolik"
+    }
+  },
   "expenseTypes": {
     "title": "Chiqim turlari",
     "new": "Yangi tur",
