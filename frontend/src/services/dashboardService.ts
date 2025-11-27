@@ -24,7 +24,6 @@ export interface DashboardSummary {
   revenue_by_month: Array<{ month: string; total: number }>;
   revenue_by_product: Array<{ category: string; revenue: number }>;
   inventory_trend: Array<{ date: string; stock_value: number }>;
-  expenses_vs_budget: { expenses: number; budget: number };
 }
 
 /**
@@ -48,7 +47,6 @@ const normalizeDashboardSummary = (data: any): DashboardSummary => {
     revenue_by_month: Array.isArray(data?.revenue_by_month) ? data.revenue_by_month : [],
     revenue_by_product: Array.isArray(data?.revenue_by_product) ? data.revenue_by_product : [],
     inventory_trend: Array.isArray(data?.inventory_trend) ? data.inventory_trend : [],
-    expenses_vs_budget: data?.expenses_vs_budget ?? { expenses: 0, budget: 100000 },
   };
 };
 

@@ -114,7 +114,6 @@ const DashboardPage = () => {
       revenue_by_month: [],
       revenue_by_product: [],
       inventory_trend: [],
-      expenses_vs_budget: { expenses: 0, budget: 100000 },
     },
     cardKpi: [],
     analytics: null,
@@ -165,7 +164,6 @@ const DashboardPage = () => {
           revenue_by_month: [],
           revenue_by_product: [],
           inventory_trend: [],
-          expenses_vs_budget: { expenses: 0, budget: 100000 },
         })),
         permissions.canLoadCardKpi
           ? fetchCardsKpi(effectiveFilters).catch(() => ({ data: [] }))

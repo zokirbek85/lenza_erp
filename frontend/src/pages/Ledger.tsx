@@ -10,19 +10,16 @@ import {
   Space,
   message,
   Typography,
-  Collapse,
 } from 'antd';
 import { useIsMobile } from '../hooks/useIsMobile';
 import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
-import CashboxManagementSection from '../components/CashboxManagementSection';
 import {
   DollarOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
   WalletOutlined,
   ReloadOutlined,
-  SettingOutlined,
 } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';
 import {
@@ -45,7 +42,6 @@ import {
   type CardBalance,
   type CategoryExpense,
 } from '../services/ledgerApi';
-import { fetchCashboxSummary, type CashboxSummary } from '../services/cashboxApi';
 import { useTranslation } from 'react-i18next';
 
 ChartJS.register(
@@ -70,14 +66,6 @@ export default function LedgerPage() {
   const [ledgerData, setLedgerData] = useState<LedgerSummary | null>(null);
   const [cardBalances, setCardBalances] = useState<CardBalance[]>([]);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
-  const [cashboxSummary, setCashboxSummary] = useState<{
-    card_uzs: number;
-    cash_uzs: number;
-    cash_usd: number;
-    total_usd: number;
-    total_uzs: number;
-    usd_rate?: number;
-  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
@@ -88,38 +76,6 @@ export default function LedgerPage() {
     loadAllData();
   }, [dateRange]);
 
-  const aggregateCashboxSummary = (items: CashboxSummary[]) => {
-    const summary = {
-      card_uzs: 0,
-      cash_uzs: 0,
-      cash_usd: 0,
-      total_usd: 0,
-      total_uzs: 0,
-      usd_rate: undefined as number | undefined,
-    };
-
-    items.forEach((item) => {
-      const balance = Number(item.balance) || 0;
-      if (item.cashbox_type === 'CARD') {
-        if (item.currency === 'USD') {
-          summary.cash_usd += balance;
-          summary.total_usd += balance;
-        } else {
-          summary.card_uzs += balance;
-          summary.total_uzs += balance;
-        }
-      } else if (item.cashbox_type === 'CASH_USD') {
-        summary.cash_usd += balance;
-        summary.total_usd += balance;
-      } else if (item.cashbox_type === 'CASH_UZS') {
-        summary.cash_uzs += balance;
-        summary.total_uzs += balance;
-      }
-    });
-
-    return summary;
-  };
-
   const loadAllData = async () => {
     setLoading(true);
     try {
@@ -128,17 +84,15 @@ export default function LedgerPage() {
         to: dateRange?.[1]?.format('YYYY-MM-DD'),
       };
 
-      const [summary, cards, cats, cashbox] = await Promise.all([
+      const [summary, cards, cats] = await Promise.all([
         fetchLedgerSummary(filters),
         fetchCardBalances(),
         fetchExpensesByCategory(filters),
-        fetchCashboxSummary(),
       ]);
 
       setLedgerData(summary);
       setCardBalances(cards);
       setCategories(cats);
-      setCashboxSummary(aggregateCashboxSummary(cashbox.cashboxes || []));
     } catch (error) {
       message.error(t('ledger.errorLoading'));
       console.error('Load data error:', error);
@@ -208,9 +162,6 @@ export default function LedgerPage() {
       maximumFractionDigits: 2,
     }).format(value);
   };
-
-  const formatUZS = (n: number) => n.toLocaleString('ru-RU') + ' so\'m';
-  const formatUSD = (n: number) => '$' + n.toFixed(2);
 
   const filtersContent = (
     <Space direction="vertical" style={{ width: '100%' }}>
@@ -341,106 +292,6 @@ export default function LedgerPage() {
           </Button>
         </Space>
       </div>
-
-      {/* OPENING BALANCES */}
-      {cashboxSummary && (
-        <Card
-          title={
-            <span>
-              <WalletOutlined style={{ marginRight: 8 }} />
-              Kassa balansi (Opening Balance)
-            </span>
-          }
-          style={{ marginBottom: '24px' }}
-        >
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Card size="small" style={{ backgroundColor: '#f0f9ff' }}>
-                <Statistic
-                  title="Karta (UZS)"
-                  value={cashboxSummary.card_uzs}
-                  precision={2}
-                  valueStyle={{ color: '#0369a1' }}
-                  formatter={(value) => formatUZS(value as number)}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card size="small" style={{ backgroundColor: '#f0fdf4' }}>
-                <Statistic
-                  title="Naqd pul (UZS)"
-                  value={cashboxSummary.cash_uzs}
-                  precision={2}
-                  valueStyle={{ color: '#15803d' }}
-                  formatter={(value) => formatUZS(value as number)}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card size="small" style={{ backgroundColor: '#fef3c7' }}>
-                <Statistic
-                  title="Naqd pul (USD)"
-                  value={cashboxSummary.cash_usd}
-                  precision={2}
-                  valueStyle={{ color: '#a16207' }}
-                  formatter={(value) => formatUSD(value as number)}
-                />
-              </Card>
-            </Col>
-          </Row>
-          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-            <Col xs={24} sm={12}>
-              <Card size="small" style={{ backgroundColor: '#eff6ff', borderLeft: '4px solid #3b82f6' }}>
-                <Statistic
-                  title="Umumiy balans"
-                  value={cashboxSummary.total_usd}
-                  precision={2}
-                  valueStyle={{ color: '#1e40af', fontSize: 24 }}
-                  suffix="USD"
-                  prefix="$"
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Card size="small" style={{ backgroundColor: '#f5f3ff', borderLeft: '4px solid #8b5cf6' }}>
-                <Statistic
-                  title="UZS ekvivalenti"
-                  value={cashboxSummary.total_uzs}
-                  precision={2}
-                  valueStyle={{ color: '#6d28d9', fontSize: 24 }}
-                  formatter={(value) => formatUZS(value as number)}
-                />
-                {typeof cashboxSummary.usd_rate === 'number' && Number.isFinite(cashboxSummary.usd_rate) && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    Kurs: 1 USD = {formatMoney(cashboxSummary.usd_rate)} UZS
-                  </Text>
-                )}
-              </Card>
-            </Col>
-          </Row>
-        </Card>
-      )}
-
-      {/* CASHBOX MANAGEMENT SECTION */}
-      <Collapse
-        items={[
-          {
-            key: 'management',
-            label: (
-              <span>
-                <SettingOutlined style={{ marginRight: 8 }} />
-                <span style={{ fontWeight: 600 }}>Kassa balanslarini boshqarish</span>
-                <span style={{ marginLeft: 8, fontSize: 12, color: '#64748b' }}>
-                  (Opening balances ni qo'shish, o'zgartirish va o'chirish)
-                </span>
-              </span>
-            ),
-            children: <CashboxManagementSection onUpdate={loadAllData} />,
-          },
-        ]}
-        defaultActiveKey={[]}
-        style={{ marginBottom: 24 }}
-      />
 
       {/* STATISTICS CARDS */}
       <Row gutter={[16, 16]}>
