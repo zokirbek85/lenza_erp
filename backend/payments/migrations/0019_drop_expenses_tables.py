@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('payments', '0018_alter_cashbox_currency'),  # Latest payments migration
+        ('payments', '0009_add_cashbox_description'),  # Latest payments migration
     ]
 
     operations = [
