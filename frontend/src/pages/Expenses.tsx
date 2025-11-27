@@ -69,9 +69,10 @@ import type {
   ExpenseDistribution,
   ExpenseFilters,
 } from '../services/expenseApi';
-import { fetchCashboxes } from '../services/cashboxApi';
+import { fetchCashboxes, createCashbox } from '../services/cashboxApi';
 import type { Cashbox } from '../services/cashboxApi';
 import type { ColumnsType } from 'antd/es/table';
+import { useAuthStore } from '../auth/useAuthStore';
 
 // Register Chart.js components
 ChartJS.register(
@@ -106,6 +107,8 @@ export default function ExpensesPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [form] = Form.useForm();
+  const [cashboxForm] = Form.useForm();
+  const [cashboxModalOpen, setCashboxModalOpen] = useState(false);
 
   // Filters
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
@@ -114,6 +117,9 @@ export default function ExpensesPage() {
   const [filterCashbox, setFilterCashbox] = useState<number | undefined>();
   const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | undefined>();
   const [cashboxCurrency, setCashboxCurrency] = useState<'USD' | 'UZS' | undefined>();
+  const [newCashboxType, setNewCashboxType] = useState<'CASH_UZS' | 'CASH_USD' | 'CARD'>('CASH_UZS');
+  const role = useAuthStore((state) => state.role);
+  const canCreateCashbox = ['admin', 'accountant', 'owner'].includes(role || '');
 
   // ========== LOAD DATA ==========
   useEffect(() => {
@@ -158,10 +164,12 @@ export default function ExpensesPage() {
     try {
       const data = await fetchCashboxes();
       setCashboxes(Array.isArray(data) ? data : []);
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Failed to load cashboxes:', error);
       message.error(t('expenses.messages.loadCashboxesError'));
       setCashboxes([]);
+      return [];
     }
   };
 
@@ -271,6 +279,51 @@ export default function ExpensesPage() {
     const selectedCurrency = selected?.currency as 'USD' | 'UZS' | undefined;
     setCashboxCurrency(selectedCurrency);
     form.setFieldsValue({ cashbox: cashboxId, currency: selectedCurrency });
+  };
+
+  const handleCreateCashbox = async () => {
+    try {
+      const values = await cashboxForm.validateFields();
+      const payload = {
+        name: values.name,
+        cashbox_type: values.cashbox_type,
+        currency: values.currency,
+        is_active: true,
+      };
+      const res = await createCashbox(payload);
+      message.success(t('cashbox.messages.created') || 'Kassa yaratildi');
+      setCashboxModalOpen(false);
+      cashboxForm.resetFields();
+      await loadCashboxes();
+      setCashboxCurrency(res.currency as 'USD' | 'UZS');
+      form.setFieldsValue({ cashbox: res.id, currency: res.currency });
+    } catch (error) {
+      message.error(t('cashbox.messages.createError') || "Kassa yaratishda xatolik");
+    }
+  };
+
+  const handleCashboxTypeSelect = (value: string) => {
+    setNewCashboxType(value as 'CASH_UZS' | 'CASH_USD' | 'CARD');
+    let currencyValue: 'USD' | 'UZS' | undefined = cashboxForm.getFieldValue('currency');
+    if (value === 'CASH_UZS') {
+      currencyValue = 'UZS';
+    } else if (value === 'CASH_USD') {
+      currencyValue = 'USD';
+    }
+    if (currencyValue) {
+      cashboxForm.setFieldsValue({ currency: currencyValue });
+    }
+  };
+
+  const openCashboxModal = () => {
+    setNewCashboxType('CASH_UZS');
+    cashboxForm.setFieldsValue({
+      name: '',
+      cashbox_type: 'CASH_UZS',
+      currency: 'UZS',
+      description: '',
+    });
+    setCashboxModalOpen(true);
   };
 
   const handleSubmit = async () => {
@@ -559,6 +612,18 @@ export default function ExpensesPage() {
           placeholder={t('expenses.form.selectCashbox')}
           showSearch
           optionFilterProp="children"
+          dropdownRender={(menu) => (
+            <>
+              {menu}
+              {canCreateCashbox && (
+                <div style={{ padding: '8px 12px' }}>
+                  <Button type="link" block onClick={openCashboxModal}>
+                    + {t('cashbox.addNew') || 'Yangi kassa yaratish'}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
           onChange={(value) => handleCashboxChange(value as number)}
         >
           {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
@@ -832,6 +897,52 @@ export default function ExpensesPage() {
       >
         <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
           {formFields}
+        </Form>
+      </Modal>
+
+      <Modal
+        title={t('cashbox.createTitle') || 'Yangi kassa yaratish'}
+        open={cashboxModalOpen}
+        onOk={handleCreateCashbox}
+        onCancel={() => setCashboxModalOpen(false)}
+        okText={t('actions.save')}
+        cancelText={t('actions.cancel')}
+      >
+        <Form layout="vertical" form={cashboxForm}>
+          <Form.Item
+            label={t('cashbox.form.name') || 'Nomi'}
+            name="name"
+            rules={[{ required: true, message: t('cashbox.form.nameRequired') || 'Kassa nomini kiriting' }]}
+          >
+            <Input placeholder={t('cashbox.form.namePlaceholder') || 'Naqd UZS'} />
+          </Form.Item>
+
+          <Form.Item
+            label={t('cashbox.form.type') || 'Turi'}
+            name="cashbox_type"
+            rules={[{ required: true, message: t('cashbox.form.typeRequired') || 'Kassa turini tanlang' }]}
+          >
+            <Select onChange={handleCashboxTypeSelect}>
+              <Select.Option value="CASH_UZS">{t('cashbox.types.cashUzs') || 'Naqd UZS'}</Select.Option>
+              <Select.Option value="CASH_USD">{t('cashbox.types.cashUsd') || 'Naqd USD'}</Select.Option>
+              <Select.Option value="CARD">{t('cashbox.types.card') || 'Karta'}</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label={t('cashbox.form.currency') || 'Valyuta'}
+            name="currency"
+            rules={[{ required: true, message: t('cashbox.form.currencyRequired') || 'Valyutani tanlang' }]}
+          >
+            <Select disabled={newCashboxType !== 'CARD'}>
+              <Select.Option value="UZS">UZS</Select.Option>
+              <Select.Option value="USD">USD</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item label={t('cashbox.form.description') || 'Izoh'} name="description">
+            <Input.TextArea rows={3} placeholder={t('cashbox.form.descriptionPlaceholder') || 'Izoh'} />
+          </Form.Item>
         </Form>
       </Modal>
     </section>
