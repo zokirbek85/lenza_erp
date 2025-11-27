@@ -1107,7 +1107,7 @@ const OrdersPage = () => {
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-200'
                         }`}
                       >
-                        {order.is_reserve ? t('orders.type.reserve') : t('orders.type.regular')}
+                        {order.is_reserve ? t('Bron') : t('Oddiy')}
                       </span>
                     </td>
                     <td className="px-4 py-3">

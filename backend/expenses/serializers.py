@@ -31,8 +31,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
     
     # Read-only fields (ma'lumot ko'rsatish uchun)
     type_name = serializers.CharField(source='type.name', read_only=True)
-    category = serializers.PrimaryKeyRelatedField(queryset=ExpenseCategory.objects.all())
+    category = serializers.PrimaryKeyRelatedField(queryset=ExpenseCategory.objects.all(), allow_null=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
+    cashbox = serializers.PrimaryKeyRelatedField(read_only=True, allow_null=True)
     cashbox_name = serializers.CharField(source='cashbox.name', read_only=True, allow_null=True)
     cashbox_currency = serializers.CharField(source='cashbox.currency', read_only=True, allow_null=True)
     card_name = serializers.CharField(source='card.name', read_only=True, allow_null=True)

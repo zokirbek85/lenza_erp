@@ -96,7 +96,7 @@ def _expense_amounts(expense: Expense) -> tuple[Decimal, Decimal]:
 
 
 def aggregate_monthly_expenses(start_date: date, end_date: date) -> dict:
-    qs = Expense.objects.select_related('type').filter(
+    qs = Expense.objects.select_related('category').filter(
         date__gte=start_date,
         date__lte=end_date,
         status=Expense.STATUS_APPROVED,
@@ -114,7 +114,12 @@ def aggregate_monthly_expenses(start_date: date, end_date: date) -> dict:
     grand_usd = DECIMAL_ZERO
     grand_uzs = DECIMAL_ZERO
     for expense in expenses:
-        key = expense.type.name if expense.type else 'Noma\'lum'
+        if expense.category:
+            key = expense.category.name
+        elif expense.type:
+            key = expense.type.name
+        else:
+            key = "Noma'lum"
         usd, uzs = _expense_amounts(expense)
         type_totals[key]['usd'] += usd
         type_totals[key]['uzs'] += uzs

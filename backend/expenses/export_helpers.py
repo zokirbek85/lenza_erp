@@ -6,7 +6,7 @@ from typing import Iterable
 
 from django.db.models import Sum
 
-from .models import Expense, ExpenseType
+from .models import Expense, ExpenseCategory, ExpenseType
 
 
 def get_filtered_expense_queryset(request):
@@ -22,15 +22,20 @@ def get_filtered_expense_queryset(request):
 def expense_rows_from_queryset(queryset: Iterable[Expense]) -> list[dict]:
     rows = []
     for expense in queryset:
+        category_name = None
+        if hasattr(expense, 'category') and expense.category:
+            category_name = expense.category.name
+        elif expense.type:
+            category_name = expense.type.name
+        else:
+            category_name = "Noma'lum"
         rows.append({
             'date': expense.date,
-            'category': expense.type.name if expense.type else 'Noma\'lum',
-            'method': expense.get_method_display(),
-            'payment_method': expense.method,
+            'category': category_name,
+            'cashbox': expense.cashbox.name if expense.cashbox else '',
             'currency': expense.currency,
-            'amount_usd': float(expense.amount_usd or Decimal('0')),
-            'amount_uzs': float(expense.amount_uzs or Decimal('0')),
-            'status': expense.get_status_display(),
+            'amount': float(expense.amount or Decimal('0')),
+            'created_by': getattr(expense.created_by, 'full_name', '') or getattr(expense.created_by, 'username', ''),
             'description': expense.description or '',
         })
     return rows
@@ -44,37 +49,27 @@ def describe_export_filters(request):
     if date_from or date_to:
         filters.append(f"Davri: {date_from or 'boshlangich'} – {date_to or 'hozirgi'}")
 
-    type_id = params.get('type')
-    if type_id:
-        type_name = ExpenseType.objects.filter(id=type_id).values_list('name', flat=True).first()
-        filters.append(f"Turi: {type_name or type_id}")
-
-    method = params.get('method')
-    if method:
-        display = dict(Expense.METHOD_CHOICES).get(method, method)
-        filters.append(f"Usul: {display}")
+    category_id = params.get('category') or params.get('type')
+    if category_id:
+        category_name = ExpenseCategory.objects.filter(id=category_id).values_list('name', flat=True).first()
+        filters.append(f"Turi: {category_name or category_id}")
 
     currency = params.get('currency')
     if currency:
         filters.append(f"Valyuta: {currency}")
 
-    status = params.get('status')
-    if status:
-        display = dict(Expense.STATUS_CHOICES).get(status, status)
-        filters.append(f"Holat: {display}")
-
-    card = params.get('card')
-    if card:
-        filters.append(f"Karta ID: {card}")
+    cashbox = params.get('cashbox') or params.get('cashbox_id')
+    if cashbox:
+        filters.append(f"Kassa ID: {cashbox}")
 
     return filters
 
 
 def total_amounts(queryset):
-    totals = queryset.aggregate(
-        total_usd=Sum('amount_usd'),
-        total_uzs=Sum('amount_uzs'),
-    )
+    totals = {
+        'total_usd': queryset.filter(currency='USD').aggregate(total=Sum('amount'))['total'] or Decimal('0'),
+        'total_uzs': queryset.filter(currency='UZS').aggregate(total=Sum('amount'))['total'] or Decimal('0'),
+    }
     return {
         'usd': float(totals['total_usd'] or Decimal('0')),
         'uzs': float(totals['total_uzs'] or Decimal('0')),

@@ -47,7 +47,7 @@ class ExpenseExportBaseView(APIView):
 
 class ExpenseListPDFExportView(ExpenseExportBaseView):
     def get(self, request):
-        queryset = get_filtered_expense_queryset(request).select_related('type')
+        queryset = get_filtered_expense_queryset(request).select_related('category', 'cashbox')
         rows = expense_rows_from_queryset(queryset)
         totals = total_amounts(queryset)
         filters = describe_export_filters(request)
@@ -70,7 +70,7 @@ class ExpenseListPDFExportView(ExpenseExportBaseView):
 
 class ExpenseListExcelExportView(ExpenseExportBaseView):
     def get(self, request):
-        queryset = get_filtered_expense_queryset(request).select_related('type')
+        queryset = get_filtered_expense_queryset(request).select_related('category', 'cashbox')
         rows = expense_rows_from_queryset(queryset)
         totals = total_amounts(queryset)
 
@@ -83,7 +83,7 @@ class ExpenseListExcelExportView(ExpenseExportBaseView):
             top=Side(style='thin'),
             bottom=Side(style='thin'),
         )
-        headers = [_('Date'), _('Type'), 'USD', 'UZS', _('Method'), _('Status'), _('Description')]
+        headers = [_('Date'), _('Category'), _('Cashbox'), _('Amount'), _('Currency'), _('Description'), _('Created by')]
         header_font = Font(bold=True)
 
         worksheet.append(headers)
@@ -96,15 +96,15 @@ class ExpenseListExcelExportView(ExpenseExportBaseView):
         for row_index, row in enumerate(rows, start=2):
             worksheet.cell(row=row_index, column=1, value=row['date'].strftime('%Y-%m-%d')).border = small_border
             worksheet.cell(row=row_index, column=2, value=row['category']).border = small_border
-            worksheet.cell(row=row_index, column=3, value=row['amount_usd']).border = small_border
-            worksheet.cell(row=row_index, column=4, value=row['amount_uzs']).border = small_border
-            worksheet.cell(row=row_index, column=5, value=row['method']).border = small_border
-            worksheet.cell(row=row_index, column=6, value=row['status']).border = small_border
-            worksheet.cell(row=row_index, column=7, value=row['description'][:100]).border = small_border
+            worksheet.cell(row=row_index, column=3, value=row.get('cashbox', '')).border = small_border
+            worksheet.cell(row=row_index, column=4, value=row['amount']).border = small_border
+            worksheet.cell(row=row_index, column=5, value=row['currency']).border = small_border
+            worksheet.cell(row=row_index, column=6, value=row['description'][:100]).border = small_border
+            worksheet.cell(row=row_index, column=7, value=row.get('created_by', '')).border = small_border
 
         total_row = len(rows) + 2
         worksheet.cell(row=total_row, column=1, value=_('Total USD')).font = header_font
-        worksheet.cell(row=total_row, column=3, value=totals['usd']).border = small_border
+        worksheet.cell(row=total_row, column=4, value=totals['usd']).border = small_border
         worksheet.cell(row=total_row + 1, column=1, value=_('Total UZS')).font = header_font
         worksheet.cell(row=total_row + 1, column=4, value=totals['uzs']).border = small_border
 

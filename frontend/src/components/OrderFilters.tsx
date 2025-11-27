@@ -35,8 +35,8 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
   const { token } = theme.useToken();
   
   const ORDER_TYPES = [
-    { value: 'regular', label: t('orders.type.regular') },
-    { value: 'reserve', label: t('orders.type.reserve') },
+    { value: 'regular', label: t('Oddiy') },
+    { value: 'reserve', label: t('Bron') },
   ];
 
   const ORDER_STATUSES = [

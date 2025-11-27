@@ -3,7 +3,7 @@ Expenses Admin - Django Admin Panel
 """
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import ExpenseType, Expense
+from .models import ExpenseType, ExpenseCategory, Expense
 
 
 @admin.register(ExpenseType)
@@ -20,26 +20,32 @@ class ExpenseTypeAdmin(admin.ModelAdmin):
     is_active_badge.short_description = 'Status'
 
 
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(ExpenseTypeAdmin):
+    """Proxy admin for expense categories (same table as ExpenseType)."""
+    pass
+
+
 @admin.register(Expense)
 class ExpenseAdmin(admin.ModelAdmin):
     list_display = [
         'id',
         'date',
-        'type',
+        'category',
         'amount_display',
         'method_badge',
         'status_badge',
         'created_by',
         'created_at'
     ]
-    list_filter = ['status', 'method', 'currency', 'type', 'date', 'created_at']
-    search_fields = ['description', 'type__name', 'created_by__full_name']
+    list_filter = ['status', 'method', 'currency', 'category', 'cashbox', 'date', 'created_at']
+    search_fields = ['description', 'category__name', 'created_by__full_name']
     readonly_fields = ['created_by', 'approved_by', 'created_at', 'updated_at', 'approved_at', 'amount_in_usd']
     date_hierarchy = 'date'
     
     fieldsets = (
         ('Asosiy malumotlar', {
-            'fields': ('date', 'type', 'amount', 'currency', 'description')
+            'fields': ('date', 'category', 'cashbox', 'amount', 'currency', 'description')
         }),
         ('Tolov malumotlari', {
             'fields': ('method', 'card')

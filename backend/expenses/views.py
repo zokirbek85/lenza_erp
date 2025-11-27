@@ -73,8 +73,8 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = ExpenseSerializer
     permission_classes = [IsAdminOwnerAccountant]
-    filterset_fields = ['status', 'method', 'currency', 'type', 'category', 'cashbox']
-    search_fields = ['description', 'type__name', 'category__name']
+    filterset_fields = ['status', 'method', 'currency', 'category', 'cashbox', 'created_by']
+    search_fields = ['description', 'category__name', 'cashbox__name']
     ordering_fields = ['date', 'amount', 'created_at']
     ordering = ['-date', '-created_at']
 
@@ -96,10 +96,15 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         if date_to:
             queryset = queryset.filter(date__lte=date_to)
         
-        # Type filtering
-        type_id = self.request.query_params.get('type')
-        if type_id:
-            queryset = queryset.filter(type_id=type_id)
+        # Category filtering (accepts legacy `type` param for compatibility)
+        category_id = self.request.query_params.get('category') or self.request.query_params.get('type')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+
+        # Cashbox filtering
+        cashbox_id = self.request.query_params.get('cashbox') or self.request.query_params.get('cashbox_id')
+        if cashbox_id:
+            queryset = queryset.filter(cashbox_id=cashbox_id)
         
         # Method filtering
         method = self.request.query_params.get('method')
@@ -254,14 +259,14 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             start_date = None
         
         # Tur bo'yicha guruh - Python-based (SQLite muammosi yo'q)
-        qs = Expense.objects.filter(status=Expense.STATUS_APPROVED).select_related('type')
+        qs = Expense.objects.filter(status=Expense.STATUS_APPROVED).select_related('category')
         if start_date:
             qs = qs.filter(date__gte=start_date)
         
         # Python'da guruhlaymiz
         type_dict = {}
         for exp in qs:
-            type_name = exp.type.name
+            type_name = exp.category.name if exp.category else (exp.type.name if exp.type else "Noma'lum")
             if type_name not in type_dict:
                 type_dict[type_name] = {'total_usd': 0, 'total_uzs': 0, 'count': 0}
             
