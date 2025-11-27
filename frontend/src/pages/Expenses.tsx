@@ -1,16 +1,11 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Table,
   Card,
   Button,
-  Modal,
-  Form,
-  Input,
   Select,
   DatePicker,
-  InputNumber,
-  Typography,
   Space,
   message,
   Row,
@@ -19,12 +14,13 @@ import {
   Statistic,
   Tooltip,
   Popconfirm,
+  Collapse,
 } from 'antd';
 import {
   PlusOutlined,
+  MinusOutlined,
   FilePdfOutlined,
   FileExcelOutlined,
-  EditOutlined,
   DeleteOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -35,6 +31,7 @@ import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import ExpensesMobileCards from './_mobile/ExpensesMobileCards';
 import type { ExpensesMobileHandlers } from './_mobile/ExpensesMobileCards';
+import CreateExpenseForm from './Expenses/components/CreateExpenseForm';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -54,8 +51,6 @@ import {
   fetchExpenseStats,
   fetchExpenseTrend,
   fetchExpenseDistribution,
-  createExpense,
-  updateExpense,
   deleteExpense,
   approveExpense,
   exportExpensesPdf,
@@ -69,8 +64,6 @@ import type {
   ExpenseDistribution,
   ExpenseFilters,
 } from '../services/expenseApi';
-import { fetchCashboxes, createCashbox } from '../services/cashboxApi';
-import type { Cashbox } from '../services/cashboxApi';
 import type { ColumnsType } from 'antd/es/table';
 import { useAuthStore } from '../auth/useAuthStore';
 
@@ -87,28 +80,24 @@ ChartJS.register(
   ArcElement
 );
 
-const { Title } = Typography;
 const { RangePicker } = DatePicker;
+
+const CREATE_FORM_PANEL_KEY = 'create-expense';
 
 export default function ExpensesPage() {
   const { t } = useTranslation();
   const { isMobile } = useIsMobile();
-  
+
   // ========== STATE ==========
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const [cashboxes, setCashboxes] = useState<Cashbox[]>([]);
   const [stats, setStats] = useState<ExpenseStats | null>(null);
   const [trendData, setTrendData] = useState<ExpenseTrend[]>([]);
   const [distributionData, setDistributionData] = useState<ExpenseDistribution[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState({ pdf: false, xlsx: false });
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [form] = Form.useForm();
-  const [cashboxForm] = Form.useForm();
-  const [cashboxModalOpen, setCashboxModalOpen] = useState(false);
 
   // Filters
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
@@ -116,34 +105,14 @@ export default function ExpensesPage() {
   const [filterCategory, setFilterCategory] = useState<number | undefined>();
   const [filterCashbox, setFilterCashbox] = useState<number | undefined>();
   const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | undefined>();
-  const [cashboxCurrency, setCashboxCurrency] = useState<'USD' | 'UZS' | undefined>();
-  const [newCashboxType, setNewCashboxType] = useState<'CASH_UZS' | 'CASH_USD' | 'CARD'>('CASH_UZS');
+
   const role = useAuthStore((state) => state.role);
-  const canCreateCashbox = ['admin', 'accountant', 'owner'].includes(role || '');
+  const canCreate = ['admin', 'accountant', 'owner'].includes(role || '');
 
   // ========== LOAD DATA ==========
   useEffect(() => {
     loadCategories();
-    loadCashboxes();
   }, []);
-
-  useEffect(() => {
-    if (modalOpen) {
-      loadCategories();
-      loadCashboxes();
-    }
-  }, [modalOpen]);
-
-  useEffect(() => {
-    const currentCashbox = form.getFieldValue('cashbox');
-    if (currentCashbox && cashboxes.length) {
-      const selected = cashboxes.find((c) => c.id === currentCashbox);
-      if (selected) {
-        setCashboxCurrency(selected.currency as 'USD' | 'UZS');
-        form.setFieldsValue({ currency: selected.currency });
-      }
-    }
-  }, [cashboxes, form]);
 
   useEffect(() => {
     loadData();
@@ -160,22 +129,8 @@ export default function ExpensesPage() {
     }
   };
 
-  const loadCashboxes = async () => {
-    try {
-      const data = await fetchCashboxes();
-      setCashboxes(Array.isArray(data) ? data : []);
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error('Failed to load cashboxes:', error);
-      message.error(t('expenses.messages.loadCashboxesError'));
-      setCashboxes([]);
-      return [];
-    }
-  };
-
   const loadData = async () => {
     setLoading(true);
-    console.log('рџ”„ loadData started...');
     try {
       const filters: ExpenseFilters = {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
@@ -184,7 +139,6 @@ export default function ExpensesPage() {
         cashbox: filterCashbox,
         status: filterStatus,
       };
-      console.log('📋 Filters:', filters);
 
       const [expensesData, statsData, trendDataResult, distributionDataResult] = await Promise.all([
         fetchExpenses(filters),
@@ -192,32 +146,19 @@ export default function ExpensesPage() {
         fetchExpenseTrend(30),
         fetchExpenseDistribution('month'),
       ]);
-      
-      console.log('вњ… All data loaded:', {
-        expenses: expensesData.length,
-        stats: statsData,
-        trend: trendDataResult.length,
-        distribution: distributionDataResult.length,
-      });
 
       setExpenses(Array.isArray(expensesData) ? expensesData : []);
-      console.log('рџ“ќ Expenses set to state:', expensesData.length, 'items');
-      
-      // Fallback - agar backend bo'sh object qaytarsa
       setStats(statsData || {
         today: { count: 0, total_usd: 0, total_uzs: 0 },
         week: { count: 0, total_usd: 0, total_uzs: 0 },
         month: { count: 0, total_usd: 0, total_uzs: 0 },
         total: { count: 0, total_usd: 0, total_uzs: 0 },
       });
-      
       setTrendData(trendDataResult || []);
       setDistributionData(distributionDataResult || []);
     } catch (error) {
       message.error(t('expenses.messages.loadError'));
-      console.error('вќЊ Load data error:', error);
-      
-      // Xatolik bo'lsa ham default qiymatlar
+      console.error('Load data error:', error);
       setExpenses([]);
       setStats({
         today: { count: 0, total_usd: 0, total_uzs: 0 },
@@ -229,31 +170,10 @@ export default function ExpensesPage() {
       setDistributionData([]);
     } finally {
       setLoading(false);
-      console.log('вњ… loadData finished');
     }
   };
 
   // ========== CRUD OPERATIONS ==========
-  const handleCreate = () => {
-    form.resetFields();
-    setEditingExpense(null);
-    setCashboxCurrency(undefined);
-    setModalOpen(true);
-  };
-
-  const handleEdit = (expense: Expense) => {
-    form.setFieldsValue({
-      ...expense,
-      category: expense.category,
-      cashbox: expense.cashbox,
-      currency: expense.cashbox_currency || expense.currency,
-      date: dayjs(expense.date),
-    });
-    setCashboxCurrency(expense.cashbox_currency || expense.currency);
-    setEditingExpense(expense);
-    setModalOpen(true);
-  };
-
   const handleDelete = async (id: number) => {
     try {
       await deleteExpense(id);
@@ -274,87 +194,25 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleCashboxChange = (cashboxId: number) => {
-    const selected = cashboxes.find((c) => c.id === cashboxId);
-    const selectedCurrency = selected?.currency as 'USD' | 'UZS' | undefined;
-    setCashboxCurrency(selectedCurrency);
-    form.setFieldsValue({ cashbox: cashboxId, currency: selectedCurrency });
+  const handleToggleCreateForm = () => {
+    setShowCreateForm((prev) => !prev);
   };
 
-  const handleCreateCashbox = async () => {
-    try {
-      const values = await cashboxForm.validateFields();
-      const payload = {
-        name: values.name,
-        cashbox_type: values.cashbox_type,
-        currency: values.currency,
-        is_active: true,
-      };
-      const res = await createCashbox(payload);
-      message.success(t('cashbox.messages.created') || 'Kassa yaratildi');
-      setCashboxModalOpen(false);
-      cashboxForm.resetFields();
-      await loadCashboxes();
-      setCashboxCurrency(res.currency as 'USD' | 'UZS');
-      form.setFieldsValue({ cashbox: res.id, currency: res.currency });
-    } catch (error) {
-      message.error(t('cashbox.messages.createError') || "Kassa yaratishda xatolik");
+  const handleCollapseChange = (keys: string | string[]) => {
+    if (Array.isArray(keys)) {
+      setShowCreateForm(keys.includes(CREATE_FORM_PANEL_KEY));
+    } else {
+      setShowCreateForm(keys === CREATE_FORM_PANEL_KEY);
     }
   };
 
-  const handleCashboxTypeSelect = (value: string) => {
-    setNewCashboxType(value as 'CASH_UZS' | 'CASH_USD' | 'CARD');
-    let currencyValue: 'USD' | 'UZS' | undefined = cashboxForm.getFieldValue('currency');
-    if (value === 'CASH_UZS') {
-      currencyValue = 'UZS';
-    } else if (value === 'CASH_USD') {
-      currencyValue = 'USD';
-    }
-    if (currencyValue) {
-      cashboxForm.setFieldsValue({ currency: currencyValue });
-    }
+  const handleFormSuccess = () => {
+    setShowCreateForm(false);
+    loadData();
   };
 
-  const openCashboxModal = () => {
-    setNewCashboxType('CASH_UZS');
-    cashboxForm.setFieldsValue({
-      name: '',
-      cashbox_type: 'CASH_UZS',
-      currency: 'UZS',
-      description: '',
-    });
-    setCashboxModalOpen(true);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      const data = {
-        ...values,
-        currency: cashboxCurrency || values.currency,
-        date: values.date.format('YYYY-MM-DD'),
-      };
-
-      if (editingExpense) {
-        await updateExpense(editingExpense.id, data);
-        message.success(t('expenses.messages.updated'));
-      } else {
-        await createExpense(data);
-        message.success(t('expenses.messages.created'));
-      }
-
-      closeModal();
-      loadData();
-    } catch (error) {
-      message.error(t('expenses.messages.saveError'));
-    }
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setCashboxCurrency(undefined);
-    setEditingExpense(null);
-    form.resetFields();
+  const handleFormCancel = () => {
+    setShowCreateForm(false);
   };
 
   // ========== EXPORT ==========
@@ -428,55 +286,6 @@ export default function ExpensesPage() {
   };
 
   // ========== TABLE COLUMNS ==========
-  // ========== MOBILE HANDLERS ==========
-  const mobileHandlers: ExpensesMobileHandlers = {
-    onView: (expenseId) => {
-      const expense = expenses.find((e) => e.id === expenseId);
-      if (expense) handleEdit(expense);
-    },
-    onEdit: (expenseId) => {
-      const expense = expenses.find((e) => e.id === expenseId);
-      if (expense) handleEdit(expense);
-    },
-    onDelete: (expenseId) => {
-      handleDelete(expenseId);
-    },
-  };
-
-  const mobilePermissions = {
-    canEdit: true,
-    canDelete: true,
-  };
-
-  const filtersContent = (
-    <Space direction="vertical" style={{ width: '100%' }}>
-      <div>
-        <label className="mb-2 block text-sm font-medium">{t('expenses.filters.type')}</label>
-        <Select
-          value={filterCategory}
-          onChange={setFilterCategory}
-          placeholder={t('expenses.filters.allTypes')}
-          allowClear
-          style={{ width: '100%' }}
-        >
-          {categories.map((type) => (
-            <Select.Option key={type.id} value={type.id}>
-              {type.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </div>
-      <div>
-        <label className="mb-2 block text-sm font-medium">{t('expenses.filters.dateRange')}</label>
-        <RangePicker
-          value={dateRange}
-          onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
-          style={{ width: '100%' }}
-        />
-      </div>
-    </Space>
-  );
-
   const columns: ColumnsType<Expense> = [
     {
       title: t('expenses.table.date'),
@@ -491,22 +300,9 @@ export default function ExpensesPage() {
       key: 'category_name',
     },
     {
-      title: t('expenses.table.method'),
-      dataIndex: 'method',
-      key: 'method',
-      render: (method?: string) => {
-        const currentMethod = method || 'cash';
-        return (
-          <Tag color={currentMethod === 'cash' ? 'green' : 'blue'}>
-            {currentMethod === 'cash' ? t('expenses.method.cash') : t('expenses.method.card')}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t('expenses.table.card'),
-      dataIndex: 'card_name',
-      key: 'card_name',
+      title: t('expenses.table.cashbox'),
+      dataIndex: 'cashbox_name',
+      key: 'cashbox_name',
       render: (name: string | null) => name || '-',
     },
     {
@@ -566,7 +362,7 @@ export default function ExpensesPage() {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          {record.status === 'pending' && (
+          {canCreate && record.status === 'pending' && (
             <Tooltip title={t('expenses.actions.approve')}>
               <Button
                 type="link"
@@ -575,87 +371,68 @@ export default function ExpensesPage() {
               />
             </Tooltip>
           )}
-          <Tooltip title={t('actions.edit')}>
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          </Tooltip>
-          <Popconfirm
-            title={t('expenses.confirmDelete')}
-            onConfirm={() => handleDelete(record.id)}
-            okText={t('actions.yes')}
-            cancelText={t('actions.no')}
-          >
-            <Button type="link" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {canCreate && (
+            <Popconfirm
+              title={t('expenses.confirmDelete')}
+              onConfirm={() => handleDelete(record.id)}
+              okText={t('actions.yes')}
+              cancelText={t('actions.no')}
+            >
+              <Button type="link" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
   ];
 
-  const formFields = (
-    <>
-      <Form.Item name="date" label={t('expenses.form.date')} rules={[{ required: true, message: t('expenses.form.dateRequired') }]}>
-        <DatePicker format="DD.MM.YYYY" style={{ width: '100%' }} />
-      </Form.Item>
+  // ========== MOBILE HANDLERS ==========
+  const mobileHandlers: ExpensesMobileHandlers = {
+    onView: (expenseId) => {
+      // For mobile, we can show details in a modal if needed
+      console.log('View expense:', expenseId);
+    },
+    onEdit: (expenseId) => {
+      // Editing not supported in inline form yet
+      console.log('Edit expense:', expenseId);
+    },
+    onDelete: (expenseId) => {
+      handleDelete(expenseId);
+    },
+  };
 
-      <Form.Item name="category" label={t('expenses.form.type')} rules={[{ required: true, message: t('expenses.form.typeRequired') }]}>
-        <Select placeholder={t('expenses.form.selectType')} showSearch optionFilterProp="children">
-          {categories.map(type => (
+  const mobilePermissions = {
+    canEdit: canCreate,
+    canDelete: canCreate,
+  };
+
+  const filtersContent = (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <div>
+        <label className="mb-2 block text-sm font-medium">{t('expenses.filters.type')}</label>
+        <Select
+          value={filterCategory}
+          onChange={setFilterCategory}
+          placeholder={t('expenses.filters.allTypes')}
+          allowClear
+          style={{ width: '100%' }}
+        >
+          {categories.map((type) => (
             <Select.Option key={type.id} value={type.id}>
               {type.name}
             </Select.Option>
           ))}
         </Select>
-      </Form.Item>
-
-      <Form.Item name="cashbox" label={t('expenses.form.cashbox')} rules={[{ required: true, message: t('expenses.form.cashboxRequired') }]}>
-        <Select 
-          placeholder={t('expenses.form.selectCashbox')}
-          showSearch
-          optionFilterProp="children"
-          dropdownRender={(menu) => (
-            <>
-              {menu}
-              {canCreateCashbox && (
-                <div style={{ padding: '8px 12px' }}>
-                  <Button type="link" block onClick={openCashboxModal}>
-                    + {t('cashbox.addNew') || 'Yangi kassa yaratish'}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-          onChange={(value) => handleCashboxChange(value as number)}
-        >
-          {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
-            <Select.Option key={cashbox.id} value={cashbox.id}>
-              {cashbox.name} ({cashbox.currency})
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-
-      <Form.Item name="currency" label={t('expenses.form.currency')} rules={[{ required: true, message: t('expenses.form.currencyRequired') }]}>
-        <Select placeholder={t('expenses.form.selectCurrency')} disabled>
-          <Select.Option value="USD">USD</Select.Option>
-          <Select.Option value="UZS">UZS</Select.Option>
-        </Select>
-      </Form.Item>
-
-      <Form.Item
-        name="amount"
-        label={t('expenses.form.amount')}
-        rules={[
-          { required: true, message: t('expenses.form.amountRequired') },
-          { type: 'number', min: 0.01, message: t('expenses.form.amountRequired') },
-        ]}
-      >
-        <InputNumber min={0.01} style={{ width: '100%' }} placeholder="0.00" />
-      </Form.Item>
-
-      <Form.Item name="description" label={t('expenses.form.description')}>
-        <Input.TextArea rows={3} placeholder={t('expenses.form.descriptionPlaceholder')} />
-      </Form.Item>
-    </>
+      </div>
+      <div>
+        <label className="mb-2 block text-sm font-medium">{t('expenses.filters.dateRange')}</label>
+        <RangePicker
+          value={dateRange}
+          onChange={(dates: any) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+          style={{ width: '100%' }}
+        />
+      </div>
+    </Space>
   );
 
   // ========== MOBILE VIEW ==========
@@ -666,10 +443,25 @@ export default function ExpensesPage() {
           <div>
             <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('expenses.title')}</h1>
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            {t('expenses.new')}
-          </Button>
+          {canCreate && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleToggleCreateForm}
+            >
+              {t('expenses.new')}
+            </Button>
+          )}
         </header>
+
+        {canCreate && showCreateForm && (
+          <CreateExpenseForm
+            categories={categories}
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+            onCategoriesReload={loadCategories}
+          />
+        )}
 
         <FilterTrigger onClick={() => setFiltersOpen(true)} />
         <FilterDrawer
@@ -697,25 +489,12 @@ export default function ExpensesPage() {
               expense_date: e.date,
               note: e.description,
               created_by: { full_name: '' },
+              status: e.status,
             }))}
             handlers={mobileHandlers}
             permissions={mobilePermissions}
           />
         )}
-
-        {/* Modal (shared with desktop) */}
-        <Modal
-          title={editingExpense ? t('expenses.edit') : t('expenses.new')}
-          open={modalOpen}
-          onOk={handleSubmit}
-          onCancel={closeModal}
-          okText={t('actions.save')}
-          cancelText={t('actions.cancel')}
-        >
-          <Form form={form} layout="vertical">
-            {formFields}
-          </Form>
-        </Modal>
       </div>
     );
   }
@@ -724,18 +503,54 @@ export default function ExpensesPage() {
   return (
     <section className="page-wrapper space-y-6">
       {/* HEADER */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Title level={2}>{t('expenses.title')}</Title>
+      <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('expenses.title')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('expenses.subtitle')}</p>
+        </div>
         <Space>
           <Select value={currency} onChange={setCurrency} style={{ width: 100 }}>
             <Select.Option value="USD">USD</Select.Option>
             <Select.Option value="UZS">UZS</Select.Option>
           </Select>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            {t('expenses.new')}
-          </Button>
         </Space>
-      </div>
+      </header>
+
+      {/* CREATE FORM TOGGLE */}
+      {canCreate && (
+        <div className="mb-4 flex justify-end">
+          <Button
+            type={showCreateForm ? 'default' : 'primary'}
+            icon={showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
+            onClick={handleToggleCreateForm}
+          >
+            {t(showCreateForm ? 'expenses.hideForm' : 'expenses.new')}
+          </Button>
+        </div>
+      )}
+
+      {/* INLINE CREATE FORM */}
+      {canCreate && (
+        <Collapse
+          className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
+          activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
+          onChange={(key) => handleCollapseChange(key as string[] | string)}
+          items={[
+            {
+              key: CREATE_FORM_PANEL_KEY,
+              label: t('expenses.form.title'),
+              children: showCreateForm ? (
+                <CreateExpenseForm
+                  categories={categories}
+                  onSuccess={handleFormSuccess}
+                  onCancel={handleFormCancel}
+                  onCategoriesReload={loadCategories}
+                />
+              ) : null,
+            },
+          ]}
+        />
+      )}
 
       {/* STATISTICS CARDS */}
       <Row gutter={[16, 16]}>
@@ -801,7 +616,7 @@ export default function ExpensesPage() {
           <Col xs={24} sm={12} md={6}>
             <RangePicker
               value={dateRange}
-              onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+              onChange={(dates: any) => setDateRange(dates as [Dayjs, Dayjs] | null)}
               format="DD.MM.YYYY"
               style={{ width: '100%' }}
               placeholder={[t('expenses.filters.startDate'), t('expenses.filters.endDate')]}
@@ -818,23 +633,6 @@ export default function ExpensesPage() {
               {categories.map(type => (
                 <Select.Option key={type.id} value={type.id}>
                   {type.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder={t('expenses.filters.cashbox')}
-              allowClear
-              value={filterCashbox}
-              onChange={setFilterCashbox}
-              style={{ width: '100%' }}
-              showSearch
-              optionFilterProp="children"
-            >
-              {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
-                <Select.Option key={cashbox.id} value={cashbox.id}>
-                  {cashbox.name} ({cashbox.currency})
                 </Select.Option>
               ))}
             </Select>
@@ -884,68 +682,6 @@ export default function ExpensesPage() {
           />
         </Card>
       </div>
-
-      {/* CREATE/EDIT MODAL */}
-      <Modal
-        title={editingExpense ? t('expenses.editTitle') : t('expenses.createTitle')}
-        open={modalOpen}
-        onOk={handleSubmit}
-        onCancel={closeModal}
-        width={600}
-        okText={t('actions.save')}
-        cancelText={t('actions.cancel')}
-      >
-        <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-          {formFields}
-        </Form>
-      </Modal>
-
-      <Modal
-        title={t('cashbox.createTitle') || 'Yangi kassa yaratish'}
-        open={cashboxModalOpen}
-        onOk={handleCreateCashbox}
-        onCancel={() => setCashboxModalOpen(false)}
-        okText={t('actions.save')}
-        cancelText={t('actions.cancel')}
-      >
-        <Form layout="vertical" form={cashboxForm}>
-          <Form.Item
-            label={t('cashbox.form.name') || 'Nomi'}
-            name="name"
-            rules={[{ required: true, message: t('cashbox.form.nameRequired') || 'Kassa nomini kiriting' }]}
-          >
-            <Input placeholder={t('cashbox.form.namePlaceholder') || 'Naqd UZS'} />
-          </Form.Item>
-
-          <Form.Item
-            label={t('cashbox.form.type') || 'Turi'}
-            name="cashbox_type"
-            rules={[{ required: true, message: t('cashbox.form.typeRequired') || 'Kassa turini tanlang' }]}
-          >
-            <Select onChange={handleCashboxTypeSelect}>
-              <Select.Option value="CASH_UZS">{t('cashbox.types.cashUzs') || 'Naqd UZS'}</Select.Option>
-              <Select.Option value="CASH_USD">{t('cashbox.types.cashUsd') || 'Naqd USD'}</Select.Option>
-              <Select.Option value="CARD">{t('cashbox.types.card') || 'Karta'}</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label={t('cashbox.form.currency') || 'Valyuta'}
-            name="currency"
-            rules={[{ required: true, message: t('cashbox.form.currencyRequired') || 'Valyutani tanlang' }]}
-          >
-            <Select disabled={newCashboxType !== 'CARD'}>
-              <Select.Option value="UZS">UZS</Select.Option>
-              <Select.Option value="USD">USD</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label={t('cashbox.form.description') || 'Izoh'} name="description">
-            <Input.TextArea rows={3} placeholder={t('cashbox.form.descriptionPlaceholder') || 'Izoh'} />
-          </Form.Item>
-        </Form>
-      </Modal>
     </section>
   );
 }
-
