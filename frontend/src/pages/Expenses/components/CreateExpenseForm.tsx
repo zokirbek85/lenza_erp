@@ -82,8 +82,15 @@ export default function CreateExpenseForm({
     try {
       const newCashbox = await createCashbox({
         name: newCashboxName.trim(),
+        type:
+          newCashboxType === 'CASH_UZS'
+            ? 'cash_uzs'
+            : newCashboxType === 'CASH_USD'
+            ? 'cash_usd'
+            : 'card',
         cashbox_type: newCashboxType,
         currency: newCashboxCurrency,
+        description: '',
         is_active: true,
       });
 

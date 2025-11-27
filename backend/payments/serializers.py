@@ -8,6 +8,8 @@ class CashboxSerializer(serializers.ModelSerializer):
     """Serializer for Cashbox model"""
     cashbox_type_display = serializers.CharField(source='get_cashbox_type_display', read_only=True)
     card_name = serializers.CharField(source='card.name', read_only=True)
+    # Accept "type" as alias for cashbox_type to match frontend payload
+    type = serializers.CharField(write_only=True, required=False)
     
     class Meta:
         model = Cashbox
@@ -15,8 +17,10 @@ class CashboxSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'cashbox_type',
+            'type',
             'cashbox_type_display',
             'currency',
+            'description',
             'card',
             'card_name',
             'is_active',
@@ -24,6 +28,12 @@ class CashboxSerializer(serializers.ModelSerializer):
             'updated_at',
         )
         read_only_fields = ('created_at', 'updated_at')
+
+    def validate(self, attrs):
+        # Map alias "type" to cashbox_type if provided
+        if attrs.get('type') and not attrs.get('cashbox_type'):
+            attrs['cashbox_type'] = attrs['type']
+        return super().validate(attrs)
 
 
 class CashboxOpeningBalanceSerializer(serializers.ModelSerializer):

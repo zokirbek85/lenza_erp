@@ -433,6 +433,11 @@ class CashboxViewSet(viewsets.ModelViewSet):
         from payments.serializers import CashboxSerializer
         return CashboxSerializer
 
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdmin() | IsAccountant() | IsOwner()]
+        return super().get_permissions()
+
 
 class CashboxSummaryExportExcelView(APIView, ExportMixin):
     """

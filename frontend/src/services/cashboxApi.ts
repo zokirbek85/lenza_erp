@@ -3,9 +3,11 @@ import http from '../app/http';
 export interface Cashbox {
   id: number;
   cashbox_type: 'CARD' | 'CASH_UZS' | 'CASH_USD';
+  type?: 'card' | 'cash_uzs' | 'cash_usd';
   cashbox_type_display?: string;
   name: string;
   currency: 'USD' | 'UZS';
+  description?: string;
   is_active: boolean;
   card?: number;
   card_name?: string;
@@ -96,7 +98,14 @@ export const fetchCashboxHistory = async (
  * Create new cashbox
  */
 export const createCashbox = async (data: Partial<Cashbox>): Promise<Cashbox> => {
-  const response = await http.post('/cashboxes/', data);
+  const payload = {
+    name: data.name,
+    type: data.type || data.cashbox_type,
+    cashbox_type: data.cashbox_type,
+    currency: data.currency,
+    description: data.description || '',
+  };
+  const response = await http.post('/cashboxes/', payload);
   return response.data;
 };
 

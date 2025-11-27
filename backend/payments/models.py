@@ -31,6 +31,7 @@ class Cashbox(models.Model):
     name = models.CharField(max_length=100, verbose_name="Nomi")  # e.g. "Karta-1", "Naqd UZS"
     cashbox_type = models.CharField(max_length=20, choices=CASHBOX_TYPES, verbose_name="Turi", db_column='type')
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, verbose_name="Valyuta")
+    description = models.TextField(blank=True, verbose_name="Izoh", default="")
     
     # Link to PaymentCard if type=CARD
     card = models.OneToOneField(
