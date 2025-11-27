@@ -6,7 +6,7 @@ from dealers.serializers import DealerSerializer
 
 class CashboxSerializer(serializers.ModelSerializer):
     """Serializer for Cashbox model"""
-    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    cashbox_type_display = serializers.CharField(source='get_cashbox_type_display', read_only=True)
     card_name = serializers.CharField(source='card.name', read_only=True)
     
     class Meta:
@@ -14,8 +14,8 @@ class CashboxSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'type',
-            'type_display',
+            'cashbox_type',
+            'cashbox_type_display',
             'currency',
             'card',
             'card_name',

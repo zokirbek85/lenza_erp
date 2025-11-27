@@ -13,30 +13,37 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from core.permissions import IsAdmin, IsAccountant, IsOwner
 from payments.models import CurrencyRate
-from .models import Expense, ExpenseType
-from .permissions import IsAdminOrAccountantForExpenses
+from .models import Expense, ExpenseCategory, ExpenseType
+from .permissions import IsAdminOwnerAccountant
 from .serializers import (
     ExpenseSerializer,
-    ExpenseTypeSerializer,
+    ExpenseCreateSerializer,
+    ExpenseCategorySerializer,
     ExpenseStatsSerializer,
     ExpenseTrendSerializer,
     ExpenseDistributionSerializer
 )
 
 
-class ExpenseTypeViewSet(viewsets.ModelViewSet):
-    """Chiqim turlari CRUD"""
-    queryset = ExpenseType.objects.all()
-    serializer_class = ExpenseTypeSerializer
+class ExpenseCategoryViewSet(viewsets.ModelViewSet):
+    """Expense categories CRUD (proxy over ExpenseType)"""
+    queryset = ExpenseCategory.objects.all()
+    serializer_class = ExpenseCategorySerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None  # Pagination o'chirish - barcha turlarni bir vaqtda ko'rsatish
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         # Faqat faol turlarni ko'rsatish (admin bundan mustasno)
         if not self.request.user.role in ['admin', 'owner']:
             queryset = queryset.filter(is_active=True)
         return queryset
+
+
+class ExpenseTypeViewSet(ExpenseCategoryViewSet):
+    """Chiqim turlari CRUD"""
+    queryset = ExpenseCategory.objects.all()
+    serializer_class = ExpenseCategorySerializer
 
 
 class ExpenseViewSet(viewsets.ModelViewSet):
@@ -58,17 +65,23 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     """
     queryset = Expense.objects.select_related(
         'type',
+        'category',
         'card',
         'cashbox',
         'created_by',
         'approved_by'
     ).all()
     serializer_class = ExpenseSerializer
-    permission_classes = [IsAdminOrAccountantForExpenses]
-    filterset_fields = ['status', 'method', 'currency', 'type']
-    search_fields = ['description', 'type__name']
+    permission_classes = [IsAdminOwnerAccountant]
+    filterset_fields = ['status', 'method', 'currency', 'type', 'category', 'cashbox']
+    search_fields = ['description', 'type__name', 'category__name']
     ordering_fields = ['date', 'amount', 'created_at']
     ordering = ['-date', '-created_at']
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return ExpenseCreateSerializer
+        return ExpenseSerializer
     
     def get_queryset(self):
         """Filtering - date range, type, method, card, status"""

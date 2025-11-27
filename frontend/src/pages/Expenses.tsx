@@ -50,7 +50,7 @@ import {
 import dayjs, { Dayjs } from 'dayjs';
 import {
   fetchExpenses,
-  fetchExpenseTypes,
+  fetchExpenseCategories,
   fetchExpenseStats,
   fetchExpenseTrend,
   fetchExpenseDistribution,
@@ -63,7 +63,7 @@ import {
 } from '../services/expenseApi';
 import type {
   Expense,
-  ExpenseType,
+  ExpenseCategory,
   ExpenseStats,
   ExpenseTrend,
   ExpenseDistribution,
@@ -95,7 +95,7 @@ export default function ExpensesPage() {
   
   // ========== STATE ==========
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [cashboxes, setCashboxes] = useState<Cashbox[]>([]);
   const [stats, setStats] = useState<ExpenseStats | null>(null);
   const [trendData, setTrendData] = useState<ExpenseTrend[]>([]);
@@ -110,28 +110,47 @@ export default function ExpensesPage() {
   // Filters
   const [currency, setCurrency] = useState<'USD' | 'UZS'>('USD');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
-  const [filterType, setFilterType] = useState<number | undefined>();
+  const [filterCategory, setFilterCategory] = useState<number | undefined>();
   const [filterCashbox, setFilterCashbox] = useState<number | undefined>();
   const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | undefined>();
+  const [cashboxCurrency, setCashboxCurrency] = useState<'USD' | 'UZS' | undefined>();
 
   // ========== LOAD DATA ==========
   useEffect(() => {
-    loadExpenseTypes();
+    loadCategories();
     loadCashboxes();
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [dateRange, filterType, filterCashbox, filterStatus]);
+    if (modalOpen) {
+      loadCategories();
+      loadCashboxes();
+    }
+  }, [modalOpen]);
 
-  const loadExpenseTypes = async () => {
+  useEffect(() => {
+    const currentCashbox = form.getFieldValue('cashbox');
+    if (currentCashbox && cashboxes.length) {
+      const selected = cashboxes.find((c) => c.id === currentCashbox);
+      if (selected) {
+        setCashboxCurrency(selected.currency as 'USD' | 'UZS');
+        form.setFieldsValue({ currency: selected.currency });
+      }
+    }
+  }, [cashboxes, form]);
+
+  useEffect(() => {
+    loadData();
+  }, [dateRange, filterCategory, filterCashbox, filterStatus]);
+
+  const loadCategories = async () => {
     try {
-      const types = await fetchExpenseTypes();
-      setExpenseTypes(Array.isArray(types) ? types.filter(t => t.is_active) : []);
+      const types = await fetchExpenseCategories();
+      setCategories(Array.isArray(types) ? types.filter(t => t.is_active) : []);
     } catch (error) {
-      console.error('Failed to load expense types:', error);
+      console.error('Failed to load expense categories:', error);
       message.error(t('expenses.messages.loadTypesError'));
-      setExpenseTypes([]);
+      setCategories([]);
     }
   };
 
@@ -153,7 +172,7 @@ export default function ExpensesPage() {
       const filters: ExpenseFilters = {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
         date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
-        type: filterType,
+        category: filterCategory,
         cashbox: filterCashbox,
         status: filterStatus,
       };
@@ -210,14 +229,19 @@ export default function ExpensesPage() {
   const handleCreate = () => {
     form.resetFields();
     setEditingExpense(null);
+    setCashboxCurrency(undefined);
     setModalOpen(true);
   };
 
   const handleEdit = (expense: Expense) => {
     form.setFieldsValue({
       ...expense,
+      category: expense.category,
+      cashbox: expense.cashbox,
+      currency: expense.cashbox_currency || expense.currency,
       date: dayjs(expense.date),
     });
+    setCashboxCurrency(expense.cashbox_currency || expense.currency);
     setEditingExpense(expense);
     setModalOpen(true);
   };
@@ -242,11 +266,19 @@ export default function ExpensesPage() {
     }
   };
 
+  const handleCashboxChange = (cashboxId: number) => {
+    const selected = cashboxes.find((c) => c.id === cashboxId);
+    const selectedCurrency = selected?.currency as 'USD' | 'UZS' | undefined;
+    setCashboxCurrency(selectedCurrency);
+    form.setFieldsValue({ cashbox: cashboxId, currency: selectedCurrency });
+  };
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
       const data = {
         ...values,
+        currency: cashboxCurrency || values.currency,
         date: values.date.format('YYYY-MM-DD'),
       };
 
@@ -258,11 +290,18 @@ export default function ExpensesPage() {
         message.success(t('expenses.messages.created'));
       }
 
-      setModalOpen(false);
+      closeModal();
       loadData();
     } catch (error) {
       message.error(t('expenses.messages.saveError'));
     }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setCashboxCurrency(undefined);
+    setEditingExpense(null);
+    form.resetFields();
   };
 
   // ========== EXPORT ==========
@@ -272,7 +311,7 @@ export default function ExpensesPage() {
       const filters: ExpenseFilters = {
         date_from: dateRange?.[0]?.format('YYYY-MM-DD'),
         date_to: dateRange?.[1]?.format('YYYY-MM-DD'),
-        type: filterType,
+        category: filterCategory,
         cashbox: filterCashbox,
         status: filterStatus,
         currency,
@@ -361,13 +400,13 @@ export default function ExpensesPage() {
       <div>
         <label className="mb-2 block text-sm font-medium">{t('expenses.filters.type')}</label>
         <Select
-          value={filterType}
-          onChange={setFilterType}
+          value={filterCategory}
+          onChange={setFilterCategory}
           placeholder={t('expenses.filters.allTypes')}
           allowClear
           style={{ width: '100%' }}
         >
-          {expenseTypes.map((type) => (
+          {categories.map((type) => (
             <Select.Option key={type.id} value={type.id}>
               {type.name}
             </Select.Option>
@@ -395,18 +434,21 @@ export default function ExpensesPage() {
     },
     {
       title: t('expenses.table.type'),
-      dataIndex: 'type_name',
-      key: 'type_name',
+      dataIndex: 'category_name',
+      key: 'category_name',
     },
     {
       title: t('expenses.table.method'),
       dataIndex: 'method',
       key: 'method',
-      render: (method: string) => (
-        <Tag color={method === 'cash' ? 'green' : 'blue'}>
-          {method === 'cash' ? t('expenses.method.cash') : t('expenses.method.card')}
-        </Tag>
-      ),
+      render: (method?: string) => {
+        const currentMethod = method || 'cash';
+        return (
+          <Tag color={currentMethod === 'cash' ? 'green' : 'blue'}>
+            {currentMethod === 'cash' ? t('expenses.method.cash') : t('expenses.method.card')}
+          </Tag>
+        );
+      },
     },
     {
       title: t('expenses.table.card'),
@@ -496,6 +538,61 @@ export default function ExpensesPage() {
     },
   ];
 
+  const formFields = (
+    <>
+      <Form.Item name="date" label={t('expenses.form.date')} rules={[{ required: true, message: t('expenses.form.dateRequired') }]}>
+        <DatePicker format="DD.MM.YYYY" style={{ width: '100%' }} />
+      </Form.Item>
+
+      <Form.Item name="category" label={t('expenses.form.type')} rules={[{ required: true, message: t('expenses.form.typeRequired') }]}>
+        <Select placeholder={t('expenses.form.selectType')} showSearch optionFilterProp="children">
+          {categories.map(type => (
+            <Select.Option key={type.id} value={type.id}>
+              {type.name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item name="cashbox" label={t('expenses.form.cashbox')} rules={[{ required: true, message: t('expenses.form.cashboxRequired') }]}>
+        <Select 
+          placeholder={t('expenses.form.selectCashbox')}
+          showSearch
+          optionFilterProp="children"
+          onChange={(value) => handleCashboxChange(value as number)}
+        >
+          {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
+            <Select.Option key={cashbox.id} value={cashbox.id}>
+              {cashbox.name} ({cashbox.currency})
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item name="currency" label={t('expenses.form.currency')} rules={[{ required: true, message: t('expenses.form.currencyRequired') }]}>
+        <Select placeholder={t('expenses.form.selectCurrency')} disabled>
+          <Select.Option value="USD">USD</Select.Option>
+          <Select.Option value="UZS">UZS</Select.Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="amount"
+        label={t('expenses.form.amount')}
+        rules={[
+          { required: true, message: t('expenses.form.amountRequired') },
+          { type: 'number', min: 0.01, message: t('expenses.form.amountRequired') },
+        ]}
+      >
+        <InputNumber min={0.01} style={{ width: '100%' }} placeholder="0.00" />
+      </Form.Item>
+
+      <Form.Item name="description" label={t('expenses.form.description')}>
+        <Input.TextArea rows={3} placeholder={t('expenses.form.descriptionPlaceholder')} />
+      </Form.Item>
+    </>
+  );
+
   // ========== MOBILE VIEW ==========
   if (isMobile) {
     return (
@@ -526,7 +623,7 @@ export default function ExpensesPage() {
           <ExpensesMobileCards
             data={expenses.map((e) => ({
               id: e.id,
-              category: { name: e.type_name || undefined },
+              category: { name: e.category_name || undefined },
               description: e.description || '',
               amount: e.amount,
               currency: e.currency,
@@ -546,12 +643,12 @@ export default function ExpensesPage() {
           title={editingExpense ? t('expenses.edit') : t('expenses.new')}
           open={modalOpen}
           onOk={handleSubmit}
-          onCancel={() => setModalOpen(false)}
+          onCancel={closeModal}
           okText={t('actions.save')}
           cancelText={t('actions.cancel')}
         >
           <Form form={form} layout="vertical">
-            {/* ... form fields will render ... */}
+            {formFields}
           </Form>
         </Modal>
       </div>
@@ -649,11 +746,11 @@ export default function ExpensesPage() {
             <Select
               placeholder={t('expenses.filters.type')}
               allowClear
-              value={filterType}
-              onChange={setFilterType}
+              value={filterCategory}
+              onChange={setFilterCategory}
               style={{ width: '100%' }}
             >
-              {expenseTypes.map(type => (
+              {categories.map(type => (
                 <Select.Option key={type.id} value={type.id}>
                   {type.name}
                 </Select.Option>
@@ -728,54 +825,13 @@ export default function ExpensesPage() {
         title={editingExpense ? t('expenses.editTitle') : t('expenses.createTitle')}
         open={modalOpen}
         onOk={handleSubmit}
-        onCancel={() => setModalOpen(false)}
+        onCancel={closeModal}
         width={600}
         okText={t('actions.save')}
         cancelText={t('actions.cancel')}
       >
         <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-          <Form.Item name="date" label={t('expenses.form.date')} rules={[{ required: true, message: t('expenses.form.dateRequired') }]}>
-            <DatePicker format="DD.MM.YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item name="type" label={t('expenses.form.type')} rules={[{ required: true, message: t('expenses.form.typeRequired') }]}>
-            <Select placeholder={t('expenses.form.selectType')}>
-              {expenseTypes.map(type => (
-                <Select.Option key={type.id} value={type.id}>
-                  {type.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="cashbox" label={t('expenses.form.cashbox')} rules={[{ required: true, message: t('expenses.form.cashboxRequired') }]}>
-            <Select 
-              placeholder={t('expenses.form.selectCashbox')}
-              showSearch
-              optionFilterProp="children"
-            >
-              {Array.isArray(cashboxes) && cashboxes.map(cashbox => (
-                <Select.Option key={cashbox.id} value={cashbox.id}>
-                  {cashbox.name} ({cashbox.currency})
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="currency" label={t('expenses.form.currency')} rules={[{ required: true, message: t('expenses.form.currencyRequired') }]}>
-            <Select placeholder={t('expenses.form.selectCurrency')}>
-              <Select.Option value="USD">USD</Select.Option>
-              <Select.Option value="UZS">UZS</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="amount" label={t('expenses.form.amount')} rules={[{ required: true, message: t('expenses.form.amountRequired') }]}>
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="0.00" />
-          </Form.Item>
-
-          <Form.Item name="description" label={t('expenses.form.description')}>
-            <Input.TextArea rows={3} placeholder={t('expenses.form.descriptionPlaceholder')} />
-          </Form.Item>
+          {formFields}
         </Form>
       </Modal>
     </section>

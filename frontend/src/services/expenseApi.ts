@@ -1,6 +1,6 @@
 ﻿import http from '../app/http';
 
-export interface ExpenseType {
+export interface ExpenseCategory {
   id: number;
   name: string;
   description?: string;
@@ -12,9 +12,13 @@ export interface ExpenseType {
 export interface Expense {
   id: number;
   date: string;
-  type: number;
+  category: number;
+  category_name?: string;
   type_name?: string;
-  method: 'cash' | 'card';
+  cashbox: number;
+  cashbox_name?: string | null;
+  cashbox_currency?: 'USD' | 'UZS';
+  method?: 'cash' | 'card';
   card?: number | null;
   card_name?: string | null;
   currency: 'USD' | 'UZS';
@@ -54,32 +58,33 @@ export interface ExpenseDistribution {
 export interface ExpenseFilters {
   date_from?: string;
   date_to?: string;
-  type?: number;
+  category?: number;
   method?: 'cash' | 'card';
   card?: number;
+  cashbox?: number;
   status?: 'pending' | 'approved';
   currency?: 'USD' | 'UZS';
   [key: string]: string | number | undefined;
 }
 
-// ========== EXPENSE TYPES ==========
-export const fetchExpenseTypes = async (): Promise<ExpenseType[]> => {
-  const response = await http.get('/expense-types/');
+// ========== EXPENSE CATEGORIES ==========
+export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
+  const response = await http.get('/expense-categories/');
   return Array.isArray(response.data) ? response.data : [];
 };
 
-export const createExpenseType = async (data: Partial<ExpenseType>): Promise<ExpenseType> => {
-  const response = await http.post('/expense-types/', data);
+export const createExpenseCategory = async (data: Partial<ExpenseCategory>): Promise<ExpenseCategory> => {
+  const response = await http.post('/expense-categories/', data);
   return response.data;
 };
 
-export const updateExpenseType = async (id: number, data: Partial<ExpenseType>): Promise<ExpenseType> => {
-  const response = await http.patch(`/expense-types/${id}/`, data);
+export const updateExpenseCategory = async (id: number, data: Partial<ExpenseCategory>): Promise<ExpenseCategory> => {
+  const response = await http.patch(`/expense-categories/${id}/`, data);
   return response.data;
 };
 
-export const deleteExpenseType = async (id: number): Promise<void> => {
-  await http.delete(`/expense-types/${id}/`);
+export const deleteExpenseCategory = async (id: number): Promise<void> => {
+  await http.delete(`/expense-categories/${id}/`);
 };
 
 // ========== EXPENSES ==========
@@ -157,18 +162,18 @@ const fetchExportBlob = async (url: string, params?: Record<string, unknown>): P
 };
 
 export const exportExpensesPdf = async (filters?: ExpenseFilters): Promise<Blob> => {
-  return fetchExportBlob('/api/expenses/export/pdf/', filters);
+  return fetchExportBlob('/expenses/export/pdf/', filters);
 };
 
 export const exportExpensesExcel = async (filters?: ExpenseFilters): Promise<Blob> => {
-  return fetchExportBlob('/api/expenses/export/excel/', filters);
+  return fetchExportBlob('/expenses/export/excel/', filters);
 };
 
 export const exportMonthlyExpensesPdf = async (month: string): Promise<Blob> => {
-  return fetchExportBlob('/api/expenses/monthly/export/pdf/', { month });
+  return fetchExportBlob('/expenses/monthly/export/pdf/', { month });
 };
 
 export const exportMonthlyExpensesExcel = async (month: string): Promise<Blob> => {
-  return fetchExportBlob('/api/expenses/monthly/export/excel/', { month });
+  return fetchExportBlob('/expenses/monthly/export/excel/', { month });
 };
 

@@ -2,10 +2,11 @@
 Expenses Module - Professional Models
 Chiqimlar tizimi - zamonaviy arxitektura
 """
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from decimal import Decimal
 
 
 class ExpenseType(models.Model):
@@ -24,6 +25,18 @@ class ExpenseType(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ExpenseCategory(ExpenseType):
+    """
+    Proxy model for expense categories.
+    We keep the same table as ExpenseType for backward compatibility.
+    """
+
+    class Meta:
+        proxy = True
+        verbose_name = 'Chiqim kategoriyasi'
+        verbose_name_plural = 'Chiqim kategoriyalari'
 
 
 class Expense(models.Model):
@@ -54,12 +67,21 @@ class Expense(models.Model):
     ]
 
     # Asosiy maydonlar
-    date = models.DateField(default=timezone.now, verbose_name="Sana")
+    date = models.DateField(verbose_name="Sana")
+    category = models.ForeignKey(
+        ExpenseCategory,
+        on_delete=models.PROTECT,
+        related_name='expenses',
+        verbose_name="Kategoriya"
+    )
+    # Legacy field for older code paths. We keep it in sync with category.
     type = models.ForeignKey(
         ExpenseType,
         on_delete=models.PROTECT,
-        related_name='expenses',
-        verbose_name="Turi"
+        related_name='legacy_expenses',
+        verbose_name="Turi",
+        null=True,
+        blank=True
     )
     
     # NEW: Cashbox FK (replaces card in balance logic)
@@ -67,8 +89,8 @@ class Expense(models.Model):
         'payments.Cashbox',
         on_delete=models.PROTECT,
         related_name='expenses',
-        null=True,
-        blank=True,
+        null=False,
+        blank=False,
         verbose_name="Kassa"
     )
     
@@ -90,11 +112,10 @@ class Expense(models.Model):
     currency = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,
-        default=CURRENCY_USD,
         verbose_name="Valyuta"
     )
     amount = models.DecimalField(
-        max_digits=14,
+        max_digits=18,
         decimal_places=2,
         verbose_name="Summa"
     )
@@ -158,7 +179,8 @@ class Expense(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.type.name} - {self.amount} {self.currency} ({self.get_status_display()})"
+        category_name = self.category.name if self.category else (self.type.name if self.type else "Kategoriya")
+        return f"{category_name} - {self.amount} {self.currency} ({self.get_status_display()})"
     
     def clean(self):
         """
@@ -167,9 +189,20 @@ class Expense(models.Model):
         2. Currency cashbox currency bilan mos kelishi kerak
         """
         from django.core.exceptions import ValidationError
+
+        # Always keep legacy type in sync for older code paths
+        if not self.type_id and self.category_id:
+            self.type_id = self.category_id
+        if not self.category_id and self.type_id:
+            self.category_id = self.type_id
+        if not self.category:
+            raise ValidationError("Kategoriya tanlanishi kerak")
         
         if not self.cashbox:
             raise ValidationError("Kassa tanlanishi kerak")
+
+        if not self.currency:
+            raise ValidationError("Valyuta tanlanishi kerak")
         
         if self.cashbox and self.currency != self.cashbox.currency:
             raise ValidationError(
@@ -192,7 +225,11 @@ class Expense(models.Model):
         5. Ikkala summa ham saqlanadi va hech qachon o'zgarmaydi (kurs doimiy)
         """
         from payments.models import CurrencyRate
-        
+
+        # Auto-align currency with selected cashbox if not explicitly provided
+        if self.cashbox and not self.currency:
+            self.currency = self.cashbox.currency
+
         self.full_clean()
         
         # Kursni olish yoki yaratish

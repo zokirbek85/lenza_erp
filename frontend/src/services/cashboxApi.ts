@@ -3,6 +3,7 @@ import http from '../app/http';
 export interface Cashbox {
   id: number;
   cashbox_type: 'CARD' | 'CASH_UZS' | 'CASH_USD';
+  cashbox_type_display?: string;
   name: string;
   currency: 'USD' | 'UZS';
   is_active: boolean;
@@ -62,7 +63,7 @@ export interface CashboxOpeningBalance {
  * Fetch all cashboxes
  */
 export const fetchCashboxes = async (): Promise<Cashbox[]> => {
-  const response = await http.get('/cashbox/');
+  const response = await http.get('/cashboxes/');
   return response.data;
 };
 
@@ -95,7 +96,7 @@ export const fetchCashboxHistory = async (
  * Create new cashbox
  */
 export const createCashbox = async (data: Partial<Cashbox>): Promise<Cashbox> => {
-  const response = await http.post('/cashbox/', data);
+  const response = await http.post('/cashboxes/', data);
   return response.data;
 };
 
@@ -103,7 +104,7 @@ export const createCashbox = async (data: Partial<Cashbox>): Promise<Cashbox> =>
  * Update cashbox
  */
 export const updateCashbox = async (id: number, data: Partial<Cashbox>): Promise<Cashbox> => {
-  const response = await http.patch(`/cashbox/${id}/`, data);
+  const response = await http.patch(`/cashboxes/${id}/`, data);
   return response.data;
 };
 
@@ -111,7 +112,7 @@ export const updateCashbox = async (id: number, data: Partial<Cashbox>): Promise
  * Delete cashbox
  */
 export const deleteCashbox = async (id: number): Promise<void> => {
-  await http.delete(`/cashbox/${id}/`);
+  await http.delete(`/cashboxes/${id}/`);
 };
 
 /**

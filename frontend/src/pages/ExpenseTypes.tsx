@@ -4,7 +4,7 @@ import { Table, Card, Button, Modal, Form, Input, Switch, Space, message, Divide
 import { PlusOutlined, EditOutlined, DeleteOutlined, SettingOutlined } from "@ant-design/icons"
 import http from '../app/http'
 
-interface ExpenseType {
+interface ExpenseCategory {
   id: number
   name: string
   description: string
@@ -13,16 +13,16 @@ interface ExpenseType {
 
 export default function ExpenseTypes() {
   const { t } = useTranslation();
-  const [data, setData] = useState<ExpenseType[]>([])
+  const [data, setData] = useState<ExpenseCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
   const [form] = Form.useForm()
-  const [editing, setEditing] = useState<ExpenseType | null>(null)
+  const [editing, setEditing] = useState<ExpenseCategory | null>(null)
 
   const fetchData = () => {
     setLoading(true)
     http
-      .get("/expense-types/")
+      .get("/expense-categories/")
       .then((res) => {
         // Array tekshiruvi - DRF paginated bo'lsa results dan olish
         const rawData = res.data
@@ -45,7 +45,7 @@ export default function ExpenseTypes() {
     fetchData()
   }, [])
 
-  const openModal = (record: ExpenseType | null = null) => {
+  const openModal = (record: ExpenseCategory | null = null) => {
     setEditing(record)
     form.setFieldsValue(
       record || {
@@ -62,8 +62,8 @@ export default function ExpenseTypes() {
       .validateFields()
       .then((values) => {
         const req = editing
-          ? http.put(`/expense-types/${editing.id}/`, values)
-          : http.post("/expense-types/", values)
+          ? http.put(`/expense-categories/${editing.id}/`, values)
+          : http.post("/expense-categories/", values)
         req
           .then(() => {
             message.success(t('expenseTypes.messages.saved'))
@@ -89,7 +89,7 @@ export default function ExpenseTypes() {
       okButtonProps: { danger: true },
       onOk: () => {
         http
-          .delete(`/expense-types/${id}/`)
+          .delete(`/expense-categories/${id}/`)
           .then(() => {
             message.success(t('expenseTypes.messages.deleted'))
             fetchData()

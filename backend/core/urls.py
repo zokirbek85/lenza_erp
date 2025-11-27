@@ -82,7 +82,7 @@ from payments.views import (
     PaymentReportPDFView,
     PaymentViewSet,
 )
-from expenses.views import ExpenseViewSet, ExpenseTypeViewSet
+from expenses.views import ExpenseCategoryViewSet, ExpenseTypeViewSet, ExpenseViewSet
 from expenses.report_view import MonthlyExpenseReportView
 from expenses.views_export import (
     ExpenseListExcelExportView,
@@ -110,8 +110,10 @@ router.register('orders', OrderViewSet, basename='order')
 router.register('payments', PaymentViewSet, basename='payment')
 router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
 router.register('cashbox', CashboxViewSet, basename='cashbox')
+router.register('cashboxes', CashboxViewSet, basename='cashboxes')
 router.register('expenses', ExpenseViewSet, basename='expense')
 router.register('expense-types', ExpenseTypeViewSet, basename='expense-type')
+router.register('expense-categories', ExpenseCategoryViewSet, basename='expense-category')
 # Ledger - dynamic API (no model, no ViewSet)
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('cashbox-opening-balances', CashboxOpeningBalanceViewSet, basename='cashbox-opening-balance')

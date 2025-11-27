@@ -77,3 +77,32 @@ class CannotCreateExpensesForSales(BasePermission):
             return False
         
         return True
+
+
+class IsAdminOwnerAccountant(BasePermission):
+    """
+    Permissions for ExpenseViewSet:
+    - POST/PUT/PATCH/DELETE: admin or accountant
+    - GET/HEAD/OPTIONS: admin, accountant, owner (manager read-only allowed)
+    - Sales users cannot create expenses
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if request.user.is_superuser:
+            return True
+
+        role = getattr(request.user, 'role', None)
+
+        # Safe methods: allow owner to view, allow manager read-only
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return role in ['admin', 'accountant', 'owner', 'manager']
+
+        # Write methods explicitly limited to admin/accountant
+        if request.method == 'POST':
+            return role in ['admin', 'accountant']
+
+        # For other write methods (PUT/PATCH/DELETE) follow the same rule
+        return role in ['admin', 'accountant']
