@@ -344,6 +344,11 @@ class Payment(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Track original status to detect changes
+        self._original_status = self.status if self.pk else None
+
     class Meta:
         ordering = ('-pay_date', '-created_at')
         indexes = [
@@ -533,6 +538,11 @@ class Expense(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan vaqt")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqt")
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Track original status to detect changes
+        self._original_status = self.status if self.pk else None
     
     class Meta:
         ordering = ['-expense_date', '-created_at']

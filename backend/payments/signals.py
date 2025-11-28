@@ -50,22 +50,29 @@ def update_finance_source_on_payment(sender, instance, created, **kwargs):
     """
     # Skip if no source linked
     if not instance.source:
+        # Reset tracked status after save
+        instance._original_status = instance.status
         return
     
     # Only process approved/confirmed payments
     if instance.status not in [Payment.Status.APPROVED, Payment.Status.CONFIRMED]:
+        # Reset tracked status after save
+        instance._original_status = instance.status
         return
     
     # Check if this was just approved (status changed to approved)
+    # Use _original_status tracked in model's __init__
     if not created:
-        # Get previous state from DB (use refresh_from_db to avoid recursion)
-        try:
-            old_instance = Payment.objects.get(pk=instance.pk)
-            # Skip if already was approved (avoid double-counting)
-            if old_instance.status in [Payment.Status.APPROVED, Payment.Status.CONFIRMED]:
+        # Skip if status didn't change or was already approved (avoid double-counting)
+        if hasattr(instance, '_original_status'):
+            if instance._original_status in [Payment.Status.APPROVED, Payment.Status.CONFIRMED]:
+                # Reset tracked status after save
+                instance._original_status = instance.status
                 return
-        except Payment.DoesNotExist:
-            pass
+        else:
+            # Fallback: If _original_status not available, skip to be safe
+            instance._original_status = instance.status
+            return
     
     # Update source balance
     source = instance.source
@@ -85,6 +92,9 @@ def update_finance_source_on_payment(sender, instance, created, **kwargs):
         description=f"To'lov #{instance.pk} tasdiqlandi: {instance.dealer.name if instance.dealer else 'N/A'}",
         created_by=instance.approved_by or instance.created_by
     )
+    
+    # Reset tracked status after successful processing
+    instance._original_status = instance.status
 
 
 @receiver(pre_delete, sender=Payment)
@@ -140,14 +150,11 @@ def validate_expense_balance(sender, instance, **kwargs):
     # Balance validation on approval
     if instance.status == Expense.STATUS_APPROVED:
         # Check if this is a new approval (not already approved)
-        if instance.pk:
-            try:
-                old_instance = Expense.objects.get(pk=instance.pk)
-                if old_instance.status == Expense.STATUS_APPROVED:
-                    # Already approved, skip validation
-                    return
-            except Expense.DoesNotExist:
-                pass
+        # Use _original_status tracked in model's __init__
+        if instance.pk and hasattr(instance, '_original_status'):
+            if instance._original_status == Expense.STATUS_APPROVED:
+                # Already approved, skip validation
+                return
         
         # Check balance
         if instance.source.balance < instance.amount:
@@ -166,17 +173,23 @@ def update_finance_source_on_expense(sender, instance, created, **kwargs):
     """
     # Only process approved expenses
     if instance.status != Expense.STATUS_APPROVED:
+        # Reset tracked status after save
+        instance._original_status = instance.status
         return
     
     # Check if this was just approved (status changed to approved)
+    # Use _original_status tracked in model's __init__
     if not created:
-        try:
-            old_instance = Expense.objects.get(pk=instance.pk)
-            # Skip if already was approved (avoid double-deduction)
-            if old_instance.status == Expense.STATUS_APPROVED:
+        # Skip if status didn't change or was already approved (avoid double-deduction)
+        if hasattr(instance, '_original_status'):
+            if instance._original_status == Expense.STATUS_APPROVED:
+                # Reset tracked status after save
+                instance._original_status = instance.status
                 return
-        except Expense.DoesNotExist:
-            pass
+        else:
+            # Fallback: If _original_status not available, skip to be safe
+            instance._original_status = instance.status
+            return
     
     # Update source balance
     source = instance.source
@@ -196,6 +209,9 @@ def update_finance_source_on_expense(sender, instance, created, **kwargs):
         description=f"Xarajat #{instance.pk} tasdiqlandi: {instance.category.name}",
         created_by=instance.approved_by
     )
+    
+    # Reset tracked status after successful processing
+    instance._original_status = instance.status
 
 
 @receiver(pre_delete, sender=Expense)

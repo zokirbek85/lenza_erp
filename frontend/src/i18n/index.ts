@@ -11,6 +11,9 @@ import uzCommon from './locales/uz/common.json';
 import enCashbox from './locales/en/cashbox.json';
 import ruCashbox from './locales/ru/cashbox.json';
 import uzCashbox from './locales/uz/cashbox.json';
+import enFinance from './locales/en/finance.json';
+import ruFinance from './locales/ru/finance.json';
+import uzFinance from './locales/uz/finance.json';
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_OPTIONS,
@@ -19,9 +22,9 @@ import {
 } from './languages';
 
 const resources = {
-  en: { translation: en, common: enCommon, cashbox: enCashbox },
-  ru: { translation: ru, common: ruCommon, cashbox: ruCashbox },
-  uz: { translation: uz, common: uzCommon, cashbox: uzCashbox },
+  en: { translation: en, common: enCommon, cashbox: enCashbox, finance: enFinance },
+  ru: { translation: ru, common: ruCommon, cashbox: ruCashbox, finance: ruFinance },
+  uz: { translation: uz, common: uzCommon, cashbox: uzCashbox, finance: uzFinance },
 };
 
 const supportedLanguages: SupportedLanguage[] = LANGUAGE_OPTIONS.map((option) => option.code);

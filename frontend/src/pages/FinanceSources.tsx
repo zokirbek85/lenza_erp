@@ -25,6 +25,7 @@ import {
   Row,
   Col,
   Popconfirm,
+  Drawer,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAuthStore } from '../auth/useAuthStore';
@@ -33,7 +34,9 @@ import {
   createFinanceSource,
   updateFinanceSource,
   deleteFinanceSource,
+  fetchTransactions,
   type FinanceSource,
+  type Transaction,
 } from '../api/financeApi';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
@@ -50,6 +53,17 @@ const FinanceSourcesPage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSource, setEditingSource] = useState<FinanceSource | null>(null);
   const [form] = Form.useForm();
+
+  // Transactions drawer state
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<FinanceSource | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsPagination, setTransactionsPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+  });
 
   const loadSources = useCallback(async () => {
     setLoading(true);
@@ -107,6 +121,39 @@ const FinanceSourcesPage = () => {
       const errorMessage = error.response?.data?.detail || error.message;
       toast.error(t('finance.saveError', `Failed to save: ${errorMessage}`));
       console.error('Save finance source error:', error);
+    }
+  };
+
+  const handleViewTransactions = async (source: FinanceSource) => {
+    setSelectedSource(source);
+    setDrawerVisible(true);
+    await loadTransactions(source.id, 1);
+  };
+
+  const loadTransactions = async (sourceId: number, page: number = 1) => {
+    setTransactionsLoading(true);
+    try {
+      const data = await fetchTransactions(sourceId, {
+        page,
+        page_size: transactionsPagination.pageSize,
+      });
+      setTransactions(data.results);
+      setTransactionsPagination({
+        current: page,
+        pageSize: transactionsPagination.pageSize,
+        total: data.count,
+      });
+    } catch (error: any) {
+      toast.error(t('finance.loadTransactionsError', 'Failed to load transactions'));
+      console.error('Load transactions error:', error);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
+  const handleTransactionsPageChange = (page: number) => {
+    if (selectedSource) {
+      loadTransactions(selectedSource.id, page);
     }
   };
 
@@ -172,6 +219,28 @@ const FinanceSourcesPage = () => {
       ),
     },
     {
+      title: t('finance.totalPayments', 'Total Payments'),
+      dataIndex: 'total_payments',
+      key: 'total_payments',
+      align: 'right',
+      render: (total, record) => (
+        <Typography.Text style={{ color: '#52c41a' }}>
+          +{formatCurrency(total || 0, record.currency)}
+        </Typography.Text>
+      ),
+    },
+    {
+      title: t('finance.totalExpenses', 'Total Expenses'),
+      dataIndex: 'total_expenses',
+      key: 'total_expenses',
+      align: 'right',
+      render: (total, record) => (
+        <Typography.Text style={{ color: '#ff4d4f' }}>
+          -{formatCurrency(total || 0, record.currency)}
+        </Typography.Text>
+      ),
+    },
+    {
       title: t('finance.status', 'Status'),
       dataIndex: 'is_active',
       key: 'is_active',
@@ -190,28 +259,37 @@ const FinanceSourcesPage = () => {
     {
       title: t('common.actions', 'Actions'),
       key: 'actions',
-      render: (_, record) =>
-        canEdit ? (
-          <Space>
-            <Button
-              type="link"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-            >
-              {t('common.edit', 'Edit')}
-            </Button>
-            <Popconfirm
-              title={t('finance.deleteConfirm', 'Are you sure to delete this finance source?')}
-              onConfirm={() => handleDelete(record.id)}
-              okText={t('common.yes', 'Yes')}
-              cancelText={t('common.no', 'No')}
-            >
-              <Button type="link" danger icon={<DeleteOutlined />}>
-                {t('common.delete', 'Delete')}
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="link"
+            onClick={() => handleViewTransactions(record)}
+          >
+            {t('finance.viewTransactions', 'View Transactions')}
+          </Button>
+          {canEdit && (
+            <>
+              <Button
+                type="link"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record)}
+              >
+                {t('common.edit', 'Edit')}
               </Button>
-            </Popconfirm>
-          </Space>
-        ) : null,
+              <Popconfirm
+                title={t('finance.deleteConfirm', 'Are you sure to delete this finance source?')}
+                onConfirm={() => handleDelete(record.id)}
+                okText={t('common.yes', 'Yes')}
+                cancelText={t('common.no', 'No')}
+              >
+                <Button type="link" danger icon={<DeleteOutlined />}>
+                  {t('common.delete', 'Delete')}
+                </Button>
+              </Popconfirm>
+            </>
+          )}
+        </Space>
+      ),
     },
   ];
 
@@ -343,6 +421,68 @@ const FinanceSourcesPage = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <Drawer
+        title={
+          selectedSource
+            ? `${t('finance.transactionHistory', 'Transaction History')}: ${selectedSource.name}`
+            : t('finance.transactionHistory', 'Transaction History')
+        }
+        width={800}
+        open={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+      >
+        <Table
+          columns={[
+            {
+              title: t('finance.transactionType', 'Type'),
+              dataIndex: 'transaction_type',
+              key: 'transaction_type',
+              render: (type) => (
+                <Tag color={type === 'payment' ? 'green' : 'red'}>
+                  {type === 'payment'
+                    ? t('finance.payment', 'Payment')
+                    : t('finance.expense', 'Expense')}
+                </Tag>
+              ),
+            },
+            {
+              title: t('finance.transactionDate', 'Date'),
+              dataIndex: 'transaction_date',
+              key: 'transaction_date',
+              render: (date) => formatDate(date),
+            },
+            {
+              title: t('finance.transactionAmount', 'Amount'),
+              dataIndex: 'transaction_amount',
+              key: 'transaction_amount',
+              align: 'right',
+              render: (amount, record) => (
+                <Typography.Text
+                  style={{
+                    color: record.transaction_type === 'payment' ? '#52c41a' : '#ff4d4f',
+                  }}
+                >
+                  {record.transaction_type === 'payment' ? '+' : '-'}
+                  {formatCurrency(amount, record.currency)}
+                </Typography.Text>
+              ),
+            },
+            {
+              title: t('finance.transactionDescription', 'Description'),
+              dataIndex: 'transaction_description',
+              key: 'transaction_description',
+            },
+          ]}
+          dataSource={transactions}
+          rowKey="id"
+          loading={transactionsLoading}
+          pagination={{
+            ...transactionsPagination,
+            onChange: handleTransactionsPageChange,
+          }}
+        />
+      </Drawer>
     </div>
   );
 };

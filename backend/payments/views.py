@@ -410,7 +410,6 @@ class FinanceSourceViewSet(viewsets.ModelViewSet):
     CRUD operations for FinanceSource (cash/card/bank accounts)
     Permissions: Admin/Accountant can create/edit, all can view
     """
-    queryset = FinanceSource.objects.all()
     serializer_class = FinanceSourceSerializer
     permission_classes = [IsAdmin | IsAccountant | IsOwner | IsSales]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
@@ -419,10 +418,119 @@ class FinanceSourceViewSet(viewsets.ModelViewSet):
     ordering_fields = ('name', 'balance', 'created_at')
     ordering = ('name',)
     
+    def get_queryset(self):
+        """Annotate queryset with aggregated payment and expense totals"""
+        from django.db.models import Sum, Count, Q, Value
+        from django.db.models.functions import Coalesce
+        
+        queryset = FinanceSource.objects.annotate(
+            total_payments=Coalesce(
+                Sum(
+                    'payments__amount',
+                    filter=Q(payments__status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
+                ),
+                Value(0)
+            ),
+            total_expenses=Coalesce(
+                Sum(
+                    'expenses__amount',
+                    filter=Q(expenses__status=Expense.STATUS_APPROVED)
+                ),
+                Value(0)
+            ),
+            transaction_count=Coalesce(
+                Count('payments', filter=Q(payments__status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])) +
+                Count('expenses', filter=Q(expenses__status=Expense.STATUS_APPROVED)),
+                Value(0)
+            )
+        )
+        return queryset
+    
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [IsAdmin() | IsAccountant()]
         return super().get_permissions()
+    
+    @action(detail=True, methods=['get'])
+    def transactions(self, request, pk=None):
+        """
+        Get all transactions (payments + expenses) for this finance source
+        Returns a unified list sorted by date with pagination
+        """
+        from rest_framework.pagination import PageNumberPagination
+        from django.db.models import Value, CharField, F
+        from django.db.models.functions import Concat, Coalesce
+        from itertools import chain
+        
+        source = self.get_object()
+        
+        # Get approved payments
+        payments = Payment.objects.filter(
+            source=source,
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        ).annotate(
+            transaction_type=Value('payment', output_field=CharField()),
+            transaction_date=F('pay_date'),
+            transaction_amount=F('amount'),
+            transaction_description=Coalesce(
+                Concat(
+                    Value('To\'lov: '),
+                    F('dealer__name'),
+                    output_field=CharField()
+                ),
+                Value('To\'lov: -', output_field=CharField())
+            )
+        ).values(
+            'id',
+            'transaction_type',
+            'transaction_date',
+            'transaction_amount',
+            'currency',
+            'transaction_description',
+            'status',
+            'created_at'
+        )
+        
+        # Get approved expenses
+        expenses = Expense.objects.filter(
+            source=source,
+            status=Expense.STATUS_APPROVED
+        ).annotate(
+            transaction_type=Value('expense', output_field=CharField()),
+            transaction_date=F('expense_date'),
+            transaction_amount=F('amount'),
+            transaction_description=Concat(
+                Value('Xarajat: '),
+                F('category__name'),
+                output_field=CharField()
+            )
+        ).values(
+            'id',
+            'transaction_type',
+            'transaction_date',
+            'transaction_amount',
+            'currency',
+            'transaction_description',
+            'status',
+            'created_at'
+        )
+        
+        # Combine and sort by date (newest first)
+        transactions = sorted(
+            chain(payments, expenses),
+            key=lambda x: x['transaction_date'],
+            reverse=True
+        )
+        
+        # Paginate results
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        paginator.page_size_query_param = 'page_size'
+        paginator.max_page_size = 100
+        
+        page = paginator.paginate_queryset(transactions, request)
+        
+        return paginator.get_paginated_response(page)
 
 
 class ExpenseCategoryViewSet(viewsets.ModelViewSet):

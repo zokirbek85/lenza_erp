@@ -233,9 +233,24 @@ class PaymentSerializer(serializers.ModelSerializer):
 # ============================================================================
 
 class FinanceSourceSerializer(serializers.ModelSerializer):
-    """Serializer for FinanceSource model"""
+    """Serializer for FinanceSource model with aggregated totals"""
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     currency_display = serializers.CharField(source='get_currency_display', read_only=True)
+    
+    # Aggregated fields (populated by viewset queryset annotations)
+    total_payments = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        read_only=True,
+        default=0
+    )
+    total_expenses = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        read_only=True,
+        default=0
+    )
+    transaction_count = serializers.IntegerField(read_only=True, default=0)
     
     class Meta:
         model = FinanceSource
@@ -247,12 +262,15 @@ class FinanceSourceSerializer(serializers.ModelSerializer):
             'currency',
             'currency_display',
             'balance',
+            'total_payments',
+            'total_expenses',
+            'transaction_count',
             'is_active',
             'description',
             'created_at',
             'updated_at',
         )
-        read_only_fields = ('balance', 'created_at', 'updated_at')
+        read_only_fields = ('balance', 'total_payments', 'total_expenses', 'transaction_count', 'created_at', 'updated_at')
 
 
 class ExpenseCategorySerializer(serializers.ModelSerializer):

@@ -12,10 +12,24 @@ export interface FinanceSource {
   currency: 'USD' | 'UZS';
   currency_display: string;
   balance: number;
+  total_payments?: number;
+  total_expenses?: number;
+  transaction_count?: number;
   is_active: boolean;
   description: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface Transaction {
+  id: number;
+  transaction_type: 'payment' | 'expense';
+  transaction_date: string;
+  transaction_amount: number;
+  currency: string;
+  transaction_description: string;
+  status: string;
+  created_at: string;
 }
 
 export interface ExpenseCategory {
@@ -96,6 +110,24 @@ export const updateFinanceSource = async (id: number, data: Partial<FinanceSourc
 
 export const deleteFinanceSource = async (id: number) => {
   await http.delete(`/finance-sources/${id}/`);
+};
+
+export const fetchTransactions = async (sourceId: number, params?: {
+  page?: number;
+  page_size?: number;
+}) => {
+  const response = await http.get<{
+    results: Transaction[];
+    count: number;
+    next?: string;
+    previous?: string;
+  }>(`/finance-sources/${sourceId}/transactions/`, { params });
+  return {
+    results: response.data.results || [],
+    count: response.data.count || 0,
+    next: response.data.next,
+    previous: response.data.previous,
+  };
 };
 
 // ============================================================================
