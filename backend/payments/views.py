@@ -451,6 +451,69 @@ class FinanceSourceViewSet(viewsets.ModelViewSet):
             return [IsAdmin() | IsAccountant()]
         return super().get_permissions()
     
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """
+        Get aggregated summary of all finance sources with recent payments
+        
+        Endpoint: GET /api/finance-sources/summary/
+        
+        Returns:
+        - All active finance sources with balances
+        - Aggregated totals (total_payments, total_expenses)
+        - Recent approved payments for each source (last 5)
+        """
+        from django.db.models import Prefetch
+        
+        # Get sources with annotations
+        sources = self.get_queryset().filter(is_active=True)
+        
+        # Prefetch recent payments for each source
+        recent_payments = Payment.objects.filter(
+            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
+        ).select_related('dealer').order_by('-pay_date')[:5]
+        
+        sources = sources.prefetch_related(
+            Prefetch(
+                'payments',
+                queryset=recent_payments,
+                to_attr='recent_payments_list'
+            )
+        )
+        
+        # Build response
+        result = []
+        for source in sources:
+            incoming_payments = []
+            if hasattr(source, 'recent_payments_list'):
+                for payment in source.recent_payments_list:
+                    incoming_payments.append({
+                        'id': payment.id,
+                        'dealer': payment.dealer.name if payment.dealer else 'N/A',
+                        'amount': float(payment.amount),
+                        'date': payment.pay_date.isoformat(),
+                        'method': payment.method,
+                        'note': payment.note or ''
+                    })
+            
+            result.append({
+                'id': source.id,
+                'name': source.name,
+                'type': source.type,
+                'type_display': source.get_type_display(),
+                'currency': source.currency,
+                'balance': float(source.balance),
+                'total_payments': float(getattr(source, 'total_payments', 0)),
+                'total_expenses': float(getattr(source, 'total_expenses', 0)),
+                'transaction_count': getattr(source, 'transaction_count', 0),
+                'is_active': source.is_active,
+                'incoming_payments': incoming_payments,
+                'created_at': source.created_at.isoformat(),
+                'updated_at': source.updated_at.isoformat(),
+            })
+        
+        return Response({'sources': result})
+    
     @action(detail=True, methods=['get'])
     def transactions(self, request, pk=None):
         """

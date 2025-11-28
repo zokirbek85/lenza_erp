@@ -89,6 +89,19 @@ export interface FinanceLog {
 // FINANCE SOURCE API
 // ============================================================================
 
+export interface FinanceSourceSummary {
+  sources: Array<FinanceSource & {
+    incoming_payments: Array<{
+      id: number;
+      dealer: string;
+      amount: number;
+      date: string;
+      method: string;
+      note: string;
+    }>;
+  }>;
+}
+
 export const fetchFinanceSources = async (params?: {
   type?: string;
   currency?: string;
@@ -96,6 +109,11 @@ export const fetchFinanceSources = async (params?: {
 }) => {
   const response = await http.get<{ results: FinanceSource[] }>('/finance-sources/', { params });
   return response.data.results || [];
+};
+
+export const fetchFinanceSourcesSummary = async () => {
+  const response = await http.get<FinanceSourceSummary>('/finance-sources/summary/');
+  return response.data;
 };
 
 export const createFinanceSource = async (data: Partial<FinanceSource>) => {
