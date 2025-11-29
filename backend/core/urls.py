@@ -65,6 +65,11 @@ from kpis.views import (
     OwnerKPIView,
     SalesManagerKPIView,
     WarehouseKPIView,
+    TopProductsAnalyticsView,
+    RegionProductAnalyticsView,
+    ProductTrendAnalyticsView,
+    TopCategoriesAnalyticsView,
+    TopDealersAnalyticsView,
 )
 from notifications.views import NotificationViewSet
 from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet
@@ -186,6 +191,12 @@ urlpatterns = [
     path('api/kpis/accountant/', AccountantKPIView.as_view(), name='kpi-accountant'),
     path('api/kpi/cards/', CardKPIView.as_view(), name='kpi-cards'),
     path('api/kpi/inventory-stats/', InventoryStatsView.as_view(), name='kpi-inventory-stats'),
+    # Sales Analytics endpoints
+    path('api/analytics/top-products/', TopProductsAnalyticsView.as_view(), name='analytics-top-products'),
+    path('api/analytics/region-products/', RegionProductAnalyticsView.as_view(), name='analytics-region-products'),
+    path('api/analytics/product-trend/', ProductTrendAnalyticsView.as_view(), name='analytics-product-trend'),
+    path('api/analytics/top-categories/', TopCategoriesAnalyticsView.as_view(), name='analytics-top-categories'),
+    path('api/analytics/top-dealers/', TopDealersAnalyticsView.as_view(), name='analytics-top-dealers'),
     path('api/returns/export/pdf/', ReturnsReportPDFView.as_view(), name='returns-export-pdf'),
     path('api/returns/export/excel/', ReturnsExportExcelView.as_view(), name='returns-export-excel'),
     path('api/returns/stats/', ReturnedProductStatsView.as_view(), name='returns-stats'),

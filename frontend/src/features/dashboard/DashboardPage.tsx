@@ -25,6 +25,13 @@ import DashboardTable from '../../components/DashboardTable';
 import DebtByDealerChart from '@/components/DebtByDealerChart';
 import DebtByRegionPie from '@/components/DebtByRegionPie';
 import DebtTrendChart from '@/components/DebtTrendChart';
+import {
+  TopProductsCard,
+  TopCategoriesCard,
+  TopDealersCard,
+  ProductTrendLineChart,
+  RegionProductHeatmap,
+} from '../../components/analytics';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import type { DashboardFilters } from '../../store/useDashboardStore';
 import { useAuthStore } from '../../auth/useAuthStore';
@@ -39,6 +46,16 @@ import {
   fetchCardsKpi,
   fetchInventoryStats,
   type InventoryStats,
+  fetchTopProducts,
+  fetchRegionProducts,
+  fetchProductTrend,
+  fetchTopCategories,
+  fetchTopDealers,
+  type TopProductItem,
+  type RegionProductItem,
+  type ProductTrendPeriod,
+  type CategoryItem,
+  type TopDealerItem,
 } from '../../services/dashboardService';
 import { fetchDebtAnalytics } from '@/services/dashboard';
 
@@ -83,6 +100,11 @@ interface DashboardData {
   cardKpi: any[];
   analytics: DebtAnalytics | null;
   inventoryStats: InventoryStats | null;
+  topProducts: TopProductItem[];
+  regionProducts: RegionProductItem[];
+  productTrend: ProductTrendPeriod[];
+  topCategories: CategoryItem[];
+  topDealers: TopDealerItem[];
 }
 
 const DashboardPage = () => {
@@ -117,6 +139,11 @@ const DashboardPage = () => {
     cardKpi: [],
     analytics: null,
     inventoryStats: null,
+    topProducts: [],
+    regionProducts: [],
+    productTrend: [],
+    topCategories: [],
+    topDealers: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -135,7 +162,15 @@ const DashboardPage = () => {
     const effectiveFilters = overrideFilters ?? filters;
     setLoading(true);
     try {
-      const [owner, sales, accountant, currency, summary, cards, analytics, inventory] = await Promise.all([
+      // Build analytics filters from dashboard filters
+      const analyticsFilters = {
+        start_date: effectiveFilters.dateRange?.[0],
+        end_date: effectiveFilters.dateRange?.[1],
+        region_id: effectiveFilters.region,
+        dealer_id: effectiveFilters.dealers.length === 1 ? effectiveFilters.dealers[0] : undefined,
+      };
+
+      const [owner, sales, accountant, currency, summary, cards, analytics, inventory, topProducts, regionProducts, productTrend, topCategories, topDealers] = await Promise.all([
         permissions.canLoadOwnerKpi
           ? fetchDashboardData(effectiveFilters).catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
@@ -170,6 +205,12 @@ const DashboardPage = () => {
           ? fetchDebtAnalytics().catch(() => ({ data: null }))
           : Promise.resolve({ data: null }),
         fetchInventoryStats().catch(() => ({ data: { total_quantity: 0, total_value_usd: 0 } })),
+        // Sales Analytics
+        fetchTopProducts(analyticsFilters).catch(() => ({ data: [] })),
+        fetchRegionProducts(analyticsFilters).catch(() => ({ data: [] })),
+        fetchProductTrend(analyticsFilters).catch(() => ({ data: [] })),
+        fetchTopCategories(analyticsFilters).catch(() => ({ data: [] })),
+        fetchTopDealers(analyticsFilters).catch(() => ({ data: [] })),
       ]);
 
       const newData = {
@@ -181,6 +222,11 @@ const DashboardPage = () => {
         cardKpi: Array.isArray(cards?.data) ? cards.data : [],
         analytics: (analytics?.data as DebtAnalytics | null) ?? null,
         inventoryStats: inventory?.data ?? null,
+        topProducts: Array.isArray(topProducts?.data) ? topProducts.data : [],
+        regionProducts: Array.isArray(regionProducts?.data) ? regionProducts.data : [],
+        productTrend: Array.isArray(productTrend?.data) ? productTrend.data : [],
+        topCategories: Array.isArray(topCategories?.data) ? topCategories.data : [],
+        topDealers: Array.isArray(topDealers?.data) ? topDealers.data : [],
       };
 
       setData(newData);
@@ -627,6 +673,45 @@ const DashboardPage = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Sales Analytics Section */}
+      <div className="mt-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+            📊 {t('Sotuv analitikasi')}
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('Mahsulotlar, hududlar va dilerlar bo\'yicha batafsil tahlil')}
+          </p>
+        </div>
+
+        {/* Top Products & Categories */}
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} lg={16}>
+            <TopProductsCard data={data.topProducts} loading={loading} />
+          </Col>
+          <Col xs={24} lg={8}>
+            <TopCategoriesCard data={data.topCategories} loading={loading} />
+          </Col>
+        </Row>
+
+        {/* Region Products & Product Trend */}
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24} lg={12}>
+            <RegionProductHeatmap data={data.regionProducts} loading={loading} />
+          </Col>
+          <Col xs={24} lg={12}>
+            <ProductTrendLineChart data={data.productTrend} loading={loading} />
+          </Col>
+        </Row>
+
+        {/* Top Dealers */}
+        <Row gutter={[16, 16]} className="mb-6">
+          <Col xs={24}>
+            <TopDealersCard data={data.topDealers} loading={loading} />
+          </Col>
+        </Row>
+      </div>
 
       {/* Overdue Receivables Table */}
       <Row gutter={[16, 16]}>

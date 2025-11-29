@@ -56,6 +56,10 @@ class IsSales(RolePermission):
     allowed_roles = {'sales'}
 
 
+class IsManager(RolePermission):
+    allowed_roles = {'manager'}
+
+
 class IsOwnerReadOnly(SafeRolePermission):
     allowed_roles = {'owner'}
 

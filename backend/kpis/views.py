@@ -1,17 +1,19 @@
 from decimal import Decimal
 from datetime import timedelta, datetime
+from collections import defaultdict
 
-from django.db.models import Avg, Sum, Count, Max, Q
+from django.db.models import Avg, Sum, Count, Max, Q, F, DecimalField, Case, When, Value
+from django.db.models.functions import Coalesce, TruncMonth, TruncWeek
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from dealers.models import Dealer
-from catalog.models import Product
+from dealers.models import Dealer, Region
+from catalog.models import Product, Brand, Category
 from orders.models import Order, OrderItem, OrderReturn
 from payments.models import Payment, PaymentCard
-from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
+from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse, IsManager
 
 from .models import KPIRecord
 from .serializers import KPIRecordSerializer
@@ -223,5 +225,447 @@ class InventoryStatsView(APIView):
             'total_quantity': float(total_quantity),
             'total_value_usd': float(total_value),
         }
+        
+        return Response(data)
+
+
+class TopProductsAnalyticsView(APIView):
+    """Returns top 10 products by total sales revenue.
+    
+    Query params:
+    - start_date: ISO date (YYYY-MM-DD)
+    - end_date: ISO date (YYYY-MM-DD)
+    - region_id: filter by region
+    - dealer_id: filter by dealer
+    - brand_id: filter by brand
+    - category_id: filter by category
+    
+    Returns list of dicts:
+    - product_id, product_name, brand_name, category_name
+    - total_qty, total_sum_usd
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
+
+    def get(self, request):
+        # Parse filters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        region_id = request.query_params.get('region_id')
+        dealer_id = request.query_params.get('dealer_id')
+        brand_id = request.query_params.get('brand_id')
+        category_id = request.query_params.get('category_id')
+        
+        # Base queryset: active orders only
+        filters = Q(order__status__in=Order.Status.active_statuses())
+        
+        # Apply date range
+        if start_date:
+            filters &= Q(order__value_date__gte=start_date)
+        if end_date:
+            filters &= Q(order__value_date__lte=end_date)
+        
+        # Apply region filter
+        if region_id:
+            filters &= Q(order__dealer__region_id=region_id)
+        
+        # Apply dealer filter
+        if dealer_id:
+            filters &= Q(order__dealer_id=dealer_id)
+        
+        # Apply brand filter
+        if brand_id:
+            filters &= Q(product__brand_id=brand_id)
+        
+        # Apply category filter
+        if category_id:
+            filters &= Q(product__category_id=category_id)
+        
+        # Role-based filtering
+        user = request.user
+        if hasattr(user, 'role'):
+            if user.role == 'manager':
+                # Manager sees only their assigned dealers
+                managed_dealers = Dealer.objects.filter(manager_user=user)
+                filters &= Q(order__dealer__in=managed_dealers)
+            elif user.role == 'sales':
+                # Sales sees only their own orders
+                filters &= Q(order__created_by=user)
+        
+        # Aggregate top products
+        top_products = (
+            OrderItem.objects.filter(filters)
+            .select_related('product__brand', 'product__category')
+            .values(
+                'product_id',
+                'product__name',
+                'product__brand__name',
+                'product__category__name'
+            )
+            .annotate(
+                total_qty=Sum('qty'),
+                total_sum_usd=Sum(
+                    F('qty') * F('price_usd'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            .order_by('-total_sum_usd')[:10]
+        )
+        
+        data = [
+            {
+                'product_id': item['product_id'],
+                'product_name': item['product__name'],
+                'brand_name': item['product__brand__name'] or '',
+                'category_name': item['product__category__name'] or '',
+                'total_qty': float(item['total_qty'] or 0),
+                'total_sum_usd': float(item['total_sum_usd'] or 0),
+            }
+            for item in top_products
+        ]
+        
+        return Response(data)
+
+
+class RegionProductAnalyticsView(APIView):
+    """Returns region -> product sales mapping.
+    
+    Query params: same as TopProductsAnalyticsView
+    
+    Returns list of dicts:
+    - region_id, region_name
+    - products: list of {product_id, product_name, total_sum_usd}
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
+
+    def get(self, request):
+        # Parse filters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        region_id = request.query_params.get('region_id')
+        dealer_id = request.query_params.get('dealer_id')
+        brand_id = request.query_params.get('brand_id')
+        category_id = request.query_params.get('category_id')
+        
+        # Base queryset
+        filters = Q(order__status__in=Order.Status.active_statuses())
+        filters &= Q(order__dealer__region__isnull=False)  # Only orders with region
+        
+        if start_date:
+            filters &= Q(order__value_date__gte=start_date)
+        if end_date:
+            filters &= Q(order__value_date__lte=end_date)
+        if region_id:
+            filters &= Q(order__dealer__region_id=region_id)
+        if dealer_id:
+            filters &= Q(order__dealer_id=dealer_id)
+        if brand_id:
+            filters &= Q(product__brand_id=brand_id)
+        if category_id:
+            filters &= Q(product__category_id=category_id)
+        
+        # Role-based filtering
+        user = request.user
+        if hasattr(user, 'role'):
+            if user.role == 'manager':
+                managed_dealers = Dealer.objects.filter(manager_user=user)
+                filters &= Q(order__dealer__in=managed_dealers)
+            elif user.role == 'sales':
+                filters &= Q(order__created_by=user)
+        
+        # Get region-product combinations
+        region_products = (
+            OrderItem.objects.filter(filters)
+            .select_related('order__dealer__region', 'product')
+            .values(
+                'order__dealer__region_id',
+                'order__dealer__region__name',
+                'product_id',
+                'product__name'
+            )
+            .annotate(
+                total_sum_usd=Sum(
+                    F('qty') * F('price_usd'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            .order_by('order__dealer__region__name', '-total_sum_usd')
+        )
+        
+        # Group by region
+        regions_map = defaultdict(lambda: {'products': []})
+        for item in region_products:
+            region_id = item['order__dealer__region_id']
+            region_name = item['order__dealer__region__name']
+            
+            if region_id not in regions_map:
+                regions_map[region_id]['region_id'] = region_id
+                regions_map[region_id]['region_name'] = region_name
+            
+            regions_map[region_id]['products'].append({
+                'product_id': item['product_id'],
+                'product_name': item['product__name'],
+                'total_sum_usd': float(item['total_sum_usd'] or 0),
+            })
+        
+        # Convert to list and limit products per region to top 5
+        data = []
+        for region_data in regions_map.values():
+            region_data['products'] = region_data['products'][:5]
+            data.append(region_data)
+        
+        # Sort regions by total sales
+        data.sort(key=lambda x: sum(p['total_sum_usd'] for p in x['products']), reverse=True)
+        
+        return Response(data)
+
+
+class ProductTrendAnalyticsView(APIView):
+    """Returns monthly or weekly product sales trend.
+    
+    Query params:
+    - start_date, end_date, region_id, dealer_id, brand_id, category_id
+    - period: 'month' (default) or 'week'
+    - limit: max number of products to show (default 5)
+    
+    Returns list of dicts:
+    - period: ISO date string (first day of month/week)
+    - products: list of {product_id, product_name, total_sum_usd}
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
+
+    def get(self, request):
+        # Parse filters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        region_id = request.query_params.get('region_id')
+        dealer_id = request.query_params.get('dealer_id')
+        brand_id = request.query_params.get('brand_id')
+        category_id = request.query_params.get('category_id')
+        period = request.query_params.get('period', 'month')
+        limit = int(request.query_params.get('limit', '5'))
+        
+        # Base queryset
+        filters = Q(order__status__in=Order.Status.active_statuses())
+        
+        if start_date:
+            filters &= Q(order__value_date__gte=start_date)
+        if end_date:
+            filters &= Q(order__value_date__lte=end_date)
+        if region_id:
+            filters &= Q(order__dealer__region_id=region_id)
+        if dealer_id:
+            filters &= Q(order__dealer_id=dealer_id)
+        if brand_id:
+            filters &= Q(product__brand_id=brand_id)
+        if category_id:
+            filters &= Q(product__category_id=category_id)
+        
+        # Role-based filtering
+        user = request.user
+        if hasattr(user, 'role'):
+            if user.role == 'manager':
+                managed_dealers = Dealer.objects.filter(manager_user=user)
+                filters &= Q(order__dealer__in=managed_dealers)
+            elif user.role == 'sales':
+                filters &= Q(order__created_by=user)
+        
+        # Choose truncation function
+        trunc_func = TruncMonth if period == 'month' else TruncWeek
+        
+        # Get trend data
+        trend_data = (
+            OrderItem.objects.filter(filters)
+            .annotate(period=trunc_func('order__value_date'))
+            .values('period', 'product_id', 'product__name')
+            .annotate(
+                total_sum_usd=Sum(
+                    F('qty') * F('price_usd'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            .order_by('period', '-total_sum_usd')
+        )
+        
+        # Group by period
+        periods_map = defaultdict(lambda: {'products': []})
+        for item in trend_data:
+            period_key = item['period'].date().isoformat()
+            
+            if period_key not in periods_map:
+                periods_map[period_key]['period'] = period_key
+            
+            periods_map[period_key]['products'].append({
+                'product_id': item['product_id'],
+                'product_name': item['product__name'],
+                'total_sum_usd': float(item['total_sum_usd'] or 0),
+            })
+        
+        # Limit products per period and convert to list
+        data = []
+        for period_data in periods_map.values():
+            period_data['products'] = period_data['products'][:limit]
+            data.append(period_data)
+        
+        # Sort by period
+        data.sort(key=lambda x: x['period'])
+        
+        return Response(data)
+
+
+class TopCategoriesAnalyticsView(APIView):
+    """Returns top product categories by sales revenue.
+    
+    Query params: same as TopProductsAnalyticsView
+    
+    Returns list of dicts:
+    - category_id, category_name
+    - total_sum_usd, percentage
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
+
+    def get(self, request):
+        # Parse filters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        region_id = request.query_params.get('region_id')
+        dealer_id = request.query_params.get('dealer_id')
+        brand_id = request.query_params.get('brand_id')
+        category_id = request.query_params.get('category_id')
+        
+        # Base queryset
+        filters = Q(order__status__in=Order.Status.active_statuses())
+        filters &= Q(product__category__isnull=False)  # Only items with category
+        
+        if start_date:
+            filters &= Q(order__value_date__gte=start_date)
+        if end_date:
+            filters &= Q(order__value_date__lte=end_date)
+        if region_id:
+            filters &= Q(order__dealer__region_id=region_id)
+        if dealer_id:
+            filters &= Q(order__dealer_id=dealer_id)
+        if brand_id:
+            filters &= Q(product__brand_id=brand_id)
+        if category_id:
+            filters &= Q(product__category_id=category_id)
+        
+        # Role-based filtering
+        user = request.user
+        if hasattr(user, 'role'):
+            if user.role == 'manager':
+                managed_dealers = Dealer.objects.filter(manager_user=user)
+                filters &= Q(order__dealer__in=managed_dealers)
+            elif user.role == 'sales':
+                filters &= Q(order__created_by=user)
+        
+        # Aggregate by category
+        categories = (
+            OrderItem.objects.filter(filters)
+            .values(
+                'product__category_id',
+                'product__category__name'
+            )
+            .annotate(
+                total_sum_usd=Sum(
+                    F('qty') * F('price_usd'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            .order_by('-total_sum_usd')
+        )
+        
+        # Calculate total for percentage
+        total_sales = sum(float(c['total_sum_usd'] or 0) for c in categories)
+        
+        data = [
+            {
+                'category_id': item['product__category_id'],
+                'category_name': item['product__category__name'],
+                'total_sum_usd': float(item['total_sum_usd'] or 0),
+                'percentage': round((float(item['total_sum_usd'] or 0) / total_sales * 100), 2) if total_sales > 0 else 0,
+            }
+            for item in categories
+        ]
+        
+        return Response(data)
+
+
+class TopDealersAnalyticsView(APIView):
+    """Returns top dealers by sales revenue.
+    
+    Query params: same as TopProductsAnalyticsView
+    
+    Returns list of dicts:
+    - dealer_id, dealer_name, region_name
+    - total_sum_usd, orders_count
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
+
+    def get(self, request):
+        # Parse filters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        region_id = request.query_params.get('region_id')
+        dealer_id = request.query_params.get('dealer_id')
+        brand_id = request.query_params.get('brand_id')
+        category_id = request.query_params.get('category_id')
+        limit = int(request.query_params.get('limit', '10'))
+        
+        # Base queryset
+        filters = Q(status__in=Order.Status.active_statuses())
+        
+        if start_date:
+            filters &= Q(value_date__gte=start_date)
+        if end_date:
+            filters &= Q(value_date__lte=end_date)
+        if region_id:
+            filters &= Q(dealer__region_id=region_id)
+        if dealer_id:
+            filters &= Q(dealer_id=dealer_id)
+        
+        # Brand/category filters require join to OrderItem
+        if brand_id or category_id:
+            item_filters = Q()
+            if brand_id:
+                item_filters &= Q(items__product__brand_id=brand_id)
+            if category_id:
+                item_filters &= Q(items__product__category_id=category_id)
+            filters &= item_filters
+        
+        # Role-based filtering
+        user = request.user
+        if hasattr(user, 'role'):
+            if user.role == 'manager':
+                managed_dealers = Dealer.objects.filter(manager_user=user)
+                filters &= Q(dealer__in=managed_dealers)
+            elif user.role == 'sales':
+                filters &= Q(created_by=user)
+        
+        # Aggregate by dealer
+        top_dealers = (
+            Order.objects.filter(filters)
+            .select_related('dealer__region')
+            .values(
+                'dealer_id',
+                'dealer__name',
+                'dealer__region__name'
+            )
+            .annotate(
+                total_sum_usd=Sum('total_usd'),
+                orders_count=Count('id', distinct=True)
+            )
+            .order_by('-total_sum_usd')[:limit]
+        )
+        
+        data = [
+            {
+                'dealer_id': item['dealer_id'],
+                'dealer_name': item['dealer__name'],
+                'region_name': item['dealer__region__name'] or '',
+                'total_sum_usd': float(item['total_sum_usd'] or 0),
+                'orders_count': item['orders_count'],
+            }
+            for item in top_dealers
+        ]
         
         return Response(data)

@@ -220,3 +220,104 @@ export const fetchInventoryStats = async () => {
     },
   };
 };
+
+/**
+ * Sales Analytics API Types and Functions
+ */
+
+export interface TopProductItem {
+  product_id: number;
+  product_name: string;
+  brand_name: string;
+  category_name: string;
+  total_qty: number;
+  total_sum_usd: number;
+}
+
+export interface RegionProductItem {
+  region_id: number;
+  region_name: string;
+  products: Array<{
+    product_id: number;
+    product_name: string;
+    total_sum_usd: number;
+  }>;
+}
+
+export interface ProductTrendPeriod {
+  period: string; // ISO date
+  products: Array<{
+    product_id: number;
+    product_name: string;
+    total_sum_usd: number;
+  }>;
+}
+
+export interface CategoryItem {
+  category_id: number;
+  category_name: string;
+  total_sum_usd: number;
+  percentage: number;
+}
+
+export interface TopDealerItem {
+  dealer_id: number;
+  dealer_name: string;
+  region_name: string;
+  total_sum_usd: number;
+  orders_count: number;
+}
+
+export interface AnalyticsFilters {
+  start_date?: string;
+  end_date?: string;
+  region_id?: number;
+  dealer_id?: number;
+  brand_id?: number;
+  category_id?: number;
+  period?: 'month' | 'week';
+  limit?: number;
+}
+
+const buildAnalyticsParams = (filters: AnalyticsFilters): URLSearchParams => {
+  const params = new URLSearchParams();
+  if (filters.start_date) params.append('start_date', filters.start_date);
+  if (filters.end_date) params.append('end_date', filters.end_date);
+  if (filters.region_id) params.append('region_id', String(filters.region_id));
+  if (filters.dealer_id) params.append('dealer_id', String(filters.dealer_id));
+  if (filters.brand_id) params.append('brand_id', String(filters.brand_id));
+  if (filters.category_id) params.append('category_id', String(filters.category_id));
+  if (filters.period) params.append('period', filters.period);
+  if (filters.limit) params.append('limit', String(filters.limit));
+  return params;
+};
+
+export const fetchTopProducts = async (filters: AnalyticsFilters = {}) => {
+  const params = buildAnalyticsParams(filters);
+  const url = `/analytics/top-products/?${params.toString()}`;
+  return http.get<TopProductItem[]>(url);
+};
+
+export const fetchRegionProducts = async (filters: AnalyticsFilters = {}) => {
+  const params = buildAnalyticsParams(filters);
+  const url = `/analytics/region-products/?${params.toString()}`;
+  return http.get<RegionProductItem[]>(url);
+};
+
+export const fetchProductTrend = async (filters: AnalyticsFilters = {}) => {
+  const params = buildAnalyticsParams(filters);
+  const url = `/analytics/product-trend/?${params.toString()}`;
+  return http.get<ProductTrendPeriod[]>(url);
+};
+
+export const fetchTopCategories = async (filters: AnalyticsFilters = {}) => {
+  const params = buildAnalyticsParams(filters);
+  const url = `/analytics/top-categories/?${params.toString()}`;
+  return http.get<CategoryItem[]>(url);
+};
+
+export const fetchTopDealers = async (filters: AnalyticsFilters = {}) => {
+  const params = buildAnalyticsParams(filters);
+  const url = `/analytics/top-dealers/?${params.toString()}`;
+  return http.get<TopDealerItem[]>(url);
+};

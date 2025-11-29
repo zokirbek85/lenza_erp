@@ -1,0 +1,133 @@
+import { Card, Table, theme, Spin, Empty } from 'antd';
+import { TrophyOutlined } from '@ant-design/icons';
+import type { TopProductItem } from '../../services/dashboardService';
+import { formatCurrency, formatQuantity } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
+
+interface TopProductsCardProps {
+  data: TopProductItem[];
+  loading?: boolean;
+}
+
+const TopProductsCard = ({ data, loading = false }: TopProductsCardProps) => {
+  const { t } = useTranslation();
+  const { token } = theme.useToken();
+
+  const columns = [
+    {
+      title: '#',
+      dataIndex: 'rank',
+      key: 'rank',
+      width: 50,
+      render: (_: any, __: any, index: number) => (
+        <span
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+          style={{
+            background: index === 0 ? '#d4af37' : token.colorBgContainer,
+            color: index === 0 ? '#000' : token.colorText,
+            border: index === 0 ? 'none' : `1px solid ${token.colorBorder}`,
+          }}
+        >
+          {index + 1}
+        </span>
+      ),
+    },
+    {
+      title: t('Mahsulot'),
+      dataIndex: 'product_name',
+      key: 'product_name',
+      render: (text: string) => (
+        <span className="font-medium text-slate-900 dark:text-white">{text}</span>
+      ),
+    },
+    {
+      title: t('Brend'),
+      dataIndex: 'brand_name',
+      key: 'brand_name',
+      render: (text: string) => (
+        <span className="text-slate-600 dark:text-slate-400">{text || '—'}</span>
+      ),
+    },
+    {
+      title: t('Kategoriya'),
+      dataIndex: 'category_name',
+      key: 'category_name',
+      render: (text: string) => (
+        <span className="text-slate-600 dark:text-slate-400">{text || '—'}</span>
+      ),
+    },
+    {
+      title: t('Miqdor'),
+      dataIndex: 'total_qty',
+      key: 'total_qty',
+      align: 'right' as const,
+      render: (value: number) => (
+        <span className="font-mono text-slate-700 dark:text-slate-300">
+          {formatQuantity(value)}
+        </span>
+      ),
+    },
+    {
+      title: t('Jami summa'),
+      dataIndex: 'total_sum_usd',
+      key: 'total_sum_usd',
+      align: 'right' as const,
+      render: (value: number, _: any, index: number) => (
+        <span
+          className="font-mono font-semibold"
+          style={{
+            color: index === 0 ? '#d4af37' : token.colorText,
+          }}
+        >
+          {formatCurrency(value)}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <Card
+      className="shadow-sm transition-shadow hover:shadow-md"
+      title={
+        <div className="flex items-center gap-2">
+          <TrophyOutlined style={{ color: '#d4af37', fontSize: '18px' }} />
+          <span className="font-semibold" style={{ color: token.colorText }}>
+            {t('Eng ko\'p sotilgan mahsulotlar (TOP 10)')}
+          </span>
+        </div>
+      }
+      styles={{
+        header: {
+          borderBottom: `1px solid ${token.colorBorder}`,
+        },
+      }}
+    >
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Spin size="large" />
+        </div>
+      ) : data.length === 0 ? (
+        <Empty
+          description={t('Ma\'lumot topilmadi')}
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      ) : (
+        <Table
+          dataSource={data}
+          columns={columns}
+          rowKey="product_id"
+          pagination={false}
+          size="small"
+          className="analytics-table"
+          rowClassName={(_, index) =>
+            index === 0
+              ? 'bg-amber-50/30 dark:bg-amber-950/10 font-semibold transition-colors'
+              : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors'
+          }
+        />
+      )}
+    </Card>
+  );
+};
+
+export default TopProductsCard;
