@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Brand, Category, Product
+from .models import Brand, Category, Product, Style
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -15,6 +15,12 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('id', 'name', 'description')
+
+
+class StyleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Style
+        fields = '__all__'
 
 
 class CatalogProductSerializer(serializers.ModelSerializer):
@@ -70,6 +76,10 @@ class ProductSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), source='category', write_only=True, allow_null=True
     )
+    style = StyleSerializer(read_only=True)
+    style_id = serializers.PrimaryKeyRelatedField(
+        queryset=Style.objects.all(), source='style', write_only=True, required=False, allow_null=True
+    )
     total_stock = serializers.SerializerMethodField()
     availability_status = serializers.SerializerMethodField()
     stock_ok = serializers.DecimalField(
@@ -95,6 +105,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'brand_id',
             'category',
             'category_id',
+            'style',
+            'style_id',
             'size',
             'unit',
             'cost_usd',

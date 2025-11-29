@@ -694,13 +694,15 @@
       "name": "Mahsulot nomi",
       "brand": "Brend",
       "category": "Kategoriya",
+      "style": "Stil",
       "costPrice": "Tannarx (USD)",
       "sellingPrice": "Sotuv narxi (USD)",
       "stock": "Zaxira soni",
       "minStock": "Minimal zaxira",
       "description": "Tavsif",
       "selectBrand": "Brend tanlang",
-      "selectCategory": "Kategoriya tanlang"
+      "selectCategory": "Kategoriya tanlang",
+      "selectStyle": "Stilni tanlang"
     },
     "filters": {
       "search": "Qidirish...",
@@ -727,6 +729,31 @@
       "tooLarge": "Rasm juda katta. Maksimal hajm 10 MB.",
       "info": "Mahsulot rasmini yuklang (maks. 10 MB). Fon avtomatik ravishda o'chiriladi."
     }
+  },
+  "styles": {
+    "title": "Stillar",
+    "subtitle": "Eshik dizayni stillari katalogi",
+    "name": "Stil nomi",
+    "description": "Tavsif",
+    "create": "Yangi stil",
+    "edit": "Stilni tahrirlash",
+    "delete": "O'chirish",
+    "deleteConfirm": "Ushbu stilni o'chirishni xohlaysizmi?",
+    "messages": {
+      "created": "Stil muvaffaqiyatli yaratildi",
+      "updated": "Stil muvaffaqiyatli yangilandi",
+      "deleted": "Stil o'chirildi",
+      "loadError": "Stillarni yuklashda xatolik"
+    },
+    "form": {
+      "name": "Stil nomi",
+      "namePlaceholder": "Masalan: Klassika, Loft, Modern...",
+      "description": "Tavsif",
+      "descriptionPlaceholder": "Stil haqida qisqacha ma'lumot",
+      "isActive": "Faol"
+    },
+    "empty": "Stillar topilmadi",
+    "productCount": "ta mahsulot"
   },
   "catalog": {
     "title": "Katalog",

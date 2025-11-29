@@ -28,6 +28,7 @@ import MobileProductForm from './_mobile/MobileProductForm';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatQuantity } from '../utils/formatters';
 import { toArray } from '../utils/api';
+import { fetchStyles, type StyleOption } from '../api/catalogApi';
 
 interface Brand {
   id: number;
@@ -44,6 +45,7 @@ const emptyForm = {
   name: '',
   brand_id: '' as number | '',
   category_id: '' as number | '',
+  style_id: '' as number | '',
   sell_price_usd: '',
   stock_ok: '',
   stock_defect: '',
@@ -72,6 +74,7 @@ const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [styles, setStyles] = useState<StyleOption[]>([]);
   const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string; searchQuery?: string }>({});
   const [formState, setFormState] = useState<typeof emptyForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -112,9 +115,14 @@ const ProductsPage = () => {
 
   const loadLookups = useCallback(async () => {
     try {
-      const [brandRes, categoryRes] = await Promise.all([http.get('/brands/'), http.get('/categories/')]);
+      const [brandRes, categoryRes, stylesData] = await Promise.all([
+        http.get('/brands/'),
+        http.get('/categories/'),
+        fetchStyles(),
+      ]);
       setBrands(toArray<Brand>(brandRes.data));
       setCategories(toArray<Category>(categoryRes.data));
+      setStyles(stylesData);
     } catch (error) {
       console.error(error);
       toast.error(t('messages.error'));
@@ -180,6 +188,7 @@ const ProductsPage = () => {
       name: formState.name,
       brand_id: formState.brand_id === '' ? null : Number(formState.brand_id),
       category_id: formState.category_id === '' ? null : Number(formState.category_id),
+      style_id: formState.style_id === '' ? null : Number(formState.style_id),
       sell_price_usd: Number(formState.sell_price_usd || 0),
       cost_usd: Number(formState.sell_price_usd || 0),
       stock_ok: normalizeStockValue(formState.stock_ok),
@@ -211,6 +220,7 @@ const ProductsPage = () => {
       name: product.name,
       brand_id: product.brand?.id ?? '',
       category_id: product.category?.id ?? '',
+      style_id: product.style?.id ?? '',
       sell_price_usd: String(product.sell_price_usd),
       stock_ok: String(product.stock_ok),
       stock_defect: String(product.stock_defect),
@@ -886,6 +896,22 @@ const ProductsPage = () => {
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.style')}</label>
+          <select
+            name="style_id"
+            value={formState.style_id}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">{t('common.select')}</option>
+            {styles.map((style) => (
+              <option key={style.id} value={style.id}>
+                {style.name}
               </option>
             ))}
           </select>

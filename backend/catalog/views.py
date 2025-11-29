@@ -17,8 +17,8 @@ from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehous
 from core.mixins.export_mixins import ExportMixin
 from services.image_processing import process_product_image, delete_product_image, ImageProcessingError
 
-from .models import Brand, Category, Product
-from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CatalogProductSerializer
+from .models import Brand, Category, Product, Style
+from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CatalogProductSerializer, StyleSerializer
 from .utils.excel_tools import export_products_to_excel, export_products_to_excel_no_price, generate_import_template, import_products_from_excel
 
 
@@ -46,6 +46,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
         if brand_id:
             queryset = queryset.filter(products__brand_id=brand_id).distinct()
         # Categories are global - no dealer filtering needed
+        return queryset
+
+
+class StyleViewSet(viewsets.ModelViewSet):
+    queryset = Style.objects.filter(is_active=True).order_by('name')
+    serializer_class = StyleSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ('name',)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Styles are global - no dealer filtering needed
         return queryset
 
 

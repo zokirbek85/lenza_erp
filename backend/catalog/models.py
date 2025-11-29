@@ -27,11 +27,24 @@ class Category(models.Model):
         return self.name
 
 
+class Style(models.Model):
+    name = models.CharField(max_length=150, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Product(models.Model):
     sku = models.CharField(max_length=64, unique=True)
     name = models.CharField(max_length=255)
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, related_name='products')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
+    style = models.ForeignKey('catalog.Style', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     size = models.CharField(max_length=64, blank=True)
     unit = models.CharField(max_length=32, default='pcs')
     cost_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)

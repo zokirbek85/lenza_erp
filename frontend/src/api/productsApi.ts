@@ -6,6 +6,7 @@ export type ProductPayload = {
   name: string;
   brand_id: number | null;
   category_id: number | null;
+  style_id?: number | null;
   sell_price_usd: number;
   cost_usd?: number;
   stock_ok: number;
@@ -18,6 +19,7 @@ export type Product = {
   name: string;
   brand: { id: number; name: string } | null;
   category: { id: number; name: string } | null;
+  style?: { id: number; name: string; description?: string } | null;
   sell_price_usd: number;
   stock_ok: number;
   stock_defect: number;

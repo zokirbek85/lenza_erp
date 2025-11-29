@@ -11,6 +11,7 @@ from catalog.views import (
     CatalogExportPDFView,
     CatalogExportExcelView,
     CategoryViewSet,
+    StyleViewSet,
     DealerProductsAPIView,
     ProductExportExcelView,
     ProductCatalogNoPricePDFView,
@@ -101,6 +102,7 @@ router.register('dealers', DealerViewSet, basename='dealer')
 router.register('regions', RegionViewSet, basename='region')
 router.register('brands', BrandViewSet, basename='brand')
 router.register('categories', CategoryViewSet, basename='category')
+router.register('styles', StyleViewSet, basename='style')
 router.register('products', ProductViewSet, basename='product')
 router.register('orders', OrderViewSet, basename='order')
 router.register('payments', PaymentViewSet, basename='payment')
