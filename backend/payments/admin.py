@@ -3,10 +3,6 @@ from django.contrib import admin
 from .models import (
     CashboxOpeningBalance,
     CurrencyRate,
-    Expense,
-    ExpenseCategory,
-    FinanceLog,
-    FinanceSource,
     Payment,
     PaymentCard,
 )
@@ -45,22 +41,10 @@ class CashboxOpeningBalanceAdmin(admin.ModelAdmin):
 
 
 # ============================================================================
-# FINANCE SOURCE & EXPENSES ADMIN
 # ============================================================================
 
-class FinanceLogInline(admin.TabularInline):
-    """Inline display of finance logs in FinanceSource admin"""
-    model = FinanceLog
-    extra = 0
-    readonly_fields = ('type', 'amount', 'old_balance', 'new_balance', 'reference_type', 'reference_id', 'created_at', 'created_by')
-    can_delete = False
-    ordering = ('-created_at',)
-    
-    def has_add_permission(self, request, obj=None):
-        return False
 
-
-@admin.register(FinanceSource)
+@admin.register()
 class FinanceSourceAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'currency', 'balance', 'is_active', 'created_at')
     list_filter = ('type', 'currency', 'is_active')
@@ -70,7 +54,7 @@ class FinanceSourceAdmin(admin.ModelAdmin):
     inlines = [FinanceLogInline]
 
 
-@admin.register(ExpenseCategory)
+@admin.register()
 class ExpenseCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_active', 'created_at')
     list_filter = ('is_active',)
@@ -78,7 +62,7 @@ class ExpenseCategoryAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
 
-@admin.register(Expense)
+@admin.register()
 class ExpenseAdmin(admin.ModelAdmin):
     list_display = ('source', 'category', 'amount', 'currency', 'expense_date', 'status', 'created_by', 'approved_by')
     list_filter = ('status', 'currency', 'expense_date', 'category')
@@ -89,7 +73,7 @@ class ExpenseAdmin(admin.ModelAdmin):
     date_hierarchy = 'expense_date'
 
 
-@admin.register(FinanceLog)
+@admin.register()
 class FinanceLogAdmin(admin.ModelAdmin):
     list_display = ('source', 'type', 'amount', 'old_balance', 'new_balance', 'reference_type', 'reference_id', 'created_at', 'created_by')
     list_filter = ('type', 'reference_type', 'created_at')

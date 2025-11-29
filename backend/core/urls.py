@@ -81,10 +81,6 @@ from payments.views import (
     CashboxViewSet,
     CurrencyRateHistoryView,
     CurrencyRateViewSet,
-    ExpenseCategoryViewSet,
-    ExpenseViewSet,
-    FinanceLogViewSet,
-    FinanceSourceViewSet,
     PaymentCardViewSet,
     PaymentExportExcelView,
     PaymentReportPDFView,
@@ -117,11 +113,6 @@ router.register('audit', AuditLogViewSet, basename='audit')
 router.register('company-info', CompanyInfoViewSet, basename='company-info')
 router.register('returns', ReturnViewSet, basename='return')
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
-# Finance Source & Expenses
-router.register('finance-sources', FinanceSourceViewSet, basename='finance-source')
-router.register('expense-categories', ExpenseCategoryViewSet, basename='expense-category')
-router.register('expenses', ExpenseViewSet, basename='expense')
-router.register('finance-logs', FinanceLogViewSet, basename='finance-log')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -166,12 +157,6 @@ urlpatterns = [
     # Explicit mapping for payments report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/payments/report/', PaymentViewSet.as_view({'get': 'report'}), name='payments-report'),
     path('api/payments/report', PaymentViewSet.as_view({'get': 'report'})),
-    # Explicit mapping for expenses export action (PDF/XLSX via ?format=)
-    path('api/expenses/export/', ExpenseViewSet.as_view({'get': 'export'}), name='expenses-export'),
-    path('api/expenses/export', ExpenseViewSet.as_view({'get': 'export'})),
-    # Explicit mapping for expenses report action (monthly report PDF/XLSX/JSON via ?format=)
-    path('api/expenses/report/', ExpenseViewSet.as_view({'get': 'report'}), name='expenses-report'),
-    path('api/expenses/report', ExpenseViewSet.as_view({'get': 'report'})),
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
