@@ -7,7 +7,6 @@ import { useAuthStore } from '../auth/useAuthStore';
 import http from '../app/http';
 import PaginationControls from '../components/PaginationControls';
 import { usePersistedPageSize } from '../hooks/usePageSize';
-import { useIsMobile } from '../hooks/useIsMobile';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { toArray } from '../utils/api';
@@ -18,6 +17,7 @@ interface Cashbox {
   name: string;
   cashbox_type: string;
   currency: string;
+  is_active: boolean;
 }
 
 const defaultForm = {
@@ -32,7 +32,6 @@ const defaultForm = {
 
 const ExpensesPage = () => {
   const role = useAuthStore((state) => state.role);
-  const { isMobile } = useIsMobile();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [cashboxes, setCashboxes] = useState<Cashbox[]>([]);
