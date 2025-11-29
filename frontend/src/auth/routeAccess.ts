@@ -48,6 +48,7 @@ export const ROUTE_ACCESS: Record<AppRole, string[]> = {
     '/catalog',
     '/dealers',
     '/payments',
+    '/expenses',
     '/currency',
     '/returns',
     '/reconciliation',

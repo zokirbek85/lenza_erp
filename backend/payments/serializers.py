@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
 from .models import (
-    Cashbox, CashboxOpeningBalance, CurrencyRate, Payment, PaymentCard
+    Cashbox,
+    CashboxOpeningBalance,
+    CurrencyRate,
+    Expense,
+    ExpenseCategory,
+    Payment,
+    PaymentCard,
 )
 from dealers.serializers import DealerSerializer
 
@@ -228,8 +234,187 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 # ============================================================================
-# FINANCE SOURCE SERIALIZERS
+# EXPENSE SERIALIZERS
 # ============================================================================
+
+
+class ExpenseCategorySerializer(serializers.ModelSerializer):
+    """Serializer for expense categories"""
+    
+    class Meta:
+        model = ExpenseCategory
+        fields = (
+            'id',
+            'name',
+            'code',
+            'description',
+            'is_active',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    """Serializer for expenses with full details"""
+    
+    # Nested read representations
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    cashbox_name = serializers.CharField(source='cashbox.name', read_only=True)
+    cashbox_type = serializers.CharField(source='cashbox.cashbox_type', read_only=True)
+    
+    # Audit fields
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    created_by_fullname = serializers.SerializerMethodField()
+    approved_by_username = serializers.CharField(source='approved_by.username', read_only=True)
+    approved_by_fullname = serializers.SerializerMethodField()
+    
+    # Write-only fields for creation
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=ExpenseCategory.objects.filter(is_active=True),
+        source='category',
+        write_only=True,
+        required=False
+    )
+    cashbox_id = serializers.PrimaryKeyRelatedField(
+        queryset=Cashbox.objects.filter(is_active=True),
+        source='cashbox',
+        write_only=True,
+        required=False
+    )
+    
+    class Meta:
+        model = Expense
+        fields = (
+            'id',
+            'expense_date',
+            'category',
+            'category_id',
+            'category_name',
+            'cashbox',
+            'cashbox_id',
+            'cashbox_name',
+            'cashbox_type',
+            'currency',
+            'amount_original',
+            'manual_rate',
+            'amount_uzs',
+            'amount_usd',
+            'description',
+            'status',
+            'created_by',
+            'created_by_username',
+            'created_by_fullname',
+            'created_at',
+            'approved_by',
+            'approved_by_username',
+            'approved_by_fullname',
+            'approved_at',
+            'updated_at',
+        )
+        read_only_fields = (
+            'amount_uzs',
+            'amount_usd',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'approved_by',
+            'approved_at',
+        )
+    
+    def get_created_by_fullname(self, obj: Expense) -> str:
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return ''
+    
+    def get_approved_by_fullname(self, obj: Expense) -> str:
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return ''
+    
+    def validate(self, attrs):
+        """Validate expense data"""
+        
+        # Get values (might be from source if using _id fields)
+        category = attrs.get('category')
+        cashbox = attrs.get('cashbox')
+        currency = attrs.get('currency')
+        status = attrs.get('status', self.instance.status if self.instance else Expense.Status.PENDING)
+        
+        # Validate category is active
+        if category and not category.is_active:
+            raise serializers.ValidationError({
+                'category': "Faol bo'lmagan xarajat turini tanlash mumkin emas"
+            })
+        
+        # Validate cashbox is active
+        if cashbox and not cashbox.is_active:
+            raise serializers.ValidationError({
+                'cashbox': "Faol bo'lmagan kassani tanlash mumkin emas"
+            })
+        
+        # Validate currency matches cashbox currency
+        if cashbox and currency and cashbox.currency != currency:
+            raise serializers.ValidationError({
+                'currency': f"Valyuta kassaning valyutasiga ({cashbox.currency}) mos kelishi kerak"
+            })
+        
+        # Prevent modification of critical fields after approval
+        if self.instance and self.instance.status == Expense.Status.APPROVED:
+            immutable_fields = [
+                'category', 'cashbox', 'currency', 'amount_original',
+                'manual_rate', 'expense_date'
+            ]
+            for field in immutable_fields:
+                if field in attrs and getattr(self.instance, field) != attrs[field]:
+                    raise serializers.ValidationError({
+                        field: "Tasdiqlangan xarajatning asosiy ma'lumotlarini o'zgartirish mumkin emas"
+                    })
+        
+        return attrs
+
+
+class ExpenseCreateSerializer(serializers.ModelSerializer):
+    """Simplified serializer for creating expenses"""
+    
+    class Meta:
+        model = Expense
+        fields = (
+            'expense_date',
+            'category',
+            'cashbox',
+            'currency',
+            'amount_original',
+            'manual_rate',
+            'description',
+        )
+    
+    def validate(self, attrs):
+        """Validate new expense data"""
+        category = attrs.get('category')
+        cashbox = attrs.get('cashbox')
+        currency = attrs.get('currency')
+        
+        # Validate category is active
+        if category and not category.is_active:
+            raise serializers.ValidationError({
+                'category': "Faol bo'lmagan xarajat turini tanlash mumkin emas"
+            })
+        
+        # Validate cashbox is active
+        if cashbox and not cashbox.is_active:
+            raise serializers.ValidationError({
+                'cashbox': "Faol bo'lmagan kassani tanlash mumkin emas"
+            })
+        
+        # Validate currency matches cashbox currency
+        if cashbox and currency and cashbox.currency != currency:
+            raise serializers.ValidationError({
+                'currency': f"Valyuta kassaning valyutasiga ({cashbox.currency}) mos kelishi kerak"
+            })
+        
+        return attrs
+
 
 
 

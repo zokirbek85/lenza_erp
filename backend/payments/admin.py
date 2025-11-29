@@ -1,8 +1,11 @@
 from django.contrib import admin
 
 from .models import (
+    Cashbox,
     CashboxOpeningBalance,
     CurrencyRate,
+    Expense,
+    ExpenseCategory,
     Payment,
     PaymentCard,
 )
@@ -31,6 +34,14 @@ class PaymentCardAdmin(admin.ModelAdmin):
     list_filter = ('is_active',)
 
 
+@admin.register(Cashbox)
+class CashboxAdmin(admin.ModelAdmin):
+    list_display = ('name', 'cashbox_type', 'currency', 'is_active', 'created_at')
+    list_filter = ('cashbox_type', 'currency', 'is_active')
+    search_fields = ('name', 'description')
+    ordering = ('cashbox_type', 'name')
+
+
 @admin.register(CashboxOpeningBalance)
 class CashboxOpeningBalanceAdmin(admin.ModelAdmin):
     list_display = ('cashbox_type', 'balance', 'currency', 'date', 'created_at')
@@ -38,3 +49,47 @@ class CashboxOpeningBalanceAdmin(admin.ModelAdmin):
     search_fields = ('cashbox_type',)
     ordering = ('-date', 'cashbox_type')
     date_hierarchy = 'date'
+
+
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'code', 'description')
+    ordering = ('name',)
+
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = (
+        'expense_date',
+        'category',
+        'cashbox',
+        'amount_original',
+        'currency',
+        'status',
+        'created_by',
+        'approved_by'
+    )
+    list_filter = ('status', 'currency', 'category', 'cashbox', 'expense_date')
+    search_fields = ('description', 'category__name', 'cashbox__name')
+    readonly_fields = ('amount_uzs', 'amount_usd', 'created_at', 'updated_at', 'approved_at')
+    autocomplete_fields = ('category', 'cashbox', 'created_by', 'approved_by')
+    ordering = ('-expense_date', '-created_at')
+    date_hierarchy = 'expense_date'
+    
+    fieldsets = (
+        ('Asosiy ma\'lumotlar', {
+            'fields': ('expense_date', 'category', 'cashbox', 'description')
+        }),
+        ('Pul summasi', {
+            'fields': ('currency', 'amount_original', 'manual_rate', 'amount_uzs', 'amount_usd')
+        }),
+        ('Holat', {
+            'fields': ('status',)
+        }),
+        ('Audit', {
+            'fields': ('created_by', 'created_at', 'approved_by', 'approved_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

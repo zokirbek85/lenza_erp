@@ -26,6 +26,7 @@ import NotificationCenterPage from '../pages/NotificationCenter';
 import UserManualPage from '../pages/UserManual';
 import Unauthorized from '../pages/Unauthorized';
 import DocumentGeneratorPage from '../pages/marketing/DocumentGenerator';
+import ExpensesPage from '../pages/Expenses';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -107,6 +108,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
             <PaymentsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'expenses',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant']}>
+            <ExpensesPage />
           </ProtectedRoute>
         ),
       },

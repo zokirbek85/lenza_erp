@@ -81,6 +81,8 @@ from payments.views import (
     CashboxViewSet,
     CurrencyRateHistoryView,
     CurrencyRateViewSet,
+    ExpenseCategoryViewSet,
+    ExpenseViewSet,
     PaymentCardViewSet,
     PaymentExportExcelView,
     PaymentReportPDFView,
@@ -107,6 +109,8 @@ router.register('cashbox', CashboxViewSet, basename='cashbox')
 router.register('cashboxes', CashboxViewSet, basename='cashboxes')
 router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
 router.register('cashbox-opening-balances', CashboxOpeningBalanceViewSet, basename='cashbox-opening-balance')
+router.register('expense-categories', ExpenseCategoryViewSet, basename='expense-category')
+router.register('expenses', ExpenseViewSet, basename='expense')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
@@ -160,6 +164,12 @@ urlpatterns = [
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
+    # Explicit mapping for expenses export action (PDF/XLSX via ?format=)
+    path('api/expenses/export/', ExpenseViewSet.as_view({'get': 'export'}), name='expenses-export'),
+    path('api/expenses/export', ExpenseViewSet.as_view({'get': 'export'})),
+    # Explicit mapping for expenses report action (monthly report PDF/XLSX/JSON via ?format=)
+    path('api/expenses/report/', ExpenseViewSet.as_view({'get': 'report'}), name='expenses-report'),
+    path('api/expenses/report', ExpenseViewSet.as_view({'get': 'report'})),
     path('api/dealers/balance/pdf/', DealerBalancePDFView.as_view(), name='dealer-balance-pdf'),
     path('api/dealers/export/excel/', DealerExportExcelView.as_view(), name='dealers-export-excel'),
     path('api/dealers/import/excel/', DealerImportExcelView.as_view(), name='dealers-import-excel'),

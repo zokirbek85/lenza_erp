@@ -16,14 +16,21 @@ from core.mixins.report_mixin import BaseReportMixin
 from core.mixins.export_mixins import ExportMixin
 
 from .models import (
+    Cashbox,
     CashboxOpeningBalance,
     CurrencyRate,
+    Expense,
+    ExpenseCategory,
     Payment,
     PaymentCard,
 )
 from .serializers import (
     CashboxOpeningBalanceSerializer,
+    CashboxSerializer,
     CurrencyRateSerializer,
+    ExpenseSerializer,
+    ExpenseCreateSerializer,
+    ExpenseCategorySerializer,
     PaymentSerializer,
     PaymentCardSerializer,
 )
@@ -240,13 +247,24 @@ class PaymentCardViewSet(viewsets.ModelViewSet):
             total=Sum('amount_uzs')
         )['total'] or Decimal('0.00')
         
-        # Note: Expenses module removed - balance is now only based on payments
+        # Get expenses from linked cashbox if exists
         expense_usd = Decimal('0.00')
         expense_uzs = Decimal('0.00')
+        if hasattr(card, 'cashbox_link') and card.cashbox_link:
+            expenses = Expense.objects.filter(
+                cashbox=card.cashbox_link,
+                status=Expense.Status.APPROVED
+            )
+            expense_usd = expenses.aggregate(
+                total=Sum('amount_usd')
+            )['total'] or Decimal('0.00')
+            expense_uzs = expenses.aggregate(
+                total=Sum('amount_uzs')
+            )['total'] or Decimal('0.00')
         
         # Balans hisoblash
-        balance_usd = payment_usd
-        balance_uzs = payment_uzs
+        balance_usd = payment_usd - expense_usd
+        balance_uzs = payment_uzs - expense_uzs
         
         return Response({
             'card_id': card.id,
@@ -394,4 +412,207 @@ class CashboxViewSet(viewsets.ModelViewSet):
 
 
 # ============================================================================
-# (Finance Source and Expenses ViewSets removed)
+# EXPENSE VIEWSETS
+# ============================================================================
+
+
+class ExpenseCategoryViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing expense categories (Admin/Accountant only)"""
+    queryset = ExpenseCategory.objects.all()
+    serializer_class = ExpenseCategorySerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = ('is_active',)
+    search_fields = ('name', 'code', 'description')
+    ordering = ('name',)
+    pagination_class = None  # No pagination for categories
+    
+    def _ensure_can_modify(self):
+        """Only Admin/Accountant can create/update/delete"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only admin or accountant can modify expense categories.')
+    
+    def perform_create(self, serializer):
+        self._ensure_can_modify()
+        serializer.save()
+    
+    def perform_update(self, serializer):
+        self._ensure_can_modify()
+        serializer.save()
+    
+    def perform_destroy(self, instance):
+        self._ensure_can_modify()
+        # Check if category is used in any expenses
+        if instance.expenses.exists():
+            raise PermissionDenied(
+                f"Cannot delete category '{instance.name}' - it is used in {instance.expenses.count()} expense(s)."
+            )
+        instance.delete()
+
+
+class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
+    """ViewSet for managing expenses (Admin/Accountant only)"""
+    queryset = Expense.objects.select_related(
+        'category',
+        'cashbox',
+        'created_by',
+        'approved_by'
+    ).all()
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = {
+        'category': ['exact'],
+        'cashbox': ['exact'],
+        'currency': ['exact'],
+        'status': ['exact'],
+        'expense_date': ['gte', 'lte', 'exact'],
+        'created_by': ['exact'],
+    }
+    search_fields = ('description', 'category__name', 'cashbox__name')
+    ordering_fields = ('expense_date', 'amount_original', 'created_at')
+    ordering = ('-expense_date', '-created_at')
+    
+    # BaseReportMixin configuration
+    date_field = "expense_date"
+    filename_prefix = "expenses"
+    title_prefix = "Xarajatlar hisoboti"
+    report_template = "expenses/report.html"
+    
+    def _ensure_can_create(self):
+        """Check if user can create expenses: accountant, admin"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin can create expenses.')
+    
+    def _ensure_can_approve(self):
+        """Check if user can approve expenses: accountant, admin only"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin can approve expenses.')
+    
+    def _ensure_can_modify(self, expense):
+        """Check if user can edit/delete: admin/accountant only"""
+        user = self.request.user
+        if user.is_superuser:
+            return
+        if getattr(user, 'role', None) not in {'admin', 'accountant'}:
+            raise PermissionDenied('Only accountant or admin can modify expenses.')
+    
+    def get_serializer_class(self):
+        """Use simplified serializer for creation"""
+        if self.action == 'create':
+            return ExpenseCreateSerializer
+        return ExpenseSerializer
+    
+    def perform_create(self, serializer):
+        self._ensure_can_create()
+        # Set created_by and default status to PENDING
+        serializer.save(
+            created_by=self.request.user,
+            status=Expense.Status.PENDING
+        )
+    
+    def perform_update(self, serializer):
+        self._ensure_can_modify(serializer.instance)
+        expense = serializer.instance
+        
+        # Check if status is changing from PENDING to APPROVED
+        if (
+            'status' in serializer.validated_data and
+            expense.status == Expense.Status.PENDING and
+            serializer.validated_data['status'] == Expense.Status.APPROVED
+        ):
+            self._ensure_can_approve()
+            # Set approval fields
+            serializer.save(
+                approved_by=self.request.user,
+                approved_at=timezone.now()
+            )
+        else:
+            serializer.save()
+    
+    def perform_destroy(self, instance):
+        self._ensure_can_modify(instance)
+        # For APPROVED expenses, we just delete them
+        # The balance calculation will automatically exclude deleted expenses
+        instance.delete()
+    
+    @action(detail=True, methods=['post'], url_path='approve')
+    def approve(self, request, pk=None):
+        """Approve an expense (accountant/admin only)"""
+        self._ensure_can_approve()
+        expense = self.get_object()
+        
+        if expense.status == Expense.Status.APPROVED:
+            return Response({'detail': 'Expense is already approved.'}, status=400)
+        
+        expense.status = Expense.Status.APPROVED
+        expense.approved_by = request.user
+        expense.approved_at = timezone.now()
+        expense.save()
+        
+        serializer = self.get_serializer(expense)
+        return Response(serializer.data)
+    
+    def get_report_rows(self, queryset):
+        """Generate rows for expense report."""
+        rows = []
+        for e in queryset.order_by('expense_date', 'id'):
+            rows.append({
+                'Sana': e.expense_date.strftime('%d.%m.%Y') if e.expense_date else '',
+                'Tur': e.category.name if e.category else '',
+                'Kassa': e.cashbox.name if e.cashbox else '',
+                'Miqdor': f"{float(e.amount_original):,.2f}",
+                'Valyuta': e.currency,
+                'USD': f"{float(e.amount_usd):,.2f}",
+                'UZS': f"{float(e.amount_uzs):,.2f}",
+                'Holat': e.get_status_display(),
+                'Izoh': e.description or '',
+            })
+        return rows
+    
+    def get_report_total(self, queryset):
+        """Calculate total amounts in USD and UZS."""
+        from decimal import Decimal
+        total_usd = queryset.aggregate(models.Sum('amount_usd'))['amount_usd__sum'] or Decimal('0')
+        total_uzs = queryset.aggregate(models.Sum('amount_uzs'))['amount_uzs__sum'] or Decimal('0')
+        return {
+            'usd': float(total_usd),
+            'uzs': float(total_uzs)
+        }
+    
+    @action(detail=False, methods=['get'])
+    def export(self, request):
+        """Unified export for expenses: ?format=pdf|xlsx"""
+        fmt = request.query_params.get('format', 'xlsx')
+        qs = self.filter_queryset(self.get_queryset())
+        rows = [{
+            'Sana': (e.expense_date.isoformat() if e.expense_date else ''),
+            'Tur': (e.category.name if e.category else ''),
+            'Kassa': (e.cashbox.name if e.cashbox else ''),
+            'Miqdor': float(e.amount_original),
+            'Valyuta': e.currency,
+            'USD': float(e.amount_usd),
+            'UZS': float(e.amount_uzs),
+            'Holat': e.get_status_display(),
+            'Izoh': (e.description or ''),
+        } for e in qs.order_by('expense_date', 'id')]
+        
+        if fmt == 'pdf':
+            return self.render_pdf_with_qr(
+                'expenses/export.html',
+                {'rows': rows, 'title': 'Xarajatlar hisobot'},
+                'xarajatlar',
+                request=request,
+                doc_type='expense-export',
+                doc_id=None,
+            )
+        return self.render_xlsx(rows, 'xarajatlar')

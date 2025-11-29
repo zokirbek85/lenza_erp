@@ -75,8 +75,7 @@ class Cashbox(models.Model):
     def calculate_balance(self, up_to_date=None, return_detailed=False):
         """
         Calculate current balance:
-        balance = opening_balance + incomes
-        (Note: Expenses module removed)
+        balance = opening_balance + incomes - expenses
         
         Args:
             up_to_date: Calculate balance up to this date (inclusive)
@@ -93,7 +92,7 @@ class Cashbox(models.Model):
             opening_amount = opening.amount
             opening_date = opening.date
         
-        # Filter payments (incomes)
+        # Filter payments (incomes) - only approved/confirmed
         income_filter = {
             'cashbox': self,
             'status__in': [Payment.Status.APPROVED, Payment.Status.CONFIRMED]
@@ -113,10 +112,32 @@ class Cashbox(models.Model):
                 total=models.Sum('amount_uzs')
             )['total'] or Decimal('0.00')
         
-        # No expenses - expenses module removed
-        expense_sum = Decimal('0.00')
+        # Filter expenses - only approved
+        expense_filter = {
+            'cashbox': self,
+            'status': 'approved'  # Using string literal to avoid circular import
+        }
+        if opening_date:
+            expense_filter['expense_date__gte'] = opening_date
+        if up_to_date:
+            expense_filter['expense_date__lte'] = up_to_date
         
-        balance = opening_amount + income_sum
+        # Calculate expense sum (need to import Expense model)
+        try:
+            # Use correct currency amount field for expenses
+            if self.currency == self.CURRENCY_USD:
+                expense_sum = self.expenses.filter(**expense_filter).aggregate(
+                    total=models.Sum('amount_usd')
+                )['total'] or Decimal('0.00')
+            else:
+                expense_sum = self.expenses.filter(**expense_filter).aggregate(
+                    total=models.Sum('amount_uzs')
+                )['total'] or Decimal('0.00')
+        except Exception:
+            # If Expense model doesn't exist yet or any error, set to zero
+            expense_sum = Decimal('0.00')
+        
+        balance = opening_amount + income_sum - expense_sum
         
         if return_detailed:
             return {
@@ -148,7 +169,7 @@ class PaymentCard(models.Model):
         return self.number or ''
 
     def get_balance_usd(self) -> Decimal:
-        """Kartadagi balans - faqat approved/confirmed to'lovlar (expenses module removed)"""
+        """Kartadagi balans USD - approved/confirmed to'lovlar minus expenses"""
         from decimal import Decimal
         
         income = self.payments.filter(
@@ -156,11 +177,23 @@ class PaymentCard(models.Model):
         ).aggregate(
             total=models.Sum('amount_usd')
         )['total'] or Decimal('0.00')
-        # Expenses module removed
-        return income
+        
+        # Get expenses from linked cashbox if exists
+        expense = Decimal('0.00')
+        try:
+            if hasattr(self, 'cashbox_link') and self.cashbox_link:
+                expense = self.cashbox_link.expenses.filter(
+                    status='approved'
+                ).aggregate(
+                    total=models.Sum('amount_usd')
+                )['total'] or Decimal('0.00')
+        except Exception:
+            pass
+        
+        return income - expense
 
     def get_balance_uzs(self) -> Decimal:
-        """Kartadagi balans UZS (expenses module removed)"""
+        """Kartadagi balans UZS - approved/confirmed to'lovlar minus expenses"""
         from decimal import Decimal
         
         income = self.payments.filter(
@@ -168,8 +201,20 @@ class PaymentCard(models.Model):
         ).aggregate(
             total=models.Sum('amount_uzs')
         )['total'] or Decimal('0.00')
-        # Expenses module removed
-        return income
+        
+        # Get expenses from linked cashbox if exists
+        expense = Decimal('0.00')
+        try:
+            if hasattr(self, 'cashbox_link') and self.cashbox_link:
+                expense = self.cashbox_link.expenses.filter(
+                    status='approved'
+                ).aggregate(
+                    total=models.Sum('amount_uzs')
+                )['total'] or Decimal('0.00')
+        except Exception:
+            pass
+        
+        return income - expense
 
 
 
@@ -371,5 +416,177 @@ class Payment(models.Model):
             self.amount_usd = (self.amount / rate_value).quantize(Decimal('0.01'))
         
         super().save(*args, **kwargs)
+
+
+class ExpenseCategory(models.Model):
+    """Expense categories (e.g. Salary, Rent, Transport, Services)"""
+    name = models.CharField(max_length=100, unique=True, verbose_name="Nomi")
+    code = models.CharField(max_length=20, blank=True, verbose_name="Kod")
+    description = models.TextField(blank=True, verbose_name="Izoh")
+    is_active = models.BooleanField(default=True, verbose_name="Faolmi")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Xarajat turi"
+        verbose_name_plural = "Xarajat turlari"
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Expense(models.Model):
+    """Company expenses tracked across cashboxes (cash, cards, bank)"""
+    
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Kutilmoqda'
+        APPROVED = 'approved', 'Tasdiqlangan'
+    
+    # Business fields
+    expense_date = models.DateField(verbose_name="Sana", default=timezone.now)
+    category = models.ForeignKey(
+        ExpenseCategory,
+        on_delete=models.PROTECT,
+        related_name='expenses',
+        verbose_name="Xarajat turi"
+    )
+    cashbox = models.ForeignKey(
+        Cashbox,
+        on_delete=models.PROTECT,
+        related_name='expenses',
+        verbose_name="Kassa"
+    )
+    
+    # Amount and currency
+    currency = models.CharField(
+        max_length=3,
+        choices=Cashbox.CURRENCY_CHOICES,
+        verbose_name="Valyuta"
+    )
+    amount_original = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        verbose_name="Summa (asl)"
+    )
+    manual_rate = models.DecimalField(
+        max_digits=14,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name="Qo'lda kurs",
+        help_text="USD<->UZS konvertatsiya uchun qo'lda kiritilgan kurs"
+    )
+    
+    # Converted amounts for analytics (frozen at creation)
+    amount_uzs = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        editable=False,
+        verbose_name="Summa UZS"
+    )
+    amount_usd = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        editable=False,
+        verbose_name="Summa USD"
+    )
+    
+    # Description
+    description = models.TextField(blank=True, verbose_name="Izoh")
+    
+    # Status and workflow
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="Holat"
+    )
+    
+    # Audit fields
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_expenses',
+        verbose_name="Yaratuvchi"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan")
+    
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_expenses',
+        verbose_name="Tasdiqlagan"
+    )
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Tasdiqlangan vaqt"
+    )
+    
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan")
+
+    class Meta:
+        ordering = ['-expense_date', '-created_at']
+        verbose_name = "Xarajat"
+        verbose_name_plural = "Xarajatlar"
+        indexes = [
+            models.Index(fields=['-expense_date']),
+            models.Index(fields=['status']),
+            models.Index(fields=['category']),
+            models.Index(fields=['cashbox']),
+            models.Index(fields=['currency']),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.category.name} - {self.amount_original} {self.currency} ({self.expense_date})"
+
+    def clean(self):
+        """Validate currency matches cashbox currency"""
+        from django.core.exceptions import ValidationError
+        
+        if self.cashbox and self.currency and self.cashbox.currency != self.currency:
+            raise ValidationError({
+                'currency': f"Valyuta kassaning valyutasiga ({self.cashbox.currency}) mos kelishi kerak"
+            })
+
+    def save(self, *args, **kwargs):
+        """Calculate converted amounts based on currency and rate"""
+        
+        # Calculate amount_uzs and amount_usd
+        if self.currency == Cashbox.CURRENCY_USD:
+            self.amount_usd = self.amount_original
+            # USD to UZS conversion
+            if self.manual_rate:
+                rate_value = self.manual_rate
+            else:
+                # Try to get current rate from CurrencyRate
+                try:
+                    from payments.utils import rate_on
+                    rate_obj = rate_on(self.expense_date)
+                    rate_value = rate_obj.usd_to_uzs if rate_obj else Decimal('12500')
+                except Exception:
+                    rate_value = Decimal('12500')
+            self.amount_uzs = (self.amount_original * rate_value).quantize(Decimal('0.01'))
+        else:  # UZS
+            self.amount_uzs = self.amount_original
+            # UZS to USD conversion
+            if self.manual_rate:
+                rate_value = self.manual_rate
+            else:
+                try:
+                    from payments.utils import rate_on
+                    rate_obj = rate_on(self.expense_date)
+                    rate_value = rate_obj.usd_to_uzs if rate_obj else Decimal('12500')
+                except Exception:
+                    rate_value = Decimal('12500')
+            self.amount_usd = (self.amount_original / rate_value).quantize(Decimal('0.01'))
+        
+        super().save(*args, **kwargs)
+
 
 
