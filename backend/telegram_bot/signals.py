@@ -22,6 +22,8 @@ STATUS_IMAGES = {
     "PACKED": "https://ibb.co/0VXbV7jg",
     "SHIPPED": "https://ibb.co/3yQMJvMG",
     "DELIVERED": "https://ibb.co/MxwB7Rts",
+    "CANCELLED": "https://ibb.co/HT75zqLz",
+    "RETURNED": "https://ibb.co/JYht9Fw",
 }
 
 
