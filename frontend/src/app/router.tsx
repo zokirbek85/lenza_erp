@@ -27,6 +27,8 @@ import UserManualPage from '../pages/UserManual';
 import Unauthorized from '../pages/Unauthorized';
 import DocumentGeneratorPage from '../pages/marketing/DocumentGenerator';
 import ExpensesPage from '../pages/Expenses';
+import VerifyOrderPage from '../pages/verify/VerifyOrderPage';
+import VerifyReconciliationPage from '../pages/verify/VerifyReconciliationPage';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -220,6 +222,14 @@ const router = createBrowserRouter([
   {
     path: '/unauthorized',
     element: <Unauthorized />,
+  },
+  {
+    path: '/verify/order/:id',
+    element: <VerifyOrderPage />,
+  },
+  {
+    path: '/verify/reconciliation/:id',
+    element: <VerifyReconciliationPage />,
   },
   {
     path: '*',

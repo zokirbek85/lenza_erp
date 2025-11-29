@@ -93,6 +93,7 @@ from users.views import TelegramLinkView, UserViewSet
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
 from reports.views_cards_pdf import cards_pdf_report
 from core.views_verify import verify_document
+from core.views_verify_api import verify_order, verify_reconciliation
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
@@ -201,7 +202,10 @@ urlpatterns = [
     path('api/2fa/verify/', TwoFactorVerifyView.as_view(), name='two-factor-verify'),
     path('api/search/', SearchView.as_view(), name='global-search'),
     path('api/', include(router.urls)),
-    # QR verification endpoint
+    # QR verification endpoints (public, no auth required)
+    path('api/verify/order/<int:id>/', verify_order, name='verify-order-api'),
+    path('api/verify/reconciliation/<int:id>/', verify_reconciliation, name='verify-reconciliation-api'),
+    # Legacy HTML verification endpoint
     path('verify/<str:doc_type>/<slug:doc_id>/', verify_document, name='verify-document'),
 ]
 

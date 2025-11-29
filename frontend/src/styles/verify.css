@@ -1,0 +1,104 @@
+.verify-wrapper {
+  min-height: 100vh;
+  background: #0d0f15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.verify-card {
+  width: 480px;
+  max-width: 95%;
+  background: #1a1d27 !important;
+  border: 1px solid #2a2e3a;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+}
+
+.verify-card .ant-card-body {
+  background: #1a1d27 !important;
+}
+
+.verify-title {
+  color: #e6c068;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.verify-content {
+  color: #e0e0e0;
+}
+
+.verify-label {
+  color: #9ca3af;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.verify-value {
+  color: #f3f4f6;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.verify-footer {
+  text-align: center;
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #2a2e3a;
+}
+
+.verify-success-icon {
+  color: #10b981;
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.verify-error-icon {
+  color: #ef4444;
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+/* Override Ant Design Result styles for dark theme */
+.verify-card .ant-result-title {
+  color: #f3f4f6 !important;
+}
+
+.verify-card .ant-result-subtitle {
+  color: #9ca3af !important;
+}
+
+.verify-card .ant-result-success .ant-result-icon > .anticon {
+  color: #10b981 !important;
+}
+
+.verify-card .ant-result-error .ant-result-icon > .anticon {
+  color: #ef4444 !important;
+}
+
+/* Divider styling */
+.verify-card .ant-divider {
+  border-color: #2a2e3a !important;
+}
+
+/* Typography */
+.verify-card .ant-typography {
+  color: #e0e0e0 !important;
+}
+
+/* Loading spinner */
+.verify-card .ant-spin {
+  color: #e6c068 !important;
+}
+
+.verify-card .ant-spin-dot-item {
+  background-color: #e6c068 !important;
+}
