@@ -75,7 +75,7 @@ const ProductsPage = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [styles, setStyles] = useState<StyleOption[]>([]);
-  const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string; searchQuery?: string }>({});
+  const [filters, setFilters] = useState<{ brandId?: string; categoryId?: string; styleId?: string; searchQuery?: string }>({});
   const [formState, setFormState] = useState<typeof emptyForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -138,6 +138,7 @@ const ProductsPage = () => {
       };
       if (filters.brandId) params.brand = filters.brandId;
       if (filters.categoryId) params.category = filters.categoryId;
+      if (filters.styleId) params.style = filters.styleId;
       if (filters.searchQuery) params.search = filters.searchQuery;
 
       const { items, total } = await fetchProductsApi(params);
@@ -149,7 +150,7 @@ const ProductsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, filters.brandId, filters.categoryId, filters.searchQuery, t]);
+  }, [page, pageSize, filters.brandId, filters.categoryId, filters.styleId, filters.searchQuery, t]);
 
   useEffect(() => {
     loadLookups();
@@ -358,7 +359,7 @@ const ProductsPage = () => {
     }
   };
 
-  const handleFilterChange = (field: 'brandId' | 'categoryId' | 'searchQuery', value: string) => {
+  const handleFilterChange = (field: 'brandId' | 'categoryId' | 'styleId' | 'searchQuery', value: string) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value || undefined,
@@ -437,6 +438,21 @@ const ProductsPage = () => {
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filter.style')}</label>
+        <select
+          value={filters.styleId ?? ''}
+          onChange={(event) => handleFilterChange('styleId', event.target.value)}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+        >
+          <option value="">{t('common.all')}</option>
+          {styles.map((style) => (
+            <option key={style.id} value={style.id}>
+              {style.name}
             </option>
           ))}
         </select>
@@ -758,6 +774,21 @@ const ProductsPage = () => {
             ))}
           </select>
         </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filter.style')}</label>
+          <select
+            value={filters.styleId ?? ''}
+            onChange={(event) => handleFilterChange('styleId', event.target.value)}
+            className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">{t('common.all')}</option>
+            {styles.map((style) => (
+              <option key={style.id} value={style.id}>
+                {style.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <button
           type="button"
           onClick={clearFilters}
@@ -983,9 +1014,6 @@ const ProductsPage = () => {
         </>
       )}
 
-      <div className="mt-4">
-        {filtersContent}
-      </div>
       <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead className="bg-slate-50 dark:bg-slate-800">

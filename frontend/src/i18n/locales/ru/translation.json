@@ -313,6 +313,10 @@
       "category": "По категории",
       "lowStock": "Низкий запас"
     },
+    "filter": {
+      "style": "По стилю",
+      "style_placeholder": "Выберите стиль"
+    },
     "messages": {
       "created": "Товар создан",
       "updated": "Товар обновлён",

@@ -82,11 +82,14 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         brand_id = self.request.query_params.get('brand_id') or self.request.query_params.get('brand')
         category_id = self.request.query_params.get('category_id') or self.request.query_params.get('category')
+        style_id = self.request.query_params.get('style_id') or self.request.query_params.get('style')
         # Products are global - no dealer filtering
         if brand_id:
             queryset = queryset.filter(brand_id=brand_id)
         if category_id:
             queryset = queryset.filter(category_id=category_id)
+        if style_id:
+            queryset = queryset.filter(style_id=style_id)
         return queryset
 
     def list(self, request, *args, **kwargs):

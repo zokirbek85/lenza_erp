@@ -710,6 +710,10 @@
       "category": "Kategoriya bo'yicha",
       "lowStock": "Kam zaxira"
     },
+    "filter": {
+      "style": "Stil bo'yicha",
+      "style_placeholder": "Stilni tanlang"
+    },
     "messages": {
       "created": "Mahsulot yaratildi",
       "updated": "Mahsulot yangilandi",
