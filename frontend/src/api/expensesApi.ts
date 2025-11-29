@@ -155,3 +155,36 @@ export const generateExpenseReport = async (
   });
   return response.data;
 };
+
+// Summary functions
+
+export interface ExpenseSummary {
+  total_usd: number;
+  total_uzs: number;
+  count: number;
+  by_category: Array<{
+    category: string;
+    amount_usd: number;
+    amount_uzs: number;
+    count: number;
+  }>;
+  monthly: Array<{
+    month: string;
+    amount_usd: number;
+    amount_uzs: number;
+    count: number;
+  }>;
+}
+
+export const fetchExpenseSummary = async (
+  startDate?: string,
+  endDate?: string
+): Promise<ExpenseSummary> => {
+  const response = await axios.get(`${API_URL}/api/expenses/summary/`, {
+    params: {
+      start_date: startDate,
+      end_date: endDate,
+    },
+  });
+  return response.data;
+};

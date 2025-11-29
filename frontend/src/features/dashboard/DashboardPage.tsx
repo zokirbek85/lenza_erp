@@ -18,6 +18,7 @@ import {
   ProductTrendLineChart,
   RegionProductHeatmap,
 } from '../../components/analytics';
+import ExpenseMetrics from '../../components/analytics/ExpenseMetrics';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import type { DashboardFilters } from '../../store/useDashboardStore';
 import { useAuthStore } from '../../auth/useAuthStore';
@@ -39,6 +40,7 @@ import {
   type TopDealerItem,
 } from '../../services/dashboardService';
 import { fetchDebtAnalytics } from '@/services/dashboard';
+import { fetchExpenseSummary, type ExpenseSummary } from '../../api/expensesApi';
 
 interface DashboardData {
   summary: DashboardSummary;
@@ -49,6 +51,7 @@ interface DashboardData {
   productTrend: ProductTrendPeriod[];
   topCategories: CategoryItem[];
   topDealers: TopDealerItem[];
+  expenses: ExpenseSummary | null;
 }
 
 const DashboardPage = () => {
@@ -81,10 +84,12 @@ const DashboardPage = () => {
     productTrend: [],
     topCategories: [],
     topDealers: [],
+    expenses: null,
   });
   const [loading, setLoading] = useState(false);
 
   const canViewDebtAnalytics = useMemo(() => role !== 'warehouse', [role]);
+  const canViewExpenses = useMemo(() => ['admin', 'accountant', 'owner'].includes(role || ''), [role]);
 
   // Fetch all dashboard data
   const fetchAll = useCallback(async (overrideFilters?: DashboardFilters) => {
@@ -99,7 +104,7 @@ const DashboardPage = () => {
         dealer_id: effectiveFilters.dealers.length === 1 ? effectiveFilters.dealers[0] : undefined,
       };
 
-      const [summary, analytics, inventory, topProducts, regionProducts, productTrend, topCategories, topDealers] = await Promise.all([
+      const [summary, analytics, inventory, topProducts, regionProducts, productTrend, topCategories, topDealers, expenses] = await Promise.all([
         fetchDashboardSummary(effectiveFilters).catch(() => ({
           total_sales: 0,
           total_payments: 0,
@@ -126,6 +131,9 @@ const DashboardPage = () => {
         fetchProductTrend(analyticsFilters).catch(() => ({ data: [] })),
         fetchTopCategories(analyticsFilters).catch(() => ({ data: [] })),
         fetchTopDealers(analyticsFilters).catch(() => ({ data: [] })),
+        canViewExpenses
+          ? fetchExpenseSummary(analyticsFilters.start_date, analyticsFilters.end_date).catch(() => null)
+          : Promise.resolve(null),
       ]);
 
       const newData = {
@@ -137,6 +145,7 @@ const DashboardPage = () => {
         productTrend: Array.isArray(productTrend?.data) ? productTrend.data : [],
         topCategories: Array.isArray(topCategories?.data) ? topCategories.data : [],
         topDealers: Array.isArray(topDealers?.data) ? topDealers.data : [],
+        expenses: expenses ?? null,
       };
 
       setData(newData);
@@ -149,7 +158,7 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, canViewDebtAnalytics]);
+  }, [filters, canViewDebtAnalytics, canViewExpenses]);
 
   // Initial data load
   useEffect(() => {
@@ -267,7 +276,12 @@ const DashboardPage = () => {
         </>
       )}
 
-      {/* Sales Analytics Section */
+      {/* Expense Analytics */}
+      {canViewExpenses && (
+        <ExpenseMetrics data={data.expenses} loading={loading} />
+      )}
+
+      {/* Sales Analytics Section */}
       <div className="mt-8">
         <div className="mb-6">
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
@@ -305,7 +319,6 @@ const DashboardPage = () => {
           </Col>
         </Row>
       </div>
-      }
 
       {/* Overdue Receivables Table */}
       <Row gutter={[16, 16]}>

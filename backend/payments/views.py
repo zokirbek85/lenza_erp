@@ -562,6 +562,82 @@ class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
         serializer = self.get_serializer(expense)
         return Response(serializer.data)
     
+    @action(detail=False, methods=['get'], url_path='summary')
+    def summary(self, request):
+        """Get expense summary metrics (for dashboard)"""
+        from decimal import Decimal
+        from datetime import datetime, timedelta
+        
+        # Get approved expenses only for accurate metrics
+        qs = self.get_queryset().filter(status=Expense.Status.APPROVED)
+        
+        # Apply date filters if provided
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if start_date:
+            qs = qs.filter(expense_date__gte=start_date)
+        if end_date:
+            qs = qs.filter(expense_date__lte=end_date)
+        
+        # Calculate totals
+        totals = qs.aggregate(
+            total_usd=models.Sum('amount_usd'),
+            total_uzs=models.Sum('amount_uzs'),
+            count=models.Count('id')
+        )
+        
+        # Get breakdown by category
+        by_category = list(
+            qs.values('category__name')
+            .annotate(
+                amount_usd=models.Sum('amount_usd'),
+                amount_uzs=models.Sum('amount_uzs'),
+                count=models.Count('id')
+            )
+            .order_by('-amount_usd')[:5]
+        )
+        
+        # Get monthly trend (last 6 months)
+        six_months_ago = datetime.now().date() - timedelta(days=180)
+        monthly_qs = qs.filter(expense_date__gte=six_months_ago)
+        monthly = list(
+            monthly_qs.annotate(
+                month=models.functions.TruncMonth('expense_date')
+            )
+            .values('month')
+            .annotate(
+                amount_usd=models.Sum('amount_usd'),
+                amount_uzs=models.Sum('amount_uzs'),
+                count=models.Count('id')
+            )
+            .order_by('month')
+        )
+        
+        return Response({
+            'total_usd': float(totals['total_usd'] or Decimal('0')),
+            'total_uzs': float(totals['total_uzs'] or Decimal('0')),
+            'count': totals['count'] or 0,
+            'by_category': [
+                {
+                    'category': item['category__name'] or 'Boshqa',
+                    'amount_usd': float(item['amount_usd'] or Decimal('0')),
+                    'amount_uzs': float(item['amount_uzs'] or Decimal('0')),
+                    'count': item['count']
+                }
+                for item in by_category
+            ],
+            'monthly': [
+                {
+                    'month': item['month'].strftime('%Y-%m') if item['month'] else '',
+                    'amount_usd': float(item['amount_usd'] or Decimal('0')),
+                    'amount_uzs': float(item['amount_uzs'] or Decimal('0')),
+                    'count': item['count']
+                }
+                for item in monthly
+            ]
+        })
+    
     def get_report_rows(self, queryset):
         """Generate rows for expense report."""
         rows = []

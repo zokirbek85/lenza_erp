@@ -536,7 +536,17 @@
       "deleteError": "O'chirishda xatolik"
     },
     "confirmApprove": "Xarajatni tasdiqlashni xohlaysizmi?",
-    "confirmDelete": "Xarajatni o'chirishni xohlaysizmi? Tasdiqlangan xarajat o'chirilganda kassa balansi avtomatik tuzatiladi."
+    "confirmDelete": "Xarajatni o'chirishni xohlaysizmi? Tasdiqlangan xarajat o'chirilganda kassa balansi avtomatik tuzatiladi.",
+    "dashboardTitle": "Xarajatlar analitikasi",
+    "dashboardSubtitle": "Tasdiqlangan kompaniya xarajatlari",
+    "totalUSD": "Jami xarajat (USD)",
+    "totalUZS": "Jami xarajat (UZS)",
+    "sum": "so'm",
+    "transactions": "ta operatsiya",
+    "approvedExpenses": "Tasdiqlangan xarajatlar",
+    "topCategory": "Eng ko'p xarajat kategoriyasi",
+    "categoryBreakdown": "Kategoriyalar bo'yicha taqsimot",
+    "monthlyTrend": "Oylik tendensiya"
   },
   "products": {
     "title": "Mahsulotlar",
