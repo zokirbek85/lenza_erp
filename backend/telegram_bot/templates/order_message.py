@@ -31,7 +31,7 @@ def _format_quantity(value) -> str:
         return "0.00"
 
 
-def _format_items(order, limit: int = 5) -> tuple[str, int]:
+def _format_items(order, limit: int = 20) -> tuple[str, int]:
     queryset = order.items.select_related('product')
     items = list(queryset)
     total = len(items)
