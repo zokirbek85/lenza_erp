@@ -12,6 +12,18 @@ from .templates import currency_message, order_message, payment_message, return_
 
 ASSETS_DIR = Path(settings.BASE_DIR) / 'telegram_bot' / 'assets'
 
+# Default image for order notifications
+DEFAULT_IMAGE = 'https://lh3.googleusercontent.com/gg-dl/ABS2GSl9wagVxdrxD1pzIp9b8KwsDeXI4s0Grw6TASFRp_6O-MPEoH1uWInVMiIhVimMUWF1YqCMMleNpuz5n1bCt8NhVBmEJnZjJf7_kLC3yS9aggAwFtFXQeSUZe3G3YhOLN0CD9u5KxZVGvKXrpogYNv2L4c671Urb6XorSb321GtphKa=s1024-rj'
+
+# Status-specific images
+STATUS_IMAGES = {
+    "CREATED": "https://ibb.co/FbmYnNYz",
+    "CONFIRMED": "https://ibb.co/h1YzzmS4",
+    "PACKED": "https://ibb.co/0VXbV7jg",
+    "SHIPPED": "https://ibb.co/3yQMJvMG",
+    "DELIVERED": "https://ibb.co/MxwB7Rts",
+}
+
 
 def _asset_path(filename: str) -> str:
     path = ASSETS_DIR / filename
@@ -48,7 +60,9 @@ def notify_order(sender, instance: Order, created: bool, **kwargs):
         print(f'  - New status: {instance.status}')
     
     text = order_message.format_order(instance, created, getattr(instance, '_previous_status', None))
-    send_telegram_message(text, image_path=_asset_path('order.png'))
+    # Use status-specific image or fallback to default
+    image_url = STATUS_IMAGES.get(instance.status.upper(), DEFAULT_IMAGE)
+    send_telegram_message(text, image_path=image_url)
 
 
 @receiver(post_save, sender=Payment)

@@ -21,13 +21,27 @@ def send_telegram_message(text: str, image_path: str | None = None, parse_mode: 
     print(f'[Telegram] Message text: {text[:100]}...')
     
     try:
-        if image_path and os.path.exists(image_path):
-            print(f'[Telegram] Sending with image: {image_path}')
-            url = f'https://api.telegram.org/bot{token}/sendPhoto'
-            with open(image_path, 'rb') as photo:
-                files = {'photo': photo}
-                data = {'chat_id': chat_id, 'caption': text, 'parse_mode': parse_mode}
-                response = requests.post(url, data=data, files=files, timeout=10)
+        if image_path:
+            # Check if it's a URL or a file path
+            is_url = image_path.startswith('http://') or image_path.startswith('https://')
+            
+            if is_url:
+                print(f'[Telegram] Sending with image URL: {image_path}')
+                url = f'https://api.telegram.org/bot{token}/sendPhoto'
+                data = {'chat_id': chat_id, 'photo': image_path, 'caption': text, 'parse_mode': parse_mode}
+                response = requests.post(url, data=data, timeout=10)
+            elif os.path.exists(image_path):
+                print(f'[Telegram] Sending with image file: {image_path}')
+                url = f'https://api.telegram.org/bot{token}/sendPhoto'
+                with open(image_path, 'rb') as photo:
+                    files = {'photo': photo}
+                    data = {'chat_id': chat_id, 'caption': text, 'parse_mode': parse_mode}
+                    response = requests.post(url, data=data, files=files, timeout=10)
+            else:
+                print(f'[Telegram] Image path not found: {image_path}, sending text-only')
+                url = f'https://api.telegram.org/bot{token}/sendMessage'
+                payload = {'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode}
+                response = requests.post(url, data=payload, timeout=5)
         else:
             print('[Telegram] Sending text-only message')
             url = f'https://api.telegram.org/bot{token}/sendMessage'

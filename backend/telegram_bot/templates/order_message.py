@@ -13,6 +13,16 @@ STATUS_EMOJIS = {
     'returned': '↩️',
 }
 
+STATUS_UZ = {
+    "CREATED": "Yaratildi",
+    "CONFIRMED": "Tasdiqlandi",
+    "PACKED": "Qadoqlandi",
+    "SHIPPED": "Jo'natildi",
+    "DELIVERED": "Yetkazildi",
+    "CANCELLED": "Bekor qilindi",
+    "RETURNED": "Qaytarildi",
+}
+
 
 def _format_quantity(value) -> str:
     try:
@@ -41,11 +51,12 @@ def _format_items(order, limit: int = 5) -> tuple[str, int]:
 
 def format_order(order, created: bool, previous_status: str | None = None) -> str:
     emoji = STATUS_EMOJIS.get(order.status, 'ℹ️')
+    current_status_uz = STATUS_UZ.get(order.status.upper(), order.status.upper())
     if created:
         title = f"{emoji} <b>Yangi buyurtma #{order.display_no}</b>"
     else:
-        from_status = previous_status.upper() if previous_status else '—'
-        title = f"{emoji} Buyurtma #{order.display_no} holati {from_status} ➜ <b>{order.status.upper()}</b>"
+        from_status_uz = STATUS_UZ.get(previous_status.upper(), previous_status.upper()) if previous_status else '—'
+        title = f"{emoji} Buyurtma #{order.display_no} holati {from_status_uz} ➜ <b>{current_status_uz}</b>"
 
     created_at = order.created_at or timezone.now()
     items_text, item_count = _format_items(order)
