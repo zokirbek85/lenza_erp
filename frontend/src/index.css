@@ -321,11 +321,16 @@ body,
   transition: all 200ms ease;
   transition-property: left, top, width, height;
   overflow: hidden; /* Prevent content overflow */
+  display: flex;
+  flex-direction: column;
 }
 
 .react-grid-item > div {
+  flex: 1;
   height: 100%; /* Ensure widget fills container */
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .react-grid-item img {
@@ -387,6 +392,19 @@ body,
   width: 100%;
   display: flex;
   flex-direction: column;
+  flex: 1;
+}
+
+/* Ensure Card components inside grid items fill properly */
+.react-grid-item .ant-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.react-grid-item .ant-card-body {
+  flex: 1;
+  overflow: auto;
 }
 
 /* Dark mode support for grid */

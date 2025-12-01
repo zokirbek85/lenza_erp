@@ -63,40 +63,40 @@ interface DashboardData {
   expenses: ExpenseSummary | null;
 }
 
-// Default layout for dashboard widgets - optimized for proper spacing
+// Default layout for dashboard widgets - perfectly aligned with component heights
 const DEFAULT_LAYOUT: Layout[] = [
-  // KPI Cards - 4 columns, h=4 for ~180px height
-  { i: 'kpi_sales', x: 0, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
-  { i: 'kpi_payments', x: 3, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
-  { i: 'kpi_debt', x: 6, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
-  { i: 'kpi_dealers', x: 9, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
+  // Row 1: KPI Cards - 4 statistics cards (h=3 for ~135px with rowHeight=45)
+  { i: 'kpi_sales', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: 'kpi_payments', x: 3, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: 'kpi_debt', x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: 'kpi_dealers', x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
   
-  // Inventory Stats - wider card
-  { i: 'inventory_stats', x: 0, y: 4, w: 4, h: 5, minW: 4, minH: 4 },
+  // Row 2: Inventory Stats card
+  { i: 'inventory_stats', x: 0, y: 3, w: 4, h: 4, minW: 3, minH: 3 },
   
-  // Debt Analytics Charts - side by side
-  { i: 'debt_by_dealer', x: 0, y: 9, w: 6, h: 7, minW: 5, minH: 6 },
-  { i: 'debt_by_region', x: 6, y: 9, w: 6, h: 7, minW: 5, minH: 6 },
+  // Row 3: Top Products (left) + Expense Analytics mini-cards (right)
+  { i: 'top_products', x: 0, y: 7, w: 6, h: 10, minW: 5, minH: 9 },
+  { i: 'expense_metrics', x: 6, y: 7, w: 6, h: 3, minW: 5, minH: 3 },
   
-  // Debt Trend - full width
-  { i: 'debt_trend', x: 0, y: 16, w: 12, h: 7, minW: 10, minH: 6 },
+  // Row 4: Categories Pie Chart (left) + Region Map (right)
+  { i: 'top_categories', x: 6, y: 10, w: 6, h: 10, minW: 4, minH: 9 },
+  { i: 'region_products', x: 0, y: 17, w: 6, h: 8, minW: 5, minH: 7 },
   
-  // Expense Metrics
-  { i: 'expense_metrics', x: 0, y: 23, w: 12, h: 5, minW: 10, minH: 4 },
+  // Row 5: Product Trend Line Chart (full width under categories)
+  { i: 'product_trend', x: 6, y: 20, w: 6, h: 10, minW: 5, minH: 9 },
   
-  // Top Products & Categories
-  { i: 'top_products', x: 0, y: 28, w: 8, h: 9, minW: 6, minH: 8 },
-  { i: 'top_categories', x: 8, y: 28, w: 4, h: 9, minW: 4, minH: 8 },
+  // Row 6: Debt Analytics Charts - side by side
+  { i: 'debt_by_dealer', x: 0, y: 30, w: 6, h: 8, minW: 5, minH: 7 },
+  { i: 'debt_by_region', x: 6, y: 30, w: 6, h: 8, minW: 5, minH: 7 },
   
-  // Region Products & Product Trend
-  { i: 'region_products', x: 0, y: 37, w: 6, h: 9, minW: 5, minH: 8 },
-  { i: 'product_trend', x: 6, y: 37, w: 6, h: 9, minW: 5, minH: 8 },
+  // Row 7: Debt Trend - full width
+  { i: 'debt_trend', x: 0, y: 38, w: 12, h: 10, minW: 10, minH: 9 },
   
-  // Top Dealers - full width
-  { i: 'top_dealers', x: 0, y: 46, w: 12, h: 7, minW: 10, minH: 6 },
+  // Row 8: Top Dealers - full width
+  { i: 'top_dealers', x: 0, y: 48, w: 12, h: 8, minW: 10, minH: 7 },
   
-  // Overdue Receivables - full width table
-  { i: 'overdue_receivables', x: 0, y: 53, w: 12, h: 8, minW: 10, minH: 7 },
+  // Row 9: Overdue Receivables - full width table
+  { i: 'overdue_receivables', x: 0, y: 56, w: 12, h: 10, minW: 10, minH: 9 },
 ];
 
 const DashboardPage = () => {
@@ -275,7 +275,7 @@ const DashboardPage = () => {
       <ResponsiveGrid
         className="layout"
         layouts={{ lg: layout, md: layout, sm: layout, xs: layout }}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
+        breakpoints={{ lg: 1400, md: 996, sm: 768, xs: 480 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 2 }}
         rowHeight={45}
         margin={[15, 15]}
@@ -284,7 +284,7 @@ const DashboardPage = () => {
         draggableHandle=".drag-handle"
         isResizable={false}
         compactType="vertical"
-        preventCollision={false}
+        preventCollision={true}
       >
         {/* Primary KPI Cards */}
         <div key="kpi_sales" className="drag-handle" style={{ cursor: 'move' }}>
