@@ -562,11 +562,24 @@ class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
         serializer = self.get_serializer(expense)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], url_path='summary', permission_classes=[IsAdmin | IsAccountant | IsOwner])
+    @action(detail=False, methods=['get'], url_path='summary')
     def summary(self, request):
-        """Get expense summary metrics (for dashboard)"""
+        """Get expense summary metrics (for dashboard)
+        
+        Permissions: Inherits from viewset (IsAdmin | IsAccountant | IsOwner)
+        """
         from decimal import Decimal
         from datetime import datetime, timedelta
+        
+        # Explicitly check permissions (redundant but explicit)
+        user = request.user
+        if not user.is_authenticated:
+            raise PermissionDenied('Authentication required')
+        
+        if not user.is_superuser:
+            role = getattr(user, 'role', None)
+            if role not in {'admin', 'accountant', 'owner'}:
+                raise PermissionDenied('Only admin, accountant, or owner can view expense summary')
         
         # Get approved expenses only for accurate metrics
         qs = self.get_queryset().filter(status=Expense.Status.APPROVED)
