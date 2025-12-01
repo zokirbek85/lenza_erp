@@ -9,16 +9,11 @@ interface CardBalance {
   balance: number;
 }
 
-interface BankBalance {
-  currency: 'USD' | 'UZS';
-  balance: number;
-}
-
 interface FinanceBalances {
   cash_uzs: number;
   cash_usd: number;
+  bank_usd: number;
   cards: CardBalance[];
-  bank: BankBalance;
 }
 
 /**
@@ -68,8 +63,12 @@ const BalancesPanel = () => {
     return null;
   }
 
+  // Calculate total number of widgets for responsive grid
+  const totalWidgets = 2 + balances.cards.length + (balances.bank_usd > 0 ? 1 : 0);
+  const gridCols = totalWidgets <= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-5';
+
   return (
-    <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className={`mb-6 grid grid-cols-2 gap-4 ${gridCols}`}>
       {/* Cash UZS */}
       <BalanceCard
         icon="money"
@@ -89,7 +88,7 @@ const BalancesPanel = () => {
       {/* Card Balances */}
       {balances.cards.map((card, index) => (
         <BalanceCard
-          key={index}
+          key={`card-${index}`}
           icon="credit-card"
           title={card.name}
           value={card.balance}
@@ -97,13 +96,15 @@ const BalancesPanel = () => {
         />
       ))}
 
-      {/* Bank Balance */}
-      <BalanceCard
-        icon="bank"
-        title={t('finance.balances.bank')}
-        value={balances.bank.balance}
-        currency={balances.bank.currency}
-      />
+      {/* Bank Balance USD - only show if balance exists */}
+      {balances.bank_usd > 0 && (
+        <BalanceCard
+          icon="bank"
+          title={t('finance.balances.bank')}
+          value={balances.bank_usd}
+          currency="USD"
+        />
+      )}
     </div>
   );
 };

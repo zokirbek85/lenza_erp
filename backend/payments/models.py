@@ -7,17 +7,19 @@ from django.utils import timezone
 
 class Cashbox(models.Model):
     """
-    Unified cashbox model - represents cards, cash UZS, cash USD.
+    Unified cashbox model - represents cards, cash UZS, cash USD, and bank accounts.
     Each cashbox has its own balance tracking.
     """
     TYPE_CARD = "CARD"
     TYPE_CASH_UZS = "CASH_UZS"
     TYPE_CASH_USD = "CASH_USD"
+    TYPE_BANK = "BANK"
 
     CASHBOX_TYPES = [
         (TYPE_CARD, "Card"),
         (TYPE_CASH_UZS, "Cash UZS"),
         (TYPE_CASH_USD, "Cash USD"),
+        (TYPE_BANK, "Bank"),
     ]
 
     CURRENCY_USD = "USD"

@@ -384,8 +384,13 @@ class CashboxSummaryView(APIView):
 class FinanceBalancesView(APIView):
     """
     Get finance balances for dashboard widgets
-    Returns: cash_uzs, cash_usd, cards array, bank balance
+    Returns: cash_uzs, cash_usd, cards array, bank_usd balance
     Used by Expenses page balance widgets
+    
+    Balance calculation:
+    - opening_balance + payments (income) - expenses (outflow) + returns
+    - Only approved/confirmed transactions
+    - Currency-specific aggregation
     """
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
@@ -397,8 +402,8 @@ class FinanceBalancesView(APIView):
         
         cash_uzs = Decimal('0')
         cash_usd = Decimal('0')
+        bank_usd = Decimal('0')
         cards = []
-        bank = {'currency': 'USD', 'balance': Decimal('0')}
         
         for cashbox in cashboxes:
             balance_data = cashbox.calculate_balance(return_detailed=True)
@@ -408,6 +413,11 @@ class FinanceBalancesView(APIView):
                 cash_uzs += balance
             elif cashbox.cashbox_type == Cashbox.TYPE_CASH_USD:
                 cash_usd += balance
+            elif cashbox.cashbox_type == Cashbox.TYPE_BANK:
+                # Bank accounts are typically USD
+                if cashbox.currency == Cashbox.CURRENCY_USD:
+                    bank_usd += balance
+                # If bank has UZS, you could add bank_uzs handling here
             elif cashbox.cashbox_type == Cashbox.TYPE_CARD:
                 cards.append({
                     'name': cashbox.name,
@@ -415,17 +425,11 @@ class FinanceBalancesView(APIView):
                     'balance': float(balance)
                 })
         
-        # Bank balance - for now we'll use a placeholder or specific cashbox
-        # You can add a separate bank account type if needed
-        
         return Response({
             'cash_uzs': float(cash_uzs),
             'cash_usd': float(cash_usd),
-            'cards': cards,
-            'bank': {
-                'currency': 'USD',
-                'balance': 0.0  # Placeholder - add bank account logic if needed
-            }
+            'bank_usd': float(bank_usd),
+            'cards': cards
         })
 
 

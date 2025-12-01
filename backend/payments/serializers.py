@@ -51,6 +51,7 @@ class CashboxSerializer(serializers.ModelSerializer):
             'cash_uzs': 'CASH_UZS',
             'cash_usd': 'CASH_USD',
             'card': 'CARD',
+            'bank': 'BANK',
         }
         cashbox_type = attrs.get('cashbox_type')
         if cashbox_type in mapping:
