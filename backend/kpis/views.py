@@ -19,6 +19,20 @@ from .models import KPIRecord
 from .serializers import KPIRecordSerializer
 
 
+def parse_category_ids(categories_param):
+    """
+    Parse categories parameter into list of integers.
+    Accepts comma-separated category IDs: "1,3,7" or "1, 3, 7"
+    Returns empty list if None or invalid.
+    """
+    if not categories_param:
+        return []
+    try:
+        return [int(cat_id.strip()) for cat_id in categories_param.split(',') if cat_id.strip()]
+    except (ValueError, AttributeError):
+        return []
+
+
 class KPIRecordViewSet(viewsets.ModelViewSet):
     queryset = KPIRecord.objects.select_related('dealer').all()
     serializer_class = KPIRecordSerializer
@@ -238,7 +252,8 @@ class TopProductsAnalyticsView(APIView):
     - region_id: filter by region
     - dealer_id: filter by dealer
     - brand_id: filter by brand
-    - category_id: filter by category
+    - category_id: filter by single category (deprecated, use categories)
+    - categories: comma-separated category IDs (e.g., "1,3,7")
     
     Returns list of dicts:
     - product_id, product_name, brand_name, category_name
@@ -254,6 +269,7 @@ class TopProductsAnalyticsView(APIView):
         dealer_id = request.query_params.get('dealer_id')
         brand_id = request.query_params.get('brand_id')
         category_id = request.query_params.get('category_id')
+        categories_param = request.query_params.get('categories')
         
         # Base queryset: active orders only
         filters = Q(order__status__in=Order.Status.active_statuses())
@@ -276,8 +292,12 @@ class TopProductsAnalyticsView(APIView):
         if brand_id:
             filters &= Q(product__brand_id=brand_id)
         
-        # Apply category filter
-        if category_id:
+        # Apply category filter (multiple categories support)
+        category_ids = parse_category_ids(categories_param)
+        if category_ids:
+            filters &= Q(product__category_id__in=category_ids)
+        elif category_id:
+            # Backward compatibility with single category_id
             filters &= Q(product__category_id=category_id)
         
         # Role-based filtering
@@ -345,6 +365,7 @@ class RegionProductAnalyticsView(APIView):
         dealer_id = request.query_params.get('dealer_id')
         brand_id = request.query_params.get('brand_id')
         category_id = request.query_params.get('category_id')
+        categories_param = request.query_params.get('categories')
         
         # Base queryset
         filters = Q(order__status__in=Order.Status.active_statuses())
@@ -360,7 +381,12 @@ class RegionProductAnalyticsView(APIView):
             filters &= Q(order__dealer_id=dealer_id)
         if brand_id:
             filters &= Q(product__brand_id=brand_id)
-        if category_id:
+        
+        # Apply category filter (multiple categories support)
+        category_ids = parse_category_ids(categories_param)
+        if category_ids:
+            filters &= Q(product__category_id__in=category_ids)
+        elif category_id:
             filters &= Q(product__category_id=category_id)
         
         # Role-based filtering
@@ -442,6 +468,7 @@ class ProductTrendAnalyticsView(APIView):
             dealer_id = request.query_params.get('dealer_id')
             brand_id = request.query_params.get('brand_id')
             category_id = request.query_params.get('category_id')
+            categories_param = request.query_params.get('categories')
             period = request.query_params.get('period', 'month')
             limit = int(request.query_params.get('limit', '5'))
             
@@ -458,7 +485,12 @@ class ProductTrendAnalyticsView(APIView):
                 filters &= Q(order__dealer_id=dealer_id)
             if brand_id:
                 filters &= Q(product__brand_id=brand_id)
-            if category_id:
+            
+            # Apply category filter (multiple categories support)
+            category_ids = parse_category_ids(categories_param)
+            if category_ids:
+                filters &= Q(product__category_id__in=category_ids)
+            elif category_id:
                 filters &= Q(product__category_id=category_id)
             
             # Role-based filtering
@@ -542,6 +574,7 @@ class TopCategoriesAnalyticsView(APIView):
         dealer_id = request.query_params.get('dealer_id')
         brand_id = request.query_params.get('brand_id')
         category_id = request.query_params.get('category_id')
+        categories_param = request.query_params.get('categories')
         
         # Base queryset
         filters = Q(order__status__in=Order.Status.active_statuses())
@@ -557,7 +590,12 @@ class TopCategoriesAnalyticsView(APIView):
             filters &= Q(order__dealer_id=dealer_id)
         if brand_id:
             filters &= Q(product__brand_id=brand_id)
-        if category_id:
+        
+        # Apply category filter (multiple categories support)
+        category_ids = parse_category_ids(categories_param)
+        if category_ids:
+            filters &= Q(product__category_id__in=category_ids)
+        elif category_id:
             filters &= Q(product__category_id=category_id)
         
         # Role-based filtering
@@ -620,6 +658,7 @@ class TopDealersAnalyticsView(APIView):
         dealer_id = request.query_params.get('dealer_id')
         brand_id = request.query_params.get('brand_id')
         category_id = request.query_params.get('category_id')
+        categories_param = request.query_params.get('categories')
         limit = int(request.query_params.get('limit', '10'))
         
         # Base queryset
@@ -635,11 +674,14 @@ class TopDealersAnalyticsView(APIView):
             filters &= Q(dealer_id=dealer_id)
         
         # Brand/category filters require join to OrderItem
-        if brand_id or category_id:
+        category_ids = parse_category_ids(categories_param)
+        if brand_id or category_ids or category_id:
             item_filters = Q()
             if brand_id:
                 item_filters &= Q(items__product__brand_id=brand_id)
-            if category_id:
+            if category_ids:
+                item_filters &= Q(items__product__category_id__in=category_ids)
+            elif category_id:
                 item_filters &= Q(items__product__category_id=category_id)
             filters &= item_filters
         

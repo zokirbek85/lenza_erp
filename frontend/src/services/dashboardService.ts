@@ -274,7 +274,8 @@ export interface AnalyticsFilters {
   region_id?: number;
   dealer_id?: number;
   brand_id?: number;
-  category_id?: number;
+  category_id?: number; // Deprecated: use categories instead
+  categories?: string; // Comma-separated category IDs (e.g., "1,3,7")
   period?: 'month' | 'week';
   limit?: number;
 }
@@ -286,7 +287,8 @@ const buildAnalyticsParams = (filters: AnalyticsFilters): URLSearchParams => {
   if (filters.region_id) params.append('region_id', String(filters.region_id));
   if (filters.dealer_id) params.append('dealer_id', String(filters.dealer_id));
   if (filters.brand_id) params.append('brand_id', String(filters.brand_id));
-  if (filters.category_id) params.append('category_id', String(filters.category_id));
+  if (filters.categories) params.append('categories', filters.categories); // Multi-category support
+  if (filters.category_id) params.append('category_id', String(filters.category_id)); // Backward compatibility
   if (filters.period) params.append('period', filters.period);
   if (filters.limit) params.append('limit', String(filters.limit));
   return params;

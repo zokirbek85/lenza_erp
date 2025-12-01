@@ -102,6 +102,7 @@ const DashboardPage = () => {
         end_date: effectiveFilters.dateRange?.[1],
         region_id: effectiveFilters.region,
         dealer_id: effectiveFilters.dealers.length === 1 ? effectiveFilters.dealers[0] : undefined,
+        categories: effectiveFilters.categories?.length ? effectiveFilters.categories.join(',') : undefined,
       };
 
       const [summary, analytics, inventory, topProducts, regionProducts, productTrend, topCategories, topDealers, expenses] = await Promise.all([

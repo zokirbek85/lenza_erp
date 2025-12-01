@@ -4,6 +4,7 @@ export interface DashboardFilters {
   dealers: number[];
   region?: number;
   manager?: number;
+  categories?: number[]; // Multiple category IDs for analytics filtering
   dateRange?: [string, string]; // ISO format: YYYY-MM-DD
 }
 
@@ -19,6 +20,7 @@ const defaultFilters: DashboardFilters = {
   dealers: [],
   region: undefined,
   manager: undefined,
+  categories: [],
   dateRange: undefined,
 };
 
