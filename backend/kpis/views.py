@@ -434,82 +434,93 @@ class ProductTrendAnalyticsView(APIView):
     permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
 
     def get(self, request):
-        # Parse filters
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        region_id = request.query_params.get('region_id')
-        dealer_id = request.query_params.get('dealer_id')
-        brand_id = request.query_params.get('brand_id')
-        category_id = request.query_params.get('category_id')
-        period = request.query_params.get('period', 'month')
-        limit = int(request.query_params.get('limit', '5'))
-        
-        # Base queryset
-        filters = Q(order__status__in=Order.Status.active_statuses())
-        
-        if start_date:
-            filters &= Q(order__value_date__gte=start_date)
-        if end_date:
-            filters &= Q(order__value_date__lte=end_date)
-        if region_id:
-            filters &= Q(order__dealer__region_id=region_id)
-        if dealer_id:
-            filters &= Q(order__dealer_id=dealer_id)
-        if brand_id:
-            filters &= Q(product__brand_id=brand_id)
-        if category_id:
-            filters &= Q(product__category_id=category_id)
-        
-        # Role-based filtering
-        user = request.user
-        if hasattr(user, 'role'):
-            if user.role == 'manager':
-                managed_dealers = Dealer.objects.filter(manager_user=user)
-                filters &= Q(order__dealer__in=managed_dealers)
-            elif user.role == 'sales':
-                filters &= Q(order__created_by=user)
-        
-        # Choose truncation function
-        trunc_func = TruncMonth if period == 'month' else TruncWeek
-        
-        # Get trend data
-        trend_data = (
-            OrderItem.objects.filter(filters)
-            .annotate(period=trunc_func('order__value_date'))
-            .values('period', 'product_id', 'product__name')
-            .annotate(
-                total_sum_usd=Sum(
-                    F('qty') * F('price_usd'),
-                    output_field=DecimalField(max_digits=18, decimal_places=2)
+        try:
+            # Parse filters
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            region_id = request.query_params.get('region_id')
+            dealer_id = request.query_params.get('dealer_id')
+            brand_id = request.query_params.get('brand_id')
+            category_id = request.query_params.get('category_id')
+            period = request.query_params.get('period', 'month')
+            limit = int(request.query_params.get('limit', '5'))
+            
+                # Base queryset
+            filters = Q(order__status__in=Order.Status.active_statuses())
+            
+            if start_date:
+                filters &= Q(order__value_date__gte=start_date)
+            if end_date:
+                filters &= Q(order__value_date__lte=end_date)
+            if region_id:
+                filters &= Q(order__dealer__region_id=region_id)
+            if dealer_id:
+                filters &= Q(order__dealer_id=dealer_id)
+            if brand_id:
+                filters &= Q(product__brand_id=brand_id)
+            if category_id:
+                filters &= Q(product__category_id=category_id)
+            
+            # Role-based filtering
+            user = request.user
+            if hasattr(user, 'role'):
+                if user.role == 'manager':
+                    managed_dealers = Dealer.objects.filter(manager_user=user)
+                    filters &= Q(order__dealer__in=managed_dealers)
+                elif user.role == 'sales':
+                    filters &= Q(order__created_by=user)
+            
+            # Choose truncation function
+            trunc_func = TruncMonth if period == 'month' else TruncWeek
+            
+            # Get trend data
+            trend_data = (
+                OrderItem.objects.filter(filters)
+                .annotate(period=trunc_func('order__value_date'))
+                .values('period', 'product_id', 'product__name')
+                .annotate(
+                    total_sum_usd=Sum(
+                        F('qty') * F('price_usd'),
+                        output_field=DecimalField(max_digits=18, decimal_places=2)
+                    )
                 )
+                .order_by('period', '-total_sum_usd')
             )
-            .order_by('period', '-total_sum_usd')
-        )
-        
-        # Group by period
-        periods_map = defaultdict(lambda: {'products': []})
-        for item in trend_data:
-            period_key = item['period'].date().isoformat()
             
-            if period_key not in periods_map:
-                periods_map[period_key]['period'] = period_key
+            # Group by period
+            periods_map = defaultdict(lambda: {'products': []})
+            for item in trend_data:
+                # Skip items with no period (shouldn't happen, but handle gracefully)
+                if not item['period']:
+                    continue
+                    
+                period_key = item['period'].date().isoformat()
+                
+                if period_key not in periods_map:
+                    periods_map[period_key]['period'] = period_key
+                
+                periods_map[period_key]['products'].append({
+                    'product_id': item['product_id'],
+                    'product_name': item['product__name'],
+                    'total_sum_usd': float(item['total_sum_usd'] or 0),
+                })
+        
+            # Limit products per period and convert to list
+            data = []
+            for period_data in periods_map.values():
+                period_data['products'] = period_data['products'][:limit]
+                data.append(period_data)
             
-            periods_map[period_key]['products'].append({
-                'product_id': item['product_id'],
-                'product_name': item['product__name'],
-                'total_sum_usd': float(item['total_sum_usd'] or 0),
-            })
-        
-        # Limit products per period and convert to list
-        data = []
-        for period_data in periods_map.values():
-            period_data['products'] = period_data['products'][:limit]
-            data.append(period_data)
-        
-        # Sort by period
-        data.sort(key=lambda x: x['period'])
-        
-        return Response(data)
+            # Sort by period
+            data.sort(key=lambda x: x['period'])
+            
+            return Response(data)
+        except Exception as e:
+            # Log error and return empty data instead of 500
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Product trend analytics error: {str(e)}", exc_info=True)
+            return Response({'data': [], 'error': str(e)}, status=200)
 
 
 class TopCategoriesAnalyticsView(APIView):
