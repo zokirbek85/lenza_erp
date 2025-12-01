@@ -346,3 +346,10 @@ msgstr "Oxirgi to'lov"
 
 msgid "Report generated"
 msgstr "Hisobot yaratilgan"
+
+# Order stock validation
+msgid "Ushbu mahsulot omborda qolmagan. Mavjud: 0"
+msgstr "Ushbu mahsulot omborda qolmagan. Mavjud: 0"
+
+msgid "Mahsulot topilmadi."
+msgstr "Mahsulot topilmadi."

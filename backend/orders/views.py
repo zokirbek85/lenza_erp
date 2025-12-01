@@ -44,6 +44,21 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     report_template = "orders/report.html"
 
     def perform_create(self, serializer):
+        """Create order with stock validation."""
+        # Validate stock for each item before creating order
+        from catalog.models import Product
+        items_data = self.request.data.get('items', [])
+        for item in items_data:
+            product_id = item.get('product')
+            if product_id:
+                try:
+                    product = Product.objects.get(id=product_id)
+                    if product.stock_ok <= 0:
+                        raise ValidationError({
+                            'detail': f'Mahsulot "{product.name}" omborda mavjud emas. Qoldiq: 0'
+                        })
+                except Product.DoesNotExist:
+                    raise ValidationError({'detail': f'Mahsulot ID {product_id} topilmadi.'})
         serializer.save()
     
     def perform_update(self, serializer):

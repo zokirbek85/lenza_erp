@@ -395,3 +395,10 @@ msgstr "Подпись"
 
 msgid "Scan QR code to verify authenticity"
 msgstr "Отсканируйте QR-код для проверки подлинности"
+
+# Order stock validation
+msgid "Ushbu mahsulot omborda qolmagan. Mavjud: 0"
+msgstr "Товар отсутствует на складе. В наличии: 0"
+
+msgid "Mahsulot topilmadi."
+msgstr "Товар не найден."

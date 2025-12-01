@@ -1230,6 +1230,9 @@
       "createError": "Не удалось создать заказ",
       "pdfError": "Не удалось скачать PDF"
     },
+    "errors": {
+      "productOutOfStock": "Товар отсутствует на складе!"
+    },
     "list": {
       "columns": {
         "id": "ID",

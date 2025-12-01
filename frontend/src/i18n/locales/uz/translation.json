@@ -1533,6 +1533,9 @@
       "createError": "Buyurtmani yaratishda xatolik yuz berdi",
       "pdfError": "PDF yuklab olinmadi"
     },
+    "errors": {
+      "productOutOfStock": "Bu mahsulot omborda mavjud emas!"
+    },
     "list": {
       "columns": {
         "id": "ID",

@@ -1,8 +1,10 @@
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from catalog.models import Product
 from catalog.serializers import ProductSerializer
 from dealers.models import Dealer
 
@@ -22,6 +24,22 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ('id', 'product', 'product_detail', 'qty', 'price_usd', 'status')
         read_only_fields = ('status',)
+    
+    def validate(self, data):
+        """Validate that product has sufficient stock."""
+        product_id = data.get('product')
+        if product_id:
+            try:
+                product = Product.objects.get(id=product_id.id if hasattr(product_id, 'id') else product_id)
+                if product.stock_ok <= 0:
+                    raise serializers.ValidationError({
+                        'product': _('Ushbu mahsulot omborda qolmagan. Mavjud: 0')
+                    })
+            except Product.DoesNotExist:
+                raise serializers.ValidationError({
+                    'product': _('Mahsulot topilmadi.')
+                })
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -136,5 +154,11 @@ class OrderSerializer(serializers.ModelSerializer):
         return data
 
     def _sync_items(self, order, items_data):
+        """Sync order items with stock validation."""
         for item in items_data:
+            product = item.get('product')
+            if product and hasattr(product, 'stock_ok') and product.stock_ok <= 0:
+                raise serializers.ValidationError({
+                    'items': _('Mahsulot "%(name)s" omborda mavjud emas.') % {'name': product.name}
+                })
             OrderItem.objects.create(order=order, **item)

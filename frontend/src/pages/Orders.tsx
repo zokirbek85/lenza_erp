@@ -364,6 +364,14 @@ const OrdersPage = () => {
       toast.error(t('orders.toast.selectProduct'));
       return;
     }
+    
+    // Check if product has sufficient stock
+    const stockOk = selectedProduct.stock_ok ?? 0;
+    if (stockOk <= 0) {
+      toast.error(t('orders.errors.productOutOfStock'));
+      return;
+    }
+    
     const normalizedQty = normalizeQuantityValue(quantityInput || DEFAULT_QTY);
     if (!Number.isFinite(normalizedQty) || normalizedQty <= 0) {
       toast.error(t('orders.toast.invalidQuantity'));
@@ -964,12 +972,17 @@ const OrdersPage = () => {
                           <option value="">{t('orders.form.productSelectPlaceholder')}</option>
                           {filteredProducts.map((product) => {
                             const stock = product.total_stock ?? product.stock_ok ?? 0;
-                            const isLow = stock <= 0;
+                            const isOutOfStock = stock <= 0;
                             const brandLabel = product.brand?.name ?? '-';
                             const categoryLabel = product.category?.name ?? '-';
-                            const stockLabel = isLow ? '(Zaxira tugagan)' : `(Zaxira: ${stock})`;
+                            const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(Qoldiq: ${stock})`;
                             return (
-                              <option key={product.id} value={product.id}>
+                              <option
+                                key={product.id}
+                                value={product.id}
+                                disabled={isOutOfStock}
+                                style={isOutOfStock ? { color: '#999', fontStyle: 'italic' } : undefined}
+                              >
                                 {cleanName(product.name)} - {brandLabel} - {categoryLabel}{' '}
                                 {stockLabel}
                               </option>

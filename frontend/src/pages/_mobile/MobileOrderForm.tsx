@@ -267,12 +267,17 @@ const MobileOrderForm = ({
               <option value="">{t('orders.form.productSelectPlaceholder')}</option>
               {products.map((product) => {
                 const stock = product.total_stock ?? product.stock_ok ?? 0;
-                const isLow = stock <= 0;
+                const isOutOfStock = stock <= 0;
                 const brandLabel = product.brand?.name ?? '-';
                 const categoryLabel = product.category?.name ?? '-';
-                const stockLabel = isLow ? '(Zaxira tugagan)' : `(Zaxira: ${stock})`;
+                const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(Qoldiq: ${stock})`;
                 return (
-                  <option key={product.id} value={product.id}>
+                  <option
+                    key={product.id}
+                    value={product.id}
+                    disabled={isOutOfStock}
+                    style={isOutOfStock ? { color: '#999', fontStyle: 'italic' } : undefined}
+                  >
                     {cleanName(product.name)} - {brandLabel} - {categoryLabel} {stockLabel}
                   </option>
                 );
