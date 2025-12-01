@@ -207,33 +207,62 @@ const DashboardPage = () => {
     }
   }, [filters, canViewDebtAnalytics, canViewExpenses]);
 
-  // Load dashboard layout
+  // Load dashboard layout from backend or localStorage
   useEffect(() => {
     const loadLayout = async () => {
+      // Try loading from backend first
       try {
         const response = await fetchDashboardLayout();
         if (response.data.layout && Array.isArray(response.data.layout) && response.data.layout.length > 0) {
           setLayout(response.data.layout);
+          return;
         }
       } catch (error) {
-        // Use default layout if loading fails
+        console.warn('Failed to load layout from backend, trying localStorage');
       }
+      
+      // Fallback to localStorage
+      try {
+        const localLayout = localStorage.getItem('dashboardLayout_lg');
+        if (localLayout) {
+          const parsed = JSON.parse(localLayout);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setLayout(parsed);
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load layout from localStorage');
+      }
+      
+      // Use default layout if all fails (already set in state)
     };
     loadLayout();
   }, []);
 
-  // Save layout when it changes with validation
+  // Save layout when it changes with validation and localStorage backup
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
-    // Validate and fix layout to prevent overlaps
+    // Validate and fix layout to prevent negative positions and min sizes
     const fixedLayout = newLayout.map(item => ({
       ...item,
       y: Math.max(item.y, 0),
       h: Math.max(item.h, 2),
+      w: Math.max(item.w, 2),
     }));
     
     setLayout(fixedLayout);
     
-    // Debounce save to avoid too many API calls
+    // Save to localStorage immediately for offline support and faster load
+    try {
+      localStorage.setItem('dashboardLayout_lg', JSON.stringify(fixedLayout));
+      localStorage.setItem('dashboardLayout_md', JSON.stringify(fixedLayout));
+      localStorage.setItem('dashboardLayout_sm', JSON.stringify(fixedLayout));
+      localStorage.setItem('dashboardLayout_xs', JSON.stringify(fixedLayout));
+    } catch (error) {
+      console.warn('Failed to save layout to localStorage:', error);
+    }
+    
+    // Debounce save to backend API to avoid too many API calls
     const timeoutId = setTimeout(() => {
       saveDashboardLayout(fixedLayout as DashboardLayoutItem[]).catch(() => {
         // Silently fail - layout will be reset on next load
@@ -271,7 +300,7 @@ const DashboardPage = () => {
       {/* Filter Bar */}
       <DashboardFilterBar onApply={fetchAll} />
 
-      {/* Draggable Dashboard Grid */}
+      {/* Draggable & Resizable Dashboard Grid */}
       <ResponsiveGrid
         className="layout"
         layouts={{ lg: layout, md: layout, sm: layout, xs: layout }}
@@ -282,9 +311,11 @@ const DashboardPage = () => {
         containerPadding={[10, 10]}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"
-        isResizable={false}
-        compactType="vertical"
-        preventCollision={true}
+        isDraggable={true}
+        isResizable={true}
+        resizeHandles={['se', 'e', 's']}
+        compactType={null}
+        preventCollision={false}
       >
         {/* Primary KPI Cards */}
         <div key="kpi_sales" className="drag-handle" style={{ cursor: 'move' }}>

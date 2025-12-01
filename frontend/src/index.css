@@ -405,6 +405,59 @@ body,
 .react-grid-item .ant-card-body {
   flex: 1;
   overflow: auto;
+  min-height: 0; /* Important for flex children with overflow */
+}
+
+/* Chart containers must respond to resize */
+.chart-container,
+.table-container {
+  height: 100% !important;
+  width: 100%;
+}
+
+/* Recharts responsive wrapper */
+.recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.recharts-surface {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Resize handles - make them more visible and easier to grab */
+.react-grid-item > .react-resizable-handle {
+  background: transparent;
+  z-index: 10;
+}
+
+.react-grid-item > .react-resizable-handle-se {
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+}
+
+.react-grid-item > .react-resizable-handle-e {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  cursor: e-resize;
+  width: 10px;
+}
+
+.react-grid-item > .react-resizable-handle-s {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  cursor: s-resize;
+  height: 10px;
+}
+
+/* Make resize handle visible on hover */
+.react-grid-item:hover > .react-resizable-handle::after {
+  border-right: 2px solid rgba(59, 130, 246, 0.7);
+  border-bottom: 2px solid rgba(59, 130, 246, 0.7);
 }
 
 /* Dark mode support for grid */
