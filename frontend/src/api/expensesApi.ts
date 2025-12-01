@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import http from '../app/http';
 
 export interface ExpenseCategory {
   id: number;
@@ -61,14 +59,14 @@ export interface ExpenseFilters {
 // Expense Categories API
 
 export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
-  const response = await axios.get(`${API_URL}/api/expense-categories/`);
+  const response = await http.get(`/expense-categories/`);
   return response.data;
 };
 
 export const createExpenseCategory = async (
   data: Omit<ExpenseCategory, 'id' | 'created_at' | 'updated_at'>
 ): Promise<ExpenseCategory> => {
-  const response = await axios.post(`${API_URL}/api/expense-categories/`, data);
+  const response = await http.post(`/expense-categories/`, data);
   return response.data;
 };
 
@@ -76,30 +74,30 @@ export const updateExpenseCategory = async (
   id: number,
   data: Partial<ExpenseCategory>
 ): Promise<ExpenseCategory> => {
-  const response = await axios.patch(`${API_URL}/api/expense-categories/${id}/`, data);
+  const response = await http.patch(`/expense-categories/${id}/`, data);
   return response.data;
 };
 
 export const deleteExpenseCategory = async (id: number): Promise<void> => {
-  await axios.delete(`${API_URL}/api/expense-categories/${id}/`);
+  await http.delete(`/expense-categories/${id}/`);
 };
 
 // Expenses API
 
 export const fetchExpenses = async (filters?: ExpenseFilters): Promise<Expense[]> => {
-  const response = await axios.get(`${API_URL}/api/expenses/`, {
+  const response = await http.get(`/expenses/`, {
     params: filters,
   });
   return response.data.results || response.data;
 };
 
 export const fetchExpenseById = async (id: number): Promise<Expense> => {
-  const response = await axios.get(`${API_URL}/api/expenses/${id}/`);
+  const response = await http.get(`/expenses/${id}/`);
   return response.data;
 };
 
 export const createExpense = async (data: ExpenseCreateData): Promise<Expense> => {
-  const response = await axios.post(`${API_URL}/api/expenses/`, data);
+  const response = await http.post(`/expenses/`, data);
   return response.data;
 };
 
@@ -107,23 +105,23 @@ export const updateExpense = async (
   id: number,
   data: Partial<ExpenseCreateData>
 ): Promise<Expense> => {
-  const response = await axios.patch(`${API_URL}/api/expenses/${id}/`, data);
+  const response = await http.patch(`/expenses/${id}/`, data);
   return response.data;
 };
 
 export const approveExpense = async (id: number): Promise<Expense> => {
-  const response = await axios.post(`${API_URL}/api/expenses/${id}/approve/`);
+  const response = await http.post(`/expenses/${id}/approve/`);
   return response.data;
 };
 
 export const deleteExpense = async (id: number): Promise<void> => {
-  await axios.delete(`${API_URL}/api/expenses/${id}/`);
+  await http.delete(`/expenses/${id}/`);
 };
 
 // Export functions
 
 export const exportExpensesToExcel = async (filters?: ExpenseFilters): Promise<Blob> => {
-  const response = await axios.get(`${API_URL}/api/expenses/export/`, {
+  const response = await http.get(`/expenses/export/`, {
     params: { ...filters, format: 'xlsx' },
     responseType: 'blob',
   });
@@ -131,7 +129,7 @@ export const exportExpensesToExcel = async (filters?: ExpenseFilters): Promise<B
 };
 
 export const exportExpensesToPDF = async (filters?: ExpenseFilters): Promise<Blob> => {
-  const response = await axios.get(`${API_URL}/api/expenses/export/`, {
+  const response = await http.get(`/expenses/export/`, {
     params: { ...filters, format: 'pdf' },
     responseType: 'blob',
   });
@@ -145,7 +143,7 @@ export const generateExpenseReport = async (
   dateTo?: string,
   format: 'json' | 'pdf' | 'xlsx' = 'json'
 ): Promise<any> => {
-  const response = await axios.get(`${API_URL}/api/expenses/report/`, {
+  const response = await http.get(`/expenses/report/`, {
     params: {
       date_from: dateFrom,
       date_to: dateTo,
@@ -180,7 +178,7 @@ export const fetchExpenseSummary = async (
   startDate?: string,
   endDate?: string
 ): Promise<ExpenseSummary> => {
-  const response = await axios.get(`${API_URL}/api/expenses/summary/`, {
+  const response = await http.get(`/expenses/summary/`, {
     params: {
       start_date: startDate,
       end_date: endDate,
