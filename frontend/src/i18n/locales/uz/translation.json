@@ -402,6 +402,7 @@
     "newPayment": "Yangi to'lov yaratish",
     "closeForm": "Formani yopish",
     "dealer": "Diler",
+    "cashbox": "Kassa",
     "date": "Sana",
     "amount": "Summa",
     "currency": "Valyuta",
@@ -420,7 +421,32 @@
     "loading": "Yuklanmoqda...",
     "noPayments": "To'lovlar topilmadi",
     "usd": "USD",
-    "uzs": "UZS"
+    "uzs": "UZS",
+    "form": {
+      "createPayment": "Yangi to'lov yaratish",
+      "dealer": "Diler",
+      "selectDealer": "Dilerni tanlang",
+      "cashbox": "Kassa",
+      "selectCashbox": "Kassani tanlang",
+      "payDate": "To'lov sanasi",
+      "amount": "Summa",
+      "currency": "Valyuta",
+      "exchangeRate": "Valyuta kursi",
+      "selectRate": "Kursni tanlang",
+      "method": "To'lov usuli",
+      "card": "Karta",
+      "selectCard": "Kartani tanlang",
+      "note": "Izoh",
+      "notePlaceholder": "Qo'shimcha ma'lumot kiriting",
+      "receiptImage": "Kvitansiya rasmi",
+      "receiptHint": "To'lov kvitansiyasi rasmini yuklang (ixtiyoriy)",
+      "uploadReceipt": "Rasmni yuklash"
+    },
+    "methods": {
+      "cash": "Naqd",
+      "card": "Karta",
+      "transfer": "Bank o'tkazmasi"
+    }
   },
   "expenseTypes": {
     "title": "Chiqim turlari",

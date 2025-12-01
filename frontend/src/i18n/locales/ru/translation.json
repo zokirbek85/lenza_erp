@@ -999,6 +999,7 @@
     "newPayment": "Создать новый платёж",
     "closeForm": "Закрыть форму",
     "dealer": "Дилер",
+    "cashbox": "Касса",
     "date": "Дата",
     "amount": "Сумма",
     "currency": "Валюта",
@@ -1017,7 +1018,32 @@
     "loading": "Загрузка...",
     "noPayments": "Платежи не найдены",
     "usd": "USD",
-    "uzs": "UZS"
+    "uzs": "UZS",
+    "form": {
+      "createPayment": "Создать новый платёж",
+      "dealer": "Дилер",
+      "selectDealer": "Выберите дилера",
+      "cashbox": "Касса",
+      "selectCashbox": "Выберите кассу",
+      "payDate": "Дата платежа",
+      "amount": "Сумма",
+      "currency": "Валюта",
+      "exchangeRate": "Курс валюты",
+      "selectRate": "Выберите курс",
+      "method": "Способ оплаты",
+      "card": "Карта",
+      "selectCard": "Выберите карту",
+      "note": "Примечание",
+      "notePlaceholder": "Введите дополнительную информацию",
+      "receiptImage": "Изображение квитанции",
+      "receiptHint": "Загрузите изображение квитанции об оплате (необязательно)",
+      "uploadReceipt": "Загрузить изображение"
+    },
+    "methods": {
+      "cash": "Наличные",
+      "card": "Карта",
+      "transfer": "Банковский перевод"
+    }
   },
   "expenseTypes": {
     "title": "Типы расходов",

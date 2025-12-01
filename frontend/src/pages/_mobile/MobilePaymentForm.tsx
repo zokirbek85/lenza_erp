@@ -14,6 +14,7 @@ type PaymentFormData = {
   rate_id: string;
   method: string;
   card_id: string;
+  cashbox_id: string;
   note: string;
   receipt_image: File | null;
 };
@@ -25,6 +26,7 @@ type MobilePaymentFormProps = {
   dealers: Array<{ id: number; name: string }>;
   rates: Array<{ id: number; rate_date: string; usd_to_uzs: number }>;
   cards: Array<{ id: number; name: string; masked_number: string }>;
+  cashboxes: Array<{ id: number; name: string; currency: string }>;
   onFormChange: (field: keyof PaymentFormData, value: string | File | null) => void;
   onSubmit: () => void;
   submitting: boolean;
@@ -47,6 +49,7 @@ const MobilePaymentForm = ({
   dealers,
   rates,
   cards,
+  cashboxes,
   onFormChange,
   onSubmit,
   submitting,
@@ -119,6 +122,24 @@ const MobilePaymentForm = ({
             {dealers.map((dealer) => (
               <option key={dealer.id} value={dealer.id}>
                 {dealer.name}
+              </option>
+            ))}
+          </select>
+        </MobileFormField>
+
+        {/* Cashbox Selection */}
+        <MobileFormField label={t('payments.form.cashbox')} required>
+          <select
+            required
+            value={form.cashbox_id}
+            onChange={(e) => onFormChange('cashbox_id', e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            style={{ minHeight: '44px', fontSize: '16px' }}
+          >
+            <option value="">{t('payments.form.selectCashbox')}</option>
+            {cashboxes.map((cashbox) => (
+              <option key={cashbox.id} value={cashbox.id}>
+                {cashbox.name} ({cashbox.currency})
               </option>
             ))}
           </select>

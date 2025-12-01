@@ -62,6 +62,7 @@ const defaultForm = {
   rate_id: '',
   method: 'cash',
   card_id: '',
+  cashbox_id: '',
   note: '',
   receipt_image: null as File | null,
 };
@@ -75,6 +76,7 @@ const PaymentsPage = () => {
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [cards, setCards] = useState<any[]>([]);
+  const [cashboxes, setCashboxes] = useState<any[]>([]);
   const [form, setForm] = useState(defaultForm);
   const [filtersState, setFiltersState] = useState({ dealer: '', from: '', to: '' });
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -119,12 +121,14 @@ const PaymentsPage = () => {
 
   useEffect(() => {
     const loadRefs = async () => {
-      const [dealers, ratesRes] = await Promise.all([
+      const [dealers, ratesRes, cashboxesRes] = await Promise.all([
         fetchAllDealers<Dealer>(),
-        http.get('/currency-rates/')
+        http.get('/currency-rates/'),
+        http.get('/cashboxes/', { params: { is_active: true } })
       ]);
       setDealers(dealers);
       setRates(toArray<CurrencyRate>(ratesRes.data));
+      setCashboxes(toArray(cashboxesRes.data));
     };
     loadRefs();
   }, []);
@@ -179,6 +183,7 @@ const PaymentsPage = () => {
     
     const formData = new FormData();
     formData.append('dealer_id', form.dealer);
+    formData.append('cashbox_id', form.cashbox_id);
     formData.append('pay_date', form.pay_date || new Date().toISOString().slice(0, 10));
     formData.append('amount', form.amount);
     formData.append('currency', form.currency);
@@ -485,6 +490,7 @@ const PaymentsPage = () => {
           dealers={dealers}
           rates={rates}
           cards={cards}
+          cashboxes={cashboxes}
           onFormChange={(field, value) => {
             if (field === 'receipt_image') {
               setForm({ ...form, [field]: value as File | null });
@@ -522,6 +528,23 @@ const PaymentsPage = () => {
             {dealers.map((dealer) => (
               <option key={dealer.id} value={dealer.id}>
                 {dealer.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('payments.cashbox')}</label>
+          <select
+            required
+            name="cashbox_id"
+            value={form.cashbox_id}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="">{t('payments.select')}</option>
+            {cashboxes.map((cashbox: any) => (
+              <option key={cashbox.id} value={cashbox.id}>
+                {cashbox.name} ({cashbox.currency})
               </option>
             ))}
           </select>
