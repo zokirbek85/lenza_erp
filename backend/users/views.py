@@ -6,7 +6,8 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import UserSerializer
+from .models import DashboardLayout
+from .serializers import UserSerializer, DashboardLayoutSerializer
 
 User = get_user_model()
 
@@ -64,3 +65,27 @@ class TelegramLinkView(APIView):
         user.is_active = False
         user.save(update_fields=['is_active'])
         return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
+
+
+class DashboardLayoutView(APIView):
+    """
+    GET: Retrieve current user's dashboard layout
+    POST: Save/update current user's dashboard layout
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        layout_obj, created = DashboardLayout.objects.get_or_create(
+            user=request.user,
+            defaults={'layout': []}
+        )
+        serializer = DashboardLayoutSerializer(layout_obj)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        layout_obj, created = DashboardLayout.objects.get_or_create(user=request.user)
+        serializer = DashboardLayoutSerializer(layout_obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

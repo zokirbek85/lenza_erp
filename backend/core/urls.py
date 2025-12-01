@@ -90,7 +90,7 @@ from payments.views import (
     PaymentViewSet,
 )
 from users.auth import RoleAwareTokenObtainPairView
-from users.views import TelegramLinkView, UserViewSet
+from users.views import TelegramLinkView, UserViewSet, DashboardLayoutView
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
 from reports.views_cards_pdf import cards_pdf_report
 from core.views_verify import verify_document
@@ -127,6 +127,7 @@ urlpatterns = [
     # Dashboard summary
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
     path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
+    path('api/dashboard/layout/', DashboardLayoutView.as_view(), name='dashboard-layout'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
     # Cashbox summary for Ledger page
     path('api/cashbox/summary/', CashboxSummaryView.as_view(), name='cashbox-summary'),

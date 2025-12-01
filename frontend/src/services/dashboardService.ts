@@ -323,3 +323,25 @@ export const fetchTopDealers = async (filters: AnalyticsFilters = {}) => {
   const url = `/analytics/top-dealers/?${params.toString()}`;
   return http.get<TopDealerItem[]>(url);
 };
+
+// Dashboard Layout API
+export interface DashboardLayoutItem {
+  i: string; // widget key
+  x: number; // grid x position
+  y: number; // grid y position
+  w: number; // grid width
+  h: number; // grid height
+}
+
+export interface DashboardLayoutResponse {
+  layout: DashboardLayoutItem[];
+  updated_at: string;
+}
+
+export const fetchDashboardLayout = async () => {
+  return http.get<DashboardLayoutResponse>('/dashboard/layout/');
+};
+
+export const saveDashboardLayout = async (layout: DashboardLayoutItem[]) => {
+  return http.post<DashboardLayoutResponse>('/dashboard/layout/', { layout });
+};;

@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row, Col, Card } from 'antd';
+import { Card } from 'antd';
 import { DollarOutlined, WalletOutlined, ShoppingOutlined } from '@ant-design/icons';
+import GridLayout from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 
 import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { loadCache, saveCache } from '../../utils/storage';
@@ -38,6 +42,9 @@ import {
   type ProductTrendPeriod,
   type CategoryItem,
   type TopDealerItem,
+  fetchDashboardLayout,
+  saveDashboardLayout,
+  type DashboardLayoutItem,
 } from '../../services/dashboardService';
 import { fetchDebtAnalytics } from '@/services/dashboard';
 import { fetchExpenseSummary, type ExpenseSummary } from '../../api/expensesApi';
@@ -53,6 +60,25 @@ interface DashboardData {
   topDealers: TopDealerItem[];
   expenses: ExpenseSummary | null;
 }
+
+// Default layout for dashboard widgets
+const DEFAULT_LAYOUT: Layout[] = [
+  { i: 'kpi_sales', x: 0, y: 0, w: 3, h: 2 },
+  { i: 'kpi_payments', x: 3, y: 0, w: 3, h: 2 },
+  { i: 'kpi_debt', x: 6, y: 0, w: 3, h: 2 },
+  { i: 'kpi_dealers', x: 9, y: 0, w: 3, h: 2 },
+  { i: 'inventory_stats', x: 0, y: 2, w: 4, h: 3 },
+  { i: 'debt_by_dealer', x: 0, y: 5, w: 6, h: 4 },
+  { i: 'debt_by_region', x: 6, y: 5, w: 6, h: 4 },
+  { i: 'debt_trend', x: 0, y: 9, w: 12, h: 4 },
+  { i: 'expense_metrics', x: 0, y: 13, w: 12, h: 3 },
+  { i: 'top_products', x: 0, y: 16, w: 8, h: 5 },
+  { i: 'top_categories', x: 8, y: 16, w: 4, h: 5 },
+  { i: 'region_products', x: 0, y: 21, w: 6, h: 5 },
+  { i: 'product_trend', x: 6, y: 21, w: 6, h: 5 },
+  { i: 'top_dealers', x: 0, y: 26, w: 12, h: 4 },
+  { i: 'overdue_receivables', x: 0, y: 30, w: 12, h: 5 },
+];
 
 const DashboardPage = () => {
   const { t } = useTranslation();
@@ -87,6 +113,7 @@ const DashboardPage = () => {
     expenses: null,
   });
   const [loading, setLoading] = useState(false);
+  const [layout, setLayout] = useState<Layout[]>(DEFAULT_LAYOUT);
 
   const canViewDebtAnalytics = useMemo(() => role !== 'warehouse', [role]);
   const canViewExpenses = useMemo(() => ['admin', 'accountant', 'owner'].includes(role || ''), [role]);
@@ -161,6 +188,33 @@ const DashboardPage = () => {
     }
   }, [filters, canViewDebtAnalytics, canViewExpenses]);
 
+  // Load dashboard layout
+  useEffect(() => {
+    const loadLayout = async () => {
+      try {
+        const response = await fetchDashboardLayout();
+        if (response.data.layout && Array.isArray(response.data.layout) && response.data.layout.length > 0) {
+          setLayout(response.data.layout);
+        }
+      } catch (error) {
+        // Use default layout if loading fails
+      }
+    };
+    loadLayout();
+  }, []);
+
+  // Save layout when it changes
+  const handleLayoutChange = useCallback((newLayout: Layout[]) => {
+    setLayout(newLayout);
+    // Debounce save to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      saveDashboardLayout(newLayout as DashboardLayoutItem[]).catch(() => {
+        // Silently fail - layout will be reset on next load
+      });
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   // Initial data load
   useEffect(() => {
     fetchAll();
@@ -190,9 +244,20 @@ const DashboardPage = () => {
       {/* Filter Bar */}
       <DashboardFilterBar onApply={fetchAll} />
 
-      {/* Primary KPI Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
+      {/* Draggable Dashboard Grid */}
+      <GridLayout
+        className="layout"
+        layout={layout}
+        cols={12}
+        rowHeight={30}
+        width={1200}
+        onLayoutChange={handleLayoutChange}
+        draggableHandle=".drag-handle"
+        isResizable={false}
+        compactType="vertical"
+      >
+        {/* Primary KPI Cards */}
+        <div key="kpi_sales" className="drag-handle" style={{ cursor: 'move' }}>
           <KpiCard
             title="Jami savdolar"
             value={data.summary?.total_sales || 0}
@@ -202,8 +267,9 @@ const DashboardPage = () => {
             tooltip="Barcha sotuvlar yig'indisi"
             loading={loading}
           />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
+        </div>
+
+        <div key="kpi_payments" className="drag-handle" style={{ cursor: 'move' }}>
           <KpiCard
             title="Jami to'lovlar"
             value={data.summary?.total_payments || 0}
@@ -213,9 +279,10 @@ const DashboardPage = () => {
             tooltip="Tasdiqlangan to'lovlar"
             loading={loading}
           />
-        </Col>
+        </div>
+
         {canViewDebtAnalytics && (
-          <Col xs={24} sm={12} lg={6}>
+          <div key="kpi_debt" className="drag-handle" style={{ cursor: 'move' }}>
             <KpiCard
               title="Umumiy qarzdorlik"
               value={data.analytics?.total_debt ?? data.summary?.total_debt ?? 0}
@@ -226,9 +293,10 @@ const DashboardPage = () => {
               loading={loading}
               valueStyle={{ color: '#dc2626' }}
             />
-          </Col>
+          </div>
         )}
-        <Col xs={24} sm={12} lg={6}>
+
+        <div key="kpi_dealers" className="drag-handle" style={{ cursor: 'move' }}>
           <KpiCard
             title="Dilerlar soni"
             value={data.summary?.total_dealers ?? data.summary?.dealers ?? 0}
@@ -237,12 +305,10 @@ const DashboardPage = () => {
             tooltip="Faol dilerlar"
             loading={loading}
           />
-        </Col>
-      </Row>
+        </div>
 
-      {/* Inventory Stats */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={8}>
+        {/* Inventory Stats */}
+        <div key="inventory_stats" className="drag-handle" style={{ cursor: 'move' }}>
           <Card className="shadow-sm hover:shadow-md transition-shadow" style={{ height: '100%' }}>
             <div className="flex items-center justify-between">
               <div>
@@ -263,67 +329,57 @@ const DashboardPage = () => {
               </p>
             </div>
           </Card>
-        </Col>
-      </Row>
-
-      {/* Debt Analytics */}
-      {canViewDebtAnalytics && data.analytics && (
-        <>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <DebtByDealerChart data={data.analytics.by_dealers} loading={loading} />
-            <DebtByRegionPie data={data.analytics.by_regions} loading={loading} />
-          </div>
-          <DebtTrendChart data={data.analytics.monthly} loading={loading} />
-        </>
-      )}
-
-      {/* Expense Analytics */}
-      {canViewExpenses && (
-        <ExpenseMetrics data={data.expenses} loading={loading} />
-      )}
-
-      {/* Sales Analytics Section */}
-      <div className="mt-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            📊 {t('Sotuv analitikasi')}
-          </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Mahsulotlar, hududlar va dilerlar bo\'yicha batafsil tahlil')}
-          </p>
         </div>
 
-        {/* Top Products & Categories */}
-        <Row gutter={[16, 16]} className="mb-6">
-          <Col xs={24} lg={16}>
-            <TopProductsCard data={data.topProducts} loading={loading} />
-          </Col>
-          <Col xs={24} lg={8}>
-            <TopCategoriesCard data={data.topCategories} loading={loading} />
-          </Col>
-        </Row>
+        {/* Debt Analytics */}
+        {canViewDebtAnalytics && data.analytics && (
+          <>
+            <div key="debt_by_dealer" className="drag-handle" style={{ cursor: 'move' }}>
+              <DebtByDealerChart data={data.analytics.by_dealers} loading={loading} />
+            </div>
+            <div key="debt_by_region" className="drag-handle" style={{ cursor: 'move' }}>
+              <DebtByRegionPie data={data.analytics.by_regions} loading={loading} />
+            </div>
+            <div key="debt_trend" className="drag-handle" style={{ cursor: 'move' }}>
+              <DebtTrendChart data={data.analytics.monthly} loading={loading} />
+            </div>
+          </>
+        )}
 
-        {/* Region Products & Product Trend */}
-        <Row gutter={[16, 16]} className="mb-6">
-          <Col xs={24} lg={12}>
-            <RegionProductHeatmap data={data.regionProducts} loading={loading} />
-          </Col>
-          <Col xs={24} lg={12}>
-            <ProductTrendLineChart data={data.productTrend} loading={loading} />
-          </Col>
-        </Row>
+        {/* Expense Analytics */}
+        {canViewExpenses && (
+          <div key="expense_metrics" className="drag-handle" style={{ cursor: 'move' }}>
+            <ExpenseMetrics data={data.expenses} loading={loading} />
+          </div>
+        )}
+
+        {/* Top Products */}
+        <div key="top_products" className="drag-handle" style={{ cursor: 'move' }}>
+          <TopProductsCard data={data.topProducts} loading={loading} />
+        </div>
+
+        {/* Top Categories */}
+        <div key="top_categories" className="drag-handle" style={{ cursor: 'move' }}>
+          <TopCategoriesCard data={data.topCategories} loading={loading} />
+        </div>
+
+        {/* Region Products */}
+        <div key="region_products" className="drag-handle" style={{ cursor: 'move' }}>
+          <RegionProductHeatmap data={data.regionProducts} loading={loading} />
+        </div>
+
+        {/* Product Trend */}
+        <div key="product_trend" className="drag-handle" style={{ cursor: 'move' }}>
+          <ProductTrendLineChart data={data.productTrend} loading={loading} />
+        </div>
 
         {/* Top Dealers */}
-        <Row gutter={[16, 16]} className="mb-6">
-          <Col xs={24}>
-            <TopDealersCard data={data.topDealers} loading={loading} />
-          </Col>
-        </Row>
-      </div>
+        <div key="top_dealers" className="drag-handle" style={{ cursor: 'move' }}>
+          <TopDealersCard data={data.topDealers} loading={loading} />
+        </div>
 
-      {/* Overdue Receivables Table */}
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
+        {/* Overdue Receivables Table */}
+        <div key="overdue_receivables" className="drag-handle" style={{ cursor: 'move' }}>
           <Card
             title={t('dashboard.overdueReceivables')}
             className="shadow-sm hover:shadow-md transition-shadow"
@@ -333,8 +389,8 @@ const DashboardPage = () => {
               loading={loading}
             />
           </Card>
-        </Col>
-      </Row>
+        </div>
+      </GridLayout>
     </section>
   );
 };

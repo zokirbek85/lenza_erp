@@ -17,3 +17,18 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
+
+
+class DashboardLayout(models.Model):
+    """Stores user's customized dashboard widget layout for drag & drop functionality."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='dashboard_layout')
+    layout = models.JSONField(default=list, help_text='Array of widget positions: [{i, x, y, w, h}, ...]')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'users_dashboard_layout'
+        verbose_name = 'Dashboard Layout'
+        verbose_name_plural = 'Dashboard Layouts'
+
+    def __str__(self) -> str:
+        return f"Dashboard layout for {self.user.username}"

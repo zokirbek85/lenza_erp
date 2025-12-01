@@ -1,7 +1,15 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .models import DashboardLayout
 
 User = get_user_model()
+
+
+class DashboardLayoutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DashboardLayout
+        fields = ('layout', 'updated_at')
+        read_only_fields = ('updated_at',)
 
 
 class UserSerializer(serializers.ModelSerializer):
