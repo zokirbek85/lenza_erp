@@ -311,7 +311,7 @@ body,
   user-select: none;
 }
 
-/* React Grid Layout Styles */
+/* React Grid Layout Styles - Optimized for no overlaps */
 .react-grid-layout {
   position: relative;
   transition: height 200ms ease;
@@ -320,6 +320,12 @@ body,
 .react-grid-item {
   transition: all 200ms ease;
   transition-property: left, top, width, height;
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.react-grid-item > div {
+  height: 100%; /* Ensure widget fills container */
+  width: 100%;
 }
 
 .react-grid-item img {
@@ -359,6 +365,7 @@ body,
   z-index: 100;
   will-change: transform;
   opacity: 0.9;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .react-grid-item.dropping {
@@ -377,6 +384,9 @@ body,
 .drag-handle {
   cursor: move;
   height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Dark mode support for grid */
@@ -388,4 +398,8 @@ body,
 [data-theme='dark'] .react-grid-item > .react-resizable-handle::after {
   border-right-color: rgba(255, 255, 255, 0.4);
   border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme='dark'] .react-grid-item.react-draggable-dragging {
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
 }

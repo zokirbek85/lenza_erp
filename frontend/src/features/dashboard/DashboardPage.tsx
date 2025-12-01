@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from 'antd';
 import { DollarOutlined, WalletOutlined, ShoppingOutlined } from '@ant-design/icons';
-import GridLayout from 'react-grid-layout';
+import { Responsive as ResponsiveGridLayout, WidthProvider } from 'react-grid-layout';
 import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+
+const ResponsiveGrid = WidthProvider(ResponsiveGridLayout);
 
 import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { loadCache, saveCache } from '../../utils/storage';
@@ -61,23 +63,40 @@ interface DashboardData {
   expenses: ExpenseSummary | null;
 }
 
-// Default layout for dashboard widgets
+// Default layout for dashboard widgets - optimized for proper spacing
 const DEFAULT_LAYOUT: Layout[] = [
-  { i: 'kpi_sales', x: 0, y: 0, w: 3, h: 2 },
-  { i: 'kpi_payments', x: 3, y: 0, w: 3, h: 2 },
-  { i: 'kpi_debt', x: 6, y: 0, w: 3, h: 2 },
-  { i: 'kpi_dealers', x: 9, y: 0, w: 3, h: 2 },
-  { i: 'inventory_stats', x: 0, y: 2, w: 4, h: 3 },
-  { i: 'debt_by_dealer', x: 0, y: 5, w: 6, h: 4 },
-  { i: 'debt_by_region', x: 6, y: 5, w: 6, h: 4 },
-  { i: 'debt_trend', x: 0, y: 9, w: 12, h: 4 },
-  { i: 'expense_metrics', x: 0, y: 13, w: 12, h: 3 },
-  { i: 'top_products', x: 0, y: 16, w: 8, h: 5 },
-  { i: 'top_categories', x: 8, y: 16, w: 4, h: 5 },
-  { i: 'region_products', x: 0, y: 21, w: 6, h: 5 },
-  { i: 'product_trend', x: 6, y: 21, w: 6, h: 5 },
-  { i: 'top_dealers', x: 0, y: 26, w: 12, h: 4 },
-  { i: 'overdue_receivables', x: 0, y: 30, w: 12, h: 5 },
+  // KPI Cards - 4 columns, h=4 for ~180px height
+  { i: 'kpi_sales', x: 0, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
+  { i: 'kpi_payments', x: 3, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
+  { i: 'kpi_debt', x: 6, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
+  { i: 'kpi_dealers', x: 9, y: 0, w: 3, h: 4, minW: 3, minH: 3 },
+  
+  // Inventory Stats - wider card
+  { i: 'inventory_stats', x: 0, y: 4, w: 4, h: 5, minW: 4, minH: 4 },
+  
+  // Debt Analytics Charts - side by side
+  { i: 'debt_by_dealer', x: 0, y: 9, w: 6, h: 7, minW: 5, minH: 6 },
+  { i: 'debt_by_region', x: 6, y: 9, w: 6, h: 7, minW: 5, minH: 6 },
+  
+  // Debt Trend - full width
+  { i: 'debt_trend', x: 0, y: 16, w: 12, h: 7, minW: 10, minH: 6 },
+  
+  // Expense Metrics
+  { i: 'expense_metrics', x: 0, y: 23, w: 12, h: 5, minW: 10, minH: 4 },
+  
+  // Top Products & Categories
+  { i: 'top_products', x: 0, y: 28, w: 8, h: 9, minW: 6, minH: 8 },
+  { i: 'top_categories', x: 8, y: 28, w: 4, h: 9, minW: 4, minH: 8 },
+  
+  // Region Products & Product Trend
+  { i: 'region_products', x: 0, y: 37, w: 6, h: 9, minW: 5, minH: 8 },
+  { i: 'product_trend', x: 6, y: 37, w: 6, h: 9, minW: 5, minH: 8 },
+  
+  // Top Dealers - full width
+  { i: 'top_dealers', x: 0, y: 46, w: 12, h: 7, minW: 10, minH: 6 },
+  
+  // Overdue Receivables - full width table
+  { i: 'overdue_receivables', x: 0, y: 53, w: 12, h: 8, minW: 10, minH: 7 },
 ];
 
 const DashboardPage = () => {
@@ -203,12 +222,20 @@ const DashboardPage = () => {
     loadLayout();
   }, []);
 
-  // Save layout when it changes
+  // Save layout when it changes with validation
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
-    setLayout(newLayout);
+    // Validate and fix layout to prevent overlaps
+    const fixedLayout = newLayout.map(item => ({
+      ...item,
+      y: Math.max(item.y, 0),
+      h: Math.max(item.h, 2),
+    }));
+    
+    setLayout(fixedLayout);
+    
     // Debounce save to avoid too many API calls
     const timeoutId = setTimeout(() => {
-      saveDashboardLayout(newLayout as DashboardLayoutItem[]).catch(() => {
+      saveDashboardLayout(fixedLayout as DashboardLayoutItem[]).catch(() => {
         // Silently fail - layout will be reset on next load
       });
     }, 500);
@@ -245,16 +272,19 @@ const DashboardPage = () => {
       <DashboardFilterBar onApply={fetchAll} />
 
       {/* Draggable Dashboard Grid */}
-      <GridLayout
+      <ResponsiveGrid
         className="layout"
-        layout={layout}
-        cols={12}
-        rowHeight={30}
-        width={1200}
+        layouts={{ lg: layout, md: layout, sm: layout, xs: layout }}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
+        cols={{ lg: 12, md: 10, sm: 6, xs: 2 }}
+        rowHeight={45}
+        margin={[15, 15]}
+        containerPadding={[10, 10]}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"
         isResizable={false}
         compactType="vertical"
+        preventCollision={false}
       >
         {/* Primary KPI Cards */}
         <div key="kpi_sales" className="drag-handle" style={{ cursor: 'move' }}>
@@ -390,7 +420,7 @@ const DashboardPage = () => {
             />
           </Card>
         </div>
-      </GridLayout>
+      </ResponsiveGrid>
     </section>
   );
 };
