@@ -61,7 +61,25 @@ class ExportMixin:
         doc_type: str,
         doc_id,
     ) -> HttpResponse:
-        verify_url = request.build_absolute_uri(reverse('verify-document', args=[doc_type, doc_id]))
+        # Build API verification URL for React frontend
+        if doc_type == 'order':
+            api_path = reverse('verify-order-api', args=[doc_id])
+        elif doc_type == 'reconciliation':
+            api_path = reverse('verify-reconciliation-api', args=[doc_id])
+        else:
+            # Fallback to legacy HTML endpoint for other doc types
+            api_path = reverse('verify-document', args=[doc_type, doc_id])
+        
+        # For QR code, link to frontend verification page (not API endpoint)
+        # Frontend will make API call to fetch data
+        base_url = request.build_absolute_uri('/')
+        if doc_type == 'order':
+            verify_url = f"{base_url.rstrip('/')}/verify/order/{doc_id}/"
+        elif doc_type == 'reconciliation':
+            verify_url = f"{base_url.rstrip('/')}/verify/reconciliation/{doc_id}/"
+        else:
+            verify_url = request.build_absolute_uri(reverse('verify-document', args=[doc_type, doc_id]))
+        
         qr_code = self._build_qr_code(verify_url)
 
         html = render_to_string(
