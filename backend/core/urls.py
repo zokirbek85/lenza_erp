@@ -83,6 +83,7 @@ from payments.views import (
     CurrencyRateViewSet,
     ExpenseCategoryViewSet,
     ExpenseViewSet,
+    FinanceBalancesView,
     PaymentCardViewSet,
     PaymentExportExcelView,
     PaymentReportPDFView,
@@ -129,6 +130,8 @@ urlpatterns = [
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
     # Cashbox summary for Ledger page
     path('api/cashbox/summary/', CashboxSummaryView.as_view(), name='cashbox-summary'),
+    # Finance balances for Expenses page widgets
+    path('api/finance/balances/', FinanceBalancesView.as_view(), name='finance-balances'),
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),
 
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),

@@ -381,6 +381,54 @@ class CashboxSummaryView(APIView):
         })
 
 
+class FinanceBalancesView(APIView):
+    """
+    Get finance balances for dashboard widgets
+    Returns: cash_uzs, cash_usd, cards array, bank balance
+    Used by Expenses page balance widgets
+    """
+    permission_classes = [IsAdmin | IsAccountant | IsOwner]
+
+    def get(self, request):
+        from payments.models import Cashbox
+        from decimal import Decimal
+
+        cashboxes = Cashbox.objects.filter(is_active=True).order_by('cashbox_type', 'name')
+        
+        cash_uzs = Decimal('0')
+        cash_usd = Decimal('0')
+        cards = []
+        bank = {'currency': 'USD', 'balance': Decimal('0')}
+        
+        for cashbox in cashboxes:
+            balance_data = cashbox.calculate_balance(return_detailed=True)
+            balance = balance_data['balance']
+            
+            if cashbox.cashbox_type == Cashbox.TYPE_CASH_UZS:
+                cash_uzs += balance
+            elif cashbox.cashbox_type == Cashbox.TYPE_CASH_USD:
+                cash_usd += balance
+            elif cashbox.cashbox_type == Cashbox.TYPE_CARD:
+                cards.append({
+                    'name': cashbox.name,
+                    'currency': cashbox.currency,
+                    'balance': float(balance)
+                })
+        
+        # Bank balance - for now we'll use a placeholder or specific cashbox
+        # You can add a separate bank account type if needed
+        
+        return Response({
+            'cash_uzs': float(cash_uzs),
+            'cash_usd': float(cash_usd),
+            'cards': cards,
+            'bank': {
+                'currency': 'USD',
+                'balance': 0.0  # Placeholder - add bank account logic if needed
+            }
+        })
+
+
 class CashboxViewSet(viewsets.ModelViewSet):
     """
     CRUD operations for Cashbox (cards and cash in UZS/USD)

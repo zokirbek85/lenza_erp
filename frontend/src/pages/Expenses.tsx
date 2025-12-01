@@ -11,6 +11,7 @@ import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { toArray } from '../utils/api';
 import type { Expense, ExpenseCategory } from '../api/expensesApi';
+import BalancesPanel from '../components/finance/BalancesPanel';
 
 interface Cashbox {
   id: number;
@@ -229,6 +230,9 @@ const ExpensesPage = () => {
           </button>
         </div>
       </header>
+
+      {/* Finance Balances */}
+      <BalancesPanel />
 
       {/* Create Expense Form */}
       {showForm && (

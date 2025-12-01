@@ -1,0 +1,111 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import http from '../../app/http';
+import BalanceCard from './BalanceCard';
+
+interface CardBalance {
+  name: string;
+  currency: 'USD' | 'UZS';
+  balance: number;
+}
+
+interface BankBalance {
+  currency: 'USD' | 'UZS';
+  balance: number;
+}
+
+interface FinanceBalances {
+  cash_uzs: number;
+  cash_usd: number;
+  cards: CardBalance[];
+  bank: BankBalance;
+}
+
+/**
+ * BalancesPanel - Display all finance balances (cash, cards, bank)
+ * 
+ * Features:
+ * - Real-time balance display
+ * - Responsive grid (4 columns desktop, 2 columns mobile)
+ * - Auto-refresh on mount
+ * - Loading state
+ * - Error handling
+ */
+const BalancesPanel = () => {
+  const { t } = useTranslation();
+  const [balances, setBalances] = useState<FinanceBalances | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBalances = async () => {
+      try {
+        const response = await http.get('/finance/balances/');
+        setBalances(response.data);
+      } catch (error) {
+        console.error('Failed to load finance balances:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBalances();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (!balances) {
+    return null;
+  }
+
+  return (
+    <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {/* Cash UZS */}
+      <BalanceCard
+        icon="money"
+        title={t('finance.balances.cashUzs')}
+        value={balances.cash_uzs}
+        currency="UZS"
+      />
+
+      {/* Cash USD */}
+      <BalanceCard
+        icon="money"
+        title={t('finance.balances.cashUsd')}
+        value={balances.cash_usd}
+        currency="USD"
+      />
+
+      {/* Card Balances */}
+      {balances.cards.map((card, index) => (
+        <BalanceCard
+          key={index}
+          icon="credit-card"
+          title={card.name}
+          value={card.balance}
+          currency={card.currency}
+        />
+      ))}
+
+      {/* Bank Balance */}
+      <BalanceCard
+        icon="bank"
+        title={t('finance.balances.bank')}
+        value={balances.bank.balance}
+        currency={balances.bank.currency}
+      />
+    </div>
+  );
+};
+
+export default BalancesPanel;

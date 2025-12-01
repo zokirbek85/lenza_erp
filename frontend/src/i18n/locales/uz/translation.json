@@ -512,6 +512,13 @@
       "exportError": "Eksport xatolik"
     }
   },
+  "finance": {
+    "balances": {
+      "cashUzs": "Naqd UZS",
+      "cashUsd": "Naqd USD",
+      "bank": "Bank balansi"
+    }
+  },
   "expenses": {
     "title": "Xarajatlar",
     "subtitle": "Kompaniya xarajatlarini boshqarish",
