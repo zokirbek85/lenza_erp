@@ -100,12 +100,6 @@ class CashboxOpeningBalanceSerializer(serializers.ModelSerializer):
             'currency',
         )
         read_only_fields = ('created_at', 'created_by')
-    
-    def validate(self, attrs):
-        """Ensure cashbox is provided"""
-        if 'cashbox' not in attrs:
-            raise serializers.ValidationError({'cashbox': 'Kassa tanlanishi kerak'})
-        return attrs
 
 
 class CurrencyRateSerializer(serializers.ModelSerializer):
@@ -142,6 +136,13 @@ class PaymentSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True
     )
+    cashbox = CashboxSerializer(read_only=True)
+    cashbox_id = serializers.PrimaryKeyRelatedField(
+        queryset=Cashbox.objects.filter(is_active=True),
+        source='cashbox',
+        write_only=True,
+        required=True
+    )
     rate = CurrencyRateSerializer(read_only=True)
     rate_id = serializers.PrimaryKeyRelatedField(
         queryset=CurrencyRate.objects.all(), source='rate', write_only=True, allow_null=True
@@ -164,6 +165,8 @@ class PaymentSerializer(serializers.ModelSerializer):
             'id',
             'dealer',
             'dealer_id',
+            'cashbox',
+            'cashbox_id',
             'pay_date',
             'amount',
             'currency',
@@ -216,6 +219,10 @@ class PaymentSerializer(serializers.ModelSerializer):
         return ''
 
     def validate(self, attrs):
+        # Ensure cashbox is provided
+        if 'cashbox' not in attrs:
+            raise serializers.ValidationError({'cashbox': 'Kassa tanlanishi kerak'})
+        
         # When creating/updating, ensure card is present for card payments
         method = attrs.get('method')
         card = attrs.get('card')
