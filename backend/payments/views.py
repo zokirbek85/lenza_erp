@@ -562,11 +562,16 @@ class ExpenseViewSet(viewsets.ModelViewSet, BaseReportMixin, ExportMixin):
         serializer = self.get_serializer(expense)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], url_path='summary')
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='summary',
+        permission_classes=[IsAdmin | IsAccountant | IsOwner]
+    )
     def summary(self, request):
         """Get expense summary metrics (for dashboard)
         
-        Permissions: Inherits from viewset (IsAdmin | IsAccountant | IsOwner)
+        Permissions: Admin, Accountant, or Owner only
         """
         from decimal import Decimal
         from datetime import datetime, timedelta
