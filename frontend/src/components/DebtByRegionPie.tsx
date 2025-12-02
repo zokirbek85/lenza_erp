@@ -12,6 +12,7 @@ import { useRef } from 'react';
 
 import { formatCurrency } from '../utils/formatters';
 import { useAutoscale } from '../hooks/useAutoscale';
+import { useChartColors, getSmartLabelConfig } from '../hooks/useChartColors';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -20,23 +21,16 @@ interface DebtByRegionPieProps {
   loading?: boolean;
 }
 
-const COLORS = [
-  '#ef476f',
-  '#ffd166',
-  '#06d6a0',
-  '#118ab2',
-  '#073b4c',
-  '#8d99ae',
-  '#ff9f1c',
-  '#8338ec',
-];
-
 const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
   const { token } = theme.useToken();
+  const colors = useChartColors();
   
   // Autoscale: widget o'lchamiga qarab chart parametrlarini moslashtirish
   const containerRef = useRef<HTMLDivElement>(null);
-  const { height, fontSize } = useAutoscale(containerRef);
+  const { height, fontSize, width } = useAutoscale(containerRef);
+  
+  // Smart label configuration based on widget size
+  const labelConfig = getSmartLabelConfig(width, height, data.length);
 
   const chartData: ChartData<'doughnut'> = {
     labels: data.map((item) => item.region),
@@ -44,9 +38,16 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
       {
         label: 'Qarzdorlik',
         data: data.map((item) => item.debt),
-        backgroundColor: data.map(
-          (_, index) => COLORS[index % COLORS.length]
-        ),
+        backgroundColor: [
+          colors.primary,
+          colors.secondary[0],
+          colors.secondary[1],
+          colors.secondary[2],
+          colors.secondary[3],
+          colors.secondary[4],
+          colors.secondary[5],
+          colors.secondary[6],
+        ],
         borderWidth: 0,
       },
     ],
@@ -57,14 +58,17 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
     maintainAspectRatio: false, // Autoscale: aspect ratio o'chirildi
     plugins: {
       legend: {
-        display: true,
-        position: 'right',
+        display: width > 400, // Smart: hide legend on small widgets
+        position: labelConfig.legendPosition,
         labels: {
           usePointStyle: true,
-          font: { size: Math.max(10, fontSize * 0.6) }, // Autoscale: legend font
+          font: { size: labelConfig.fontSize },
+          color: colors.text,
+          padding: width > 600 ? 15 : 10,
         },
       },
       tooltip: {
+        backgroundColor: colors.tooltip,
         bodyFont: { size: Math.max(11, fontSize * 0.7) }, // Autoscale: tooltip font
         callbacks: {
           label: (context) => {
@@ -73,7 +77,10 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
               typeof parsedValue === 'object' && parsedValue !== null
                 ? Number((parsedValue as { y?: number }).y ?? 0)
                 : Number(parsedValue ?? 0);
-            return `${context.label}: ${formatCurrency(value, 'USD')}`;
+            const label = labelConfig.truncateLabels && context.label && context.label.length > 20
+              ? context.label.substring(0, 17) + '...'
+              : context.label;
+            return `${label}: ${formatCurrency(value, 'USD')}`;
           },
         },
       },

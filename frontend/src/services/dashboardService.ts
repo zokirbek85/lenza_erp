@@ -331,6 +331,9 @@ export interface DashboardLayoutItem {
   y: number; // grid y position
   w: number; // grid width
   h: number; // grid height
+  collapsed?: boolean; // widget collapse state
+  minW?: number; // min width
+  minH?: number; // min height
 }
 
 export interface DashboardLayoutResponse {

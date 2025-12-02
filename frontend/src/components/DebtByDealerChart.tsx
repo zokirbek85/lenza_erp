@@ -14,6 +14,7 @@ import { useRef } from 'react';
 
 import { formatCurrency } from '../utils/formatters';
 import { useAutoscale } from '../hooks/useAutoscale';
+import { useChartColors } from '../hooks/useChartColors';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -24,17 +25,19 @@ interface DebtByDealerChartProps {
 
 const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
   const { token } = theme.useToken();
+  const colors = useChartColors();
   
   // Autoscale: widget o'lchamiga qarab chart parametrlarini moslashtirish
   const containerRef = useRef<HTMLDivElement>(null);
-  const { height, fontSize, chartPadding } = useAutoscale(containerRef);
+  const { height, fontSize, chartPadding, width } = useAutoscale(containerRef);
+  
   const chartData: ChartData<'bar'> = {
     labels: data.map((item) => item.dealer),
     datasets: [
       {
         label: 'Qarzdorlik (USD)',
         data: data.map((item) => item.debt),
-        backgroundColor: '#e63946',
+        backgroundColor: colors.primary,
         borderRadius: 4,
       },
     ],
@@ -48,6 +51,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
         display: false,
       },
       tooltip: {
+        backgroundColor: colors.tooltip,
         bodyFont: { 
           size: Math.max(11, fontSize * 0.7), // Autoscale: tooltip font
         },
@@ -66,12 +70,20 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
       x: {
         ticks: {
           font: { size: Math.max(10, fontSize * 0.6) }, // Autoscale: x-axis labels
+          color: colors.text,
+        },
+        grid: {
+          color: colors.grid,
         },
       },
       y: {
         ticks: {
           font: { size: Math.max(10, fontSize * 0.6) }, // Autoscale: y-axis labels
+          color: colors.text,
           callback: (value) => formatCurrency(Number(value), 'USD'),
+        },
+        grid: {
+          color: colors.grid,
         },
       },
     },

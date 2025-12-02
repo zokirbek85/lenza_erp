@@ -25,6 +25,7 @@ import {
   RegionProductHeatmap,
 } from '../../components/analytics';
 import ExpenseMetrics from '../../components/analytics/ExpenseMetrics';
+import { WidgetWrapper } from '../../components/WidgetWrapper';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import type { DashboardFilters } from '../../store/useDashboardStore';
 import { useAuthStore } from '../../auth/useAuthStore';
@@ -133,6 +134,7 @@ const DashboardPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [layout, setLayout] = useState<Layout[]>(DEFAULT_LAYOUT);
+  const [collapsedWidgets, setCollapsedWidgets] = useState<Set<string>>(new Set());
 
   const canViewDebtAnalytics = useMemo(() => role !== 'warehouse', [role]);
   const canViewExpenses = useMemo(() => ['admin', 'accountant', 'owner'].includes(role || ''), [role]);
@@ -207,16 +209,43 @@ const DashboardPage = () => {
     }
   }, [filters, canViewDebtAnalytics, canViewExpenses]);
 
-  // Load dashboard layout - priority: localStorage > backend > default
+  // Load dashboard layout - priority: backend > localStorage > default
   useEffect(() => {
     const loadLayout = async () => {
-      // 1. Try localStorage first (fastest, most recent)
+      // 1. Try backend first (authoritative source)
+      try {
+        const response = await fetchDashboardLayout();
+        if (response.data.layout && Array.isArray(response.data.layout) && response.data.layout.length > 0) {
+          setLayout(response.data.layout);
+          // Extract collapsed state
+          const collapsed = new Set(
+            response.data.layout
+              .filter((item) => (item as DashboardLayoutItem).collapsed)
+              .map((item) => item.i)
+          );
+          setCollapsedWidgets(collapsed);
+          // Sync to localStorage
+          localStorage.setItem('dashboardLayout_lg', JSON.stringify(response.data.layout));
+          return;
+        }
+      } catch (error) {
+        console.warn('Failed to load layout from backend, trying localStorage');
+      }
+      
+      // 2. Fallback to localStorage
       try {
         const localLayout = localStorage.getItem('dashboardLayout_lg');
         if (localLayout) {
           const parsed = JSON.parse(localLayout);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setLayout(parsed);
+            // Extract collapsed state
+            const collapsed = new Set(
+              parsed
+                .filter((item: DashboardLayoutItem) => item.collapsed)
+                .map((item: DashboardLayoutItem) => item.i)
+            );
+            setCollapsedWidgets(collapsed);
             return;
           }
         }
@@ -224,33 +253,70 @@ const DashboardPage = () => {
         console.warn('Failed to load layout from localStorage');
       }
       
-      // 2. Fallback to backend
-      try {
-        const response = await fetchDashboardLayout();
-        if (response.data.layout && Array.isArray(response.data.layout) && response.data.layout.length > 0) {
-          setLayout(response.data.layout);
-          // Sync to localStorage
-          localStorage.setItem('dashboardLayout_lg', JSON.stringify(response.data.layout));
-          return;
-        }
-      } catch (error) {
-        console.warn('Failed to load layout from backend');
-      }
-      
       // 3. Use default layout if all fails (already set in state)
     };
     loadLayout();
   }, []);
 
+  // Toggle widget collapse/expand
+  const toggleWidgetCollapse = useCallback((widgetId: string) => {
+    setCollapsedWidgets(prev => {
+      const next = new Set(prev);
+      if (next.has(widgetId)) {
+        next.delete(widgetId);
+      } else {
+        next.add(widgetId);
+      }
+      return next;
+    });
+    
+    // Update layout with collapsed state
+    setLayout(prev => {
+      const updated = prev.map(item => {
+        if (item.i === widgetId) {
+          const isCollapsing = !collapsedWidgets.has(widgetId);
+          return {
+            ...item,
+            collapsed: isCollapsing,
+            h: isCollapsing ? 1 : (item.minH || 2), // Collapse to 1 row height
+          } as DashboardLayoutItem;
+        }
+        return item;
+      });
+      
+      // Save to localStorage and backend
+      try {
+        localStorage.setItem('dashboardLayout_lg', JSON.stringify(updated));
+      } catch (error) {
+        console.warn('Failed to save collapsed state to localStorage');
+      }
+      
+      // Debounce backend save
+      setTimeout(() => {
+        saveDashboardLayout(updated as DashboardLayoutItem[]).catch(() => {
+          console.warn('Failed to save collapsed state to backend');
+        });
+      }, 300);
+      
+      return updated;
+    });
+  }, [collapsedWidgets]);
+
   // Save layout when it changes with validation and localStorage backup
   const handleLayoutChange = useCallback((newLayout: Layout[]) => {
     // Validate and fix layout to prevent negative positions and min sizes
-    const fixedLayout = newLayout.map(item => ({
-      ...item,
-      y: Math.max(item.y, 0),
-      h: Math.max(item.h, 2),
-      w: Math.max(item.w, 2),
-    }));
+    const fixedLayout = newLayout.map(item => {
+      const existingItem = layout.find(l => l.i === item.i) as DashboardLayoutItem | undefined;
+      return {
+        ...item,
+        y: Math.max(item.y, 0),
+        h: Math.max(item.h, 2),
+        w: Math.max(item.w, 2),
+        collapsed: existingItem?.collapsed || collapsedWidgets.has(item.i),
+        minW: existingItem?.minW,
+        minH: existingItem?.minH,
+      };
+    });
     
     setLayout(fixedLayout);
     
@@ -271,7 +337,7 @@ const DashboardPage = () => {
       });
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [collapsedWidgets, layout]);
 
   // Initial data load
   useEffect(() => {
@@ -320,138 +386,228 @@ const DashboardPage = () => {
         preventCollision={false}
       >
         {/* Primary KPI Cards */}
-        <div key="kpi_sales" className="drag-handle" style={{ cursor: 'move' }}>
-          <KpiCard
-            title="Jami savdolar"
-            value={data.summary?.total_sales || 0}
-            prefix="$"
-            precision={2}
-            icon={<DollarOutlined />}
-            tooltip="Barcha sotuvlar yig'indisi"
-            loading={loading}
-          />
-        </div>
-
-        <div key="kpi_payments" className="drag-handle" style={{ cursor: 'move' }}>
-          <KpiCard
-            title="Jami to'lovlar"
-            value={data.summary?.total_payments || 0}
-            prefix="$"
-            precision={2}
-            icon={<WalletOutlined />}
-            tooltip="Tasdiqlangan to'lovlar"
-            loading={loading}
-          />
-        </div>
-
-        {canViewDebtAnalytics && (
-          <div key="kpi_debt" className="drag-handle" style={{ cursor: 'move' }}>
+        <div key="kpi_sales">
+          <WidgetWrapper
+            widgetId="kpi_sales"
+            isCollapsed={collapsedWidgets.has('kpi_sales')}
+            onToggle={toggleWidgetCollapse}
+          >
             <KpiCard
-              title="Umumiy qarzdorlik"
-              value={data.analytics?.total_debt ?? data.summary?.total_debt ?? 0}
+              title="Jami savdolar"
+              value={data.summary?.total_sales || 0}
               prefix="$"
               precision={2}
               icon={<DollarOutlined />}
-              tooltip="Opening + Orders - Payments - Returns"
+              tooltip="Barcha sotuvlar yig'indisi"
               loading={loading}
-              valueStyle={{ color: '#dc2626' }}
             />
+          </WidgetWrapper>
+        </div>
+
+        <div key="kpi_payments">
+          <WidgetWrapper
+            widgetId="kpi_payments"
+            isCollapsed={collapsedWidgets.has('kpi_payments')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <KpiCard
+              title="Jami to'lovlar"
+              value={data.summary?.total_payments || 0}
+              prefix="$"
+              precision={2}
+              icon={<WalletOutlined />}
+              tooltip="Tasdiqlangan to'lovlar"
+              loading={loading}
+            />
+          </WidgetWrapper>
+        </div>
+
+        {canViewDebtAnalytics && (
+          <div key="kpi_debt">
+            <WidgetWrapper
+              widgetId="kpi_debt"
+              isCollapsed={collapsedWidgets.has('kpi_debt')}
+              onToggle={toggleWidgetCollapse}
+            >
+              <KpiCard
+                title="Umumiy qarzdorlik"
+                value={data.analytics?.total_debt ?? data.summary?.total_debt ?? 0}
+                prefix="$"
+                precision={2}
+                icon={<DollarOutlined />}
+                tooltip="Opening + Orders - Payments - Returns"
+                loading={loading}
+                valueStyle={{ color: '#dc2626' }}
+              />
+            </WidgetWrapper>
           </div>
         )}
 
-        <div key="kpi_dealers" className="drag-handle" style={{ cursor: 'move' }}>
-          <KpiCard
-            title="Dilerlar soni"
-            value={data.summary?.total_dealers ?? data.summary?.dealers ?? 0}
-            precision={0}
-            icon={<ShoppingOutlined />}
-            tooltip="Faol dilerlar"
-            loading={loading}
-          />
+        <div key="kpi_dealers">
+          <WidgetWrapper
+            widgetId="kpi_dealers"
+            isCollapsed={collapsedWidgets.has('kpi_dealers')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <KpiCard
+              title="Dilerlar soni"
+              value={data.summary?.total_dealers ?? data.summary?.dealers ?? 0}
+              precision={0}
+              icon={<ShoppingOutlined />}
+              tooltip="Faol dilerlar"
+              loading={loading}
+            />
+          </WidgetWrapper>
         </div>
 
         {/* Inventory Stats */}
-        <div key="inventory_stats" className="drag-handle" style={{ cursor: 'move' }}>
-          <Card className="shadow-sm hover:shadow-md transition-shadow" style={{ height: '100%' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.title')}</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                  {loading ? '...' : formatQuantity(data.summary?.total_stock_good ?? data.inventoryStats?.total_quantity ?? 0)}
+        <div key="inventory_stats">
+          <WidgetWrapper
+            widgetId="inventory_stats"
+            isCollapsed={collapsedWidgets.has('inventory_stats')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <Card className="shadow-sm hover:shadow-md transition-shadow" style={{ height: '100%' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.title')}</p>
+                  <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+                    {loading ? '...' : formatQuantity(data.summary?.total_stock_good ?? data.inventoryStats?.total_quantity ?? 0)}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.unit')}</p>
+                </div>
+                <div className="rounded-full bg-blue-100 p-4 dark:bg-blue-900">
+                  <ShoppingOutlined style={{ fontSize: '24px', color: '#3b82f6' }} />
+                </div>
+              </div>
+              <div className="mt-4 border-t pt-4 dark:border-slate-700">
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.totalValue')}</p>
+                <p className="mt-1 text-xl font-semibold text-green-600 dark:text-green-400">
+                  ${loading ? '...' : formatCurrency(data.summary?.total_stock_cost ?? data.inventoryStats?.total_value_usd ?? 0)}
                 </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.unit')}</p>
               </div>
-              <div className="rounded-full bg-blue-100 p-4 dark:bg-blue-900">
-                <ShoppingOutlined style={{ fontSize: '24px', color: '#3b82f6' }} />
-              </div>
-            </div>
-            <div className="mt-4 border-t pt-4 dark:border-slate-700">
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.totalValue')}</p>
-              <p className="mt-1 text-xl font-semibold text-green-600 dark:text-green-400">
-                ${loading ? '...' : formatCurrency(data.summary?.total_stock_cost ?? data.inventoryStats?.total_value_usd ?? 0)}
-              </p>
-            </div>
-          </Card>
+            </Card>
+          </WidgetWrapper>
         </div>
 
         {/* Debt Analytics */}
         {canViewDebtAnalytics && data.analytics && (
           <>
-            <div key="debt_by_dealer" className="drag-handle" style={{ cursor: 'move' }}>
-              <DebtByDealerChart data={data.analytics.by_dealers} loading={loading} />
+            <div key="debt_by_dealer">
+              <WidgetWrapper
+                widgetId="debt_by_dealer"
+                isCollapsed={collapsedWidgets.has('debt_by_dealer')}
+                onToggle={toggleWidgetCollapse}
+              >
+                <DebtByDealerChart data={data.analytics.by_dealers} loading={loading} />
+              </WidgetWrapper>
             </div>
-            <div key="debt_by_region" className="drag-handle" style={{ cursor: 'move' }}>
-              <DebtByRegionPie data={data.analytics.by_regions} loading={loading} />
+            <div key="debt_by_region">
+              <WidgetWrapper
+                widgetId="debt_by_region"
+                isCollapsed={collapsedWidgets.has('debt_by_region')}
+                onToggle={toggleWidgetCollapse}
+              >
+                <DebtByRegionPie data={data.analytics.by_regions} loading={loading} />
+              </WidgetWrapper>
             </div>
-            <div key="debt_trend" className="drag-handle" style={{ cursor: 'move' }}>
-              <DebtTrendChart data={data.analytics.monthly} loading={loading} />
+            <div key="debt_trend">
+              <WidgetWrapper
+                widgetId="debt_trend"
+                isCollapsed={collapsedWidgets.has('debt_trend')}
+                onToggle={toggleWidgetCollapse}
+              >
+                <DebtTrendChart data={data.analytics.monthly} loading={loading} />
+              </WidgetWrapper>
             </div>
           </>
         )}
 
         {/* Expense Analytics */}
         {canViewExpenses && (
-          <div key="expense_metrics" className="drag-handle" style={{ cursor: 'move' }}>
-            <ExpenseMetrics data={data.expenses} loading={loading} />
+          <div key="expense_metrics">
+            <WidgetWrapper
+              widgetId="expense_metrics"
+              isCollapsed={collapsedWidgets.has('expense_metrics')}
+              onToggle={toggleWidgetCollapse}
+            >
+              <ExpenseMetrics data={data.expenses} loading={loading} />
+            </WidgetWrapper>
           </div>
         )}
 
         {/* Top Products */}
-        <div key="top_products" className="drag-handle" style={{ cursor: 'move' }}>
-          <TopProductsCard data={data.topProducts} loading={loading} />
+        <div key="top_products">
+          <WidgetWrapper
+            widgetId="top_products"
+            isCollapsed={collapsedWidgets.has('top_products')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <TopProductsCard data={data.topProducts} loading={loading} />
+          </WidgetWrapper>
         </div>
 
         {/* Top Categories */}
-        <div key="top_categories" className="drag-handle" style={{ cursor: 'move' }}>
-          <TopCategoriesCard data={data.topCategories} loading={loading} />
+        <div key="top_categories">
+          <WidgetWrapper
+            widgetId="top_categories"
+            isCollapsed={collapsedWidgets.has('top_categories')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <TopCategoriesCard data={data.topCategories} loading={loading} />
+          </WidgetWrapper>
         </div>
 
         {/* Region Products */}
-        <div key="region_products" className="drag-handle" style={{ cursor: 'move' }}>
-          <RegionProductHeatmap data={data.regionProducts} loading={loading} />
+        <div key="region_products">
+          <WidgetWrapper
+            widgetId="region_products"
+            isCollapsed={collapsedWidgets.has('region_products')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <RegionProductHeatmap data={data.regionProducts} loading={loading} />
+          </WidgetWrapper>
         </div>
 
         {/* Product Trend */}
-        <div key="product_trend" className="drag-handle" style={{ cursor: 'move' }}>
-          <ProductTrendLineChart data={data.productTrend} loading={loading} />
+        <div key="product_trend">
+          <WidgetWrapper
+            widgetId="product_trend"
+            isCollapsed={collapsedWidgets.has('product_trend')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <ProductTrendLineChart data={data.productTrend} loading={loading} />
+          </WidgetWrapper>
         </div>
 
         {/* Top Dealers */}
-        <div key="top_dealers" className="drag-handle" style={{ cursor: 'move' }}>
-          <TopDealersCard data={data.topDealers} loading={loading} />
+        <div key="top_dealers">
+          <WidgetWrapper
+            widgetId="top_dealers"
+            isCollapsed={collapsedWidgets.has('top_dealers')}
+            onToggle={toggleWidgetCollapse}
+          >
+            <TopDealersCard data={data.topDealers} loading={loading} />
+          </WidgetWrapper>
         </div>
 
         {/* Overdue Receivables Table */}
-        <div key="overdue_receivables" className="drag-handle" style={{ cursor: 'move' }}>
-          <Card
-            title={t('dashboard.overdueReceivables')}
-            className="shadow-sm hover:shadow-md transition-shadow"
+        <div key="overdue_receivables">
+          <WidgetWrapper
+            widgetId="overdue_receivables"
+            isCollapsed={collapsedWidgets.has('overdue_receivables')}
+            onToggle={toggleWidgetCollapse}
           >
-            <DashboardTable
-              data={Array.isArray(data.summary?.overdue_receivables) ? data.summary.overdue_receivables : []}
-              loading={loading}
-            />
-          </Card>
+            <Card
+              title={t('dashboard.overdueReceivables')}
+              className="shadow-sm hover:shadow-md transition-shadow"
+            >
+              <DashboardTable
+                data={Array.isArray(data.summary?.overdue_receivables) ? data.summary.overdue_receivables : []}
+                loading={loading}
+              />
+            </Card>
+          </WidgetWrapper>
         </div>
       </ResponsiveGrid>
     </section>
