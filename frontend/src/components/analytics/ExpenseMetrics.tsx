@@ -1,8 +1,10 @@
 import { Card, Row, Col } from 'antd';
 import { DollarOutlined, WalletOutlined, RiseOutlined } from '@ant-design/icons';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ExpenseSummary } from '../../api/expensesApi';
 import { formatCurrency } from '../../utils/formatters';
+import { useAutoscale } from '../../hooks/useAutoscale';
 
 interface ExpenseMetricsProps {
   data: ExpenseSummary | null;
@@ -11,21 +13,32 @@ interface ExpenseMetricsProps {
 
 const ExpenseMetrics = ({ data, loading }: ExpenseMetricsProps) => {
   const { t } = useTranslation();
+  
+  // Autoscale: widget o'lchamiga qarab matn va icon o'lchamlarini moslashtirish
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { fontSize, iconSize } = useAutoscale(containerRef);
 
   if (!data && !loading) {
     return null;
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          💰 {t('expenses.dashboardTitle')}
-        </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {t('expenses.dashboardSubtitle')}
-        </p>
-      </div>
+    <div ref={containerRef} style={{ height: '100%', width: '100%' }}>
+      <div className="space-y-4">
+        <div>
+          <h2 
+            className="font-semibold text-slate-900 dark:text-white"
+            style={{ fontSize: `${Math.max(16, fontSize * 1.2)}px` }} // Autoscale: title
+          >
+            💰 {t('expenses.dashboardTitle')}
+          </h2>
+          <p 
+            className="text-slate-500 dark:text-slate-400"
+            style={{ fontSize: `${Math.max(11, fontSize * 0.7)}px` }} // Autoscale: subtitle
+          >
+            {t('expenses.dashboardSubtitle')}
+          </p>
+        </div>
 
       <Row gutter={[16, 16]}>
         {/* Total USD */}
@@ -33,18 +46,30 @@ const ExpenseMetrics = ({ data, loading }: ExpenseMetricsProps) => {
           <Card className="shadow-sm hover:shadow-md transition-shadow" loading={loading}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p 
+                  className="text-slate-500 dark:text-slate-400"
+                  style={{ fontSize: `${Math.max(10, fontSize * 0.6)}px` }}
+                >
                   {t('expenses.totalUSD')}
                 </p>
-                <p className="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">
+                <p 
+                  className="mt-2 font-bold text-red-600 dark:text-red-400"
+                  style={{ fontSize: `${Math.max(18, fontSize * 1.5)}px` }} // Autoscale: value
+                >
                   ${formatCurrency(data?.total_usd || 0)}
                 </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p 
+                  className="mt-1 text-slate-500 dark:text-slate-400"
+                  style={{ fontSize: `${Math.max(10, fontSize * 0.6)}px` }}
+                >
                   {data?.count || 0} {t('expenses.transactions')}
                 </p>
               </div>
-              <div className="rounded-full bg-red-100 p-4 dark:bg-red-900">
-                <DollarOutlined style={{ fontSize: '24px', color: '#dc2626' }} />
+              <div 
+                className="rounded-full bg-red-100 dark:bg-red-900"
+                style={{ width: `${iconSize}px`, height: `${iconSize}px`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <DollarOutlined style={{ fontSize: `${iconSize * 0.5}px`, color: '#dc2626' }} />
               </div>
             </div>
           </Card>
@@ -159,6 +184,7 @@ const ExpenseMetrics = ({ data, loading }: ExpenseMetricsProps) => {
           </div>
         </Card>
       )}
+      </div>
     </div>
   );
 };

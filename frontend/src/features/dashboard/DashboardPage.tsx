@@ -207,21 +207,10 @@ const DashboardPage = () => {
     }
   }, [filters, canViewDebtAnalytics, canViewExpenses]);
 
-  // Load dashboard layout from backend or localStorage
+  // Load dashboard layout - priority: localStorage > backend > default
   useEffect(() => {
     const loadLayout = async () => {
-      // Try loading from backend first
-      try {
-        const response = await fetchDashboardLayout();
-        if (response.data.layout && Array.isArray(response.data.layout) && response.data.layout.length > 0) {
-          setLayout(response.data.layout);
-          return;
-        }
-      } catch (error) {
-        console.warn('Failed to load layout from backend, trying localStorage');
-      }
-      
-      // Fallback to localStorage
+      // 1. Try localStorage first (fastest, most recent)
       try {
         const localLayout = localStorage.getItem('dashboardLayout_lg');
         if (localLayout) {
@@ -235,7 +224,20 @@ const DashboardPage = () => {
         console.warn('Failed to load layout from localStorage');
       }
       
-      // Use default layout if all fails (already set in state)
+      // 2. Fallback to backend
+      try {
+        const response = await fetchDashboardLayout();
+        if (response.data.layout && Array.isArray(response.data.layout) && response.data.layout.length > 0) {
+          setLayout(response.data.layout);
+          // Sync to localStorage
+          localStorage.setItem('dashboardLayout_lg', JSON.stringify(response.data.layout));
+          return;
+        }
+      } catch (error) {
+        console.warn('Failed to load layout from backend');
+      }
+      
+      // 3. Use default layout if all fails (already set in state)
     };
     loadLayout();
   }, []);
