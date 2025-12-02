@@ -17,7 +17,7 @@ type ProductOption = {
   name: string;
   sell_price_usd: number;
   stock_ok?: number;
-  stock_defect?: number;
+  // stock_defect removed - order creation only uses good stock (stock_ok)
   total_stock?: number;
   brand?: { id: number; name: string } | null;
   category?: { id: number; name: string } | null;
@@ -266,11 +266,12 @@ const MobileOrderForm = ({
             >
               <option value="">{t('orders.form.productSelectPlaceholder')}</option>
               {products.map((product) => {
-                const stock = product.total_stock ?? product.stock_ok ?? 0;
+                // Only show good stock (stock_ok) - defect stock is not used in orders
+                const stock = product.stock_ok ?? 0;
                 const isOutOfStock = stock <= 0;
                 const brandLabel = product.brand?.name ?? '-';
                 const categoryLabel = product.category?.name ?? '-';
-                const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(Qoldiq: ${stock})`;
+                const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(OK: ${stock})`;
                 return (
                   <option
                     key={product.id}

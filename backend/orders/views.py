@@ -44,8 +44,9 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     report_template = "orders/report.html"
 
     def perform_create(self, serializer):
-        """Create order with stock validation."""
-        # Validate stock for each item before creating order
+        """Create order with stock validation (good stock only)."""
+        # Validate stock_ok for each item before creating order
+        # stock_defect is NOT used in order creation
         from catalog.models import Product
         items_data = self.request.data.get('items', [])
         for item in items_data:
@@ -53,6 +54,7 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
             if product_id:
                 try:
                     product = Product.objects.get(id=product_id)
+                    # Only check stock_ok - defect stock is ignored
                     if product.stock_ok <= 0:
                         raise ValidationError({
                             'detail': f'Mahsulot "{product.name}" omborda mavjud emas. Qoldiq: 0'

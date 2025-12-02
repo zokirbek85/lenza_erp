@@ -26,11 +26,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
         read_only_fields = ('status',)
     
     def validate(self, data):
-        """Validate that product has sufficient stock."""
+        """Validate that product has sufficient good stock (stock_ok only)."""
         product_id = data.get('product')
         if product_id:
             try:
                 product = Product.objects.get(id=product_id.id if hasattr(product_id, 'id') else product_id)
+                # Only check stock_ok - defect stock is not used in order creation
                 if product.stock_ok <= 0:
                     raise serializers.ValidationError({
                         'product': _('Ushbu mahsulot omborda qolmagan. Mavjud: 0')
@@ -154,9 +155,10 @@ class OrderSerializer(serializers.ModelSerializer):
         return data
 
     def _sync_items(self, order, items_data):
-        """Sync order items with stock validation."""
+        """Sync order items with stock validation (good stock only)."""
         for item in items_data:
             product = item.get('product')
+            # Only validate stock_ok - defect stock is not used in order creation
             if product and hasattr(product, 'stock_ok') and product.stock_ok <= 0:
                 raise serializers.ValidationError({
                     'items': _('Mahsulot "%(name)s" omborda mavjud emas.') % {'name': product.name}

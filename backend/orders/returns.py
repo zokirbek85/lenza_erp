@@ -28,6 +28,8 @@ def process_return(*, item: OrderItem, quantity, is_defect: bool, user=None) -> 
 
     with transaction.atomic():
         product = Product.objects.select_for_update().get(pk=item.product_id)
+        # Return processing: is_defect flag determines where stock goes
+        # NOTE: Order creation only uses stock_ok, but returns can still mark items as defective
         if is_defect:
             product.stock_defect += qty
         else:
