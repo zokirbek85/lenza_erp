@@ -1,29 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from 'antd';
-import { DollarOutlined, WalletOutlined, ShoppingOutlined } from '@ant-design/icons';
+import {
+  DollarOutlined,
+  WalletOutlined,
+  ShoppingOutlined,
+  TrophyOutlined,
+  BoxPlotOutlined,
+} from '@ant-design/icons';
 
 import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { loadCache, saveCache } from '../../utils/storage';
 import DashboardFilterBar from '../../components/DashboardFilterBar';
-import DashboardTable from '../../components/DashboardTable';
 import KpiCard from '../../components/KpiCard';
-import DebtByDealerChart from '@/components/DebtByDealerChart';
-import DebtByRegionPie from '@/components/DebtByRegionPie';
-import DebtTrendChart from '@/components/DebtTrendChart';
 import {
   TopProductsCard,
-  TopCategoriesCard,
   TopDealersCard,
   ProductTrendLineChart,
   RegionProductHeatmap,
 } from '../../components/analytics';
-import ExpenseMetrics from '../../components/analytics/ExpenseMetrics';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import type { DashboardFilters } from '../../store/useDashboardStore';
-import { useAuthStore } from '../../auth/useAuthStore';
 import type { DashboardSummary } from '../../services/dashboardService';
-import type { DebtAnalytics } from '@/types/dashboard';
 import {
   fetchDashboardSummary,
   fetchInventoryStats,
@@ -31,34 +29,26 @@ import {
   fetchTopProducts,
   fetchRegionProducts,
   fetchProductTrend,
-  fetchTopCategories,
   fetchTopDealers,
   type TopProductItem,
   type RegionProductItem,
   type ProductTrendPeriod,
-  type CategoryItem,
   type TopDealerItem,
 } from '../../services/dashboardService';
-import { fetchDebtAnalytics } from '@/services/dashboard';
-import { fetchExpenseSummary, type ExpenseSummary } from '../../api/expensesApi';
 import './DashboardPage.css';
 
 interface DashboardData {
   summary: DashboardSummary;
-  analytics: DebtAnalytics | null;
   inventoryStats: InventoryStats | null;
   topProducts: TopProductItem[];
   regionProducts: RegionProductItem[];
   productTrend: ProductTrendPeriod[];
-  topCategories: CategoryItem[];
   topDealers: TopDealerItem[];
-  expenses: ExpenseSummary | null;
 }
 
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { filters } = useDashboardStore();
-  const { role } = useAuthStore();
 
   const [data, setData] = useState<DashboardData>({
     summary: {
@@ -78,19 +68,13 @@ const DashboardPage = () => {
       revenue_by_product: [],
       inventory_trend: [],
     },
-    analytics: null,
     inventoryStats: null,
     topProducts: [],
     regionProducts: [],
     productTrend: [],
-    topCategories: [],
     topDealers: [],
-    expenses: null,
   });
   const [loading, setLoading] = useState(false);
-
-  const canViewDebtAnalytics = useMemo(() => role !== 'warehouse', [role]);
-  const canViewExpenses = useMemo(() => ['admin', 'accountant', 'owner'].includes(role || ''), [role]);
 
   // Fetch all dashboard data
   const fetchAll = useCallback(async (overrideFilters?: DashboardFilters) => {
@@ -106,7 +90,7 @@ const DashboardPage = () => {
         categories: effectiveFilters.categories?.length ? effectiveFilters.categories.join(',') : undefined,
       };
 
-      const [summary, analytics, inventory, topProducts, regionProducts, productTrend, topCategories, topDealers, expenses] = await Promise.all([
+      const [summary, inventory, topProducts, regionProducts, productTrend, topDealers] = await Promise.all([
         fetchDashboardSummary(effectiveFilters).catch(() => ({
           total_sales: 0,
           total_payments: 0,
@@ -124,30 +108,20 @@ const DashboardPage = () => {
           revenue_by_product: [],
           inventory_trend: [],
         })),
-        canViewDebtAnalytics
-          ? fetchDebtAnalytics().catch(() => ({ data: null }))
-          : Promise.resolve({ data: null }),
         fetchInventoryStats().catch(() => ({ data: { total_quantity: 0, total_value_usd: 0 } })),
         fetchTopProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchRegionProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchProductTrend(analyticsFilters).catch(() => ({ data: [] })),
-        fetchTopCategories(analyticsFilters).catch(() => ({ data: [] })),
         fetchTopDealers(analyticsFilters).catch(() => ({ data: [] })),
-        canViewExpenses
-          ? fetchExpenseSummary(analyticsFilters.start_date, analyticsFilters.end_date).catch(() => null)
-          : Promise.resolve(null),
       ]);
 
       const newData = {
         summary,
-        analytics: (analytics?.data as DebtAnalytics | null) ?? null,
         inventoryStats: inventory?.data ?? null,
         topProducts: Array.isArray(topProducts?.data) ? topProducts.data : [],
         regionProducts: Array.isArray(regionProducts?.data) ? regionProducts.data : [],
         productTrend: Array.isArray(productTrend?.data) ? productTrend.data : [],
-        topCategories: Array.isArray(topCategories?.data) ? topCategories.data : [],
         topDealers: Array.isArray(topDealers?.data) ? topDealers.data : [],
-        expenses: expenses ?? null,
       };
 
       setData(newData);
@@ -160,7 +134,7 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, canViewDebtAnalytics, canViewExpenses]);
+  }, [filters]);
 
   // Initial data load
   useEffect(() => {
@@ -176,136 +150,115 @@ const DashboardPage = () => {
   }, [fetchAll]);
 
   return (
-    <div className="dashboard-page space-y-6 pb-8">
+    <div className="dashboard-page">
       {/* Header */}
-      <header className="space-y-2">
-        <p className="text-sm uppercase tracking-widest text-slate-500 dark:text-slate-400">
-          {t('dashboard.ownerKpi')}
-        </p>
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">
-          {t('nav.dashboard')}
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">{t('app.operations')}</p>
+      <header className="dashboard-header">
+        <div className="header-content">
+          <p className="header-label">{t('dashboard.ownerKpi')}</p>
+          <h1 className="header-title">{t('nav.dashboard')}</h1>
+          <p className="header-subtitle">{t('app.operations')}</p>
+        </div>
       </header>
 
       {/* Filter Bar */}
       <DashboardFilterBar onApply={fetchAll} />
 
-      {/* KPI Cards Section - STATIC GRID */}
-      <section className="dashboard-section-kpi">
-        <div className="kpi-grid">
+      {/* Main Dashboard Grid */}
+      <div className="dashboard-grid">
+        {/* Row 1: 4 KPI Cards */}
+        <div className="dashboard-card kpi-card">
           <KpiCard
             title="Jami savdolar"
             value={data.summary?.total_sales || 0}
             prefix="$"
             precision={2}
-            icon={<DollarOutlined />}
+            icon={<DollarOutlined className="dashboard-icon" />}
             tooltip="Barcha sotuvlar yig'indisi"
             loading={loading}
           />
+        </div>
+
+        <div className="dashboard-card kpi-card">
           <KpiCard
             title="Jami to'lovlar"
             value={data.summary?.total_payments || 0}
             prefix="$"
             precision={2}
-            icon={<WalletOutlined />}
+            icon={<WalletOutlined className="dashboard-icon" />}
             tooltip="Tasdiqlangan to'lovlar"
             loading={loading}
           />
-          {canViewDebtAnalytics && (
-            <KpiCard
-              title="Umumiy qarzdorlik"
-              value={data.analytics?.total_debt ?? data.summary?.total_debt ?? 0}
-              prefix="$"
-              precision={2}
-              icon={<DollarOutlined />}
-              tooltip="Opening + Orders - Payments - Returns"
-              loading={loading}
-              valueStyle={{ color: '#dc2626' }}
-            />
-          )}
+        </div>
+
+        <div className="dashboard-card kpi-card">
+          <KpiCard
+            title="Umumiy qarzdorlik"
+            value={data.summary?.total_debt ?? 0}
+            prefix="$"
+            precision={2}
+            icon={<DollarOutlined className="dashboard-icon" />}
+            tooltip="Opening + Orders - Payments - Returns"
+            loading={loading}
+            valueStyle={{ color: '#dc2626' }}
+          />
+        </div>
+
+        <div className="dashboard-card kpi-card">
           <KpiCard
             title="Dilerlar soni"
             value={data.summary?.total_dealers ?? data.summary?.dealers ?? 0}
             precision={0}
-            icon={<ShoppingOutlined />}
+            icon={<ShoppingOutlined className="dashboard-icon" />}
             tooltip="Faol dilerlar"
             loading={loading}
           />
-          <Card className="shadow-sm hover:shadow-md transition-shadow h-full">
-            <div className="flex items-center justify-between h-full">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.title')}</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
-                  {loading ? '...' : formatQuantity(data.summary?.total_stock_good ?? data.inventoryStats?.total_quantity ?? 0)}
-                </p>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('dashboard.inventory.unit')}</p>
-                <div className="mt-3 pt-3 border-t dark:border-slate-700">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{t('dashboard.inventory.totalValue')}</p>
-                  <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
-                    ${loading ? '...' : formatCurrency(data.summary?.total_stock_cost ?? data.inventoryStats?.total_value_usd ?? 0)}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900 self-start">
-                <ShoppingOutlined style={{ fontSize: '20px', color: '#3b82f6' }} />
-              </div>
+        </div>
+
+        {/* Row 2: Inventory Card - Full Width */}
+        <Card className="dashboard-card inventory-card">
+          <div className="card-header">
+            <BoxPlotOutlined className="dashboard-icon" />
+            <h2 className="dashboard-card-title">{t('dashboard.inventory.title')}</h2>
+          </div>
+          <div className="inventory-content">
+            <div className="inventory-stat">
+              <p className="stat-label">{t('dashboard.inventory.unit')}</p>
+              <p className="stat-value-large">
+                {loading ? '...' : formatQuantity(data.summary?.total_stock_good ?? data.inventoryStats?.total_quantity ?? 0)}
+              </p>
             </div>
-          </Card>
-        </div>
-      </section>
-
-      {/* Sales Analytics Section */}
-      <section className="dashboard-section-analytics">
-        <div className="analytics-grid">
-          <div className="analytics-left">
-            <TopProductsCard data={data.topProducts} loading={loading} />
+            <div className="inventory-stat">
+              <p className="stat-label">{t('dashboard.inventory.totalValue')}</p>
+              <p className="stat-value-medium">
+                ${loading ? '...' : formatCurrency(data.summary?.total_stock_cost ?? data.inventoryStats?.total_value_usd ?? 0)}
+              </p>
+            </div>
           </div>
-          <div className="analytics-right">
-            {canViewExpenses && <ExpenseMetrics data={data.expenses} loading={loading} />}
-            <TopCategoriesCard data={data.topCategories} loading={loading} />
-          </div>
-        </div>
-      </section>
+        </Card>
 
-      {/* Region & Trend Section */}
-      <section className="dashboard-section-region">
-        <div className="region-grid">
+        {/* Row 3: Top Products - Full Width */}
+        <div className="dashboard-card products-card">
+          <div className="card-header">
+            <TrophyOutlined className="dashboard-icon" />
+            <h2 className="dashboard-card-title">Top 10 Eng ko'p sotilgan mahsulotlar</h2>
+          </div>
+          <TopProductsCard data={data.topProducts} loading={loading} />
+        </div>
+
+        {/* Row 4: Region & Trend - 2 Columns */}
+        <div className="dashboard-card region-card">
           <RegionProductHeatmap data={data.regionProducts} loading={loading} />
+        </div>
+
+        <div className="dashboard-card trend-card">
           <ProductTrendLineChart data={data.productTrend} loading={loading} />
         </div>
-      </section>
 
-      {/* Debt Analytics Section */}
-      {canViewDebtAnalytics && data.analytics && (
-        <section className="dashboard-section-debt">
-          <div className="debt-grid">
-            <DebtByDealerChart data={data.analytics.by_dealers} loading={loading} />
-            <DebtByRegionPie data={data.analytics.by_regions} loading={loading} />
-          </div>
-          <div className="debt-trend-full">
-            <DebtTrendChart data={data.analytics.monthly} loading={loading} />
-          </div>
-        </section>
-      )}
-
-      {/* Top Dealers Section */}
-      <section className="dashboard-section-dealers">
-        <TopDealersCard data={data.topDealers} loading={loading} />
-      </section>
-
-      {/* Overdue Receivables Section */}
-      <section className="dashboard-section-receivables">
-        <Card
-          title={t('dashboard.overdueReceivables')}
-          className="shadow-sm hover:shadow-md transition-shadow"
-        >
-          <DashboardTable
-            data={Array.isArray(data.summary?.overdue_receivables) ? data.summary.overdue_receivables : []}
-            loading={loading}
-          />
-        </Card>
-      </section>
+        {/* Row 5: Top Dealers - Full Width */}
+        <div className="dashboard-card dealers-card">
+          <TopDealersCard data={data.topDealers} loading={loading} />
+        </div>
+      </div>
     </div>
   );
 };

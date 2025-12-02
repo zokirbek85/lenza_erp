@@ -1,6 +1,6 @@
 /* ========================================
-   LENZA ERP - PROFESSIONAL DASHBOARD LAYOUT
-   Enterprise-grade structure with uniform styling
+   LENZA ERP - OPTIMIZED DASHBOARD LAYOUT
+   Clean, uniform styling with golden accents
    ======================================== */
 
 /* ===== MAIN CONTAINER ===== */
@@ -9,284 +9,276 @@
   max-width: 1920px;
   margin: 0 auto;
   padding: 20px;
+  background: var(--bg-base, #f8fafc);
 }
 
-/* ===== TYPOGRAPHY STANDARDS ===== */
-/* Unified font sizes across all widgets */
-.dashboard-page h1 {
-  font-size: 28px;
+/* ===== HEADER ===== */
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header-label {
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary, #64748b);
 }
 
-.dashboard-page h2,
-.dashboard-page .ant-card-head-title {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  line-height: 1.4;
-}
-
-.dashboard-page h3,
-.dashboard-page .widget-subtitle {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.dashboard-page p,
-.dashboard-page .ant-card-body {
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-/* Number displays */
-.dashboard-page .metric-value,
-.dashboard-page .kpi-value {
-  font-size: 24px;
-  font-weight: 600;
+.header-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
   line-height: 1.2;
 }
 
-/* ===== CARD STANDARDS ===== */
-/* Uniform card styling across all widgets */
-.dashboard-page .ant-card {
-  border-radius: 12px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
-  transition: all 0.2s ease;
-  height: 100%;
+.header-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, #64748b);
 }
 
-.dashboard-page .ant-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
-}
-
-.dashboard-page .ant-card-head {
-  padding: 16px 20px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.dashboard-page .ant-card-body {
-  padding: 20px !important;
-}
-
-/* Dark mode adjustments */
-.dark .dashboard-page .ant-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dark .dashboard-page .ant-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-}
-
-.dark .dashboard-page .ant-card-head {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-/* ===== SECTION SPACING ===== */
-/* Consistent spacing between sections */
-.dashboard-page > section {
-  margin-bottom: 20px;
-}
-
-.dashboard-page > section:last-child {
-  margin-bottom: 0;
-}
-
-/* ===== KPI GRID (Top Row) ===== */
-/* 5 KPI cards in a single row */
-.dashboard-section-kpi {
-  margin-bottom: 20px;
-}
-
-.kpi-grid {
+/* ===== DASHBOARD GRID ===== */
+.dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 24px;
 }
 
-/* 4 columns on large tablets */
+/* Responsive Grid */
 @media (max-width: 1400px) {
-  .kpi-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* 3 columns on tablets */
-@media (max-width: 1024px) {
-  .kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* 2 columns on small tablets */
-@media (max-width: 768px) {
-  .kpi-grid {
+  .dashboard-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* 1 column on mobile */
-@media (max-width: 480px) {
-  .kpi-grid {
+@media (max-width: 900px) {
+  .dashboard-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 }
 
-/* KPI Card minimum height */
-.kpi-grid .ant-card {
-  min-height: 140px;
+/* ===== UNIFIED CARD STYLING ===== */
+.dashboard-card {
+  background: var(--bg-elevated, #ffffff);
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--text-primary, #0f172a);
+  transition: all 0.2s ease;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
-/* ===== MAIN ANALYTICS GRID (4-Column System) ===== */
-/* Professional 4-column grid for perfect balance */
-.dashboard-section-analytics {
-  margin-bottom: 20px;
+.dashboard-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
-.analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  align-items: start;
+/* Card Header with Golden Icons */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
-/* Top Products takes 3 columns (75%) */
-.analytics-left {
-  grid-column: span 3;
+.dashboard-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #0f172a);
+  line-height: 1.4;
 }
 
-/* Right side takes 1 column (25%) */
-.analytics-right {
+/* Golden Icon Style */
+.dashboard-icon {
+  color: #d4af37 !important;
+  font-size: 20px;
+}
+
+/* Dark Mode */
+.dark .dashboard-card {
+  background: var(--bg-elevated-dark, #1e293b);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: var(--text-primary-dark, #f1f5f9);
+}
+
+.dark .dashboard-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.dark .dashboard-card-title {
+  color: var(--text-primary-dark, #f1f5f9);
+}
+
+/* ===== ROW 1: KPI CARDS (4 columns) ===== */
+.kpi-card {
   grid-column: span 1;
+  min-height: 140px;
+}
+
+@media (max-width: 1400px) {
+  .kpi-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .kpi-card {
+    grid-column: span 1;
+    min-height: 120px;
+  }
+}
+
+/* ===== ROW 2: INVENTORY CARD (Full Width) ===== */
+.inventory-card {
+  grid-column: span 4;
+  min-height: 180px;
+}
+
+.inventory-content {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  gap: 48px;
+  margin-top: 16px;
 }
 
-/* Tablet: 2 columns */
-@media (max-width: 1200px) {
-  .analytics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .analytics-left {
+.inventory-stat {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.stat-value-large {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  line-height: 1.2;
+}
+
+.stat-value-medium {
+  font-size: 24px;
+  font-weight: 600;
+  color: #10b981;
+  line-height: 1.2;
+}
+
+@media (max-width: 1400px) {
+  .inventory-card {
     grid-column: span 2;
-  }
-  
-  .analytics-right {
-    grid-column: span 2;
-    flex-direction: row;
-    gap: 20px;
-  }
-  
-  .analytics-right > * {
-    flex: 1;
   }
 }
 
-/* Mobile: 1 column */
-@media (max-width: 768px) {
-  .analytics-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .analytics-left {
+@media (max-width: 900px) {
+  .inventory-card {
     grid-column: span 1;
   }
   
-  .analytics-right {
-    grid-column: span 1;
+  .inventory-content {
     flex-direction: column;
+    gap: 24px;
   }
 }
 
-/* ===== REGION & TREND GRID ===== */
-.dashboard-section-region {
-  margin-bottom: 20px;
+.dark .stat-value-large {
+  color: var(--text-primary-dark, #f1f5f9);
 }
 
-.region-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+.dark .stat-label {
+  color: var(--text-secondary-dark, #94a3b8);
 }
 
-@media (max-width: 1024px) {
-  .region-grid {
-    grid-template-columns: 1fr;
+/* ===== ROW 3: TOP PRODUCTS (Full Width) ===== */
+.products-card {
+  grid-column: span 4;
+  min-height: 450px;
+}
+
+.products-card .ant-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+@media (max-width: 1400px) {
+  .products-card {
+    grid-column: span 2;
   }
 }
 
-/* ===== DEBT ANALYTICS GRID ===== */
-.dashboard-section-debt {
-  margin-bottom: 20px;
-}
-
-.debt-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 1024px) {
-  .debt-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 900px) {
+  .products-card {
+    grid-column: span 1;
+    min-height: 400px;
   }
 }
 
-.debt-trend-full {
-  width: 100%;
+/* ===== ROW 4: REGION & TREND (2 Columns) ===== */
+.region-card,
+.trend-card {
+  grid-column: span 2;
+  min-height: 380px;
 }
 
-/* ===== FULL WIDTH SECTIONS ===== */
-.dashboard-section-dealers,
-.dashboard-section-receivables {
-  margin-bottom: 20px;
+@media (max-width: 1400px) {
+  .region-card,
+  .trend-card {
+    grid-column: span 1;
+  }
 }
 
-/* ===== CHART CONTAINERS ===== */
-/* Responsive chart containers with overflow control */
-.dashboard-page .chart-container {
-  width: 100%;
-  min-height: 300px;
-  max-height: 500px;
-  overflow: hidden;
-  position: relative;
+@media (max-width: 900px) {
+  .region-card,
+  .trend-card {
+    grid-column: span 1;
+    min-height: 350px;
+  }
 }
 
-/* Specific chart heights for consistency */
-.analytics-left .ant-card {
+/* ===== ROW 5: TOP DEALERS (Full Width) ===== */
+.dealers-card {
+  grid-column: span 4;
   min-height: 400px;
 }
 
-.analytics-right .ant-card {
-  min-height: 320px;
+@media (max-width: 1400px) {
+  .dealers-card {
+    grid-column: span 2;
+  }
 }
 
-.region-grid .ant-card {
-  min-height: 350px;
+@media (max-width: 900px) {
+  .dealers-card {
+    grid-column: span 1;
+    min-height: 380px;
+  }
 }
 
-.debt-grid .ant-card {
-  min-height: 350px;
+/* ===== NESTED ANT DESIGN CARDS ===== */
+.dashboard-card .ant-card {
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.debt-trend-full .ant-card {
-  min-height: 400px;
+.dark .dashboard-card .ant-card {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.dashboard-section-dealers .ant-card,
-.dashboard-section-receivables .ant-card {
-  min-height: 350px;
-}
-
-/* ===== TABLE CONTAINERS ===== */
-/* Responsive tables with scroll */
+/* ===== TABLES ===== */
 .dashboard-page .ant-table-wrapper {
   overflow-x: auto;
 }
@@ -299,10 +291,15 @@
   font-size: 13px;
   font-weight: 600;
   padding: 12px 16px;
+  background: var(--bg-base, #f8fafc);
 }
 
 .dashboard-page .ant-table-tbody > tr > td {
   padding: 12px 16px;
+}
+
+.dark .dashboard-page .ant-table-thead > tr > th {
+  background: var(--bg-base-dark, #0f172a);
 }
 
 /* ===== LOADING STATES ===== */
@@ -310,25 +307,35 @@
   padding: 20px;
 }
 
-/* ===== RESPONSIVE PADDING ===== */
+/* ===== MOBILE OPTIMIZATIONS ===== */
 @media (max-width: 768px) {
   .dashboard-page {
     padding: 16px;
   }
   
-  .dashboard-page > section {
+  .dashboard-header {
     margin-bottom: 16px;
   }
   
-  .dashboard-page .ant-card-body {
-    padding: 16px !important;
+  .header-title {
+    font-size: 24px;
   }
   
-  .kpi-grid,
-  .analytics-grid,
-  .region-grid,
-  .debt-grid {
-    gap: 16px;
+  .dashboard-card {
+    padding: 16px 20px;
+    border-radius: 12px;
+  }
+  
+  .dashboard-card-title {
+    font-size: 16px;
+  }
+  
+  .stat-value-large {
+    font-size: 28px;
+  }
+  
+  .stat-value-medium {
+    font-size: 20px;
   }
 }
 
@@ -337,7 +344,11 @@
     padding: 12px;
   }
   
-  .dashboard-page .ant-card-body {
-    padding: 12px !important;
+  .dashboard-card {
+    padding: 12px 16px;
+  }
+  
+  .dashboard-icon {
+    font-size: 18px;
   }
 }
