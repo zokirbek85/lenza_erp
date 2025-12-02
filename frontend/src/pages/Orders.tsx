@@ -882,15 +882,16 @@ const OrdersPage = () => {
       </div>
 
       {!isWarehouse && (
-        <Collapse
-          className="rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
-          activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
-          onChange={(key) => handleCollapseChange(key as string[] | string)}
-          items={[
-            {
-              key: CREATE_FORM_PANEL_KEY,
-              label: t('orders.header.panelTitle'),
-              children: showCreateForm ? (
+        <div className="bg-[#1E2732] border-l-2 border-[rgba(255,200,0,0.40)] rounded-lg shadow-lg shadow-black/20 p-4 transition-all duration-300 hover:bg-[#232E3D]">
+          <Collapse
+            className="bg-transparent border-none shadow-none"
+            activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
+            onChange={(key) => handleCollapseChange(key as string[] | string)}
+            items={[
+              {
+                key: CREATE_FORM_PANEL_KEY,
+                label: t('orders.header.panelTitle'),
+                children: showCreateForm ? (
                 <Card
                 title={t('orders.header.panelTitle')}
                 className="mt-4 border border-slate-700 bg-slate-900"
@@ -1097,7 +1098,8 @@ const OrdersPage = () => {
             ) : null,
           },
         ]}
-        />
+          />
+        </div>
       )}
 
       <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
