@@ -40,7 +40,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
       {
         label: 'Umumiy qarzdorlik',
         data: data.map((item) => item.debt),
-        borderColor: colors.primary,
+        borderColor: colors.primary[0],
         fill: true,
         backgroundColor: (context) => {
           const chart = context.chart;
@@ -60,7 +60,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
         },
         tension: 0.35,
         pointRadius: 3,
-        pointBackgroundColor: colors.primary,
+        pointBackgroundColor: colors.primary[0],
       },
     ],
   };
@@ -73,7 +73,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
         display: false,
       },
       tooltip: {
-        backgroundColor: colors.tooltip,
+        backgroundColor: colors.tooltip.background,
         bodyFont: { size: Math.max(11, fontSize * 0.7) }, // Autoscale: tooltip font
         callbacks: {
           label: (context) => {

@@ -29,7 +29,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
   
   // Autoscale: widget o'lchamiga qarab chart parametrlarini moslashtirish
   const containerRef = useRef<HTMLDivElement>(null);
-  const { height, fontSize, chartPadding, width } = useAutoscale(containerRef);
+  const { height, fontSize, chartPadding } = useAutoscale(containerRef);
   
   const chartData: ChartData<'bar'> = {
     labels: data.map((item) => item.dealer),
@@ -37,7 +37,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
       {
         label: 'Qarzdorlik (USD)',
         data: data.map((item) => item.debt),
-        backgroundColor: colors.primary,
+        backgroundColor: colors.primary[0],
         borderRadius: 4,
       },
     ],
@@ -51,7 +51,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
         display: false,
       },
       tooltip: {
-        backgroundColor: colors.tooltip,
+        backgroundColor: colors.tooltip.background,
         bodyFont: { 
           size: Math.max(11, fontSize * 0.7), // Autoscale: tooltip font
         },

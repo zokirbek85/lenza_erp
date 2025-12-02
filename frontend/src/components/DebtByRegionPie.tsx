@@ -38,16 +38,9 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
       {
         label: 'Qarzdorlik',
         data: data.map((item) => item.debt),
-        backgroundColor: [
-          colors.primary,
-          colors.secondary[0],
-          colors.secondary[1],
-          colors.secondary[2],
-          colors.secondary[3],
-          colors.secondary[4],
-          colors.secondary[5],
-          colors.secondary[6],
-        ],
+        backgroundColor: data.map((_, index) => {
+          return colors.primary[Math.min(index, colors.primary.length - 1)];
+        }),
         borderWidth: 0,
       },
     ],
@@ -68,7 +61,7 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
         },
       },
       tooltip: {
-        backgroundColor: colors.tooltip,
+        backgroundColor: colors.tooltip.background,
         bodyFont: { size: Math.max(11, fontSize * 0.7) }, // Autoscale: tooltip font
         callbacks: {
           label: (context) => {
@@ -77,7 +70,7 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
               typeof parsedValue === 'object' && parsedValue !== null
                 ? Number((parsedValue as { y?: number }).y ?? 0)
                 : Number(parsedValue ?? 0);
-            const label = labelConfig.truncateLabels && context.label && context.label.length > 20
+            const label = data.length > 6 && context.label && context.label.length > 20
               ? context.label.substring(0, 17) + '...'
               : context.label;
             return `${label}: ${formatCurrency(value, 'USD')}`;
