@@ -882,7 +882,7 @@ const OrdersPage = () => {
       </div>
 
       {!isWarehouse && (
-        <div className="bg-[#1E2732] border-l-2 border-[rgba(255,200,0,0.40)] rounded-lg shadow-lg shadow-black/20 p-4 transition-all duration-300 hover:bg-[#232E3D]">
+        <div className="rounded-lg p-4 shadow-md shadow-black/10 border-l-2 transition-all duration-300 ease-in-out bg-[#F7F9FC] text-[#1A1F25] border-[rgba(212,165,0,0.45)] hover:bg-[#EEF1F6] dark:bg-[#1E2732] dark:text-[#E9ECF1] dark:border-[rgba(255,200,0,0.40)] dark:hover:bg-[#232E3D]">
           <Collapse
             className="bg-transparent border-none shadow-none"
             activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
