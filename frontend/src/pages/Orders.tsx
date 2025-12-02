@@ -1,6 +1,6 @@
 ﻿import type { FormEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
+import { MinusOutlined, PlusOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Card, Collapse } from 'antd';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -136,6 +136,7 @@ const OrdersPage = () => {
   const { t } = useTranslation();
   const { isMobile } = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const role = useAuthStore((state) => state.role);
   const isWarehouse = role === 'warehouse';
 
@@ -429,7 +430,7 @@ const OrdersPage = () => {
   };
 
   const filtersContent = (
-    <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+    <div className="grid gap-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Holat</label>
@@ -844,7 +845,41 @@ const OrdersPage = () => {
         </div>
       )}
 
-      <div className="mt-4">{filtersContent}</div>
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+        {/* Collapsible Filter Header */}
+        <button
+          type="button"
+          onClick={() => setFiltersExpanded(!filtersExpanded)}
+          className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-semibold text-slate-900 dark:text-white">Filtrlash</span>
+            {(statusFilter || managerFilter || dateFrom || dateTo || brandId || categoryId) && (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                Faol
+              </span>
+            )}
+          </div>
+          {filtersExpanded ? (
+            <UpOutlined className="text-slate-500 transition-transform dark:text-slate-400" />
+          ) : (
+            <DownOutlined className="text-slate-500 transition-transform dark:text-slate-400" />
+          )}
+        </button>
+
+        {/* Collapsible Filter Content */}
+        <div
+          className="overflow-hidden transition-all duration-300 ease-in-out"
+          style={{
+            maxHeight: filtersExpanded ? '1000px' : '0',
+            opacity: filtersExpanded ? 1 : 0,
+          }}
+        >
+          <div className="border-t border-slate-200 p-6 dark:border-slate-800">
+            {filtersContent}
+          </div>
+        </div>
+      </div>
 
       {!isWarehouse && (
         <Collapse
