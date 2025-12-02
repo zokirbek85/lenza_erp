@@ -876,6 +876,17 @@
     }
   },
   "dashboard": {
+    "kpi": {
+      "totalSales": "Total Sales",
+      "totalPayments": "Total Payments",
+      "totalDebt": "Total Debt",
+      "dealersCount": "Number of Dealers",
+      "salesTooltip": "Sum of all sales",
+      "paymentsTooltip": "Confirmed payments",
+      "debtTooltip": "Opening + Orders - Payments - Returns",
+      "dealersTooltip": "Active dealers"
+    },
+    "topProducts": "Top 10 Best Selling Products",
     "ownerKpi": "Owner overview",
     "salesManagerKpi": "Sales manager",
     "accountantKpi": "Accountant",

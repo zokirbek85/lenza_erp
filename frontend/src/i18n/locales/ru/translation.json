@@ -871,6 +871,17 @@
     }
   },
   "dashboard": {
+    "kpi": {
+      "totalSales": "Всего продаж",
+      "totalPayments": "Всего платежей",
+      "totalDebt": "Общая задолженность",
+      "dealersCount": "Количество дилеров",
+      "salesTooltip": "Сумма всех продаж",
+      "paymentsTooltip": "Подтвержденные платежи",
+      "debtTooltip": "Начальный + Заказы - Платежи - Возвраты",
+      "dealersTooltip": "Активные дилеры"
+    },
+    "topProducts": "Топ 10 Самые продаваемые товары",
     "ownerKpi": "Общий обзор",
     "salesManagerKpi": "Менеджер по продажам",
     "accountantKpi": "Бухгалтер",

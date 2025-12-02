@@ -227,11 +227,22 @@
     "inventoryTrend": "Ombor tendentsiyasi",
     "expensesBudget": "Xarajatlar va byudjet",
     "overdueReceivables": "Muddati o'tgan qarzlar",
+    "kpi": {
+      "totalSales": "Jami savdolar",
+      "totalPayments": "Jami to'lovlar",
+      "totalDebt": "Umumiy qarzdorlik",
+      "dealersCount": "Dilerlar soni",
+      "salesTooltip": "Barcha sotuvlar yig'indisi",
+      "paymentsTooltip": "Tasdiqlangan to'lovlar",
+      "debtTooltip": "Opening + Orders - Payments - Returns",
+      "dealersTooltip": "Faol dilerlar"
+    },
     "inventory": {
       "title": "Ombordagi mahsulotlar (sog'lom)",
       "unit": "dona",
       "totalValue": "Umumiy qiymati"
     },
+    "topProducts": "Top 10 Eng ko'p sotilgan mahsulotlar",
     "charts": {
       "revenue": "Daromad (USD)",
       "stockValue": "Stok qiymati (USD)",

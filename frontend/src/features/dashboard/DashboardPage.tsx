@@ -168,36 +168,36 @@ const DashboardPage = () => {
         {/* Row 1: 4 KPI Cards */}
         <div className="dashboard-card kpi-card">
           <KpiCard
-            title="Jami savdolar"
+            title={t('dashboard.kpi.totalSales')}
             value={data.summary?.total_sales || 0}
             prefix="$"
             precision={2}
             icon={<DollarOutlined className="dashboard-icon" />}
-            tooltip="Barcha sotuvlar yig'indisi"
+            tooltip={t('dashboard.kpi.salesTooltip')}
             loading={loading}
           />
         </div>
 
         <div className="dashboard-card kpi-card">
           <KpiCard
-            title="Jami to'lovlar"
+            title={t('dashboard.kpi.totalPayments')}
             value={data.summary?.total_payments || 0}
             prefix="$"
             precision={2}
             icon={<WalletOutlined className="dashboard-icon" />}
-            tooltip="Tasdiqlangan to'lovlar"
+            tooltip={t('dashboard.kpi.paymentsTooltip')}
             loading={loading}
           />
         </div>
 
         <div className="dashboard-card kpi-card">
           <KpiCard
-            title="Umumiy qarzdorlik"
+            title={t('dashboard.kpi.totalDebt')}
             value={data.summary?.total_debt ?? 0}
             prefix="$"
             precision={2}
             icon={<DollarOutlined className="dashboard-icon" />}
-            tooltip="Opening + Orders - Payments - Returns"
+            tooltip={t('dashboard.kpi.debtTooltip')}
             loading={loading}
             valueStyle={{ color: '#dc2626' }}
           />
@@ -205,11 +205,11 @@ const DashboardPage = () => {
 
         <div className="dashboard-card kpi-card">
           <KpiCard
-            title="Dilerlar soni"
+            title={t('dashboard.kpi.dealersCount')}
             value={data.summary?.total_dealers ?? data.summary?.dealers ?? 0}
             precision={0}
             icon={<ShoppingOutlined className="dashboard-icon" />}
-            tooltip="Faol dilerlar"
+            tooltip={t('dashboard.kpi.dealersTooltip')}
             loading={loading}
           />
         </div>
@@ -240,7 +240,7 @@ const DashboardPage = () => {
         <div className="dashboard-card products-card">
           <div className="card-header">
             <TrophyOutlined className="dashboard-icon" />
-            <h2 className="dashboard-card-title">Top 10 Eng ko'p sotilgan mahsulotlar</h2>
+            <h2 className="dashboard-card-title">{t('dashboard.topProducts')}</h2>
           </div>
           <TopProductsCard data={data.topProducts} loading={loading} />
         </div>
