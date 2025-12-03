@@ -2,7 +2,17 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import FinanceAccount, FinanceTransaction
+from .models import ExchangeRate, FinanceAccount, FinanceTransaction
+
+
+@admin.register(ExchangeRate)
+class ExchangeRateAdmin(admin.ModelAdmin):
+    """ExchangeRate admin interface"""
+    list_display = ['rate_date', 'usd_to_uzs', 'created_at']
+    list_filter = ['rate_date', 'created_at']
+    search_fields = ['rate_date']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-rate_date']
 
 
 @admin.register(FinanceAccount)
