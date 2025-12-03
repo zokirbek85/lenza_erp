@@ -34,7 +34,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const loadAccounts = async () => {
     setLoadingAccounts(true);
     try {
-      const response = await getFinanceAccounts({ is_active: true, page_size: 1000 });
+      const response = await getFinanceAccounts({ is_active: true, page_size: 200 });
       const accountsList = Array.isArray(response.data)
         ? response.data
         : (response.data as any)?.results || [];

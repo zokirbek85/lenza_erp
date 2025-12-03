@@ -41,8 +41,8 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
     setLoadingAccounts(true);
     try {
       const [dealersRes, accountsRes] = await Promise.all([
-        getDealers({ is_active: true, page_size: 1000 }),
-        getFinanceAccounts({ is_active: true, page_size: 1000 }),
+        getDealers({ is_active: true, page_size: 200 }),
+        getFinanceAccounts({ is_active: true, page_size: 200 }),
       ]);
       
       const dealersList = Array.isArray(dealersRes.data)
