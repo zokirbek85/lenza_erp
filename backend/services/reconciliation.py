@@ -11,7 +11,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 
 from dealers.models import Dealer
 from orders.models import Order, OrderReturn
-from payments.models import Payment
+# Payment model removed
 from returns.models import Return as ProductReturn
 from returns.models import ReturnItem as ProductReturnItem
 
@@ -61,14 +61,8 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
         ).aggregate(total=Sum('total_usd'))['total']
         or Decimal('0')
     )
-    payments_total = (
-        Payment.objects.filter(
-            dealer=dealer,
-            pay_date__gte=start,
-            pay_date__lte=end,
-        ).aggregate(total=Sum('amount_usd'))['total']
-        or Decimal('0')
-    )
+    # Payment module removed - payments_total is zero
+    payments_total = Decimal('0')
     returns_total = (
         OrderReturn.objects.filter(
             order__dealer=dealer,
@@ -130,16 +124,8 @@ def get_reconciliation_data(
     )
     logger.info(f"Found {len(orders)} orders")
 
-    payments = list(
-        Payment.objects.filter(
-            dealer=dealer,
-            pay_date__gte=start,
-            pay_date__lte=end,
-        )
-        .select_related('card')
-        .order_by('pay_date', '-created_at')
-        .values('pay_date', 'method', 'amount_usd', 'card__name', 'card__number', 'card__holder_name')
-    )
+    # Payment module removed - payments list is empty
+    payments = []
     logger.info(f"Found {len(payments)} payments")
 
     returns = list(

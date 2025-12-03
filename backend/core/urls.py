@@ -78,7 +78,7 @@ from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import TelegramLinkView, UserViewSet, DashboardLayoutView
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
-from reports.views_cards_pdf import cards_pdf_report
+# cards_pdf_report removed - depends on Payment model
 from core.views_verify import verify_document
 from core.views_verify_api import verify_order, verify_reconciliation
 
@@ -131,7 +131,7 @@ urlpatterns = [
     path('api/marketing/brand-catalog/excel/', BrandCatalogExcelView.as_view(), name='marketing-brand-catalog-excel'),
     path('api/marketing/pricelist/pdf/', PriceListPDFView.as_view(), name='marketing-pricelist-pdf'),
     path('api/marketing/pricelist/excel/', PriceListExcelView.as_view(), name='marketing-pricelist-excel'),
-    path('api/reports/cards/pdf/', cards_pdf_report, name='cards-pdf-report'),
+    # Cards report removed - depends on Payment model
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),

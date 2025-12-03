@@ -49,7 +49,7 @@ class Dealer(models.Model):
     @property
     def balance_usd(self) -> Decimal:
         from orders.models import Order, OrderReturn
-        from payments.models import Payment
+        # Payment model removed
 
         opening = self.opening_balance_usd or Decimal('0')
 
@@ -69,15 +69,7 @@ class Dealer(models.Model):
             .get('total')
             or Decimal('0')
         )
-        # Only count APPROVED and CONFIRMED payments (backward compatibility)
-        payments_total = (
-            Payment.objects.filter(
-                dealer=self,
-                status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
-            )
-            .aggregate(total=Sum('amount_usd'))
-            .get('total')
-            or Decimal('0')
-        )
+        # Payment module removed - payments_total is zero
+        payments_total = Decimal('0')
 
         return opening + orders_total - returns_total - payments_total

@@ -20,7 +20,7 @@ from dealers.models import Dealer
 from dealers.serializers import DealerSerializer
 from orders.models import Order, OrderReturn
 from orders.serializers import OrderSerializer
-from payments.models import Payment
+# Payment model removed
 
 from .config import load_config, update_config
 from .middleware import AuditLog
@@ -155,18 +155,8 @@ class DashboardSummaryView(APIView):
 
         orders_qs = Order.objects.filter(order_filter).exclude(status=Order.Status.CANCELLED)
 
-        payment_filter = Q(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
-        if dealer_ids:
-            payment_filter &= Q(dealer_id__in=dealer_ids)
-        if region_id:
-            payment_filter &= Q(dealer__region_id=region_id)
-        if manager_id:
-            payment_filter &= Q(dealer__manager_user_id=manager_id)
-        if start_date:
-            payment_filter &= Q(pay_date__gte=start_date)
-        if end_date:
-            payment_filter &= Q(pay_date__lte=end_date)
-        payments_qs = Payment.objects.filter(payment_filter)
+        # Payment module removed - set payments to zero
+        payments_total = Decimal('0')
 
         return_filter = Q(order__in=orders_qs)
         if start_date:
@@ -179,7 +169,7 @@ class DashboardSummaryView(APIView):
             filtered_dealers.aggregate(total=Sum('opening_balance_usd'))['total']
         )
         orders_total = decimal_or_zero(orders_qs.aggregate(total=Sum('total_usd'))['total'])
-        payments_total = decimal_or_zero(payments_qs.aggregate(total=Sum('amount_usd'))['total'])
+        # payments_total already set to zero above
         returns_total = decimal_or_zero(returns_qs.aggregate(total=Sum('amount_usd'))['total'])
 
         # Inventory totals (products are global, show all inventory)
@@ -239,26 +229,17 @@ class DebtAnalyticsView(APIView):
             .annotate(total=Sum('total_usd'))
             .values('total')[:1]
         )
-        payment_subquery = (
-            Payment.objects.filter(
-                dealer=OuterRef('pk'),
-                status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
-            )
-            .values('dealer')
-            .annotate(total=Sum('amount_usd'))
-            .values('total')[:1]
-        )
+        # Payment module removed - set payments to zero
+        zero_value = Value(0, output_field=DecimalField(max_digits=20, decimal_places=2))
         return_subquery = (
             OrderReturn.objects.filter(order__dealer=OuterRef('pk'))
             .values('order__dealer')
             .annotate(total=Sum('amount_usd'))
             .values('total')[:1]
         )
-        zero_value = Value(0, output_field=DecimalField(max_digits=20, decimal_places=2))
 
         dealers_qs = dealer_qs.annotate(
             orders_total=Coalesce(Subquery(order_subquery), zero_value),
-            payments_total=Coalesce(Subquery(payment_subquery), zero_value),
             returns_total=Coalesce(Subquery(return_subquery), zero_value),
         )
 
@@ -272,7 +253,7 @@ class DebtAnalyticsView(APIView):
         for dealer in dealers:
             opening = decimal_or_zero(dealer.opening_balance_usd)
             orders_total = decimal_or_zero(dealer.orders_total)
-            payments_total = decimal_or_zero(dealer.payments_total)
+            payments_total = Decimal('0')  # Payment module removed
             returns_total = decimal_or_zero(dealer.returns_total)
             debt = opening + orders_total - payments_total - returns_total
             if debt == 0:
@@ -309,17 +290,8 @@ class DebtAnalyticsView(APIView):
                 .annotate(total=Sum('total_usd'))
                 .order_by('month')
             )
-            payments_monthly = (
-                Payment.objects.filter(
-                    dealer_id__in=dealer_ids,
-                    pay_date__gte=start_date,
-                    status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
-                )
-                .annotate(month=TruncMonth('pay_date'))
-                .values('month')
-                .annotate(total=Sum('amount_usd'))
-                .order_by('month')
-            )
+            # Payment module removed - payments_monthly is empty list
+            payments_monthly = []
             returns_monthly = (
                 OrderReturn.objects.filter(order__dealer_id__in=dealer_ids, created_at__date__gte=start_date)
                 .annotate(month=TruncMonth('created_at'))
@@ -340,7 +312,7 @@ class DebtAnalyticsView(APIView):
             return mapping
 
         orders_map = build_map(orders_monthly)
-        payments_map = build_map(payments_monthly)
+        payments_map = {}  # Payment module removed
         returns_map = build_map(returns_monthly)
 
         opening_total = sum((decimal_or_zero(dealer.opening_balance_usd) for dealer in dealers), Decimal('0'))

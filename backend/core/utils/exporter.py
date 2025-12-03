@@ -51,23 +51,7 @@ def export_products_to_excel(products):
     return _workbook_to_file(workbook, 'products')
 
 
-def export_payments_to_excel(payments):
-    workbook, worksheet = _prepare_workbook(
-        'Payments',
-        ['Dealer', 'Date', 'Amount', 'Currency', 'Method'],
-    )
-    for payment in payments:
-        worksheet.append(
-            [
-                getattr(payment.dealer, 'name', ''),
-                payment.pay_date.isoformat() if payment.pay_date else '',
-                float(payment.amount),
-                payment.currency,
-                payment.method,
-            ]
-        )
-    return _workbook_to_file(workbook, 'payments')
-
+# export_payments_to_excel removed - Payment module deleted
 
 def export_returns_to_excel(returns):
     workbook, worksheet = _prepare_workbook(
@@ -88,26 +72,7 @@ def export_returns_to_excel(returns):
     return _workbook_to_file(workbook, 'returns')
 
 
-def export_expenses_to_excel(expenses):
-    workbook, worksheet = _prepare_workbook(
-        'Expenses',
-        ['Date', 'Type', 'Method', 'Card', 'Currency', 'Amount', 'Status', 'Comment'],
-    )
-    for e in expenses:
-        worksheet.append(
-            [
-                e.date.isoformat() if e.date else '',
-                getattr(e.type, 'name', ''),
-                e.method,
-                getattr(e.card, 'name', ''),
-                e.currency,
-                float(e.amount),
-                e.status,
-                e.comment or '',
-            ]
-        )
-    return _workbook_to_file(workbook, 'expenses')
-
+# export_expenses_to_excel removed - Expense module deleted
 
 def _workbook_to_file(workbook: Workbook, prefix: str):
     stream = BytesIO()
