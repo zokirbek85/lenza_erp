@@ -51,6 +51,18 @@ class DealerViewSet(viewsets.ModelViewSet):
     ordering_fields = ('name', 'created_at')
     filter_backends = (filters.DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter)
 
+    def get_serializer_class(self):
+        """
+        Use lightweight serializer for list actions to avoid N+1 query problem.
+        DealerSerializer has computed fields (current_debt_usd, current_debt_uzs, balance_usd)
+        that trigger expensive queries for each dealer.
+        """
+        from .serializers import DealerListSerializer
+        
+        if self.action == 'list':
+            return DealerListSerializer
+        return DealerSerializer
+
     def get_queryset(self):
         """
         Sales (menejer) roli faqat o'ziga tayinlangan dilerlarni ko'radi.
