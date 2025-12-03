@@ -7,6 +7,29 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+class ExchangeRate(models.Model):
+    """
+    USD to UZS exchange rates
+    Used for currency conversion in transactions
+    """
+    rate_date = models.DateField(unique=True, db_index=True)
+    usd_to_uzs = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text=_('Exchange rate: 1 USD = X UZS')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ('-rate_date',)
+        verbose_name = _('Exchange Rate')
+        verbose_name_plural = _('Exchange Rates')
+    
+    def __str__(self):
+        return f"{self.rate_date}: 1 USD = {self.usd_to_uzs} UZS"
+
+
 class FinanceAccount(models.Model):
     """
     Moliya hisoblari - kassa, karta, bank

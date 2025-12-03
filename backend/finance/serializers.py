@@ -6,7 +6,14 @@ from rest_framework import serializers
 from dealers.models import Dealer
 from dealers.serializers import DealerSerializer
 
-from .models import FinanceAccount, FinanceTransaction
+from .models import ExchangeRate, FinanceAccount, FinanceTransaction
+
+
+class ExchangeRateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExchangeRate
+        fields = ('id', 'rate_date', 'usd_to_uzs', 'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at')
 
 
 class FinanceAccountSerializer(serializers.ModelSerializer):
