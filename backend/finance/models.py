@@ -190,26 +190,18 @@ class FinanceTransaction(models.Model):
             self.exchange_rate = None
             self.exchange_rate_date = None
         elif self.currency == 'UZS':
-            # Kurs modulidan kurs olish
-            from catalog.models import CurrencyRate
-            try:
-                rate_obj = CurrencyRate.objects.filter(
-                    date__lte=self.date
-                ).order_by('-date').first()
-                
-                if not rate_obj:
-                    raise ValidationError({
-                        'date': _('No exchange rate found for this date or earlier')
-                    })
-                
-                self.exchange_rate = rate_obj.usd_to_uzs
-                self.exchange_rate_date = rate_obj.date
-                # UZS -> USD konvertatsiya
+            # CurrencyRate model removed from system
+            # For UZS transactions, use manual exchange_rate or default conversion
+            if self.exchange_rate and self.exchange_rate > 0:
+                # Use manually provided exchange rate
                 self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
-            except CurrencyRate.DoesNotExist:
-                raise ValidationError({
-                    'date': _('Exchange rate not found')
-                })
+                if not self.exchange_rate_date:
+                    self.exchange_rate_date = self.date
+            else:
+                # No exchange rate provided - set amount_usd same as amount (will need manual correction)
+                self.amount_usd = self.amount
+                self.exchange_rate = None
+                self.exchange_rate_date = None
         
         super().save(*args, **kwargs)
     
