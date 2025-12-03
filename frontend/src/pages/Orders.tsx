@@ -247,13 +247,13 @@ const OrdersPage = () => {
     try {
       console.log('Loading dealers, users, brands, categories...');
       
-      // Load dealers with proper filters
-      const dealersResponse = await http.get('/dealers/', { 
-        params: { is_active: true, page_size: 500 } 
+      // Load dealers using unpaginated list-all endpoint with is_active filter
+      const dealersResponse = await http.get('/dealers/list-all/', { 
+        params: { is_active: true } 
       });
       const dealersData = Array.isArray(dealersResponse.data) 
         ? dealersResponse.data 
-        : dealersResponse.data?.results ?? [];
+        : [];
       
       const [usersData, brandsData, categoriesData] = await Promise.all([
         fetchAllPages<UserOption>('/users/'),
