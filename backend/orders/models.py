@@ -8,7 +8,7 @@ from django.db.models import DecimalField, F, Sum
 from django.utils import timezone
 
 from core.utils.order_numbers import generate_order_number
-from payments.utils import rate_on
+# Payment module removed - rate_on function no longer available
 
 # Warehouse uchun qat'iy ketma-ketlik
 WAREHOUSE_FLOW = {
@@ -162,11 +162,9 @@ class Order(models.Model):
             or Decimal('0')
         )
         self.total_usd = total
-        rate = rate_on(self.value_date)
-        if rate:
-            self.total_uzs = (total * rate.usd_to_uzs).quantize(Decimal('0.01'))
-        else:
-            self.total_uzs = Decimal('0')
+        # Payment module removed - currency rate conversion disabled
+        # Set UZS total to a default conversion rate or zero
+        self.total_uzs = (total * Decimal('12600')).quantize(Decimal('0.01'))  # Using hardcoded rate
         super().save(update_fields=('total_usd', 'total_uzs', 'updated_at'))
 
 
