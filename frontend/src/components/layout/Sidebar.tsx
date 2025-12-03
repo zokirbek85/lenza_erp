@@ -22,6 +22,7 @@ import {
   NotificationOutlined,
   BookOutlined,
   AppstoreOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 
 export interface MenuItem {
@@ -79,6 +80,12 @@ const BASE_MENU: MenuItem[] = [
       label: 'nav.currency',
       icon: <RiseOutlined />,
       roles: ['admin', 'sales', 'accountant'],
+    },
+    {
+      path: '/finance',
+      label: 'nav.finance',
+      icon: <DollarOutlined />,
+      roles: ['admin', 'accountant', 'owner'],
     },
     {
       path: '/returns',

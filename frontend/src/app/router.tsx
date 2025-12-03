@@ -27,6 +27,8 @@ import Unauthorized from '../pages/Unauthorized';
 import DocumentGeneratorPage from '../pages/marketing/DocumentGenerator';
 import VerifyOrderPage from '../pages/verify/VerifyOrderPage';
 import VerifyReconciliationPage from '../pages/verify/VerifyReconciliationPage';
+import FinanceDashboard from '../pages/FinanceDashboard';
+import FinanceTransactions from '../pages/FinanceTransactions';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -188,6 +190,22 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant', 'owner']}>
             <UserManualPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'finance',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <FinanceDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'finance/transactions',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant']}>
+            <FinanceTransactions />
           </ProtectedRoute>
         ),
       },

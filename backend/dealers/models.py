@@ -48,11 +48,17 @@ class Dealer(models.Model):
 
     @property
     def balance_usd(self) -> Decimal:
+        """
+        Calculate dealer balance in USD.
+        Balance = Opening Balance + Orders Total - Returns Total - Payments Total
+        Positive balance = dealer owes money (debt)
+        """
         from orders.models import Order, OrderReturn
-        # Payment model removed
+        from finance.models import FinanceTransaction
 
         opening = self.opening_balance_usd or Decimal('0')
 
+        # Total of active orders
         orders_total = (
             Order.objects.filter(
                 dealer=self, 
@@ -63,13 +69,54 @@ class Dealer(models.Model):
             .get('total')
             or Decimal('0')
         )
+        
+        # Total of returns
         returns_total = (
             OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
             .aggregate(total=Sum('amount_usd'))
             .get('total')
             or Decimal('0')
         )
-        # Payment module removed - payments_total is zero
-        payments_total = Decimal('0')
+        
+        # Total of approved income transactions (payments from dealer)
+        payments_total = (
+            FinanceTransaction.objects.filter(
+                dealer=self,
+                type=FinanceTransaction.TransactionType.INCOME,
+                status=FinanceTransaction.TransactionStatus.APPROVED
+            )
+            .aggregate(total=Sum('amount_usd'))
+            .get('total')
+            or Decimal('0')
+        )
 
         return opening + orders_total - returns_total - payments_total
+    
+    @property
+    def current_debt_usd(self) -> Decimal:
+        """
+        Dealer's current debt in USD (only positive balances).
+        Returns 0 if balance is negative or zero.
+        """
+        balance = self.balance_usd
+        return balance if balance > 0 else Decimal('0')
+    
+    @property
+    def current_debt_uzs(self) -> Decimal:
+        """
+        Dealer's current debt in UZS.
+        Converts USD debt to UZS using latest exchange rate.
+        """
+        from catalog.models import CurrencyRate
+        
+        debt_usd = self.current_debt_usd
+        if debt_usd == 0:
+            return Decimal('0')
+        
+        # Get latest exchange rate
+        try:
+            rate = CurrencyRate.objects.latest('date')
+            return (debt_usd * rate.usd_to_uzs).quantize(Decimal('0.01'))
+        except CurrencyRate.DoesNotExist:
+            # If no rate available, return 0
+            return Decimal('0')

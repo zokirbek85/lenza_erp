@@ -28,6 +28,8 @@ class DealerSerializer(serializers.ModelSerializer):
     )
     balance = serializers.DecimalField(max_digits=14, decimal_places=2, source='balance_usd', read_only=True)
     debt = serializers.DecimalField(max_digits=14, decimal_places=2, source='debt_usd', read_only=True)
+    current_debt_usd = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    current_debt_uzs = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     class Meta:
         model = Dealer
@@ -44,6 +46,8 @@ class DealerSerializer(serializers.ModelSerializer):
             'debt',
             'is_active',
             'balance',
+            'current_debt_usd',
+            'current_debt_uzs',
             'created_at',
             'updated_at',
         )

@@ -34,6 +34,23 @@ class FinanceAccount(models.Model):
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.name} ({self.currency})"
+    
+    @property
+    def balance(self):
+        """Calculate account balance from approved transactions"""
+        from django.db.models import Sum
+        approved_transactions = self.transactions.filter(
+            status=FinanceTransaction.TransactionStatus.APPROVED
+        )
+        income = approved_transactions.filter(
+            type=FinanceTransaction.TransactionType.INCOME
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        expense = approved_transactions.filter(
+            type=FinanceTransaction.TransactionType.EXPENSE
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        return income - expense
 
 
 class FinanceTransaction(models.Model):

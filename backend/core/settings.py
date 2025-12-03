@@ -85,7 +85,7 @@ ASGI_APPLICATION = 'core.asgi.application'
 # Database Configuration
 # Local development: SQLite3 (default)
 # Production (VPS): PostgreSQL
-ENV = os.getenv('ENV', 'production').lower()
+ENV = os.getenv('ENV', 'development').lower()
 USE_POSTGRES = ENV == 'production' or os.getenv('USE_POSTGRES', 'false').lower() == 'true'
 
 if USE_POSTGRES:
