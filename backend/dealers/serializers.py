@@ -6,6 +6,13 @@ from .models import Dealer, Region
 User = get_user_model()
 
 
+class DealerListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for dropdown lists (no computed fields)"""
+    class Meta:
+        model = Dealer
+        fields = ('id', 'name', 'code', 'contact')
+
+
 class RegionSerializer(serializers.ModelSerializer):
     manager_user = serializers.StringRelatedField(read_only=True)
     manager_user_id = serializers.PrimaryKeyRelatedField(

@@ -12,6 +12,8 @@ export interface Dealer {
 
 export interface DealerFilters {
   search?: string;
+  page_size?: number;
+  is_active?: boolean;
 }
 
 export const getDealers = (params?: DealerFilters) =>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import { getFinanceAccounts, createFinanceTransaction } from '../../api/finance';
-import { fetchAllDealers } from '../../utils/api';
+import { getDealers } from '../../api/dealers';
 import type { FinanceAccount, Currency } from '../../types/finance';
 import type { Dealer } from '../../types/dealer';
 
@@ -40,11 +40,14 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
     setLoadingDealers(true);
     setLoadingAccounts(true);
     try {
-      const [dealersList, accountsRes] = await Promise.all([
-        fetchAllDealers<Dealer>(),
+      const [dealersRes, accountsRes] = await Promise.all([
+        getDealers({ is_active: true, page_size: 1000 }),
         getFinanceAccounts({ is_active: true, page_size: 1000 }),
       ]);
       
+      const dealersList = Array.isArray(dealersRes.data)
+        ? dealersRes.data
+        : (dealersRes.data as any)?.results || [];
       const accountsList = Array.isArray(accountsRes.data)
         ? accountsRes.data
         : (accountsRes.data as any)?.results || [];

@@ -75,9 +75,12 @@ class DealerViewSet(viewsets.ModelViewSet):
         """
         Unpaginated dealer list for dropdowns.
         Respects role-based visibility from get_queryset.
+        Uses lightweight serializer without computed debt fields.
         """
+        from .serializers import DealerListSerializer
+        
         queryset = self.filter_queryset(self.get_queryset()).order_by('name')
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = DealerListSerializer(queryset, many=True)
         return Response(serializer.data)
 
 
