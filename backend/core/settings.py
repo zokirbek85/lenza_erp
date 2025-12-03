@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'kpis',
     'notifications.apps.NotificationsConfig',
     'returns.apps.ReturnsConfig',
+    'finance.apps.FinanceConfig',
 ]
 
 MIDDLEWARE = [
