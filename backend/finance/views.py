@@ -33,8 +33,10 @@ class ExchangeRateViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Read - hamma, Write - faqat admin/accountant"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAdmin | IsAccountant]
-        return [IsAuthenticated]
+            self.permission_classes = [IsAdmin | IsAccountant]
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
 
 class FinanceAccountFilter(filters.FilterSet):
