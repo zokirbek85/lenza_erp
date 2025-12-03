@@ -64,8 +64,8 @@ ENV=production
 DJANGO_DEBUG=False
 DJANGO_SECRET_KEY=PLEASE_CHANGE_ME_TO_LONG_RANDOM_STRING
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,45.138.159.195,erp.lenza.uz
-DJANGO_CSRF_TRUSTED_ORIGINS=http://erp.lenza.uz,http://45.138.159.195
-DJANGO_CORS_ALLOWED_ORIGINS=http://erp.lenza.uz,http://45.138.159.195
+DJANGO_CSRF_TRUSTED_ORIGINS=https://erp.lenza.uz,http://45.138.159.195
+DJANGO_CORS_ALLOWED_ORIGINS=https://erp.lenza.uz,http://45.138.159.195
 DJANGO_CORS_ALLOW_ALL=False
 
 USE_POSTGRES=True
@@ -263,9 +263,9 @@ Lenza ERP o'rnatish tugadi.
      cd /opt/lenza_erp/src/backend
      python manage.py createsuperuser
 3) Ilova frontendini brauzerda ko'rish:
-     http://erp.lenza.uz
+     https://erp.lenza.uz
    Admin panel:
-     http://erp.lenza.uz/admin/
+     https://erp.lenza.uz/admin/
 4) Agar Telegram bot kerak bo'lsa:
      systemctl enable lenza_erp_bot
      systemctl start lenza_erp_bot

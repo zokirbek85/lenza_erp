@@ -185,8 +185,8 @@ systemctl status lenza_erp
 ## 11. Frontend build (Vite + React)
 1. `.env` fayli (`/opt/lenza_erp/src/frontend/.env`) ni yarating:
    ```
-   VITE_API_URL=http://erp.lenza.uz
-   VITE_WS_URL=ws://erp.lenza.uz
+   VITE_API_URL=https://erp.lenza.uz
+   VITE_WS_URL=wss://erp.lenza.uz
    VITE_DISABLE_SW=true
    ```
 2. Build qilish:
@@ -244,7 +244,7 @@ ln -s /etc/nginx/sites-available/lenza_erp /etc/nginx/sites-enabled/lenza_erp
 nginx -t
 systemctl restart nginx
 ```
-So'ng brauzerda `http://erp.lenza.uz` va `http://erp.lenza.uz/admin/` ni tekshiring.
+So'ng brauzerda `https://erp.lenza.uz` va `https://erp.lenza.uz/admin/` ni tekshiring.
 
 ---
 
