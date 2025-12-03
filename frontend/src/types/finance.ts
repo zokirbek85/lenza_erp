@@ -9,6 +9,7 @@ export type TransactionStatus = 'draft' | 'approved' | 'cancelled';
 export interface FinanceAccount {
   id: number;
   type: AccountType;
+  type_display?: string;
   currency: Currency;
   name: string;
   is_active: boolean;

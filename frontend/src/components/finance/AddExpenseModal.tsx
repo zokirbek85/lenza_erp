@@ -16,7 +16,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
   
   const [formData, setFormData] = useState({
-    account: '',
+    account: 0,
     currency: 'USD' as Currency,
     amount: '',
     category: '',
@@ -47,7 +47,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
     // Auto-select matching account if possible
     const matchingAccount = accounts.find(a => a.currency === currency && a.is_active);
     if (matchingAccount) {
-      setFormData(prev => ({ ...prev, account: matchingAccount.id.toString() }));
+      setFormData(prev => ({ ...prev, account: matchingAccount.id }));
     }
   };
 
@@ -63,9 +63,9 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
       setLoading(true);
       await createFinanceTransaction({
         type: 'expense',
-        account: parseInt(formData.account),
+        account: formData.account,
         currency: formData.currency,
-        amount: formData.amount,
+        amount: parseFloat(formData.amount),
         category: formData.category,
         comment: formData.comment,
         date: formData.date,
@@ -88,7 +88,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
 
   const resetForm = () => {
     setFormData({
-      account: '',
+      account: 0,
       currency: 'USD',
       amount: '',
       category: '',
@@ -204,15 +204,15 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
               {t('finance.transaction.account', 'Hisob')} <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.account}
-              onChange={(e) => setFormData({ ...formData, account: e.target.value })}
+              value={formData.account || ''}
+              onChange={(e) => setFormData({ ...formData, account: parseInt(e.target.value) || 0 })}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="">{t('common.select', 'Tanlang')}</option>
               {filteredAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name} ({account.type_display})
+                  {account.name} ({account.type_display || account.type})
                 </option>
               ))}
             </select>

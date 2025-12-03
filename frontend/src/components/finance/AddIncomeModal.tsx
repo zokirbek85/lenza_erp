@@ -20,8 +20,8 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   
   const [formData, setFormData] = useState({
-    dealer: '',
-    account: '',
+    dealer: 0,
+    account: 0,
     currency: 'USD' as Currency,
     amount: '',
     comment: '',
@@ -56,8 +56,9 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
   };
 
   const handleDealerChange = (dealerId: string) => {
-    setFormData({ ...formData, dealer: dealerId });
-    const dealer = dealers.find(d => d.id.toString() === dealerId);
+    const id = parseInt(dealerId);
+    setFormData({ ...formData, dealer: id });
+    const dealer = dealers.find(d => d.id === id);
     setSelectedDealer(dealer || null);
   };
 
@@ -66,7 +67,7 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
     // Auto-select matching account if possible
     const matchingAccount = accounts.find(a => a.currency === currency && a.is_active);
     if (matchingAccount) {
-      setFormData(prev => ({ ...prev, account: matchingAccount.id.toString() }));
+      setFormData(prev => ({ ...prev, account: matchingAccount.id }));
     }
   };
 
@@ -82,10 +83,10 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
       setLoading(true);
       await createFinanceTransaction({
         type: 'income',
-        dealer: parseInt(formData.dealer),
-        account: parseInt(formData.account),
+        dealer: formData.dealer,
+        account: formData.account,
         currency: formData.currency,
-        amount: formData.amount,
+        amount: parseFloat(formData.amount),
         comment: formData.comment,
         date: formData.date,
       });
@@ -107,8 +108,8 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
 
   const resetForm = () => {
     setFormData({
-      dealer: '',
-      account: '',
+      dealer: 0,
+      account: 0,
       currency: 'USD',
       amount: '',
       comment: '',
@@ -145,7 +146,7 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
               {t('finance.transaction.dealer', 'Diler')} <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.dealer}
+              value={formData.dealer || ''}
               onChange={(e) => handleDealerChange(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -222,15 +223,15 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
               {t('finance.transaction.account', 'Hisob')} <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.account}
-              onChange={(e) => setFormData({ ...formData, account: e.target.value })}
+              value={formData.account || ''}
+              onChange={(e) => setFormData({ ...formData, account: parseInt(e.target.value) || 0 })}
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="">{t('common.select', 'Tanlang')}</option>
               {filteredAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {account.name} ({account.type_display})
+                  {account.name} ({account.type_display || account.type})
                 </option>
               ))}
             </select>
