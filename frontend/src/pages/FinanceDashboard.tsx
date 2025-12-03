@@ -3,12 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCashSummary } from '../api/finance';
 import type { CashSummary } from '../types/finance';
+import AddIncomeModal from '../components/finance/AddIncomeModal';
+import AddExpenseModal from '../components/finance/AddExpenseModal';
 
 export default function FinanceDashboard() {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<CashSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showIncomeModal, setShowIncomeModal] = useState(false);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
 
   useEffect(() => {
     loadSummary();
@@ -43,6 +47,10 @@ export default function FinanceDashboard() {
     return labels[type] || type;
   };
 
+  const handleTransactionSuccess = () => {
+    loadSummary(); // Refresh dashboard data
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -74,13 +82,35 @@ export default function FinanceDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          {t('finance.dashboard.title', 'Kassa Boshqaruvi')}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {t('finance.dashboard.subtitle', 'Umumiy moliyaviy ko\'rinish')}
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {t('finance.dashboard.title', 'Moliya Boshqaruvi')}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {t('finance.dashboard.subtitle', 'Kassa va hisob-kitoblar')}
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowIncomeModal(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {t('finance.income.add', 'Kirim qo\'shish')}
+          </button>
+          <button
+            onClick={() => setShowExpenseModal(true)}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+            {t('finance.expense.add', 'Chiqim qo\'shish')}
+          </button>
+        </div>
       </div>
 
       {/* Total Balance Cards */}
@@ -250,6 +280,18 @@ export default function FinanceDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Modals */}
+      <AddIncomeModal
+        visible={showIncomeModal}
+        onClose={() => setShowIncomeModal(false)}
+        onSuccess={handleTransactionSuccess}
+      />
+      <AddExpenseModal
+        visible={showExpenseModal}
+        onClose={() => setShowExpenseModal(false)}
+        onSuccess={handleTransactionSuccess}
+      />
     </div>
   );
 }

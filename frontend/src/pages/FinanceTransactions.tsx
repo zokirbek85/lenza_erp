@@ -48,38 +48,41 @@ export default function FinanceTransactions() {
   };
 
   const handleApprove = async (id: number) => {
-    if (!confirm(t('finance.transaction.confirmApprove', 'Operatsiyani tasdiqlaysizmi?'))) {
+    if (!window.confirm(t('finance.transaction.confirmApprove', 'Operatsiyani tasdiqlaysizmi?'))) {
       return;
     }
     try {
       await approveFinanceTransaction(id);
-      loadTransactions();
+      await loadTransactions();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to approve transaction');
+      const errorMsg = err.response?.data?.detail || 'Failed to approve transaction';
+      window.alert(errorMsg);
     }
   };
 
   const handleCancel = async (id: number) => {
-    if (!confirm(t('finance.transaction.confirmCancel', 'Operatsiyani bekor qilasizmi?'))) {
+    if (!window.confirm(t('finance.transaction.confirmCancel', 'Operatsiyani bekor qilasizmi?'))) {
       return;
     }
     try {
       await cancelFinanceTransaction(id);
-      loadTransactions();
+      await loadTransactions();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to cancel transaction');
+      const errorMsg = err.response?.data?.detail || 'Failed to cancel transaction';
+      window.alert(errorMsg);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm(t('finance.transaction.confirmDelete', 'Operatsiyani o\'chirasizmi?'))) {
+    if (!window.confirm(t('finance.transaction.confirmDelete', 'Operatsiyani o\'chirasizmi?'))) {
       return;
     }
     try {
       await deleteFinanceTransaction(id);
-      loadTransactions();
+      await loadTransactions();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete transaction');
+      const errorMsg = err.response?.data?.detail || 'Failed to delete transaction';
+      window.alert(errorMsg);
     }
   };
 

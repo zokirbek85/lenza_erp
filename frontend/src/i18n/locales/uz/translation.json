@@ -525,6 +525,70 @@
     }
   },
   "finance": {
+    "dashboard": {
+      "title": "Moliya Boshqaruvi",
+      "subtitle": "Kassa va hisob-kitoblar"
+    },
+    "transactions": {
+      "title": "Moliya Operatsiyalari",
+      "subtitle": "Kirim va chiqim operatsiyalari",
+      "empty": "Operatsiyalar topilmadi"
+    },
+    "transaction": {
+      "date": "Sana",
+      "type": "Turi",
+      "dealer": "Diler",
+      "account": "Hisob",
+      "currency": "Valyuta",
+      "amount": "Summa",
+      "category": "Kategoriya",
+      "comment": "Izoh",
+      "status": "Status",
+      "income": "Kirim",
+      "expense": "Chiqim",
+      "draft": "Draft",
+      "approved": "Tasdiqlangan",
+      "cancelled": "Bekor qilingan",
+      "approve": "Tasdiqlash",
+      "cancel": "Bekor qilish",
+      "confirmApprove": "Operatsiyani tasdiqlaysizmi?",
+      "confirmCancel": "Operatsiyani bekor qilasizmi?",
+      "confirmDelete": "Operatsiyani o'chirasizmi?"
+    },
+    "income": {
+      "add": "Kirim qo'shish",
+      "created": "Kirim muvaffaqiyatli qo'shildi",
+      "fillRequired": "Barcha majburiy maydonlarni to'ldiring",
+      "currentDebt": "Joriy qarz",
+      "commentPlaceholder": "Qo'shimcha ma'lumot...",
+      "noAccounts": "Hisob topilmadi"
+    },
+    "expense": {
+      "add": "Chiqim qo'shish",
+      "created": "Chiqim muvaffaqiyatli qo'shildi",
+      "fillRequired": "Barcha majburiy maydonlarni to'ldiring",
+      "commentPlaceholder": "Qo'shimcha ma'lumot...",
+      "noAccounts": "Hisob topilmadi",
+      "customCategory": "Boshqa kategoriya nomini kiriting",
+      "salary": "Maosh",
+      "rent": "Ijara",
+      "utilities": "Kommunal xizmatlar",
+      "supplies": "Materiallar",
+      "transport": "Transport",
+      "marketing": "Marketing",
+      "equipment": "Uskunalar",
+      "maintenance": "Ta'mirlash",
+      "other": "Boshqa"
+    },
+    "account": {
+      "balance": "Balans",
+      "status": "Status"
+    },
+    "accountType": {
+      "cash": "Naqd pul",
+      "card": "Karta",
+      "bank": "Bank"
+    },
     "balances": {
       "cashUzs": "Naqd UZS",
       "cashUsd": "Naqd USD",
