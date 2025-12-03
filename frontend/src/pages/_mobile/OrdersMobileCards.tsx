@@ -14,6 +14,7 @@ export type OrderMobileSummary = {
   created_by?: { full_name?: string };
   status: string;
   can_edit?: boolean;
+  can_change_status?: boolean;
   items?: { id: number }[];
 };
 
@@ -59,7 +60,7 @@ export const OrdersMobileCard = ({ order, handlers }: OrdersMobileCardProps) => 
           value={order.status}
           orderId={order.id}
           onStatusUpdated={handlers.onStatusUpdated}
-          canEdit={order.can_edit}
+          canEdit={order.can_change_status}
         />
       }
     />

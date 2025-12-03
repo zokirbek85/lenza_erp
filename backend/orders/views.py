@@ -65,10 +65,9 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     
     def perform_update(self, serializer):
         """
-        Edit order with role-based permissions:
-        - Admin/Accountant: can edit any order
-        - Manager (sales): can only edit CREATED status orders
-        - Confirmed and later: only admin/accountant can edit
+        Edit order with separate permissions for status and items:
+        - Status change: admin/accountant always, manager for own orders
+        - Items edit: admin/accountant always, manager only for CREATED status
         """
         order = self.get_object()
         user = self.request.user
@@ -78,13 +77,22 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
             serializer.save()
             return
         
-        # Check if user has permission to edit this order
-        if not order.can_edit(user):
+        # Check what's being updated
+        is_status_change = 'status' in self.request.data
+        is_items_change = 'items' in self.request.data
+        
+        # Validate status change permission
+        if is_status_change and not order.can_change_status(user):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Sizda bu buyurtma statusini o\'zgartirish huquqi yo\'q.')
+        
+        # Validate items change permission
+        if is_items_change and not order.can_edit_items(user):
             from rest_framework.exceptions import PermissionDenied
             if hasattr(user, 'role') and user.role == 'sales':
-                raise PermissionDenied('Manager faqat "created" statusdagi buyurtmalarni tahrirlashi mumkin. Bu buyurtma allaqachon tasdiqlangan.')
+                raise PermissionDenied('Manager faqat "created" statusdagi buyurtmalarda mahsulotlarni tahrirlashi mumkin.')
             else:
-                raise PermissionDenied('Sizda bu buyurtmani tahrirlash huquqi yo\'q.')
+                raise PermissionDenied('Sizda bu buyurtma mahsulotlarini tahrirlash huquqi yo\'q.')
         
         serializer.save()
     

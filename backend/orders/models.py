@@ -71,22 +71,42 @@ class Order(models.Model):
             self.display_no = candidate
         super().save(*args, **kwargs)
 
-    def can_edit(self, user) -> bool:
+    def can_edit_items(self, user) -> bool:
         """
-        Determine if user can edit this order.
-        - Admin/Accountant: always can edit
+        Determine if user can edit order items (add/remove/modify products).
+        - Admin/Accountant: always can edit items
         - Manager (sales): only if status == CREATED
         - Other roles: no edit permission
         """
         if not user or not hasattr(user, 'role'):
             return False
         
-        # Admin and accountant can always edit
+        # Admin and accountant can always edit items
         if user.role in ['admin', 'accountant', 'owner']:
             return True
         
-        # Manager (sales) can only edit CREATED orders
+        # Manager (sales) can only edit items in CREATED orders
         if user.role == 'sales' and self.status == self.Status.CREATED:
+            return True
+        
+        return False
+
+    def can_change_status(self, user) -> bool:
+        """
+        Determine if user can change order status.
+        - Admin/Accountant: always can change status
+        - Manager (sales): only for orders they created
+        - Other roles: no permission
+        """
+        if not user or not hasattr(user, 'role'):
+            return False
+        
+        # Admin and accountant can always change status
+        if user.role in ['admin', 'accountant', 'owner']:
+            return True
+        
+        # Manager (sales) can change status only for their own orders
+        if user.role == 'sales' and self.created_by_id == user.id:
             return True
         
         return False

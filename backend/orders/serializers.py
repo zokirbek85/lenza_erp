@@ -92,12 +92,20 @@ class OrderSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     can_edit = serializers.SerializerMethodField()
+    can_change_status = serializers.SerializerMethodField()
 
     def get_can_edit(self, obj):
-        """Return whether current user can edit this order."""
+        """Return whether current user can edit order items."""
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            return obj.can_edit(request.user)
+            return obj.can_edit_items(request.user)
+        return False
+
+    def get_can_change_status(self, obj):
+        """Return whether current user can change order status."""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            return obj.can_change_status(request.user)
         return False
 
     class Meta:
@@ -118,11 +126,12 @@ class OrderSerializer(serializers.ModelSerializer):
             'is_reserve',
             'is_imported',
             'can_edit',
+            'can_change_status',
             'items',
             'status_logs',
             'returns',
         )
-        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'can_edit')
+        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'can_edit', 'can_change_status')
 
     def to_internal_value(self, data):
         if hasattr(data, 'copy'):
@@ -145,18 +154,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """
-        Update order - enforce permission checks.
-        Manager can only edit CREATED orders.
-        Admin/Accountant can edit any order.
+        Update order - permissions are checked in ViewSet.perform_update().
+        Status and items have separate permission checks.
         """
-        user = self.context['request'].user
-        
-        # Double-check permission (should already be checked in view)
-        if not instance.can_edit(user):
-            raise serializers.ValidationError({
-                'detail': 'Bu buyurtmani tahrirlash mumkin emas. Faqat "created" statusdagi buyurtmalarni tahrirlash mumkin.'
-            })
-        
         items_data = validated_data.pop('items', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
