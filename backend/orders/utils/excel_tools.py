@@ -297,6 +297,7 @@ def import_orders_from_excel(file_obj, created_by=None) -> dict:
                         note=note,
                         value_date=value_date,
                         is_reserve=is_reserve,
+                        is_imported=True,  # Mark as imported - will not affect stock/balance
                     )
                     
                     for item_data in order_items:

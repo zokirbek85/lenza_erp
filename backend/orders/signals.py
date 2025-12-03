@@ -12,6 +12,10 @@ from .models import Order, OrderItem, OrderStatusLog
 
 
 def _adjust_inventory(order: Order, multiplier: int):
+    # Skip inventory adjustment for imported orders
+    if order.is_imported:
+        return
+    
     with transaction.atomic():
         for item in order.items.select_related('product'):
             product = Product.objects.select_for_update().get(pk=item.product_id)
@@ -44,6 +48,10 @@ def order_status_logging(sender, instance: Order, created, **kwargs):
         broadcast_order_status(instance)
         if hasattr(instance, '_status_actor'):
             delattr(instance, '_status_actor')
+
+    # Skip inventory adjustment for imported orders
+    if instance.is_imported:
+        return
 
     if previous in Order.Status.active_statuses() and instance.status not in Order.Status.active_statuses():
         _adjust_inventory(instance, 1)

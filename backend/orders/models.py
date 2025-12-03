@@ -42,6 +42,7 @@ class Order(models.Model):
     total_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     total_uzs = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     is_reserve = models.BooleanField(default=False)
+    is_imported = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('-created_at',)

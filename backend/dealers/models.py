@@ -54,13 +54,17 @@ class Dealer(models.Model):
         opening = self.opening_balance_usd or Decimal('0')
 
         orders_total = (
-            Order.objects.filter(dealer=self, status__in=Order.Status.active_statuses())
+            Order.objects.filter(
+                dealer=self, 
+                status__in=Order.Status.active_statuses(),
+                is_imported=False
+            )
             .aggregate(total=Sum('total_usd'))
             .get('total')
             or Decimal('0')
         )
         returns_total = (
-            OrderReturn.objects.filter(order__dealer=self)
+            OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
             .aggregate(total=Sum('amount_usd'))
             .get('total')
             or Decimal('0')

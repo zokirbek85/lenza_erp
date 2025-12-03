@@ -30,7 +30,8 @@ def _create_notification(
 
 @receiver(post_save, sender=Order)
 def notify_order_created(sender, instance: Order, created, **kwargs):
-    if created:
+    # Skip notifications for imported orders
+    if created and not instance.is_imported:
         _create_notification(
             'Yangi buyurtma', 
             f'{instance.display_no} uchun buyurtma yaratildi.',

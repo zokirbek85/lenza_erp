@@ -108,6 +108,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_usd',
             'total_uzs',
             'is_reserve',
+            'is_imported',
             'items',
             'status_logs',
             'returns',
