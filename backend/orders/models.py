@@ -10,6 +10,14 @@ from django.utils import timezone
 from core.utils.order_numbers import generate_order_number
 from payments.utils import rate_on
 
+# Warehouse uchun qat'iy ketma-ketlik
+WAREHOUSE_FLOW = {
+    'confirmed': 'packed',
+    'packed': 'shipped',
+    'shipped': 'delivered',
+    'delivered': 'returned',
+}
+
 
 class Order(models.Model):
     class Status(models.TextChoices):
@@ -91,25 +99,60 @@ class Order(models.Model):
         
         return False
 
-    def can_change_status(self, user) -> bool:
+    def can_change_status(self, user, new_status: str = None) -> bool:
         """
         Determine if user can change order status.
-        - Admin/Accountant: always can change status
-        - Manager (sales): only for orders they created
+        - Admin/Accountant/Owner: always can change to any status
+        - Manager (sales): only for orders they created, can change to any status
+        - Warehouse: only can change following strict workflow (confirmed→packed→shipped→delivered→returned)
         - Other roles: no permission
         """
         if not user or not hasattr(user, 'role'):
             return False
         
-        # Admin and accountant can always change status
+        # Admin, accountant and owner can always change to any status
         if user.role in ['admin', 'accountant', 'owner']:
             return True
         
-        # Manager (sales) can change status only for their own orders
+        # Manager (sales) can change status only for their own orders, no status restriction
         if user.role == 'sales' and self.created_by_id == user.id:
             return True
         
+        # Warehouse can only follow strict workflow
+        if user.role == 'warehouse':
+            # If new_status provided, validate it's the next allowed step
+            if new_status:
+                allowed_next_status = WAREHOUSE_FLOW.get(self.status)
+                return allowed_next_status == new_status
+            # If no new_status, just check if current status has a next step
+            return self.status in WAREHOUSE_FLOW
+        
         return False
+    
+    def get_allowed_next_statuses(self, user) -> list[str]:
+        """
+        Get list of statuses user can change to from current status.
+        - Admin/Accountant/Owner: all statuses
+        - Manager: all statuses (for own orders)
+        - Warehouse: only next step in workflow
+        """
+        if not user or not hasattr(user, 'role'):
+            return []
+        
+        # Admin, accountant, owner - all statuses
+        if user.role in ['admin', 'accountant', 'owner']:
+            return list(self.Status.values)
+        
+        # Manager - all statuses for own orders
+        if user.role == 'sales' and self.created_by_id == user.id:
+            return list(self.Status.values)
+        
+        # Warehouse - only next step
+        if user.role == 'warehouse':
+            next_status = WAREHOUSE_FLOW.get(self.status)
+            return [next_status] if next_status else []
+        
+        return []
 
     def recalculate_totals(self):
         total = (

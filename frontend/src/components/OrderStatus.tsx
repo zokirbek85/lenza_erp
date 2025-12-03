@@ -3,13 +3,13 @@ import { Select, Tag, Button, Space, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, SyncOutlined } from '@ant-design/icons';
 import { updateOrderStatus } from '../services/orders';
-import { useAuthStore } from '../auth/useAuthStore';
 
 interface OrderStatusProps {
   value: string;
   orderId: number;
   onStatusUpdated?: (orderId: number, newStatus: string) => void;
   canEdit?: boolean;
+  allowedStatuses?: string[]; // Backend returns this based on role and workflow
 }
 
 const STATUS_OPTIONS = [
@@ -22,24 +22,11 @@ const STATUS_OPTIONS = [
   { value: 'returned', color: 'magenta' },
 ] as const;
 
-// Rol bo'yicha ruxsatlar jadvali
-const ROLE_PERMISSIONS: Record<string, string[]> = {
-  sales: ['created', 'confirmed', 'cancelled'],
-  warehouse: ['packed', 'shipped', 'delivered', 'returned'],
-  accountant: STATUS_OPTIONS.map((s) => s.value),
-  admin: STATUS_OPTIONS.map((s) => s.value),
-  owner: STATUS_OPTIONS.map((s) => s.value),
-};
-
-export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true }: OrderStatusProps) => {
+export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, allowedStatuses = [] }: OrderStatusProps) => {
   const { t } = useTranslation();
-  const { role } = useAuthStore();
   const [selectedStatus, setSelectedStatus] = useState(value);
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
-  // Foydalanuvchi roliga qarab ruxsat berilgan statuslar
-  const allowedStatuses = ROLE_PERMISSIONS[role || ''] || [];
 
   // can_edit=false bo'lsa, hech narsa qilmaslik
   const isEditable = canEdit && allowedStatuses.length > 0;
@@ -83,7 +70,6 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true }:
         orderId,
         oldStatus: value,
         newStatus: selectedStatus,
-        userRole: role,
       });
 
       const response = await updateOrderStatus(orderId, selectedStatus);

@@ -76,6 +76,7 @@ interface Order {
   is_reserve: boolean;
   can_edit?: boolean;
   can_change_status?: boolean;
+  allowed_next_statuses?: string[];
   items: OrderItem[];
 }
 
@@ -1172,6 +1173,7 @@ const OrdersPage = () => {
                           orderId={order.id}
                           onStatusUpdated={handleStatusUpdated}
                           canEdit={order.can_change_status}
+                          allowedStatuses={order.allowed_next_statuses || []}
                         />
                       </div>
                     </td>

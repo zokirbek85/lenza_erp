@@ -66,7 +66,7 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     def perform_update(self, serializer):
         """
         Edit order with separate permissions for status and items:
-        - Status change: admin/accountant always, manager for own orders
+        - Status change: admin/accountant always, manager for own orders, warehouse only following workflow
         - Items edit: admin/accountant always, manager only for CREATED status
         """
         order = self.get_object()
@@ -81,10 +81,20 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
         is_status_change = 'status' in self.request.data
         is_items_change = 'items' in self.request.data
         
-        # Validate status change permission
-        if is_status_change and not order.can_change_status(user):
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied('Sizda bu buyurtma statusini o\'zgartirish huquqi yo\'q.')
+        # Validate status change permission with new_status
+        if is_status_change:
+            new_status = self.request.data.get('status')
+            if not order.can_change_status(user, new_status):
+                from rest_framework.exceptions import PermissionDenied
+                if hasattr(user, 'role') and user.role == 'warehouse':
+                    from orders.models import WAREHOUSE_FLOW
+                    allowed = WAREHOUSE_FLOW.get(order.status)
+                    if allowed:
+                        raise PermissionDenied(f'Warehouse faqat "{order.status}" dan "{allowed}" ga o\'tkazishi mumkin.')
+                    else:
+                        raise PermissionDenied(f'Warehouse "{order.status}" statusidan keyingi bosqichga o\'tkaza olmaydi.')
+                else:
+                    raise PermissionDenied('Sizda bu buyurtma statusini o\'zgartirish huquqi yo\'q.')
         
         # Validate items change permission
         if is_items_change and not order.can_edit_items(user):

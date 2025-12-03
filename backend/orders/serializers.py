@@ -93,6 +93,7 @@ class OrderSerializer(serializers.ModelSerializer):
     )
     can_edit = serializers.SerializerMethodField()
     can_change_status = serializers.SerializerMethodField()
+    allowed_next_statuses = serializers.SerializerMethodField()
 
     def get_can_edit(self, obj):
         """Return whether current user can edit order items."""
@@ -107,6 +108,13 @@ class OrderSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user'):
             return obj.can_change_status(request.user)
         return False
+    
+    def get_allowed_next_statuses(self, obj):
+        """Return list of statuses user can change to from current status."""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            return obj.get_allowed_next_statuses(request.user)
+        return []
 
     class Meta:
         model = Order
@@ -127,11 +135,12 @@ class OrderSerializer(serializers.ModelSerializer):
             'is_imported',
             'can_edit',
             'can_change_status',
+            'allowed_next_statuses',
             'items',
             'status_logs',
             'returns',
         )
-        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'can_edit', 'can_change_status')
+        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'can_edit', 'can_change_status', 'allowed_next_statuses')
 
     def to_internal_value(self, data):
         if hasattr(data, 'copy'):
