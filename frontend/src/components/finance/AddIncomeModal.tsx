@@ -5,6 +5,7 @@ import { getFinanceAccounts, createFinanceTransaction } from '../../api/finance'
 import { getDealers } from '../../api/dealers';
 import type { FinanceAccount, Currency } from '../../types/finance';
 import type { Dealer } from '../../types/dealer';
+import { fetchAllPages } from '../../utils/pagination';
 
 interface AddIncomeModalProps {
   visible: boolean;
@@ -40,17 +41,11 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
     setLoadingDealers(true);
     setLoadingAccounts(true);
     try {
-      const [dealersRes, accountsRes] = await Promise.all([
-        getDealers({ is_active: true, page_size: 200 }),
-        getFinanceAccounts({ is_active: true, page_size: 200 }),
+      // Fetch all pages for dealers and accounts
+      const [dealersList, accountsList] = await Promise.all([
+        fetchAllPages<Dealer>('/dealers/', { is_active: true }),
+        fetchAllPages<FinanceAccount>('/finance/accounts/', { is_active: true }),
       ]);
-      
-      const dealersList = Array.isArray(dealersRes.data)
-        ? dealersRes.data
-        : (dealersRes.data as any)?.results || [];
-      const accountsList = Array.isArray(accountsRes.data)
-        ? accountsRes.data
-        : (accountsRes.data as any)?.results || [];
       
       setDealers(dealersList);
       setAccounts(accountsList);

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import { getFinanceAccounts, createFinanceTransaction } from '../../api/finance';
 import type { FinanceAccount, Currency } from '../../types/finance';
+import { fetchAllPages } from '../../utils/pagination';
 
 interface AddExpenseModalProps {
   visible: boolean;
@@ -34,10 +35,8 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const loadAccounts = async () => {
     setLoadingAccounts(true);
     try {
-      const response = await getFinanceAccounts({ is_active: true, page_size: 200 });
-      const accountsList = Array.isArray(response.data)
-        ? response.data
-        : (response.data as any)?.results || [];
+      // Fetch all pages for accounts
+      const accountsList = await fetchAllPages<FinanceAccount>('/finance/accounts/', { is_active: true });
       setAccounts(accountsList);
       console.log('Loaded accounts:', accountsList.length);
     } catch (error: any) {
