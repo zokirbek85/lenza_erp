@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import { getFinanceAccounts, createFinanceTransaction } from '../../api/finance';
-import { getDealers } from '../../api/dealers';
+import { fetchAllDealers } from '../../utils/api';
 import type { FinanceAccount, Currency } from '../../types/finance';
 import type { Dealer } from '../../types/dealer';
 
@@ -15,6 +15,8 @@ interface AddIncomeModalProps {
 export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncomeModalProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [loadingDealers, setLoadingDealers] = useState(false);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
@@ -35,23 +37,28 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
   }, [visible]);
 
   const loadData = async () => {
+    setLoadingDealers(true);
+    setLoadingAccounts(true);
     try {
-      const [dealersRes, accountsRes] = await Promise.all([
-        getDealers({}),
-        getFinanceAccounts({ is_active: true }),
+      const [dealersList, accountsRes] = await Promise.all([
+        fetchAllDealers<Dealer>(),
+        getFinanceAccounts({ is_active: true, page_size: 1000 }),
       ]);
       
-      const dealersList = Array.isArray(dealersRes.data)
-        ? dealersRes.data
-        : (dealersRes.data as any)?.results || [];
       const accountsList = Array.isArray(accountsRes.data)
         ? accountsRes.data
         : (accountsRes.data as any)?.results || [];
       
       setDealers(dealersList);
       setAccounts(accountsList);
+      console.log('Loaded dealers:', dealersList.length);
+      console.log('Loaded accounts:', accountsList.length);
     } catch (error: any) {
-      message.error(error.response?.data?.detail || 'Failed to load data');
+      console.error('Failed to load data:', error);
+      message.error(error.response?.data?.detail || t('common.messages.error', 'Xatolik yuz berdi'));
+    } finally {
+      setLoadingDealers(false);
+      setLoadingAccounts(false);
     }
   };
 
@@ -149,15 +156,23 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
               value={formData.dealer || ''}
               onChange={(e) => handleDealerChange(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              disabled={loadingDealers}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
             >
-              <option value="">{t('common.select', 'Tanlang')}</option>
+              <option value="">
+                {loadingDealers ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+              </option>
               {dealers.map((dealer) => (
                 <option key={dealer.id} value={dealer.id}>
                   {dealer.name}
                 </option>
               ))}
             </select>
+            {!loadingDealers && dealers.length === 0 && (
+              <p className="mt-1 text-sm text-red-500">
+                {t('finance.income.noDealers', 'Dilerlar topilmadi')}
+              </p>
+            )}
             {selectedDealer && (
               <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
@@ -226,16 +241,19 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
               value={formData.account || ''}
               onChange={(e) => setFormData({ ...formData, account: parseInt(e.target.value) || 0 })}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              disabled={loadingAccounts}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
             >
-              <option value="">{t('common.select', 'Tanlang')}</option>
+              <option value="">
+                {loadingAccounts ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+              </option>
               {filteredAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name} ({account.type_display || account.type})
                 </option>
               ))}
             </select>
-            {filteredAccounts.length === 0 && (
+            {!loadingAccounts && filteredAccounts.length === 0 && (
               <p className="mt-1 text-sm text-red-500">
                 {t('finance.income.noAccounts', `${formData.currency} hisobi topilmadi`)}
               </p>

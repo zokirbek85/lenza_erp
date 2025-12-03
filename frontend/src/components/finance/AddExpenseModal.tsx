@@ -13,6 +13,7 @@ interface AddExpenseModalProps {
 export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpenseModalProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
   
   const [formData, setFormData] = useState({
@@ -31,14 +32,19 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   }, [visible]);
 
   const loadAccounts = async () => {
+    setLoadingAccounts(true);
     try {
-      const response = await getFinanceAccounts({ is_active: true });
+      const response = await getFinanceAccounts({ is_active: true, page_size: 1000 });
       const accountsList = Array.isArray(response.data)
         ? response.data
         : (response.data as any)?.results || [];
       setAccounts(accountsList);
+      console.log('Loaded accounts:', accountsList.length);
     } catch (error: any) {
-      message.error(error.response?.data?.detail || 'Failed to load accounts');
+      console.error('Failed to load accounts:', error);
+      message.error(error.response?.data?.detail || t('common.messages.error', 'Xatolik yuz berdi'));
+    } finally {
+      setLoadingAccounts(false);
     }
   };
 
@@ -207,16 +213,19 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
               value={formData.account || ''}
               onChange={(e) => setFormData({ ...formData, account: parseInt(e.target.value) || 0 })}
               required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              disabled={loadingAccounts}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
             >
-              <option value="">{t('common.select', 'Tanlang')}</option>
+              <option value="">
+                {loadingAccounts ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+              </option>
               {filteredAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name} ({account.type_display || account.type})
                 </option>
               ))}
             </select>
-            {filteredAccounts.length === 0 && (
+            {!loadingAccounts && filteredAccounts.length === 0 && (
               <p className="mt-1 text-sm text-red-500">
                 {t('finance.expense.noAccounts', `${formData.currency} hisobi topilmadi`)}
               </p>

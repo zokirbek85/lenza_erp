@@ -81,6 +81,7 @@ export interface FinanceAccountFilters {
   type?: AccountType;
   currency?: Currency;
   is_active?: boolean;
+  page_size?: number;
 }
 
 // Pagination response from DRF
