@@ -1,205 +1,131 @@
+/* ==========================================================================
+   LENZA ERP — Main Stylesheet
+   Enterprise-grade Design System
+   ========================================================================== */
+
+@import './styles/tokens.brand.css';
+@import './styles/tokens.light.css';
+@import './styles/tokens.dark.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Light theme colors - LENZA ERP */
-  --bg-base: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-body: #f8fafc;
-  --bg-elevated: #ffffff;
-  --bg-container: #ffffff;
-  --text-color: #141414;
-  --text-secondary: #666666;
-  --card-bg: #ffffff;
-  --border-color: #e8e8e8;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  
-  /* Lenza brand colors */
-  --lenza-gold: #d4af37;
-  --lenza-black: #0f172a;
-  --lenza-accent: #141414;
-  
-  color: var(--text-color);
-  background-color: var(--bg-secondary);
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-[data-theme='dark'] {
-  /* Dark theme colors - LENZA ERP brand palette */
-  --bg-base: #0d1117;
-  --bg-secondary: #0d1117;
-  --bg-body: #020617;
-  --bg-elevated: #2a2e3a;
-  --bg-container: #1b1f27;
-  --text-color: #f5f6fa;
-  --text-secondary: #a8adb7;
-  --card-bg: #1b1f27;
-  --border-color: #2a2a2a;
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  
-  /* Lenza brand colors remain same */
-  --lenza-gold: #d4af37;
-  --lenza-black: #0d1117;
-  --lenza-accent: #1b1f27;
+html {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
   background-color: var(--bg-secondary);
-  color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Dark mode utility classes */
-.dark body {
-  background-color: #020617;
-  color: #e2e8f0;
-}
-
-/* Smooth transitions for theme changes */
-* {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-/* Chart container backgrounds */
-.chart-container {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-/* Custom scrollbar for dark mode */
-[data-theme='dark'] ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-track {
-  background: #0d1117;
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
-  border-radius: 4px;
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3a;
-}
-
-/* Lenza specific utility classes */
-.lenza-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-}
-
-.lenza-text {
-  color: var(--text-color);
-}
-
-.lenza-text-secondary {
-  color: var(--text-secondary);
-}
-
-.lenza-gold {
-  color: var(--lenza-gold);
-}
-
-.lenza-bg-gold {
-  background-color: var(--lenza-gold);
-}
-
-html,
-body,
-#root {
-  height: 100%;
+  transition: background-color var(--transition-base), color var(--transition-base);
   overflow-x: hidden;
 }
 
+#root {
+  height: 100%;
+}
+
+/* ==========================================================================
+   SCROLLBAR STYLING
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--border-strong), var(--border-base));
+  border-radius: var(--radius-full);
+  border: 2px solid var(--bg-secondary);
+  transition: background var(--transition-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--lenza-gold-dark), var(--lenza-gold));
+}
+
+/* ==========================================================================
+   LAYOUT COMPONENTS
+   ========================================================================== */
+
 .ant-layout {
-  background: var(--bg-body);
+  background: var(--bg-base);
+  min-height: 100vh;
 }
 
 .page-wrapper {
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  padding-bottom: 32px;
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .table-wrapper {
   width: 100%;
-  background: var(--bg-container);
-  border-radius: 8px;
-  padding: 16px;
-  overflow-y: auto;
-  height: auto !important;
-  box-shadow: var(--shadow);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-soft);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.lenza-border {
-  border-color: var(--border-color);
+/* ==========================================================================
+   LENZA UTILITY CLASSES
+   ========================================================================== */
+
+.lenza-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-base);
+  color: var(--text-primary);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
 }
 
-.lenza-input {
-  background: var(--bg-container);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-
-.lenza-input:focus {
-  outline: none;
-  border-color: var(--lenza-gold);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-}
-
-.lenza-btn-primary {
-  background: var(--lenza-gold);
-  color: #1e1e1e;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s;
-  padding: 8px 16px;
-}
-
-.lenza-btn-primary:hover {
-  background: #c49b2f;
+.lenza-card:hover {
+  box-shadow: var(--shadow-medium);
   transform: translateY(-1px);
 }
 
-.lenza-btn-secondary {
-  background: var(--bg-elevated);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s;
-  padding: 8px 16px;
-}
-
-.lenza-btn-secondary:hover {
-  background: var(--bg-container);
-  border-color: var(--lenza-gold);
+.lenza-text-primary {
+  color: var(--text-primary);
 }
 
 .lenza-text-secondary {
   color: var(--text-secondary);
 }
 
-.lenza-border {
-  border-color: var(--border-color);
+.lenza-text-tertiary {
+  color: var(--text-tertiary);
 }
 
 .lenza-gold {
@@ -210,149 +136,440 @@ body,
   background-color: var(--lenza-gold);
 }
 
-/* Mobile Responsive Styles */
-@media (max-width: 768px) {
-  /* Mobile Order Create Form Overlay */
-  .order-create-mobile-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 3000 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Mobile Drawer Form */
-  .mobile-drawer-form {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-  }
-
-  /* Touch-optimized form inputs */
-  .mobile-form-field-input input,
-  .mobile-form-field-input select,
-  .mobile-form-field-input textarea {
-    min-height: 44px !important;
-    font-size: 16px !important; /* Prevents iOS zoom */
-    padding: 12px !important;
-    border-radius: 8px !important;
-  }
-
-  /* Mobile buttons - larger touch targets */
-  .mobile-btn {
-    min-height: 44px !important;
-    padding: 12px 16px !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    touch-action: manipulation;
-  }
-
-  /* Mobile card improvements */
-  .mobile-card {
-    margin-bottom: 12px !important;
-    border-radius: 12px !important;
-  }
-
-  /* Prevent horizontal scroll */
-  body {
-    overflow-x: hidden !important;
-  }
-
-  /* Page wrapper full width on mobile */
-  .page-wrapper {
-    max-width: 100% !important;
-    padding: 0 !important;
-  }
-
-  /* Hide desktop-only elements */
-  .desktop-only {
-    display: none !important;
-  }
-
-  /* Mobile table alternative - hide tables, show cards */
-  .mobile-hide-table table {
-    display: none;
-  }
+.lenza-border {
+  border-color: var(--border-base);
 }
 
-/* Z-index hierarchy for mobile */
-.layout-header {
-  z-index: 1000;
+/* ==========================================================================
+   INPUT COMPONENTS
+   ========================================================================== */
+
+.lenza-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.ant-drawer {
-  z-index: 2500 !important;
+.lenza-input::placeholder {
+  color: var(--text-tertiary);
 }
 
-.ant-modal-root,
-.ant-modal-wrap {
-  z-index: 2800 !important;
+.lenza-input:hover {
+  border-color: var(--border-strong);
 }
 
-/* Mobile Form Drawer - highest priority */
-.mobile-drawer-form .ant-drawer-content-wrapper {
-  z-index: 3000 !important;
+.lenza-input:focus {
+  outline: none;
+  border-color: var(--interactive-default);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
 }
 
-/* Touch-friendly action buttons */
-.mobile-action-btn {
-  min-height: 44px;
-  min-width: 44px;
+.lenza-input:disabled {
+  background: var(--bg-tertiary);
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   BUTTON COMPONENTS
+   ========================================================================== */
+
+.lenza-btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  touch-action: manipulation;
+  gap: var(--space-2);
+  background: var(--interactive-default);
+  color: var(--lenza-graphite);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   user-select: none;
 }
 
-/* React Grid Layout Styles - Optimized for no overlaps */
+.lenza-btn-primary:hover {
+  background: var(--interactive-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.lenza-btn-primary:active {
+  background: var(--interactive-active);
+  transform: translateY(0);
+}
+
+.lenza-btn-primary:disabled {
+  background: var(--interactive-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.lenza-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  user-select: none;
+}
+
+.lenza-btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--interactive-default);
+}
+
+.lenza-btn-secondary:active {
+  background: var(--bg-tertiary);
+}
+
+.lenza-btn-secondary:disabled {
+  background: var(--bg-tertiary);
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   SKELETON LOADING
+   ========================================================================== */
+
+.lenza-skeleton {
+  background: linear-gradient(90deg, 
+    var(--bg-tertiary) 0%, 
+    var(--bg-secondary) 50%, 
+    var(--bg-tertiary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.lenza-skeleton-text {
+  height: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.lenza-skeleton-title {
+  height: var(--space-6);
+  width: 60%;
+  margin-bottom: var(--space-3);
+}
+
+.lenza-skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+}
+
+/* ==========================================================================
+   ANT DESIGN OVERRIDES
+   ========================================================================== */
+
+/* Primary Button */
+.ant-btn-primary {
+  background: var(--interactive-default);
+  border-color: var(--interactive-default);
+  color: var(--lenza-graphite);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--shadow-soft);
+  transition: all var(--transition-fast);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: var(--interactive-hover);
+  border-color: var(--interactive-hover);
+  color: var(--lenza-graphite);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.ant-btn-primary:active {
+  background: var(--interactive-active);
+  border-color: var(--interactive-active);
+  transform: translateY(0);
+}
+
+.ant-btn-primary:disabled {
+  background: var(--interactive-disabled);
+  border-color: var(--interactive-disabled);
+  color: var(--text-disabled);
+}
+
+/* Input & TextArea */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-textarea {
+  background: var(--bg-elevated);
+  border-color: var(--border-base);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ant-input::placeholder,
+.ant-input-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-input-textarea:hover {
+  border-color: var(--border-strong);
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--interactive-default);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+/* Select */
+.ant-select-selector {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-base) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ant-select:hover .ant-select-selector {
+  border-color: var(--border-strong) !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: var(--interactive-default) !important;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color) !important;
+}
+
+.ant-select-dropdown {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-strong);
+}
+
+.ant-select-item {
+  color: var(--text-primary);
+}
+
+.ant-select-item-option-selected {
+  background: var(--bg-tertiary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ant-select-item-option-active {
+  background: var(--bg-secondary);
+}
+
+/* DatePicker */
+.ant-picker {
+  background: var(--bg-elevated);
+  border-color: var(--border-base);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ant-picker:hover {
+  border-color: var(--border-strong);
+}
+
+.ant-picker-focused {
+  border-color: var(--interactive-default);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+.ant-picker-dropdown {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-strong);
+}
+
+/* Modal */
+.ant-modal-content {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lifted);
+}
+
+.ant-modal-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-base);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.ant-modal-title {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ant-modal-body {
+  color: var(--text-primary);
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--border-base);
+}
+
+/* Table */
+.ant-table {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+}
+
+.ant-table-thead > tr > th {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 2px solid var(--border-base);
+}
+
+.ant-table-tbody > tr {
+  transition: background var(--transition-fast);
+}
+
+.ant-table-tbody > tr:hover {
+  background: var(--bg-secondary);
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Card */
+.ant-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow var(--transition-base);
+}
+
+.ant-card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.ant-card-head {
+  border-bottom: 1px solid var(--border-base);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ant-card-body {
+  color: var(--text-primary);
+}
+
+/* Drawer */
+.ant-drawer-content {
+  background: var(--bg-elevated);
+}
+
+.ant-drawer-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-base);
+}
+
+.ant-drawer-title {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ant-drawer-body {
+  color: var(--text-primary);
+}
+
+/* Tabs */
+.ant-tabs-tab {
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.ant-tabs-tab:hover {
+  color: var(--text-primary);
+}
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--interactive-default);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ant-tabs-ink-bar {
+  background: var(--interactive-default);
+}
+
+/* Switch */
+.ant-switch-checked {
+  background: var(--interactive-default);
+}
+
+/* Checkbox */
+.ant-checkbox-checked .ant-checkbox-inner {
+  background: var(--interactive-default);
+  border-color: var(--interactive-default);
+}
+
+/* Radio */
+.ant-radio-checked .ant-radio-inner {
+  border-color: var(--interactive-default);
+}
+
+.ant-radio-inner::after {
+  background-color: var(--interactive-default);
+}
+
+/* ==========================================================================
+   REACT GRID LAYOUT — DASHBOARD WIDGETS
+   ========================================================================== */
+
 .react-grid-layout {
   position: relative;
-  transition: height 200ms ease;
+  transition: height var(--transition-base);
 }
 
 .react-grid-item {
-  transition: all 200ms ease;
+  transition: all var(--transition-base);
   transition-property: left, top, width, height;
-  overflow: hidden; /* Prevent content overflow */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .react-grid-item > div {
   flex: 1;
-  height: 100%; /* Ensure widget fills container */
+  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.react-grid-item img {
-  pointer-events: none;
-  user-select: none;
-}
-
-.react-grid-item > .react-resizable-handle {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-}
-
-.react-grid-item > .react-resizable-handle::after {
-  content: "";
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 5px;
-  height: 5px;
-  border-right: 2px solid rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
 }
 
 .react-grid-item.static {
@@ -369,65 +586,34 @@ body,
   transition: none;
   z-index: 100;
   will-change: transform;
-  opacity: 0.9;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  opacity: 0.95;
+  box-shadow: var(--shadow-lifted);
+  transform: scale(1.02) translateZ(0);
 }
 
-.react-grid-item.dropping {
-  visibility: hidden;
+.react-grid-item.react-draggable-dragging::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--interactive-default);
+  opacity: 0.05;
+  border-radius: var(--radius-lg);
+  pointer-events: none;
 }
 
 .react-grid-item.react-grid-placeholder {
-  background: rgba(59, 130, 246, 0.15);
-  opacity: 0.2;
+  background: var(--interactive-default);
+  opacity: 0.15;
   transition-duration: 100ms;
   z-index: 2;
-  border-radius: 8px;
-  border: 2px dashed rgba(59, 130, 246, 0.5);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--interactive-default);
 }
 
-.drag-handle {
-  cursor: move;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-/* Ensure Card components inside grid items fill properly */
-.react-grid-item .ant-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.react-grid-item .ant-card-body {
-  flex: 1;
-  overflow: auto;
-  min-height: 0; /* Important for flex children with overflow */
-}
-
-/* Chart containers must respond to resize */
-.chart-container,
-.table-container {
-  height: 100% !important;
-  width: 100%;
-}
-
-/* Recharts responsive wrapper */
-.recharts-wrapper {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.recharts-surface {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Resize handles - make them more visible and easier to grab */
 .react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
   background: transparent;
   z-index: 10;
 }
@@ -443,7 +629,7 @@ body,
   top: 0;
   bottom: 0;
   cursor: e-resize;
-  width: 10px;
+  width: 12px;
 }
 
 .react-grid-item > .react-resizable-handle-s {
@@ -451,26 +637,238 @@ body,
   left: 0;
   right: 0;
   cursor: s-resize;
-  height: 10px;
+  height: 12px;
 }
 
-/* Make resize handle visible on hover */
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--border-strong);
+  border-bottom: 2px solid var(--border-strong);
+  transition: border-color var(--transition-fast);
+}
+
 .react-grid-item:hover > .react-resizable-handle::after {
-  border-right: 2px solid rgba(59, 130, 246, 0.7);
-  border-bottom: 2px solid rgba(59, 130, 246, 0.7);
+  border-right-color: var(--interactive-default);
+  border-bottom-color: var(--interactive-default);
 }
 
-/* Dark mode support for grid */
-[data-theme='dark'] .react-grid-item.react-grid-placeholder {
-  background: rgba(96, 165, 250, 0.15);
-  border-color: rgba(96, 165, 250, 0.5);
+.drag-handle {
+  cursor: move;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-[data-theme='dark'] .react-grid-item > .react-resizable-handle::after {
-  border-right-color: rgba(255, 255, 255, 0.4);
-  border-bottom-color: rgba(255, 255, 255, 0.4);
+.react-grid-item .ant-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-[data-theme='dark'] .react-grid-item.react-draggable-dragging {
-  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+.react-grid-item .ant-card-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.chart-container,
+.table-container {
+  height: 100% !important;
+  width: 100%;
+}
+
+.recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.recharts-surface {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ==========================================================================
+   MOBILE OPTIMIZATIONS
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .page-wrapper {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+  
+  .mobile-btn {
+    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    border-radius: var(--radius-md);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .mobile-card {
+    margin-bottom: var(--space-3);
+    border-radius: var(--radius-lg);
+  }
+  
+  .mobile-form-field input,
+  .mobile-form-field select,
+  .mobile-form-field textarea {
+    min-height: 44px;
+    font-size: 16px;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+  }
+  
+  .mobile-sticky-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-base);
+    padding: var(--space-4);
+    box-shadow: 0 -4px 6px -1px var(--shadow-color);
+    z-index: var(--z-mobile-sticky);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+  
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .mobile-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-overlay);
+    z-index: var(--z-drawer);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .mobile-action-btn {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  /* Legacy mobile classes for backward compatibility */
+  .order-create-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .mobile-drawer-form {
+    position: fixed;
+    inset: 0;
+  }
+  
+  .mobile-form-field-input input,
+  .mobile-form-field-input select,
+  .mobile-form-field-input textarea {
+    min-height: 44px;
+    font-size: 16px;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+  }
+}
+
+/* iOS Safe Area Support */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ==========================================================================
+   Z-INDEX HIERARCHY
+   ========================================================================== */
+
+.layout-header {
+  z-index: var(--z-sticky);
+}
+
+.ant-dropdown {
+  z-index: var(--z-dropdown);
+}
+
+.ant-drawer {
+  z-index: var(--z-drawer) !important;
+}
+
+.ant-modal-root,
+.ant-modal-wrap {
+  z-index: var(--z-modal) !important;
+}
+
+.ant-message {
+  z-index: var(--z-tooltip);
+}
+
+.ant-notification {
+  z-index: var(--z-tooltip);
+}
+
+.mobile-drawer-form .ant-drawer-content-wrapper {
+  z-index: var(--z-drawer) !important;
+}
+
+/* ==========================================================================
+   CHART CONTAINER STYLING
+   ========================================================================== */
+
+.chart-container {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ==========================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* GPU Acceleration for smooth animations */
+.lenza-card,
+.react-grid-item,
+.ant-card,
+.mobile-sticky-footer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: auto;
 }

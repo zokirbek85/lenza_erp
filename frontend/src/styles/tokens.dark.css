@@ -1,0 +1,101 @@
+/* ==========================================================================
+   LENZA ERP — Dark Theme Tokens
+   ========================================================================== */
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  
+  /* Background Colors */
+  --bg-base: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --bg-elevated: #1c2128;
+  --bg-container: #0d1117;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  
+  /* Text Colors */
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-tertiary: #6e7681;
+  --text-disabled: #484f58;
+  --text-inverse: #0d1117;
+  
+  /* Border Colors */
+  --border-base: #30363d;
+  --border-strong: #484f58;
+  --border-subtle: #21262d;
+  
+  /* State Colors */
+  --state-success: #3fb950;
+  --state-success-bg: #0f2d1a;
+  --state-warning: #d29922;
+  --state-warning-bg: #2d2311;
+  --state-error: #f85149;
+  --state-error-bg: #2d1518;
+  --state-info: #58a6ff;
+  --state-info-bg: #0c2d6b;
+  
+  /* Interactive Colors */
+  --interactive-default: var(--lenza-gold);
+  --interactive-hover: var(--lenza-gold-light);
+  --interactive-active: #f0d668;
+  --interactive-disabled: #21262d;
+  
+  /* Shadow Colors */
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --shadow-strong-color: rgba(0, 0, 0, 0.7);
+  
+  /* Shadow Scale (darker for dark mode) */
+  --shadow-soft: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-lifted: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* System Dark Mode Detection */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    
+    --bg-base: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #1c2128;
+    --bg-elevated: #1c2128;
+    --bg-container: #0d1117;
+    --bg-overlay: rgba(0, 0, 0, 0.7);
+    
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-tertiary: #6e7681;
+    --text-disabled: #484f58;
+    --text-inverse: #0d1117;
+    
+    --border-base: #30363d;
+    --border-strong: #484f58;
+    --border-subtle: #21262d;
+    
+    --state-success: #3fb950;
+    --state-success-bg: #0f2d1a;
+    --state-warning: #d29922;
+    --state-warning-bg: #2d2311;
+    --state-error: #f85149;
+    --state-error-bg: #2d1518;
+    --state-info: #58a6ff;
+    --state-info-bg: #0c2d6b;
+    
+    --interactive-default: var(--lenza-gold);
+    --interactive-hover: var(--lenza-gold-light);
+    --interactive-active: #f0d668;
+    --interactive-disabled: #21262d;
+    
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --shadow-strong-color: rgba(0, 0, 0, 0.7);
+    
+    --shadow-soft: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-lifted: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  }
+}

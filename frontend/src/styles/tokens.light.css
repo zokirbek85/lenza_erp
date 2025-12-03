@@ -1,0 +1,47 @@
+/* ==========================================================================
+   LENZA ERP — Light Theme Tokens
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  
+  /* Background Colors */
+  --bg-base: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #ffffff;
+  --bg-container: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Text Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-disabled: #cbd5e1;
+  --text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --border-base: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-subtle: #f1f5f9;
+  
+  /* State Colors */
+  --state-success: #10b981;
+  --state-success-bg: #d1fae5;
+  --state-warning: #f59e0b;
+  --state-warning-bg: #fef3c7;
+  --state-error: #ef4444;
+  --state-error-bg: #fee2e2;
+  --state-info: #3b82f6;
+  --state-info-bg: #dbeafe;
+  
+  /* Interactive Colors */
+  --interactive-default: var(--lenza-gold);
+  --interactive-hover: var(--lenza-gold-dark);
+  --interactive-active: #b3872a;
+  --interactive-disabled: #e2e8f0;
+  
+  /* Shadow Colors */
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-strong-color: rgba(0, 0, 0, 0.15);
+}
