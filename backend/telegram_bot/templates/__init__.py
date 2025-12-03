@@ -1,1 +1,2 @@
-from . import order_message, payment_message, currency_message, return_message  # noqa: F401
+from . import order_message, return_message  # noqa: F401
+# payment_message and currency_message removed - payments module deleted
