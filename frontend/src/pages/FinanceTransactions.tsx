@@ -24,9 +24,24 @@ export default function FinanceTransactions() {
       setLoading(true);
       setError(null);
       const response = await getFinanceTransactions(filters);
-      setTransactions(response.data);
+      
+      // Normalize response - handle both paginated and non-paginated
+      const data = response.data;
+      let items: FinanceTransaction[] = [];
+      
+      if (Array.isArray(data)) {
+        // Direct array response
+        items = data;
+      } else if (data && typeof data === 'object') {
+        // Paginated response with results, data, or items key
+        items = (data as any).results || (data as any).data || (data as any).items || [];
+      }
+      
+      // Ensure it's always an array
+      setTransactions(Array.isArray(items) ? items : []);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load transactions');
+      setTransactions([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -84,12 +99,14 @@ export default function FinanceTransactions() {
   };
 
   const getTypeLabel = (type: string) => {
+    if (!type) return '-';
     return type === 'income' 
       ? t('finance.transaction.income', 'Kirim')
       : t('finance.transaction.expense', 'Chiqim');
   };
 
   const getStatusLabel = (status: string) => {
+    if (!status) return '-';
     const labels: Record<string, string> = {
       draft: t('finance.transaction.draft', 'Draft'),
       approved: t('finance.transaction.approved', 'Tasdiqlangan'),
@@ -236,7 +253,7 @@ export default function FinanceTransactions() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {transactions.map((transaction) => (
+              {(transactions || []).map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     #{transaction.id}
@@ -258,9 +275,9 @@ export default function FinanceTransactions() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {formatNumber(transaction.amount)} {transaction.currency}
+                      {formatNumber(transaction.amount || 0)} {transaction.currency || 'USD'}
                     </div>
-                    {transaction.currency !== 'USD' && (
+                    {transaction.currency && transaction.currency !== 'USD' && transaction.amount_usd && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         ${formatNumber(transaction.amount_usd)}
                       </div>

@@ -81,3 +81,11 @@ export interface FinanceAccountFilters {
   currency?: Currency;
   is_active?: boolean;
 }
+
+// Pagination response from DRF
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}

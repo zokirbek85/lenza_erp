@@ -5,11 +5,12 @@ import type {
   CashSummary,
   FinanceTransactionFilters,
   FinanceAccountFilters,
+  PaginatedResponse,
 } from '../types/finance';
 
 // Accounts
 export const getFinanceAccounts = (params?: FinanceAccountFilters) => 
-  http.get<FinanceAccount[]>('/finance/accounts/', { params });
+  http.get<PaginatedResponse<FinanceAccount>>('/finance/accounts/', { params });
 
 export const getFinanceAccount = (id: number) => 
   http.get<FinanceAccount>(`/finance/accounts/${id}/`);
@@ -25,7 +26,7 @@ export const deleteFinanceAccount = (id: number) =>
 
 // Transactions
 export const getFinanceTransactions = (params?: FinanceTransactionFilters) => 
-  http.get<FinanceTransaction[]>('/finance/transactions/', { params });
+  http.get<PaginatedResponse<FinanceTransaction>>('/finance/transactions/', { params });
 
 export const getFinanceTransaction = (id: number) => 
   http.get<FinanceTransaction>(`/finance/transactions/${id}/`);

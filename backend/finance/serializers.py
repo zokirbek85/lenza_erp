@@ -44,11 +44,13 @@ class FinanceAccountSerializer(serializers.ModelSerializer):
 
 class FinanceTransactionSerializer(serializers.ModelSerializer):
     dealer_detail = DealerSerializer(source='dealer', read_only=True)
+    dealer_name = serializers.CharField(source='dealer.name', read_only=True, allow_null=True)
     account_detail = FinanceAccountSerializer(source='account', read_only=True)
+    account_name = serializers.CharField(source='account.name', read_only=True)
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True, allow_null=True)
+    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, allow_null=True)
     
     # amount_usd va exchange_rate read-only, avtomatik hisoblanadi
     amount_usd = serializers.DecimalField(
@@ -74,8 +76,10 @@ class FinanceTransactionSerializer(serializers.ModelSerializer):
             'type',
             'type_display',
             'dealer',
+            'dealer_name',
             'dealer_detail',
             'account',
+            'account_name',
             'account_detail',
             'date',
             'currency',
