@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
-import { getFinanceAccounts, createFinanceTransaction } from '../../api/finance';
+import { createFinanceTransaction } from '../../api/finance';
 import type { FinanceAccount, Currency } from '../../types/finance';
 import { fetchAllPages } from '../../utils/pagination';
 

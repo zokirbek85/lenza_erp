@@ -30,11 +30,11 @@ export async function fetchAllPages<T>(
   while (nextUrl) {
     try {
       // For first page, use endpoint with params. For subsequent pages, use full next URL
-      const response = isFirstPage
+      const response: { data: PaginatedResponse<T> | T[] } = isFirstPage
         ? await http.get<PaginatedResponse<T>>(endpoint, { params })
         : await http.get<PaginatedResponse<T>>(nextUrl);
 
-      const data = response.data;
+      const data: PaginatedResponse<T> | T[] = response.data;
 
       // Handle both paginated and non-paginated responses
       if (Array.isArray(data)) {
