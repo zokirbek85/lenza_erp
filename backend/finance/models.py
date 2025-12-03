@@ -94,7 +94,10 @@ class FinanceTransaction(models.Model):
     amount_usd = models.DecimalField(
         max_digits=18,
         decimal_places=2,
-        help_text=_('Amount in USD equivalent')
+        null=True,
+        blank=True,
+        editable=False,
+        help_text=_('Amount in USD equivalent (auto-calculated)')
     )
     exchange_rate = models.DecimalField(
         max_digits=12,
@@ -176,6 +179,10 @@ class FinanceTransaction(models.Model):
     def save(self, *args, **kwargs):
         # Validatsiya
         self.full_clean()
+        
+        # Initialize amount_usd if not set
+        if self.amount_usd is None:
+            self.amount_usd = Decimal('0')
         
         # USD miqdorini hisoblash
         if self.currency == 'USD':

@@ -10,12 +10,12 @@ class FinanceAccountAdmin(admin.ModelAdmin):
     """FinanceAccount admin interface"""
     list_display = ['name', 'type', 'currency', 'balance_display', 'is_active_display', 'created_at']
     list_filter = ['type', 'currency', 'is_active', 'created_at']
-    search_fields = ['name', 'description']
+    search_fields = ['name']
     readonly_fields = ['balance', 'created_at', 'updated_at']
     
     fieldsets = (
         (_('Asosiy malumotlar'), {
-            'fields': ('name', 'type', 'currency', 'description')
+            'fields': ('name', 'type', 'currency')
         }),
         (_('Balans'), {
             'fields': ('balance',)
@@ -63,10 +63,11 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
         'created_at'
     ]
     list_filter = ['type', 'status', 'currency', 'date', 'created_at', 'account']
-    search_fields = ['description', 'category', 'dealer__name', 'account__name']
+    search_fields = ['comment', 'category', 'dealer__name', 'account__name']
     readonly_fields = [
         'amount_usd',
         'exchange_rate',
+        'exchange_rate_date',
         'created_by',
         'created_at',
         'updated_at',
@@ -80,10 +81,10 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
             'fields': ('type', 'account', 'dealer', 'date')
         }),
         (_('Summa'), {
-            'fields': ('amount', 'currency', 'amount_usd', 'exchange_rate')
+            'fields': ('amount', 'currency', 'amount_usd', 'exchange_rate', 'exchange_rate_date')
         }),
-        (_('Kategoriya va tavsif'), {
-            'fields': ('category', 'description')
+        (_('Kategoriya va izoh'), {
+            'fields': ('category', 'comment')
         }),
         (_('Status'), {
             'fields': ('status', 'approved_by', 'approved_at')
