@@ -1,0 +1,82 @@
+/* Orders page styles */
+
+/* Collapse panel styling to match button style */
+.orderCollapsePanel {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+/* Light mode */
+.orderCollapsePanel :global(.ant-collapse-item) {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease;
+}
+
+.orderCollapsePanel :global(.ant-collapse-item:hover) {
+  background: #f9fafb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.orderCollapsePanel :global(.ant-collapse-header) {
+  padding: 12px 20px !important;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2937;
+  transition: all 0.25s ease;
+}
+
+.orderCollapsePanel :global(.ant-collapse-content) {
+  border-top: 1px solid #e5e7eb;
+  background: transparent;
+}
+
+.orderCollapsePanel :global(.ant-collapse-content-box) {
+  padding: 20px 24px !important;
+}
+
+.orderCollapsePanel :global(.ant-collapse-expand-icon) {
+  color: #4b5563 !important;
+}
+
+/* Dark mode */
+:global(.dark) .orderCollapsePanel :global(.ant-collapse-item) {
+  background: #1f1f1f;
+  border: 1px solid #2d2d2d;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .orderCollapsePanel :global(.ant-collapse-item:hover) {
+  background: #252525;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+:global(.dark) .orderCollapsePanel :global(.ant-collapse-header) {
+  color: #e5e7eb;
+}
+
+:global(.dark) .orderCollapsePanel :global(.ant-collapse-content) {
+  border-top: 1px solid #2d2d2d;
+}
+
+:global(.dark) .orderCollapsePanel :global(.ant-collapse-expand-icon) {
+  color: #e5e7eb !important;
+}
+
+/* Remove default ant-design collapse borders and backgrounds */
+.orderCollapsePanel :global(.ant-collapse) {
+  background: transparent !important;
+  border: none !important;
+}
+
+.orderCollapsePanel :global(.ant-collapse-item) {
+  border-bottom: none !important;
+}
+
+.orderCollapsePanel :global(.ant-collapse > .ant-collapse-item:last-child) {
+  border-radius: 10px !important;
+}

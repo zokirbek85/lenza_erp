@@ -29,13 +29,14 @@ STATUS_FLOW = {
 
 
 class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
-    queryset = Order.objects.prefetch_related('items__product', 'status_logs', 'returns').select_related('dealer', 'created_by')
+    queryset = Order.objects.prefetch_related('items__product', 'status_logs', 'returns').select_related('dealer', 'created_by').order_by('-created_at')
     serializer_class = OrderSerializer
     permission_classes = [IsAdmin | IsSales | IsOwner | IsWarehouse | IsAccountant]
     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
     filterset_class = OrderFilter
     search_fields = ('display_no', 'dealer__name')
     ordering_fields = ('created_at', 'value_date', 'total_usd')
+    ordering = ['-created_at']  # Default ordering: newest first
     
     # BaseReportMixin configuration
     date_field = "value_date"

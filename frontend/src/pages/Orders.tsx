@@ -1,9 +1,11 @@
 ﻿import type { FormEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { MinusOutlined, PlusOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Button, Card, Collapse } from 'antd';
+import { Button, Collapse } from 'antd';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import styles from './Orders.module.css';
 
 import http from '../app/http';
 import { useAuthStore } from '../auth/useAuthStore';
@@ -885,9 +887,8 @@ const OrdersPage = () => {
       </div>
 
       {!isWarehouse && (
-        <div className="rounded-lg p-4 shadow-md shadow-black/10 border-l-2 transition-all duration-300 ease-in-out bg-[#F7F9FC] text-[#1A1F25] border-[rgba(212,165,0,0.45)] hover:bg-[#EEF1F6] dark:bg-[#1E2732] dark:text-[#E9ECF1] dark:border-[rgba(255,200,0,0.40)] dark:hover:bg-[#232E3D]">
+        <div className={styles.orderCollapsePanel}>
           <Collapse
-            className="bg-transparent border-none shadow-none"
             activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
             onChange={(key) => handleCollapseChange(key as string[] | string)}
             items={[
@@ -895,15 +896,9 @@ const OrdersPage = () => {
                 key: CREATE_FORM_PANEL_KEY,
                 label: t('orders.header.panelTitle'),
                 children: showCreateForm ? (
-                <Card
-                title={t('orders.header.panelTitle')}
-                className="mt-4 border border-slate-700 bg-slate-900"
-                headStyle={{ color: '#fff', backgroundColor: 'transparent' }}
-                bodyStyle={{ padding: 0, backgroundColor: 'transparent' }}
-              >
                 <form
                   onSubmit={handleSubmit}
-                  className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                  className="space-y-4"
                 >
                   <div className="grid gap-4 md:grid-cols-4">
                     <div>
@@ -987,7 +982,7 @@ const OrdersPage = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="space-y-4 rounded-lg border border-slate-200/50 bg-slate-50/50 p-4 dark:border-slate-700/50 dark:bg-slate-800/30">
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t('orders.form.productSearch')}
@@ -1097,7 +1092,6 @@ const OrdersPage = () => {
                     </button>
                   </div>
                 </form>
-              </Card>
             ) : null,
           },
         ]}
