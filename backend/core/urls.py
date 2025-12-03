@@ -75,20 +75,6 @@ from kpis.views import (
 from notifications.views import NotificationViewSet
 from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet
 from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
-from payments.views import (
-    CashboxOpeningBalanceViewSet,
-    CashboxSummaryView,
-    CashboxViewSet,
-    CurrencyRateHistoryView,
-    CurrencyRateViewSet,
-    ExpenseCategoryViewSet,
-    ExpenseViewSet,
-    FinanceBalancesView,
-    PaymentCardViewSet,
-    PaymentExportExcelView,
-    PaymentReportPDFView,
-    PaymentViewSet,
-)
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import TelegramLinkView, UserViewSet, DashboardLayoutView
 from users.views_2fa import TwoFactorSetupView, TwoFactorVerifyView
@@ -105,14 +91,6 @@ router.register('categories', CategoryViewSet, basename='category')
 router.register('styles', StyleViewSet, basename='style')
 router.register('products', ProductViewSet, basename='product')
 router.register('orders', OrderViewSet, basename='order')
-router.register('payments', PaymentViewSet, basename='payment')
-router.register('payment-cards', PaymentCardViewSet, basename='payment-card')
-router.register('cashbox', CashboxViewSet, basename='cashbox')
-router.register('cashboxes', CashboxViewSet, basename='cashboxes')
-router.register('currency-rates', CurrencyRateViewSet, basename='currency-rate')
-router.register('cashbox-opening-balances', CashboxOpeningBalanceViewSet, basename='cashbox-opening-balance')
-router.register('expense-categories', ExpenseCategoryViewSet, basename='expense-category')
-router.register('expenses', ExpenseViewSet, basename='expense')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
@@ -129,10 +107,6 @@ urlpatterns = [
     path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
     path('api/dashboard/layout/', DashboardLayoutView.as_view(), name='dashboard-layout'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
-    # Cashbox summary for Ledger page
-    path('api/cashbox/summary/', CashboxSummaryView.as_view(), name='cashbox-summary'),
-    # Finance balances for Expenses page widgets
-    path('api/finance/balances/', FinanceBalancesView.as_view(), name='finance-balances'),
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),
 
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),
@@ -157,24 +131,10 @@ urlpatterns = [
     path('api/marketing/brand-catalog/excel/', BrandCatalogExcelView.as_view(), name='marketing-brand-catalog-excel'),
     path('api/marketing/pricelist/pdf/', PriceListPDFView.as_view(), name='marketing-pricelist-pdf'),
     path('api/marketing/pricelist/excel/', PriceListExcelView.as_view(), name='marketing-pricelist-excel'),
-    path('api/payments/report/pdf/', PaymentReportPDFView.as_view(), name='payments-report-pdf'),
     path('api/reports/cards/pdf/', cards_pdf_report, name='cards-pdf-report'),
-    path('api/payments/export/excel/', PaymentExportExcelView.as_view(), name='payments-export-excel'),
-    # Explicit mapping for payments export action (PDF/XLSX via ?format=)
-    path('api/payments/export/', PaymentViewSet.as_view({'get': 'export'}), name='payments-export'),
-    path('api/payments/export', PaymentViewSet.as_view({'get': 'export'})),
-    # Explicit mapping for payments report action (monthly report PDF/XLSX/JSON via ?format=)
-    path('api/payments/report/', PaymentViewSet.as_view({'get': 'report'}), name='payments-report'),
-    path('api/payments/report', PaymentViewSet.as_view({'get': 'report'})),
     # Explicit mapping for orders report action (monthly report PDF/XLSX/JSON via ?format=)
     path('api/orders/report/', OrderViewSet.as_view({'get': 'report'}), name='orders-report'),
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
-    # Explicit mapping for expenses export action (PDF/XLSX via ?format=)
-    path('api/expenses/export/', ExpenseViewSet.as_view({'get': 'export'}), name='expenses-export'),
-    path('api/expenses/export', ExpenseViewSet.as_view({'get': 'export'})),
-    # Explicit mapping for expenses report action (monthly report PDF/XLSX/JSON via ?format=)
-    path('api/expenses/report/', ExpenseViewSet.as_view({'get': 'report'}), name='expenses-report'),
-    path('api/expenses/report', ExpenseViewSet.as_view({'get': 'report'})),
     path('api/dealers/balance/pdf/', DealerBalancePDFView.as_view(), name='dealer-balance-pdf'),
     path('api/dealers/export/excel/', DealerExportExcelView.as_view(), name='dealers-export-excel'),
     path('api/dealers/import/excel/', DealerImportExcelView.as_view(), name='dealers-import-excel'),
@@ -184,7 +144,6 @@ urlpatterns = [
     path('api/dealers/<int:pk>/reconciliation/excel/', DealerReconciliationExcelView.as_view(), name='dealer-reconciliation-excel'),
     # Non-paginated dealer list for dropdowns
     path('api/dealers/list-all/', DealerListAllView.as_view(), name='dealer-list-all'),
-    path('api/payments/rates/history/', CurrencyRateHistoryView.as_view(), name='currency-rate-history'),
     path('api/system/config/', SystemConfigView.as_view(), name='system-config'),
     path('api/system/backup/', SystemBackupView.as_view(), name='system-backup'),
     path('api/kpis/owner/', OwnerKPIView.as_view(), name='kpi-owner'),

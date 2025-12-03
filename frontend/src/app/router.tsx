@@ -13,7 +13,6 @@ import WarehouseKpiPage from '../pages/kpi/WarehouseKpiPage';
 import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
-import PaymentsPage from '../pages/Payments';
 import ProductsPage from '../pages/Products';
 import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
@@ -26,7 +25,6 @@ import NotificationCenterPage from '../pages/NotificationCenter';
 import UserManualPage from '../pages/UserManual';
 import Unauthorized from '../pages/Unauthorized';
 import DocumentGeneratorPage from '../pages/marketing/DocumentGenerator';
-import ExpensesPage from '../pages/Expenses';
 import VerifyOrderPage from '../pages/verify/VerifyOrderPage';
 import VerifyReconciliationPage from '../pages/verify/VerifyReconciliationPage';
 import ProtectedRoute from '../auth/ProtectedRoute';
@@ -102,22 +100,6 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
             <DealersPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'payments',
-        element: (
-          <ProtectedRoute roles={['admin', 'sales', 'accountant']}>
-            <PaymentsPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'expenses',
-        element: (
-          <ProtectedRoute roles={['admin', 'accountant']}>
-            <ExpensesPage />
           </ProtectedRoute>
         ),
       },

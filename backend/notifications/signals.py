@@ -4,7 +4,6 @@ from django.dispatch import receiver
 from notifications.models import SystemNotification
 from notifications.utils import push_global
 from orders.models import Order, OrderReturn
-from payments.models import Payment
 
 
 def _create_notification(
@@ -37,18 +36,6 @@ def notify_order_created(sender, instance: Order, created, **kwargs):
             f'{instance.display_no} uchun buyurtma yaratildi.',
             notification_type='order',
             link=f'/orders'
-        )
-
-
-@receiver(post_save, sender=Payment)
-def notify_payment(sender, instance: Payment, created, **kwargs):
-    if created:
-        dealer_name = instance.dealer.name if instance.dealer else 'Noma\'lum diler'
-        _create_notification(
-            'To\'lov qabul qilindi', 
-            f"{dealer_name} dan {instance.amount} {instance.currency} tushdi.",
-            notification_type='payment',
-            link='/payments'
         )
 
 

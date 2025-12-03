@@ -16,7 +16,6 @@ import {
   ShoppingOutlined,
   LineChartOutlined,
   SettingOutlined,
-  WalletOutlined,
   AuditOutlined,
   FileTextOutlined,
   RiseOutlined,
@@ -74,18 +73,6 @@ const BASE_MENU: MenuItem[] = [
       label: 'nav.dealers',
       icon: <BankOutlined />,
       roles: ['admin', 'sales', 'accountant'],
-    },
-    {
-      path: '/payments',
-      label: 'nav.payments',
-      icon: <WalletOutlined />,
-      roles: ['admin', 'sales', 'accountant'],
-    },
-    {
-      path: '/expenses',
-      label: 'nav.expenses',
-      icon: <WalletOutlined />,
-      roles: ['admin', 'accountant'],
     },
     {
       path: '/currency',

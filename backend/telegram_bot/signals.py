@@ -5,10 +5,9 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from orders.models import Order, OrderReturn
-from payments.models import CurrencyRate, Payment
 
 from .services import send_telegram_message
-from .templates import currency_message, order_message, payment_message, return_message
+from .templates import order_message, return_message
 
 ASSETS_DIR = Path(settings.BASE_DIR) / 'telegram_bot' / 'assets'
 
@@ -65,22 +64,6 @@ def notify_order(sender, instance: Order, created: bool, **kwargs):
     # Use status-specific image or fallback to default
     image_url = STATUS_IMAGES.get(instance.status.upper(), DEFAULT_IMAGE)
     send_telegram_message(text, image_path=image_url)
-
-
-@receiver(post_save, sender=Payment)
-def notify_payment(sender, instance: Payment, created: bool, **kwargs):
-    if not created:
-        return
-    text = payment_message.format_payment(instance)
-    send_telegram_message(text, image_path=_asset_path('payment.png'))
-
-
-@receiver(post_save, sender=CurrencyRate)
-def notify_currency(sender, instance: CurrencyRate, created: bool, **kwargs):
-    if not created:
-        return
-    text = currency_message.format_currency(instance)
-    send_telegram_message(text, image_path=_asset_path('currency.png'))
 
 
 @receiver(post_save, sender=OrderReturn)

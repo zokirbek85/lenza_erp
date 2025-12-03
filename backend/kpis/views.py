@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 from dealers.models import Dealer, Region
 from catalog.models import Product, Brand, Category
 from orders.models import Order, OrderItem, OrderReturn
-from payments.models import Payment, PaymentCard
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse, IsManager
 
 from .models import KPIRecord
@@ -46,7 +45,6 @@ class OwnerKPIView(APIView):
     def get(self, request):
         active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
         sales_total = active_orders.aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
-        payments_total = Payment.objects.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
         top_dealers = (
             active_orders.values('dealer__id', 'dealer__name')
             .annotate(total=Sum('total_usd'))
@@ -61,7 +59,6 @@ class OwnerKPIView(APIView):
         ]
         data = {
             'total_sales_usd': float(sales_total),
-            'total_payments_usd': float(payments_total),
             'top_dealers': [
                 {'dealer_id': row['dealer__id'], 'dealer': row['dealer__name'], 'total_usd': float(row['total'])}
                 for row in top_dealers
@@ -139,17 +136,11 @@ class AccountantKPIView(APIView):
     def get(self, request):
         active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
         sales_total = active_orders.aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
-        payments_total = Payment.objects.filter(
-            status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED]
-        ).aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
         returns_total = OrderReturn.objects.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
-        outstanding = sales_total - payments_total
         net_profit = sales_total - returns_total
 
         data = {
             'sales_total_usd': float(sales_total),
-            'payments_total_usd': float(payments_total),
-            'outstanding_balance_usd': float(outstanding),
             'returns_total_usd': float(returns_total),
             'net_profit_usd': float(net_profit),
         }
@@ -157,53 +148,11 @@ class AccountantKPIView(APIView):
 
 
 class CardKPIView(APIView):
-    """KPI per active PaymentCard for card payments only, with optional date range filters.
-
-    Returns list of dicts with:
-    - card_id, card_name, holder_name
-    - total_amount (USD), payments_count, last_payment_date
-    """
+    """Card KPI - removed as payment cards are no longer available"""
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
-        from_param = request.query_params.get('from')
-        to_param = request.query_params.get('to')
-
-        payment_filters = Q(method=Payment.Method.CARD) & Q(status__in=[Payment.Status.APPROVED, Payment.Status.CONFIRMED])
-        if from_param:
-            try:
-                from_date = datetime.fromisoformat(from_param).date()
-                payment_filters &= Q(pay_date__gte=from_date)
-            except ValueError:
-                payment_filters &= Q(pay_date__gte=from_param)
-        if to_param:
-            try:
-                to_date = datetime.fromisoformat(to_param).date()
-                payment_filters &= Q(pay_date__lte=to_date)
-            except ValueError:
-                payment_filters &= Q(pay_date__lte=to_param)
-
-        data = []
-        for card in PaymentCard.objects.filter(is_active=True):
-            card_payments = card.payments.filter(payment_filters)
-
-            total = card_payments.aggregate(total=Sum('amount_usd'))['total'] or 0
-            count = card_payments.count()
-            last_date = card_payments.aggregate(last=Max('pay_date'))['last']
-            
-            data.append({
-                'card_id': card.id,
-                'card_name': card.name,
-                'holder_name': card.holder_name,
-                'total_amount': float(total),
-                'payments_count': count,
-                'last_payment_date': last_date,
-            })
-        
-        # Sort by total_amount descending
-        data.sort(key=lambda x: x['total_amount'], reverse=True)
-
-        return Response(data)
+        return Response({'message': 'Card KPI removed - payment module no longer available'})
 
 
 class InventoryStatsView(APIView):
