@@ -91,6 +91,14 @@ class OrderSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    can_edit = serializers.SerializerMethodField()
+
+    def get_can_edit(self, obj):
+        """Return whether current user can edit this order."""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            return obj.can_edit(request.user)
+        return False
 
     class Meta:
         model = Order
@@ -109,11 +117,12 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_uzs',
             'is_reserve',
             'is_imported',
+            'can_edit',
             'items',
             'status_logs',
             'returns',
         )
-        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs')
+        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'can_edit')
 
     def to_internal_value(self, data):
         if hasattr(data, 'copy'):
@@ -135,6 +144,19 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
+        """
+        Update order - enforce permission checks.
+        Manager can only edit CREATED orders.
+        Admin/Accountant can edit any order.
+        """
+        user = self.context['request'].user
+        
+        # Double-check permission (should already be checked in view)
+        if not instance.can_edit(user):
+            raise serializers.ValidationError({
+                'detail': 'Bu buyurtmani tahrirlash mumkin emas. Faqat "created" statusdagi buyurtmalarni tahrirlash mumkin.'
+            })
+        
         items_data = validated_data.pop('items', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

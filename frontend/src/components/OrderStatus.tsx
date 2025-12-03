@@ -9,6 +9,7 @@ interface OrderStatusProps {
   value: string;
   orderId: number;
   onStatusUpdated?: (orderId: number, newStatus: string) => void;
+  canEdit?: boolean;
 }
 
 const STATUS_OPTIONS = [
@@ -30,7 +31,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   owner: STATUS_OPTIONS.map((s) => s.value),
 };
 
-export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProps) => {
+export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true }: OrderStatusProps) => {
   const { t } = useTranslation();
   const { role } = useAuthStore();
   const [selectedStatus, setSelectedStatus] = useState(value);
@@ -39,6 +40,9 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
 
   // Foydalanuvchi roliga qarab ruxsat berilgan statuslar
   const allowedStatuses = ROLE_PERMISSIONS[role || ''] || [];
+
+  // can_edit=false bo'lsa, hech narsa qilmaslik
+  const isEditable = canEdit && allowedStatuses.length > 0;
 
   const handleChange = (newStatus: string) => {
     if (newStatus === value) {
@@ -122,6 +126,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated }: OrderStatusProp
         style={{ width: 160 }}
         value={selectedStatus}
         onChange={handleChange}
+        disabled={!isEditable}
         popupMatchSelectWidth={false}
         onClick={(e) => e.stopPropagation()}
         options={STATUS_OPTIONS.map((s) => ({

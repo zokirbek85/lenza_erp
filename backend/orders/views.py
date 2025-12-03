@@ -64,7 +64,12 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
         serializer.save()
     
     def perform_update(self, serializer):
-        """Only admin/owner and order creator can edit orders."""
+        """
+        Edit order with role-based permissions:
+        - Admin/Accountant: can edit any order
+        - Manager (sales): can only edit CREATED status orders
+        - Confirmed and later: only admin/accountant can edit
+        """
         order = self.get_object()
         user = self.request.user
         
@@ -73,18 +78,15 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
             serializer.save()
             return
         
-        # Admin and owner can edit any order
-        if hasattr(user, 'role') and user.role in ['admin', 'owner']:
-            serializer.save()
-            return
+        # Check if user has permission to edit this order
+        if not order.can_edit(user):
+            from rest_framework.exceptions import PermissionDenied
+            if hasattr(user, 'role') and user.role == 'sales':
+                raise PermissionDenied('Manager faqat "created" statusdagi buyurtmalarni tahrirlashi mumkin. Bu buyurtma allaqachon tasdiqlangan.')
+            else:
+                raise PermissionDenied('Sizda bu buyurtmani tahrirlash huquqi yo\'q.')
         
-        # Order creator can edit their own orders
-        if order.created_by == user:
-            serializer.save()
-            return
-        
-        from rest_framework.exceptions import PermissionDenied
-        raise PermissionDenied('Faqat admin, owner va buyurtma yaratuvchi tahrirlashi mumkin.')
+        serializer.save()
     
     def perform_destroy(self, instance):
         """Only admin/owner can delete orders."""

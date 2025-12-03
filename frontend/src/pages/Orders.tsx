@@ -74,6 +74,7 @@ interface Order {
   total_usd: number;
   value_date: string;
   is_reserve: boolean;
+  can_edit?: boolean;
   items: OrderItem[];
 }
 
@@ -1169,6 +1170,7 @@ const OrdersPage = () => {
                           value={order.status}
                           orderId={order.id}
                           onStatusUpdated={handleStatusUpdated}
+                          canEdit={order.can_edit}
                         />
                       </div>
                     </td>

@@ -7,9 +7,10 @@ interface OrderItemTableProps {
   onQtyChange: (productId: number, qty: number) => void;
   onPriceChange: (productId: number, price: number) => void;
   onRemove: (productId: number) => void;
+  readOnly?: boolean;
 }
 
-const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderItemTableProps) => {
+const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove, readOnly = false }: OrderItemTableProps) => {
   const { t } = useTranslation();
 
   if (!items.length) {
@@ -57,7 +58,8 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
                     const nextValue = Number(event.target.value);
                     onQtyChange(item.product, Number.isFinite(nextValue) ? nextValue : 0);
                   }}
-                  className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  disabled={readOnly}
+                  className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-800/50"
                 />
               </td>
               <td className="px-4 py-3">
@@ -67,20 +69,23 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove }: OrderIt
                   step="0.01"
                   value={item.price_usd}
                   onChange={(event) => onPriceChange(item.product, Number(event.target.value) || 0)}
-                  className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  disabled={readOnly}
+                  className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-800/50"
                 />
               </td>
               <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
                 {formatCurrency(Number(item.qty) * Number(item.price_usd), 'USD')}
               </td>
               <td className="px-4 py-3 text-right">
-                <button
-                  type="button"
-                  onClick={() => onRemove(item.product)}
-                  className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-900/30"
-                >
-                  {t('actions.remove')}
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item.product)}
+                    className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-900/30"
+                  >
+                    {t('actions.remove')}
+                  </button>
+                )}
               </td>
             </tr>
           ))}

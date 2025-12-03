@@ -71,6 +71,26 @@ class Order(models.Model):
             self.display_no = candidate
         super().save(*args, **kwargs)
 
+    def can_edit(self, user) -> bool:
+        """
+        Determine if user can edit this order.
+        - Admin/Accountant: always can edit
+        - Manager (sales): only if status == CREATED
+        - Other roles: no edit permission
+        """
+        if not user or not hasattr(user, 'role'):
+            return False
+        
+        # Admin and accountant can always edit
+        if user.role in ['admin', 'accountant', 'owner']:
+            return True
+        
+        # Manager (sales) can only edit CREATED orders
+        if user.role == 'sales' and self.status == self.Status.CREATED:
+            return True
+        
+        return False
+
     def recalculate_totals(self):
         total = (
             self.items.aggregate(
