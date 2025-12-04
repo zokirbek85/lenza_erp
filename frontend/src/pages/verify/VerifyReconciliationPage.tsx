@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, Result, Typography, Divider, Spin } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import http from '../../app/http';
 import '../../styles/verify.css';
 
 const { Title, Text } = Typography;
@@ -28,8 +28,7 @@ const VerifyReconciliationPage = () => {
   useEffect(() => {
     const fetchVerification = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-        const response = await axios.get(`${apiUrl}/api/verify/reconciliation/${id}/`);
+        const response = await http.get(`/verify/reconciliation/${id}/`);
         setData(response.data);
       } catch (error) {
         setData({ valid: false, error: 'Hujjat topilmadi' });
