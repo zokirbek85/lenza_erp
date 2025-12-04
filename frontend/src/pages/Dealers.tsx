@@ -28,6 +28,7 @@ interface Manager {
   username: string;
   first_name: string;
   last_name: string;
+  full_name?: string;
 }
 
 interface Dealer {
@@ -38,7 +39,7 @@ interface Dealer {
   opening_balance_usd: number;
   region: Region | null;
   region_id?: number | null;
-  manager_user?: string | null;
+  manager_user?: string | Manager | null;
   manager_user_id?: number | null;
   balance: string | number;
 }
@@ -262,7 +263,13 @@ const DealersPage = () => {
     }
   };
 
-  const managerLabel = (manager?: Dealer['manager_user']) => manager ?? '—';
+  const managerLabel = (manager?: Dealer['manager_user']) => {
+    if (!manager) return '—';
+    if (typeof manager === 'object' && manager !== null) {
+      return manager.full_name || `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username || '—';
+    }
+    return manager;
+  };
 
   const handleExport = async () => {
     try {
