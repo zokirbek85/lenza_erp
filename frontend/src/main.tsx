@@ -6,6 +6,39 @@ import './i18n';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary';
 
+// Prevent browser extension conflicts
+// Suppress chrome.runtime errors from extensions
+if (typeof window !== 'undefined') {
+  // Create a safe error handler for extension conflicts
+  const originalError = console.error;
+  console.error = (...args: any[]) => {
+    // Filter out known extension-related errors
+    const errorString = args.join(' ');
+    if (
+      errorString.includes('chrome.runtime') ||
+      errorString.includes('message port closed') ||
+      errorString.includes('Extension context invalidated')
+    ) {
+      // Silently ignore extension errors
+      return;
+    }
+    originalError.apply(console, args);
+  };
+
+  // Prevent unhandled promise rejections from extensions
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason?.message || String(event.reason || '');
+    if (
+      reason.includes('chrome.runtime') ||
+      reason.includes('message port closed') ||
+      reason.includes('Extension context')
+    ) {
+      // Prevent default error logging for extension errors
+      event.preventDefault();
+    }
+  });
+}
+
 const rootEl = document.getElementById('root');
 if (!rootEl) {
   throw new Error('Root element #root not found');
