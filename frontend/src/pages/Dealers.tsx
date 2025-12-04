@@ -251,40 +251,58 @@ const DealersPage = () => {
     setSelectedDealer(dealer);
     setDetailOpen(true);
     setDetailLoading(true);
+    
     try {
-      // Only fetch orders - payments endpoint doesn't exist
-      // Use reconciliation endpoint for full financial data if needed
-      const ordersRes = await http.get('/orders/', { 
-        params: { 
-          dealer: dealer.id, 
-          ordering: '-created_at',
-          page_size: 10 // Limit to recent 10 orders
-        } 
-      });
-      setOrders(toArray<OrderSummary>(ordersRes.data));
-      
-      // Try to fetch finance transactions (new endpoint)
-      try {
-        const financeRes = await http.get('/finance/transactions/', {
+      // Fetch orders and finance transactions in parallel
+      const [ordersRes, financeRes] = await Promise.allSettled([
+        http.get('/orders/', { 
+          params: { 
+            dealer: dealer.id, 
+            ordering: '-created_at',
+            page_size: 10
+          } 
+        }),
+        http.get('/finance/transactions/', {
           params: {
             dealer: dealer.id,
             type: 'income',
             ordering: '-date',
             page_size: 10
           }
-        });
+        })
+      ]);
+      
+      // Handle orders result
+      if (ordersRes.status === 'fulfilled') {
+        setOrders(toArray<OrderSummary>(ordersRes.value.data));
+      } else {
+        console.warn('Orders fetch failed:', ordersRes.reason);
+        setOrders([]);
+      }
+      
+      // Handle finance transactions result
+      if (financeRes.status === 'fulfilled') {
+        const responseData = financeRes.value.data;
+        // Handle paginated response (results array) or direct array
+        const transactions = Array.isArray(responseData?.results) 
+          ? responseData.results 
+          : Array.isArray(responseData) 
+          ? responseData 
+          : [];
+        
         // Map finance transactions to payment format for compatibility
-        const transactions = toArray(financeRes.data);
         const mappedPayments: PaymentSummary[] = transactions.map((t: any) => ({
           id: t.id,
-          pay_date: t.date,
-          amount: t.amount,
-          currency: t.currency,
-          method: t.category || 'finance',
+          pay_date: t.date || t.created_at,
+          // Use amount_usd if available, fallback to amount
+          amount: t.amount_usd ?? t.amount ?? 0,
+          currency: t.currency || 'USD',
+          // Display transaction type instead of category
+          method: t.type_display || (t.type === 'income' ? 'Income' : 'Expense'),
         }));
         setPayments(mappedPayments);
-      } catch (financeError) {
-        console.warn('Finance transactions not available:', financeError);
+      } else {
+        console.warn('Finance transactions fetch failed:', financeRes.reason);
         setPayments([]);
       }
     } catch (error) {
@@ -513,8 +531,8 @@ const DealersPage = () => {
             )}
             {!loading &&
               dealers.map((dealer) => {
-                // Balance is already a number from API
-                const balanceValue = dealer.balance ?? 0;
+                // Balance is already a number from API (balance_usd property)
+                const balanceValue = Number(dealer.balance ?? 0);
                 const balanceClass =
                   balanceValue < 0
                     ? 'text-rose-600 dark:text-rose-300'
@@ -527,10 +545,14 @@ const DealersPage = () => {
                       <div className="font-semibold text-slate-900 dark:text-white">{dealer.name}</div>
                       <p className="text-xs text-slate-500">{dealer.code}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{dealer.region?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{managerLabel(dealer.manager_user)}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
+                      {dealer.region?.name ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
+                      {managerLabel(dealer.manager_user)}
+                    </td>
                     <td className={`px-4 py-3 text-right font-semibold ${balanceClass}`}>
-                      {formatCurrency(balanceValue ?? 0)}
+                      {formatCurrency(balanceValue)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap items-center justify-end gap-2">
