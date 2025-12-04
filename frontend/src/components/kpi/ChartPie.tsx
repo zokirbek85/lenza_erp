@@ -11,7 +11,16 @@ interface ChartPieProps<TData extends Record<string, unknown>> {
   colors?: string[];
 }
 
-const DEFAULT_COLORS = ['#0ea5e9', '#f97316', '#22c55e', '#a855f7', '#ef4444', '#14b8a6', '#6366f1'];
+// Modern corporate color palette for charts
+const DEFAULT_COLORS = [
+  '#C9A86C', // Lenza Gold
+  '#16A34A', // Success Green
+  '#3B82F6', // Primary Blue
+  '#F59E0B', // Warning Orange
+  '#DC2626', // Error Red
+  '#14B8A6', // Teal
+  '#8B5CF6', // Purple
+];
 
 const ChartPie = <TData extends Record<string, unknown>>({
   data,
@@ -22,8 +31,12 @@ const ChartPie = <TData extends Record<string, unknown>>({
 }: ChartPieProps<TData>) => {
   const { t } = useTranslation();
 
+  const tooltipBg = getComputedStyle(document.documentElement).getPropertyValue('--bg-body').trim();
+  const tooltipText = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+  const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-base').trim();
+
   if (!data.length) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">{t('kpi.noData')}</p>;
+    return <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('kpi.noData')}</p>;
   }
 
   return (
@@ -48,10 +61,10 @@ const ChartPie = <TData extends Record<string, unknown>>({
           </Pie>
           <Tooltip
             contentStyle={{
-              background: '#0f172a',
-              border: 'none',
+              background: tooltipBg,
+              border: `1px solid ${borderColor}`,
               borderRadius: '0.5rem',
-              color: '#f8fafc',
+              color: tooltipText,
             }}
             formatter={(value: number) => [formatCurrency(value), t('common.amount')]}
           />

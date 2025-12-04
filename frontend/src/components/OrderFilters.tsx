@@ -143,7 +143,7 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
       variant="outlined"
       title={
         <Space>
-          <FilterOutlined style={{ color: '#d4af37' }} />
+          <FilterOutlined style={{ color: 'var(--lenza-gold)' }} />
           <span style={{ color: token.colorText }}>{t('common:filters.title')}</span>
         </Space>
       }
@@ -220,9 +220,9 @@ export default function OrderFilters({ onChange }: OrderFiltersProps) {
               type="primary"
               onClick={handleApply}
               style={{ 
-                background: '#d4af37',
-                borderColor: '#d4af37',
-                color: '#1e1e1e',
+                background: 'var(--lenza-gold)',
+                borderColor: 'var(--lenza-gold)',
+                color: 'var(--text-primary)',
               }}
             >
               {t('common:filters.apply')}

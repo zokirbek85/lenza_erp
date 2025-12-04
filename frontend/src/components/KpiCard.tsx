@@ -2,7 +2,6 @@ import { Card, Statistic, Tooltip, theme } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
-import { useTheme } from '../context/ThemeContext';
 import { useAutoscale } from '../hooks/useAutoscale';
 
 interface KpiCardProps {
@@ -31,8 +30,6 @@ const KpiCard = ({
   valueStyle,
 }: KpiCardProps) => {
   const { token } = theme.useToken();
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
   
   // Autoscale: widget o'lchamiga qarab matn va icon o'lchamlarini moslashtirish
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,9 +38,9 @@ const KpiCard = ({
   const trendIcon =
     change !== undefined && change !== 0 ? (
       change >= 0 ? (
-        <ArrowUpOutlined style={{ color: '#52c41a', fontSize: '14px' }} />
+        <ArrowUpOutlined style={{ color: 'var(--success)', fontSize: '14px' }} />
       ) : (
-        <ArrowDownOutlined style={{ color: '#ff4d4f', fontSize: '14px' }} />
+        <ArrowDownOutlined style={{ color: 'var(--error)', fontSize: '14px' }} />
       )
     ) : null;
 
@@ -97,7 +94,7 @@ const KpiCard = ({
                 <span
                   className="font-semibold"
                   style={{
-                    color: change >= 0 ? '#52c41a' : '#ff4d4f',
+                    color: change >= 0 ? 'var(--success)' : 'var(--error)',
                     fontSize: `${Math.max(10, fontSize * 0.6)}px`, // Responsive change text
                   }}
                 >
@@ -116,9 +113,9 @@ const KpiCard = ({
           </div>
           {icon && (
             <div 
-              className="flex items-center justify-center rounded-xl transition-all group-hover:bg-amber-50 group-hover:text-amber-600"
+              className="flex items-center justify-center rounded-xl transition-all"
               style={{
-                backgroundColor: isDark ? '#2a2a2a' : '#f8fafc',
+                backgroundColor: 'var(--bg-secondary)',
                 color: token.colorTextSecondary,
                 width: `${iconSize}px`, // Autoscale: icon o'lchami
                 height: `${iconSize}px`,
