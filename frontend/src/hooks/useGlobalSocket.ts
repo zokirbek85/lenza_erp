@@ -32,32 +32,45 @@ const prettyMessage = (event: string, data: Record<string, unknown>): string => 
 };
 
 const resolveWsBase = (): string => {
+  // Priority 1: Explicit VITE_WS_URL from environment
   const explicit = (import.meta.env.VITE_WS_URL as string | undefined) ?? '';
   if (explicit.trim()) {
     return explicit;
   }
 
+  // Priority 2: Derive from VITE_API_URL
   const apiBase = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
-  if (apiBase) {
+  if (apiBase && apiBase.trim()) {
     try {
       const url = new URL(apiBase);
+      // Force wss:// for HTTPS origins
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
       return `${url.protocol}//${url.host}`;
     } catch (error) {
-      console.warn('Invalid API URL for WS resolution', error);
+      console.warn('[WS] Invalid API URL for WS resolution', error);
     }
   }
 
+  // Priority 3: Use current window.location (respects HTTPS)
   if (typeof window !== 'undefined') {
     const { protocol, hostname, port } = window.location;
+    // Automatically use wss:// for HTTPS pages
     const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+    
+    // Production domain: use domain without port
+    if (hostname.includes('erp.lenza.uz') || hostname.includes('lenza')) {
+      return `${wsProtocol}//erp.lenza.uz`;
+    }
+    
+    // Development or other domains
     const normalizedHost = hostname || 'localhost';
     const fallbackPort = port || (['localhost', '127.0.0.1'].includes(normalizedHost) ? '8000' : '');
     const portPart = fallbackPort ? `:${fallbackPort}` : '';
     return `${wsProtocol}//${normalizedHost}${portPart}`;
   }
 
-  return 'ws://127.0.0.1:8000';
+  // Final fallback for SSR/development
+  return import.meta.env.DEV ? 'ws://127.0.0.1:8000' : 'wss://erp.lenza.uz';
 };
 
 export const useGlobalSocket = () => {

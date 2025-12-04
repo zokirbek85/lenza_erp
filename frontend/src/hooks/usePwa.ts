@@ -32,8 +32,11 @@ export const usePwa = () => {
 
   useEffect(() => {
     const handler = (event: Event) => {
+      // Prevent default browser install prompt so we can show custom UI
       event.preventDefault();
+      // Store event for later use when user clicks our custom install button
       setInstallEvent(event as BeforeInstallPromptEvent);
+      console.info('[PWA] Install prompt available');
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -51,9 +54,19 @@ export const usePwa = () => {
   }, []);
 
   const promptInstall = async () => {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    setInstallEvent(null);
+    if (!installEvent) {
+      console.warn('[PWA] No install event available');
+      return;
+    }
+    try {
+      // Show the browser's install prompt
+      await installEvent.prompt();
+      console.info('[PWA] Install prompt shown');
+      // Clear the event after showing (can only be used once)
+      setInstallEvent(null);
+    } catch (error) {
+      console.error('[PWA] Failed to show install prompt:', error);
+    }
   };
 
   return {
