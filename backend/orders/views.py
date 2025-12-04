@@ -24,7 +24,8 @@ STATUS_FLOW = {
     Order.Status.CREATED: {Order.Status.CONFIRMED, Order.Status.CANCELLED},
     Order.Status.CONFIRMED: {Order.Status.PACKED, Order.Status.CANCELLED},
     Order.Status.PACKED: {Order.Status.SHIPPED, Order.Status.CANCELLED},
-    Order.Status.SHIPPED: {Order.Status.DELIVERED, Order.Status.CANCELLED},
+    Order.Status.SHIPPED: {Order.Status.DELIVERED, Order.Status.RETURNED, Order.Status.CANCELLED},
+    Order.Status.DELIVERED: {Order.Status.RETURNED},
 }
 
 
