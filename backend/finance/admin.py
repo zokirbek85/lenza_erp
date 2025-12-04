@@ -76,6 +76,8 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
     ]
     list_filter = ['type', 'status', 'currency', 'date', 'created_at', 'account']
     search_fields = ['comment', 'category', 'dealer__name', 'account__name']
+    autocomplete_fields = ['dealer']
+    raw_id_fields = ['account']
     readonly_fields = [
         'amount_usd',
         'exchange_rate',
@@ -87,6 +89,7 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
         'approved_at'
     ]
     date_hierarchy = 'date'
+    list_select_related = ['account', 'dealer', 'created_by', 'approved_by']
     
     fieldsets = (
         (_('Asosiy malumotlar'), {
