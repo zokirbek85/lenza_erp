@@ -29,10 +29,41 @@ export async function fetchAllPages<T>(
 
   while (nextUrl) {
     try {
-      // For first page, use endpoint with params. For subsequent pages, use full next URL
-      const response: { data: PaginatedResponse<T> | T[] } = isFirstPage
-        ? await http.get<PaginatedResponse<T>>(endpoint, { params })
-        : await http.get<PaginatedResponse<T>>(nextUrl);
+      let requestUrl: string;
+      let requestParams: Record<string, any> | undefined;
+
+      if (isFirstPage) {
+        // First page: use endpoint with params
+        requestUrl = endpoint;
+        requestParams = params;
+      } else {
+        // Subsequent pages: extract relative path from 'next' URL
+        // DRF returns full URLs like "http://erp.lenza.uz/api/dealers/?page=2"
+        // We need to extract just "/api/dealers/?page=2" or "/dealers/?page=2"
+        if (nextUrl.startsWith('http://') || nextUrl.startsWith('https://')) {
+          try {
+            const url = new URL(nextUrl);
+            // Extract pathname + search (e.g., "/api/dealers/?page=2")
+            requestUrl = url.pathname + url.search;
+            // Remove /api prefix if present (since http client already has baseURL: '/api')
+            if (requestUrl.startsWith('/api/')) {
+              requestUrl = requestUrl.substring(4); // Remove '/api'
+            }
+          } catch (e) {
+            console.warn('Failed to parse next URL, using as-is:', nextUrl);
+            requestUrl = nextUrl;
+          }
+        } else {
+          // Already a relative URL
+          requestUrl = nextUrl;
+        }
+        requestParams = undefined;
+      }
+
+      const response: { data: PaginatedResponse<T> | T[] } = await http.get<PaginatedResponse<T>>(
+        requestUrl,
+        requestParams ? { params: requestParams } : undefined
+      );
 
       const data: PaginatedResponse<T> | T[] = response.data;
 
