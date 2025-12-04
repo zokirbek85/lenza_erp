@@ -475,7 +475,8 @@ class ProductTrendAnalyticsView(APIView):
                 if not item['period']:
                     continue
                     
-                period_key = item['period'].date().isoformat()
+                # TruncMonth/TruncWeek already returns date object, not datetime
+                period_key = item['period'].isoformat()
                 
                 if period_key not in periods_map:
                     periods_map[period_key]['period'] = period_key
