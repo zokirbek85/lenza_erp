@@ -63,6 +63,48 @@ interface PaymentSummary {
   method: string;
 }
 
+/**
+ * FinanceTransaction interface matching backend serializer
+ * Backend: finance/serializers.py -> FinanceTransactionSerializer
+ */
+interface FinanceTransaction {
+  id: number;
+  type: 'income' | 'expense';
+  type_display: string;
+  dealer: number | null;
+  dealer_name: string | null;
+  dealer_detail?: Dealer;
+  account: number;
+  account_name: string;
+  date: string;
+  currency: 'USD' | 'UZS';
+  amount: number;
+  amount_usd: number;
+  exchange_rate?: number | null;
+  exchange_rate_date?: string | null;
+  category: string | null;
+  comment: string;
+  status: 'draft' | 'approved' | 'cancelled';
+  status_display: string;
+  created_by: number | null;
+  created_by_name: string | null;
+  approved_by: number | null;
+  approved_by_name: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Paginated API response structure
+ */
+interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 const emptyForm = {
   name: '',
   code: '',
@@ -280,26 +322,17 @@ const DealersPage = () => {
         setOrders([]);
       }
       
-      // Handle finance transactions result
+      // Handle finance transactions result with proper typing
       if (financeRes.status === 'fulfilled') {
-        const responseData = financeRes.value.data;
-        // Handle paginated response (results array) or direct array
-        const transactions = Array.isArray(responseData?.results) 
-          ? responseData.results 
-          : Array.isArray(responseData) 
-          ? responseData 
-          : [];
+        const responseData = financeRes.value.data as PaginatedResponse<FinanceTransaction> | FinanceTransaction[];
         
-        // Map finance transactions to payment format for compatibility
-        const mappedPayments: PaymentSummary[] = transactions.map((t: any) => ({
-          id: t.id,
-          pay_date: t.date || t.created_at,
-          // Use amount_usd if available, fallback to amount
-          amount: t.amount_usd ?? t.amount ?? 0,
-          currency: t.currency || 'USD',
-          // Display transaction type instead of category
-          method: t.type_display || (t.type === 'income' ? 'Income' : 'Expense'),
-        }));
+        // Handle paginated response (results array) or direct array
+        const transactions: FinanceTransaction[] = Array.isArray(responseData)
+          ? responseData
+          : responseData?.results ?? [];
+        
+        // Map finance transactions to payment format using utility function
+        const mappedPayments: PaymentSummary[] = transactions.map(mapTransactionToPayment);
         setPayments(mappedPayments);
       } else {
         console.warn('Finance transactions fetch failed:', financeRes.reason);
@@ -318,6 +351,24 @@ const DealersPage = () => {
   const managerLabel = (manager?: Dealer['manager_user']) => {
     // manager_user is a string from API (StringRelatedField)
     return manager || '—';
+  };
+
+  /**
+   * Map FinanceTransaction to PaymentSummary for compatibility with existing UI
+   * @param transaction - Finance transaction from API
+   * @returns PaymentSummary object
+   */
+  const mapTransactionToPayment = (transaction: FinanceTransaction): PaymentSummary => {
+    return {
+      id: transaction.id,
+      // Use date field, fallback to created_at
+      pay_date: transaction.date || transaction.created_at,
+      // Prefer amount_usd for consistency, fallback to amount
+      amount: transaction.amount_usd ?? transaction.amount ?? 0,
+      currency: transaction.currency || 'USD',
+      // Use type_display for better UX (e.g., "Income", "Expense")
+      method: transaction.type_display || (transaction.type === 'income' ? 'Income' : 'Expense'),
+    };
   };
 
   const handleExport = async () => {
