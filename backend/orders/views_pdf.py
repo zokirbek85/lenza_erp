@@ -13,10 +13,26 @@ class OrderInvoiceView(APIView, ExportMixin):
 
     def get(self, request, pk):
         order = get_object_or_404(Order.objects.prefetch_related('items__product', 'dealer'), pk=pk)
+        
+        # Get exchange rate on order date
+        from finance.models import ExchangeRate
+        rate = ExchangeRate.objects.filter(
+            rate_date__lte=order.value_date
+        ).order_by('-rate_date').first()
+        
+        if not rate:
+            # Fallback to latest rate if none found for order date
+            rate = ExchangeRate.objects.order_by('-rate_date').first()
+        
+        currency_rate = rate.usd_to_uzs if rate else 12700
+        currency_rate_date = rate.rate_date if rate else order.value_date
+        
         context = {
             'order': order,
             'items': order.items.all(),
             'company': get_company_info(),
+            'currency_rate': currency_rate,
+            'currency_rate_date': currency_rate_date,
         }
         return self.render_pdf_with_qr(
             'orders/invoice.html',
