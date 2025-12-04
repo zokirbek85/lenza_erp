@@ -247,8 +247,13 @@ def get_reconciliation_data(
                 'source': 'inventory',
             }
 
+    # Convert generators to lists to allow multiple iterations
+    formatted_orders = list(_format_orders())
+    formatted_payments = list(_format_payments())
+    combined_returns = [*list(_format_returns()), *list(_format_new_returns())]
+
     movements = []
-    for order in _format_orders():
+    for order in formatted_orders:
         movements.append(
             {
                 'date': order['date'],
@@ -258,7 +263,7 @@ def get_reconciliation_data(
                 'type': 'order',
             }
         )
-    for payment in _format_payments():
+    for payment in formatted_payments:
         movements.append(
             {
                 'date': payment['date'],
@@ -268,7 +273,6 @@ def get_reconciliation_data(
                 'type': 'payment',
             }
         )
-    combined_returns = [*list(_format_returns()), *list(_format_new_returns())]
 
     for ret in combined_returns:
         movements.append(
@@ -293,8 +297,8 @@ def get_reconciliation_data(
         'to_date': end,
         'opening_balance': float(opening_balance),
         'closing_balance': float(closing_balance),
-        'orders': list(_format_orders()),
-        'payments': list(_format_payments()),
+        'orders': formatted_orders,
+        'payments': formatted_payments,
         'returns': combined_returns,
         'returns_items': product_return_items,
         'movements': movements,
