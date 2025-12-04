@@ -131,7 +131,7 @@ const WarehouseKpiPage = () => {
       </div>
 
       <KpiSection title={t('kpi.warehouse.stockDistribution')} description={t('kpi.warehouse.stockDistributionDesc')}>
-        <ChartBar data={lowStockChartData} xKey="name" yKey="total" color="#f97316" legendLabel={t('kpi.warehouse.stockUnits')} />
+        <ChartBar data={lowStockChartData} xKey="name" yKey="total" legendLabel={t('kpi.warehouse.stockUnits')} />
       </KpiSection>
 
       <div className="grid gap-6 lg:grid-cols-2">

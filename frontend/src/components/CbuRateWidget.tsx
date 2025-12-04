@@ -101,9 +101,13 @@ const CbuRateWidget = () => {
 
   // Calculate rate change indicator
   const getRateChangeColor = (diff: number) => {
-    if (diff > 0) return '#3f8600';
-    if (diff < 0) return '#cf1322';
-    return '#666';
+    const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success').trim();
+    const errorColor = getComputedStyle(document.documentElement).getPropertyValue('--error').trim();
+    const textSecondary = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+    
+    if (diff > 0) return successColor;
+    if (diff < 0) return errorColor;
+    return textSecondary;
   };
 
   const getRateChangeIcon = (diff: number) => {
@@ -229,22 +233,25 @@ const CbuRateWidget = () => {
                 data={chartData}
                 margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke={getComputedStyle(document.documentElement).getPropertyValue('--border-base').trim()} 
+                />
                 <XAxis
                   dataKey="date"
-                  stroke="#6b7280"
+                  stroke={getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim()}
                   style={{ fontSize: '12px' }}
                 />
                 <YAxis
-                  stroke="#6b7280"
+                  stroke={getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim()}
                   style={{ fontSize: '12px' }}
                   domain={['dataMin - 10', 'dataMax + 10']}
                   tickFormatter={(value) => value.toFixed(0)}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-body').trim(),
+                    border: `1px solid ${getComputedStyle(document.documentElement).getPropertyValue('--border-base').trim()}`,
                     borderRadius: '6px',
                   }}
                   formatter={(value: number) => [
@@ -262,9 +269,9 @@ const CbuRateWidget = () => {
                 <Line
                   type="monotone"
                   dataKey="rate"
-                  stroke="#3b82f6"
+                  stroke={getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim()}
                   strokeWidth={2}
-                  dot={{ fill: '#3b82f6', r: 3 }}
+                  dot={{ fill: getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim(), r: 3 }}
                   activeDot={{ r: 5 }}
                 />
               </LineChart>

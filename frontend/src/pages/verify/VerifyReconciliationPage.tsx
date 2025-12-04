@@ -48,7 +48,7 @@ const VerifyReconciliationPage = () => {
         <Card className="verify-card">
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <Spin size="large" />
-            <div style={{ marginTop: 16, color: '#9ca3af' }}>
+            <div style={{ marginTop: 16, color: 'var(--text-secondary)' }}>
               Hujjat tekshirilmoqda...
             </div>
           </div>
@@ -64,15 +64,15 @@ const VerifyReconciliationPage = () => {
           <Result
             status="error"
             icon={<CloseCircleOutlined className="verify-error-icon" />}
-            title={<span style={{ color: '#f3f4f6' }}>Hujjat topilmadi</span>}
+            title={<span style={{ color: 'var(--text-primary)' }}>Hujjat topilmadi</span>}
             subTitle={
-              <span style={{ color: '#9ca3af' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
                 {data?.error || 'Bu akt sverka hujjati tizimda mavjud emas'}
               </span>
             }
           />
           <div className="verify-footer">
-            <Text style={{ color: '#6b7280' }}>Lenza ERP tizimi orqali tekshirildi</Text>
+            <Text style={{ color: 'var(--text-secondary)' }}>Lenza ERP tizimi orqali tekshirildi</Text>
           </div>
         </Card>
       </div>
@@ -89,7 +89,7 @@ const VerifyReconciliationPage = () => {
           </Title>
         </div>
 
-        <Divider style={{ borderColor: '#2a2e3a', margin: '16px 0' }} />
+        <Divider style={{ borderColor: 'var(--border-base)', margin: '16px 0' }} />
 
         <div className="verify-content">
           <div style={{ marginBottom: 16 }}>
@@ -99,7 +99,7 @@ const VerifyReconciliationPage = () => {
 
           <div style={{ marginBottom: 16 }}>
             <div className="verify-label">Diler:</div>
-            <div className="verify-value" style={{ color: '#e6c068' }}>
+            <div className="verify-value" style={{ color: 'var(--lenza-gold)' }}>
               {data.dealer}
             </div>
           </div>
@@ -131,21 +131,21 @@ const VerifyReconciliationPage = () => {
           {data.note && (
             <div style={{ marginBottom: 16 }}>
               <div className="verify-label">Eslatma:</div>
-              <div className="verify-value" style={{ fontSize: '14px', color: '#9ca3af' }}>
+              <div className="verify-value" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                 {data.note}
               </div>
             </div>
           )}
         </div>
 
-        <Divider style={{ borderColor: '#2a2e3a', margin: '24px 0 16px' }} />
+        <Divider style={{ borderColor: 'var(--border-base)', margin: '24px 0 16px' }} />
 
         <div className="verify-footer">
-          <Text style={{ color: '#10b981', fontWeight: 500 }}>
+          <Text style={{ color: 'var(--success)', fontWeight: 500 }}>
             ✓ Документ прошёл проверку подлинности
           </Text>
           <br />
-          <Text style={{ color: '#6b7280', fontSize: '12px', marginTop: 8 }}>
+          <Text style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 8 }}>
             Lenza ERP tizimi orqali tekshirildi
           </Text>
         </div>
