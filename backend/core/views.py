@@ -155,8 +155,24 @@ class DashboardSummaryView(APIView):
 
         orders_qs = Order.objects.filter(order_filter).exclude(status=Order.Status.CANCELLED)
 
-        # Payment module removed - set payments to zero
-        payments_total = Decimal('0')
+        # Calculate payments from FinanceTransaction (income) with proper USD conversion
+        from finance.models import FinanceTransaction
+        
+        payment_filter = Q(
+            type=FinanceTransaction.TransactionType.INCOME,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            dealer__in=filtered_dealers
+        )
+        if start_date:
+            payment_filter &= Q(date__gte=start_date)
+        if end_date:
+            payment_filter &= Q(date__lte=end_date)
+        
+        payments_total = decimal_or_zero(
+            FinanceTransaction.objects.filter(payment_filter).aggregate(
+                total=Sum('amount_usd')
+            )['total']
+        )
 
         return_filter = Q(order__in=orders_qs)
         if start_date:
@@ -169,7 +185,7 @@ class DashboardSummaryView(APIView):
             filtered_dealers.aggregate(total=Sum('opening_balance_usd'))['total']
         )
         orders_total = decimal_or_zero(orders_qs.aggregate(total=Sum('total_usd'))['total'])
-        # payments_total already set to zero above
+        # payments_total calculated from FinanceTransaction above
         returns_total = decimal_or_zero(returns_qs.aggregate(total=Sum('amount_usd'))['total'])
 
         # Inventory totals (products are global, show all inventory)
@@ -253,7 +269,15 @@ class DebtAnalyticsView(APIView):
         for dealer in dealers:
             opening = decimal_or_zero(dealer.opening_balance_usd)
             orders_total = decimal_or_zero(dealer.orders_total)
-            payments_total = Decimal('0')  # Payment module removed
+            # Calculate payments from FinanceTransaction
+            from finance.models import FinanceTransaction
+            payments_total = decimal_or_zero(
+                FinanceTransaction.objects.filter(
+                    dealer=dealer,
+                    type=FinanceTransaction.TransactionType.INCOME,
+                    status=FinanceTransaction.TransactionStatus.APPROVED
+                ).aggregate(total=Sum('amount_usd'))['total']
+            )
             returns_total = decimal_or_zero(dealer.returns_total)
             debt = opening + orders_total - payments_total - returns_total
             if debt == 0:
