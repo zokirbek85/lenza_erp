@@ -1,47 +1,68 @@
 /* ==========================================================================
-   LENZA ERP — Light Theme Tokens
+   LENZA ERP — Light Theme Tokens (2025 Corporate Refresh)
+   Compliant with WCAG 2.1 AA standards
    ========================================================================== */
 
 :root {
   color-scheme: light;
   
-  /* Background Colors */
-  --bg-base: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --bg-elevated: #ffffff;
-  --bg-container: #ffffff;
-  --bg-overlay: rgba(0, 0, 0, 0.5);
+  /* ===== BACKGROUND COLORS ===== */
+  --bg-base: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --bg-body: #FFFFFF;
+  --bg-container: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-tertiary: #E2E8F0;
+  --bg-overlay: rgba(26, 26, 26, 0.5);
   
-  /* Text Colors */
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
-  --text-disabled: #cbd5e1;
-  --text-inverse: #ffffff;
+  /* ===== TEXT COLORS ===== */
+  --text-color: #1A1A1A;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B7280;
+  --text-tertiary: #94A3B8;
+  --text-disabled: #CBD5E1;
+  --text-inverse: #FFFFFF;
   
-  /* Border Colors */
-  --border-base: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-subtle: #f1f5f9;
+  /* ===== BORDER COLORS ===== */
+  --border-color: #E5E7EB;
+  --border-base: #E5E7EB;
+  --border-strong: #D1D5DB;
+  --border-subtle: #F3F4F6;
   
-  /* State Colors */
-  --state-success: #10b981;
-  --state-success-bg: #d1fae5;
-  --state-warning: #f59e0b;
-  --state-warning-bg: #fef3c7;
-  --state-error: #ef4444;
-  --state-error-bg: #fee2e2;
-  --state-info: #3b82f6;
-  --state-info-bg: #dbeafe;
+  /* ===== STATE COLORS ===== */
+  --success: #16A34A;
+  --success-bg: #DCFCE7;
+  --warning: #F59E0B;
+  --warning-bg: #FEF3C7;
+  --error: #DC2626;
+  --error-bg: #FEE2E2;
+  --info: #3B82F6;
+  --info-bg: #DBEAFE;
   
-  /* Interactive Colors */
+  /* Legacy state colors */
+  --state-success: #16A34A;
+  --state-success-bg: #DCFCE7;
+  --state-warning: #F59E0B;
+  --state-warning-bg: #FEF3C7;
+  --state-error: #DC2626;
+  --state-error-bg: #FEE2E2;
+  --state-info: #3B82F6;
+  --state-info-bg: #DBEAFE;
+  
+  /* ===== INTERACTIVE COLORS ===== */
   --interactive-default: var(--lenza-gold);
-  --interactive-hover: var(--lenza-gold-dark);
-  --interactive-active: #b3872a;
-  --interactive-disabled: #e2e8f0;
+  --interactive-hover: var(--lenza-gold-hover);
+  --interactive-active: #A68847;
+  --interactive-disabled: #E5E7EB;
   
-  /* Shadow Colors */
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --shadow-strong-color: rgba(0, 0, 0, 0.15);
+  /* ===== SHADOW COLORS ===== */
+  --shadow-color: rgba(26, 26, 26, 0.08);
+  --shadow-strong-color: rgba(26, 26, 26, 0.12);
+  
+  /* ===== SHADOWS ===== */
+  --shadow-soft: 0 1px 2px 0 rgba(26, 26, 26, 0.04);
+  --shadow-base: 0 1px 3px 0 rgba(26, 26, 26, 0.08), 0 1px 2px -1px rgba(26, 26, 26, 0.08);
+  --shadow-medium: 0 4px 6px -1px rgba(26, 26, 26, 0.08), 0 2px 4px -2px rgba(26, 26, 26, 0.08);
+  --shadow-strong: 0 10px 15px -3px rgba(26, 26, 26, 0.08), 0 4px 6px -4px rgba(26, 26, 26, 0.08);
+  --shadow-lifted: 0 20px 25px -5px rgba(26, 26, 26, 0.08), 0 8px 10px -6px rgba(26, 26, 26, 0.08);
 }
