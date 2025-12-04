@@ -9,11 +9,11 @@ from .models import FinanceAccount, FinanceTransaction
 @receiver(post_save, sender=Order)
 def create_transaction_on_order_approved(sender, instance, created, **kwargs):
     """
-    Order approved bo'lganda avtomatik income transaction yaratish.
-    Faqat yangi approved orderlar uchun (draft -> approved o'tganda).
+    Order confirmed bo'lganda avtomatik income transaction yaratish.
+    Faqat confirmed orderlar uchun (created -> confirmed o'tganda).
     """
-    # Skip if order is not approved or is imported
-    if instance.status != Order.Status.APPROVED or instance.is_imported:
+    # Skip if order is not confirmed or is imported
+    if instance.status != Order.Status.CONFIRMED or instance.is_imported:
         return
     
     # Check if transaction already exists for this order
