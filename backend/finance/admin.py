@@ -120,10 +120,11 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
     def amount_display(self, obj):
         """Display amount with currency"""
         color = 'green' if obj.type == FinanceTransaction.TransactionType.INCOME else 'red'
+        amount_formatted = f'{float(obj.amount):,.2f}'
         return format_html(
-            '<span style="color: {};">{:,.2f} {}</span>',
+            '<span style="color: {};">{} {}</span>',
             color,
-            obj.amount,
+            amount_formatted,
             obj.currency
         )
     amount_display.short_description = _('Summa')
