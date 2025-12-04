@@ -23,21 +23,21 @@ def create_transaction_on_order_approved(sender, instance, created, **kwargs):
     ).exists():
         return
     
-    # Get or create default cash account for order currency
+    # Get USD cash account (orders are always in USD)
     try:
         account = FinanceAccount.objects.get(
             type=FinanceAccount.AccountType.CASH,
-            currency=instance.currency,
+            currency='USD',
             is_active=True
         )
     except FinanceAccount.DoesNotExist:
-        # No active cash account found, skip transaction creation
+        # No active USD cash account found, skip transaction creation
         return
     except FinanceAccount.MultipleObjectsReturned:
         # Multiple accounts found, use the first one
         account = FinanceAccount.objects.filter(
             type=FinanceAccount.AccountType.CASH,
-            currency=instance.currency,
+            currency='USD',
             is_active=True
         ).first()
     
@@ -47,8 +47,8 @@ def create_transaction_on_order_approved(sender, instance, created, **kwargs):
         dealer=instance.dealer,
         account=account,
         date=instance.created_at.date(),
-        currency=instance.currency,
-        amount=instance.total,
+        currency='USD',
+        amount=instance.total_usd,
         category='Order Income',
         comment=f"Order #{instance.id} - {instance.dealer.name}",
         status=FinanceTransaction.TransactionStatus.DRAFT,
