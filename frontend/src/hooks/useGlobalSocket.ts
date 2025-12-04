@@ -5,9 +5,10 @@ import { useAuthStore } from '../auth/useAuthStore';
 
 const EVENT_MAP: Record<string, string> = {
   'orders.status': 'orders:refresh',
-  'payments.created': 'payments:refresh',
-  'payments.updated': 'payments:refresh',
-  payment_added: 'payments:refresh',
+  'finance.transaction.created': 'finance:refresh',
+  'finance.transaction.updated': 'finance:refresh',
+  'finance.transaction.approved': 'finance:refresh',
+  transaction_added: 'finance:refresh',
   'currency.rate': 'currency:refresh',
   notification: 'notifications:refresh',
 };
@@ -16,12 +17,14 @@ const prettyMessage = (event: string, data: Record<string, unknown>): string => 
   switch (event) {
     case 'orders.status':
       return `Order ${data.order ?? ''} → ${data.status ?? ''}`;
-    case 'payments.created':
-      return `New payment: ${data.amount ?? ''} ${data.currency ?? ''}`;
-    case 'payments.updated':
-      return `Payment updated for ${data.dealer ?? ''}`;
-    case 'payment_added':
-      return `Payment added: ${data.amount ?? ''} ${data.currency ?? ''}`;
+    case 'finance.transaction.created':
+      return `New transaction: ${data.amount ?? ''} ${data.currency ?? ''}`;
+    case 'finance.transaction.updated':
+      return `Transaction updated for ${data.dealer ?? ''}`;
+    case 'finance.transaction.approved':
+      return `Transaction approved: ${data.amount ?? ''} ${data.currency ?? ''}`;
+    case 'transaction_added':
+      return `Transaction added: ${data.amount ?? ''} ${data.currency ?? ''}`;
     case 'currency.rate':
       return `New currency rate for ${data.rate_date ?? ''}`;
     case 'notification':

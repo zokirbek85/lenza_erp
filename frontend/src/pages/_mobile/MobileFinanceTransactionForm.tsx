@@ -6,61 +6,84 @@ import type { UploadFile } from 'antd/es/upload/interface';
 import MobileDrawerForm from '../../components/responsive/MobileDrawerForm';
 import MobileFormField from '../../components/responsive/MobileFormField';
 
-type PaymentFormData = {
-  dealer: string;
-  pay_date: string;
+/**
+ * Finance Transaction Form Data
+ * Maps to backend /api/finance/transactions/ endpoint
+ * 
+ * Required fields:
+ * - type: 'income' | 'expense'
+ * - dealer: Required for income, not allowed for expense
+ * - account: Finance account ID (replaces cashbox_id)
+ * - date: Transaction date
+ * - currency: 'USD' | 'UZS'
+ * - amount: Transaction amount
+ * 
+ * Optional fields:
+ * - category: Required for expense, not allowed for income
+ * - comment: Notes/description
+ * - status: 'draft' | 'approved' (default: draft)
+ */
+type FinanceTransactionFormData = {
+  type: 'income' | 'expense';
+  dealer: string; // Dealer ID (only for income)
+  account: string; // FinanceAccount ID (replaces cashbox_id)
+  date: string; // Transaction date (replaces pay_date)
   amount: string;
   currency: string;
-  rate_id: string;
-  method: string;
-  card_id: string;
-  cashbox_id: string;
-  note: string;
+  category: string; // Only for expense type
+  comment: string; // Replaces note
   receipt_image: File | null;
 };
 
-type MobilePaymentFormProps = {
+type MobileFinanceTransactionFormProps = {
   open: boolean;
   onClose: () => void;
-  form: PaymentFormData;
+  form: FinanceTransactionFormData;
   dealers: Array<{ id: number; name: string }>;
-  rates: Array<{ id: number; rate_date: string; usd_to_uzs: number }>;
-  cards: Array<{ id: number; name: string; masked_number: string }>;
-  cashboxes: Array<{ id: number; name: string; currency: string }>;
-  onFormChange: (field: keyof PaymentFormData, value: string | File | null) => void;
+  accounts: Array<{ id: number; name: string; currency: string; type: string }>; // FinanceAccounts (replaces cashboxes)
+  expenseCategories?: Array<{ id: string; label: string }>; // For expense type
+  onFormChange: (field: keyof FinanceTransactionFormData, value: string | File | null) => void;
   onSubmit: () => void;
   submitting: boolean;
 };
 
 /**
- * @deprecated This component is deprecated. Use MobileFinanceTransactionForm instead.
- * 
- * MobilePaymentForm - Full-screen payment creation form for mobile devices
- * 
- * IMPORTANT: This component uses the old /api/payments/ endpoint which no longer exists.
- * The new finance system uses /api/finance/transactions/ endpoint.
- * 
- * See: MobileFinanceTransactionForm.tsx for the updated version
+ * MobileFinanceTransactionForm - Mobile form for creating finance transactions
  * 
  * Features:
+ * - Supports both income (dealer payments) and expense transactions
+ * - Uses /api/finance/transactions/ endpoint
  * - Large touch-friendly inputs (min 44px)
  * - Image upload with preview
  * - Fixed bottom action bar
  * - Validation feedback
  * - Dark mode support
+ * 
+ * Backend integration:
+ * POST /api/finance/transactions/
+ * {
+ *   "type": "income", // or "expense"
+ *   "dealer": 1, // Only for income
+ *   "account": 1, // FinanceAccount ID
+ *   "date": "2025-12-04",
+ *   "currency": "USD",
+ *   "amount": 1000.00,
+ *   "category": null, // Only for expense
+ *   "comment": "Optional notes",
+ *   "status": "draft" // or "approved"
+ * }
  */
-const MobilePaymentForm = ({
+const MobileFinanceTransactionForm = ({
   open,
   onClose,
   form,
   dealers,
-  rates,
-  cards,
-  cashboxes,
+  accounts,
+  expenseCategories = [],
   onFormChange,
   onSubmit,
   submitting,
-}: MobilePaymentFormProps) => {
+}: MobileFinanceTransactionFormProps) => {
   const { t } = useTranslation();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
@@ -86,6 +109,8 @@ const MobilePaymentForm = ({
   };
 
   const today = new Date().toISOString().split('T')[0];
+  const isIncome = form.type === 'income';
+  const isExpense = form.type === 'expense';
 
   const footer = (
     <div className="flex gap-2">
@@ -112,61 +137,97 @@ const MobilePaymentForm = ({
     <MobileDrawerForm
       open={open}
       onClose={onClose}
-      title={t('payments.form.createPayment')}
+      title={t('finance.form.createTransaction')}
       footer={footer}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Dealer Selection */}
-        <MobileFormField label={t('payments.form.dealer')} required>
+        {/* Transaction Type */}
+        <MobileFormField label={t('finance.form.type')} required>
           <select
             required
-            value={form.dealer}
-            onChange={(e) => onFormChange('dealer', e.target.value)}
+            value={form.type}
+            onChange={(e) => onFormChange('type', e.target.value)}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             style={{ minHeight: '44px', fontSize: '16px' }}
           >
-            <option value="">{t('payments.form.selectDealer')}</option>
-            {dealers.map((dealer) => (
-              <option key={dealer.id} value={dealer.id}>
-                {dealer.name}
+            <option value="income">{t('finance.types.income')}</option>
+            <option value="expense">{t('finance.types.expense')}</option>
+          </select>
+        </MobileFormField>
+
+        {/* Dealer Selection (only for income) */}
+        {isIncome && (
+          <MobileFormField label={t('finance.form.dealer')} required>
+            <select
+              required
+              value={form.dealer}
+              onChange={(e) => onFormChange('dealer', e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              style={{ minHeight: '44px', fontSize: '16px' }}
+            >
+              <option value="">{t('finance.form.selectDealer')}</option>
+              {dealers.map((dealer) => (
+                <option key={dealer.id} value={dealer.id}>
+                  {dealer.name}
+                </option>
+              ))}
+            </select>
+          </MobileFormField>
+        )}
+
+        {/* Expense Category (only for expense) */}
+        {isExpense && expenseCategories.length > 0 && (
+          <MobileFormField label={t('finance.form.category')} required>
+            <select
+              required
+              value={form.category}
+              onChange={(e) => onFormChange('category', e.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              style={{ minHeight: '44px', fontSize: '16px' }}
+            >
+              <option value="">{t('finance.form.selectCategory')}</option>
+              {expenseCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </MobileFormField>
+        )}
+
+        {/* Finance Account Selection */}
+        <MobileFormField label={t('finance.form.account')} required>
+          <select
+            required
+            value={form.account}
+            onChange={(e) => onFormChange('account', e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            style={{ minHeight: '44px', fontSize: '16px' }}
+          >
+            <option value="">{t('finance.form.selectAccount')}</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name} ({account.currency}) - {account.type}
               </option>
             ))}
           </select>
         </MobileFormField>
 
-        {/* Cashbox Selection */}
-        <MobileFormField label={t('payments.form.cashbox')} required>
-          <select
-            required
-            value={form.cashbox_id}
-            onChange={(e) => onFormChange('cashbox_id', e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            style={{ minHeight: '44px', fontSize: '16px' }}
-          >
-            <option value="">{t('payments.form.selectCashbox')}</option>
-            {cashboxes.map((cashbox) => (
-              <option key={cashbox.id} value={cashbox.id}>
-                {cashbox.name} ({cashbox.currency})
-              </option>
-            ))}
-          </select>
-        </MobileFormField>
-
-        {/* Payment Date */}
-        <MobileFormField label={t('payments.form.payDate')} required>
+        {/* Transaction Date */}
+        <MobileFormField label={t('finance.form.date')} required>
           <input
             type="date"
             required
-            value={form.pay_date}
+            value={form.date}
             max={today}
-            onChange={(e) => onFormChange('pay_date', e.target.value)}
+            onChange={(e) => onFormChange('date', e.target.value)}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             style={{ minHeight: '44px', fontSize: '16px' }}
           />
         </MobileFormField>
 
         {/* Amount */}
-        <MobileFormField label={t('payments.form.amount')} required>
+        <MobileFormField label={t('finance.form.amount')} required>
           <input
             type="number"
             required
@@ -181,7 +242,7 @@ const MobilePaymentForm = ({
         </MobileFormField>
 
         {/* Currency */}
-        <MobileFormField label={t('payments.form.currency')} required>
+        <MobileFormField label={t('finance.form.currency')} required>
           <select
             required
             value={form.currency}
@@ -194,65 +255,12 @@ const MobilePaymentForm = ({
           </select>
         </MobileFormField>
 
-        {/* Exchange Rate */}
-        <MobileFormField label={t('payments.form.exchangeRate')} required>
-          <select
-            required
-            value={form.rate_id}
-            onChange={(e) => onFormChange('rate_id', e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            style={{ minHeight: '44px', fontSize: '16px' }}
-          >
-            <option value="">{t('payments.form.selectRate')}</option>
-            {rates.map((rate) => (
-              <option key={rate.id} value={rate.id}>
-                {rate.rate_date} - {rate.usd_to_uzs} UZS
-              </option>
-            ))}
-          </select>
-        </MobileFormField>
-
-        {/* Payment Method */}
-        <MobileFormField label={t('payments.form.method')} required>
-          <select
-            required
-            value={form.method}
-            onChange={(e) => onFormChange('method', e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            style={{ minHeight: '44px', fontSize: '16px' }}
-          >
-            <option value="cash">{t('payments.methods.cash')}</option>
-            <option value="card">{t('payments.methods.card')}</option>
-            <option value="transfer">{t('payments.methods.transfer')}</option>
-          </select>
-        </MobileFormField>
-
-        {/* Card Selection (if method is card) */}
-        {form.method === 'card' && (
-          <MobileFormField label={t('payments.form.card')} required>
-            <select
-              required
-              value={form.card_id}
-              onChange={(e) => onFormChange('card_id', e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              style={{ minHeight: '44px', fontSize: '16px' }}
-            >
-              <option value="">{t('payments.form.selectCard')}</option>
-              {cards.map((card) => (
-                <option key={card.id} value={card.id}>
-                  {card.name} - {card.masked_number}
-                </option>
-              ))}
-            </select>
-          </MobileFormField>
-        )}
-
-        {/* Note */}
-        <MobileFormField label={t('payments.form.note')}>
+        {/* Comment/Note */}
+        <MobileFormField label={t('finance.form.comment')}>
           <textarea
-            value={form.note}
-            onChange={(e) => onFormChange('note', e.target.value)}
-            placeholder={t('payments.form.notePlaceholder')}
+            value={form.comment}
+            onChange={(e) => onFormChange('comment', e.target.value)}
+            placeholder={t('finance.form.commentPlaceholder')}
             rows={3}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             style={{ fontSize: '16px' }}
@@ -261,8 +269,8 @@ const MobilePaymentForm = ({
 
         {/* Receipt Image Upload */}
         <MobileFormField
-          label={t('payments.form.receiptImage')}
-          hint={t('payments.form.receiptHint')}
+          label={t('finance.form.receiptImage')}
+          hint={t('finance.form.receiptHint')}
         >
           <div className="space-y-3">
             <Upload
@@ -278,7 +286,7 @@ const MobilePaymentForm = ({
                 <div className="flex flex-col items-center justify-center p-4">
                   <UploadOutlined className="text-2xl text-slate-400" />
                   <span className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                    {t('payments.form.uploadReceipt')}
+                    {t('finance.form.uploadReceipt')}
                   </span>
                 </div>
               )}
@@ -320,4 +328,4 @@ const MobilePaymentForm = ({
   );
 };
 
-export default MobilePaymentForm;
+export default MobileFinanceTransactionForm;

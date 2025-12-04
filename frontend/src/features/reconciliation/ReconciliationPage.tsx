@@ -28,6 +28,7 @@ interface ReconciliationResponse {
   opening_balance: number;
   closing_balance: number;
   orders: Array<{ date: string; order_no: string; amount_usd: number }>;
+  // payments: Backend returns finance transactions mapped as payments
   payments: Array<{ date: string; method: string; amount_usd: number }>;
   returns: Array<{ date: string; order_no: string; amount_usd: number }>;
   movements: MovementEntry[];

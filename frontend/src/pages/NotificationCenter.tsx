@@ -59,7 +59,7 @@ export default function NotificationCenterPage() {
   const resolveLink = (title: string): string => {
     const lower = title.toLowerCase();
     if (lower.includes('buyurtma') || lower.includes('order')) return '/orders';
-    if (lower.includes("to'lov") || lower.includes('payment')) return '/payments';
+    if (lower.includes("to'lov") || lower.includes('payment') || lower.includes('tranzaksiya') || lower.includes('transaction')) return '/finance';
     if (lower.includes('qaytar') || lower.includes('return')) return '/returns';
     if (lower.includes('kurs') || lower.includes('currency')) return '/settings';
     return '/';

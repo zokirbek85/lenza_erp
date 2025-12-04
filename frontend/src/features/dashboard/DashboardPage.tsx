@@ -143,7 +143,7 @@ const DashboardPage = () => {
 
   // Event listeners for real-time updates
   useEffect(() => {
-    const events = ['orders:refresh', 'payments:refresh', 'currency:refresh'];
+    const events = ['orders:refresh', 'finance:refresh', 'currency:refresh'];
     const handler = () => void fetchAll();
     events.forEach((event) => window.addEventListener(event, handler));
     return () => events.forEach((event) => window.removeEventListener(event, handler));

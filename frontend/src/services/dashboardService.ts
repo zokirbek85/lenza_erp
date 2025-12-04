@@ -158,18 +158,18 @@ export const fetchCurrencyHistory = async (filters: DashboardFilters) => {
   const params = new URLSearchParams();
 
   if (filters.dateRange && filters.dateRange.length === 2) {
-    params.append('from', filters.dateRange[0]);
-    params.append('to', filters.dateRange[1]);
+    params.append('start_date', filters.dateRange[0]);
+    params.append('end_date', filters.dateRange[1]);
   }
 
   const queryString = params.toString();
-  const url = queryString ? `/payments/rates/history/?${queryString}` : '/payments/rates/history/';
+  const url = queryString ? `/finance/exchange-rates/?${queryString}` : '/finance/exchange-rates/';
 
   const response = await http.get(url);
   // Normalize: ensure we always return an array
   return {
     ...response,
-    data: Array.isArray(response.data) ? response.data : [],
+    data: Array.isArray(response.data?.results) ? response.data.results : Array.isArray(response.data) ? response.data : [],
   };
 };
 
