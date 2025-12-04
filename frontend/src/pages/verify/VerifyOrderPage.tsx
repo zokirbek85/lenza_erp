@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, Result, Typography, Divider, Spin } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import http from '../../app/http';
 import '../../styles/verify.css';
 
 const { Title, Text } = Typography;
@@ -30,8 +30,7 @@ const VerifyOrderPage = () => {
   useEffect(() => {
     const fetchVerification = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const response = await axios.get(`${apiUrl}/api/verify/order/${id}/`);
+        const response = await http.get(`/verify/order/${id}/`);
         setData(response.data);
       } catch (error) {
         setData({ valid: false, error: 'Hujjat topilmadi' });
@@ -51,7 +50,7 @@ const VerifyOrderPage = () => {
         <Card className="verify-card">
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <Spin size="large" />
-            <div style={{ marginTop: 16, color: '#9ca3af' }}>
+            <div style={{ marginTop: 16, color: 'var(--text-secondary)' }}>
               Hujjat tekshirilmoqda...
             </div>
           </div>
@@ -67,15 +66,15 @@ const VerifyOrderPage = () => {
           <Result
             status="error"
             icon={<CloseCircleOutlined className="verify-error-icon" />}
-            title={<span style={{ color: '#f3f4f6' }}>Hujjat topilmadi</span>}
+            title={<span style={{ color: 'var(--text-primary)' }}>Hujjat topilmadi</span>}
             subTitle={
-              <span style={{ color: '#9ca3af' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
                 {data?.error || 'Bu buyurtma hujjati tizimda mavjud emas yoki o\'chirilgan'}
               </span>
             }
           />
           <div className="verify-footer">
-            <Text style={{ color: '#6b7280' }}>Lenza ERP tizimi orqali tekshirildi</Text>
+            <Text style={{ color: 'var(--text-secondary)' }}>Lenza ERP tizimi orqali tekshirildi</Text>
           </div>
         </Card>
       </div>
@@ -92,7 +91,7 @@ const VerifyOrderPage = () => {
           </Title>
         </div>
 
-        <Divider style={{ borderColor: '#2a2e3a', margin: '16px 0' }} />
+        <Divider style={{ borderColor: 'var(--border-base)', margin: '16px 0' }} />
 
         <div className="verify-content">
           <div style={{ marginBottom: 16 }}>
@@ -102,8 +101,8 @@ const VerifyOrderPage = () => {
 
           <div style={{ marginBottom: 16 }}>
             <div className="verify-label">Buyurtma raqami:</div>
-            <div className="verify-value" style={{ color: '#e6c068' }}>
-              #{data.order_number}
+            <div className="verify-value" style={{ color: 'var(--lenza-gold)' }}>
+              {data.order_number || `ORD-${data.id}`}
             </div>
           </div>
 
@@ -135,8 +134,8 @@ const VerifyOrderPage = () => {
                 style={{
                   padding: '4px 12px',
                   borderRadius: '6px',
-                  backgroundColor: '#10b98120',
-                  color: '#10b981',
+                  backgroundColor: 'var(--success-bg)',
+                  color: 'var(--success)',
                   fontSize: '14px',
                 }}
               >
@@ -146,14 +145,14 @@ const VerifyOrderPage = () => {
           </div>
         </div>
 
-        <Divider style={{ borderColor: '#2a2e3a', margin: '24px 0 16px' }} />
+        <Divider style={{ borderColor: 'var(--border-base)', margin: '24px 0 16px' }} />
 
         <div className="verify-footer">
-          <Text style={{ color: '#10b981', fontWeight: 500 }}>
+          <Text style={{ color: 'var(--success)', fontWeight: 500 }}>
             ✓ Документ прошёл проверку подлинности
           </Text>
           <br />
-          <Text style={{ color: '#6b7280', fontSize: '12px', marginTop: 8 }}>
+          <Text style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: 8 }}>
             Lenza ERP tizimi orqali tekshirildi
           </Text>
         </div>

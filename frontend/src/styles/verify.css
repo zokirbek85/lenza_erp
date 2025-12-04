@@ -1,6 +1,11 @@
+/* ==========================================================================
+   LENZA ERP — Verify Pages Styles (Theme-Aware)
+   Updated to use CSS custom properties for consistent theming
+   ========================================================================== */
+
 .verify-wrapper {
   min-height: 100vh;
-  background: #0d0f15;
+  background: var(--bg-body);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,37 +15,38 @@
 .verify-card {
   width: 480px;
   max-width: 95%;
-  background: #1a1d27 !important;
-  border: 1px solid #2a2e3a;
+  background: var(--bg-container) !important;
+  border: 1px solid var(--border-base);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-strong);
 }
 
 .verify-card .ant-card-body {
-  background: #1a1d27 !important;
+  background: var(--bg-container) !important;
 }
 
 .verify-title {
-  color: #e6c068;
+  color: var(--lenza-gold);
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 16px;
   text-align: center;
+  font-family: var(--font-family-heading);
 }
 
 .verify-content {
-  color: #e0e0e0;
+  color: var(--text-primary);
 }
 
 .verify-label {
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-size: 13px;
   margin-bottom: 4px;
 }
 
 .verify-value {
-  color: #f3f4f6;
+  color: var(--text-primary);
   font-size: 16px;
   font-weight: 500;
   margin-bottom: 16px;
@@ -48,57 +54,57 @@
 
 .verify-footer {
   text-align: center;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 12px;
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid #2a2e3a;
+  border-top: 1px solid var(--border-base);
 }
 
 .verify-success-icon {
-  color: #10b981;
+  color: var(--success);
   font-size: 48px;
   margin-bottom: 16px;
 }
 
 .verify-error-icon {
-  color: #ef4444;
+  color: var(--error);
   font-size: 48px;
   margin-bottom: 16px;
 }
 
-/* Override Ant Design Result styles for dark theme */
+/* Override Ant Design Result styles for theming */
 .verify-card .ant-result-title {
-  color: #f3f4f6 !important;
+  color: var(--text-primary) !important;
 }
 
 .verify-card .ant-result-subtitle {
-  color: #9ca3af !important;
+  color: var(--text-secondary) !important;
 }
 
 .verify-card .ant-result-success .ant-result-icon > .anticon {
-  color: #10b981 !important;
+  color: var(--success) !important;
 }
 
 .verify-card .ant-result-error .ant-result-icon > .anticon {
-  color: #ef4444 !important;
+  color: var(--error) !important;
 }
 
 /* Divider styling */
 .verify-card .ant-divider {
-  border-color: #2a2e3a !important;
+  border-color: var(--border-base) !important;
 }
 
 /* Typography */
 .verify-card .ant-typography {
-  color: #e0e0e0 !important;
+  color: var(--text-primary) !important;
 }
 
 /* Loading spinner */
 .verify-card .ant-spin {
-  color: #e6c068 !important;
+  color: var(--lenza-gold) !important;
 }
 
 .verify-card .ant-spin-dot-item {
-  background-color: #e6c068 !important;
+  background-color: var(--lenza-gold) !important;
 }

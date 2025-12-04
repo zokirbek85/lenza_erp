@@ -249,7 +249,7 @@ const Catalog = () => {
                               strong
                               style={{
                                 fontSize: 13,
-                                color: inStock ? '#52c41a' : '#ff4d4f',
+                                color: inStock ? 'var(--success)' : 'var(--error)',
                               }}
                             >
                               {inStock ? `${stock} ${t('catalog.inStock')}` : t('catalog.notAvailable')}

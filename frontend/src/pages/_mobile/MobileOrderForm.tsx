@@ -171,7 +171,7 @@ const MobileOrderForm = ({
               style={{ minHeight: '44px', fontSize: '16px' }}
             >
               <option value="">{t('orders.form.dealerPlaceholder')}</option>
-              {dealers.map((dealer) => (
+              {(dealers || []).map((dealer) => (
                 <option key={dealer.id} value={dealer.id}>
                   {dealer.name}
                 </option>

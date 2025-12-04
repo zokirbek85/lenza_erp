@@ -13,7 +13,6 @@ import {
 } from 'chart.js';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../context/ThemeContext';
 
 ChartJS.register(
   CategoryScale,
@@ -36,10 +35,10 @@ interface RevenueTrendProps {
 export const RevenueTrendChart = ({ data }: RevenueTrendProps) => {
   const { t } = useTranslation();
   const { token } = theme.useToken();
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
 
   const safeData = Array.isArray(data) ? data : [];
+
+  const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim();
 
   const chartData = {
     labels: safeData.map((d) => d.month),
@@ -47,7 +46,7 @@ export const RevenueTrendChart = ({ data }: RevenueTrendProps) => {
       {
         label: t('dashboard.charts.revenue'),
         data: safeData.map((d) => d.total),
-        backgroundColor: '#d4af37',
+        backgroundColor: goldColor,
         borderRadius: 8,
       },
     ],
@@ -61,7 +60,7 @@ export const RevenueTrendChart = ({ data }: RevenueTrendProps) => {
         display: false,
       },
       tooltip: {
-        backgroundColor: isDark ? '#1b1f27' : '#ffffff',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-body').trim(),
         titleColor: token.colorText,
         bodyColor: token.colorTextSecondary,
         borderColor: token.colorBorder,
@@ -104,12 +103,17 @@ interface RevenueShareProps {
   loading?: boolean;
 }
 
-const COLORS = ['#d4af37', '#0d1117', '#64748b', '#f97316', '#22c55e', '#3b82f6'];
+const COLORS = [
+  '#C9A86C', // Lenza Gold
+  '#16A34A', // Success Green
+  '#3B82F6', // Primary Blue  
+  '#F59E0B', // Warning Orange
+  '#DC2626', // Error Red
+  '#14B8A6', // Teal
+];
 
 export const RevenueSharePie = ({ data }: RevenueShareProps) => {
   const { token } = theme.useToken();
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
 
   const safeData = Array.isArray(data) ? data : [];
 
@@ -140,7 +144,7 @@ export const RevenueSharePie = ({ data }: RevenueShareProps) => {
         },
       },
       tooltip: {
-        backgroundColor: isDark ? '#1b1f27' : '#ffffff',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-body').trim(),
         titleColor: token.colorText,
         bodyColor: token.colorTextSecondary,
         borderColor: token.colorBorder,
@@ -173,10 +177,10 @@ interface InventoryTrendProps {
 export const InventoryTrendLine = ({ data }: InventoryTrendProps) => {
   const { t } = useTranslation();
   const { token } = theme.useToken();
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
 
   const safeData = Array.isArray(data) ? data : [];
+
+  const goldColor = getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim();
 
   const chartData = {
     labels: safeData.map((d) => d.date),
@@ -184,12 +188,12 @@ export const InventoryTrendLine = ({ data }: InventoryTrendProps) => {
       {
         label: t('dashboard.charts.stockValue'),
         data: safeData.map((d) => d.stock_value),
-        borderColor: '#d4af37',
-        backgroundColor: isDark ? 'rgba(212, 175, 55, 0.1)' : 'rgba(212, 175, 55, 0.05)',
+        borderColor: goldColor,
+        backgroundColor: 'rgba(201, 168, 108, 0.08)',
         borderWidth: 2,
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#d4af37',
+        pointBackgroundColor: goldColor,
         pointBorderColor: token.colorBgContainer,
         pointBorderWidth: 2,
         pointRadius: 4,
@@ -206,7 +210,7 @@ export const InventoryTrendLine = ({ data }: InventoryTrendProps) => {
         display: false,
       },
       tooltip: {
-        backgroundColor: isDark ? '#1b1f27' : '#ffffff',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-body').trim(),
         titleColor: token.colorText,
         bodyColor: token.colorTextSecondary,
         borderColor: token.colorBorder,
@@ -253,8 +257,6 @@ interface ExpensesGaugeProps {
 export const ExpensesGauge = ({ expenses, budget }: ExpensesGaugeProps) => {
   const { t } = useTranslation();
   const { token } = theme.useToken();
-  const { mode } = useTheme();
-  const isDark = mode === 'dark';
   
   const percentage = budget > 0 ? Math.round((expenses / budget) * 100) : 0;
   const isOverBudget = percentage > 100;
@@ -269,7 +271,7 @@ export const ExpensesGauge = ({ expenses, budget }: ExpensesGaugeProps) => {
             cy="50"
             r="45"
             fill="none"
-            stroke={isDark ? '#2a2a2a' : '#f1f5f9'}
+            stroke={getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim()}
             strokeWidth="10"
           />
           {/* Progress circle */}
@@ -278,7 +280,13 @@ export const ExpensesGauge = ({ expenses, budget }: ExpensesGaugeProps) => {
             cy="50"
             r="45"
             fill="none"
-            stroke={isOverBudget ? '#ff4d4f' : percentage > 80 ? '#faad14' : '#52c41a'}
+            stroke={
+              isOverBudget 
+                ? getComputedStyle(document.documentElement).getPropertyValue('--error').trim()
+                : percentage > 80 
+                  ? getComputedStyle(document.documentElement).getPropertyValue('--warning').trim()
+                  : getComputedStyle(document.documentElement).getPropertyValue('--success').trim()
+            }
             strokeWidth="10"
             strokeDasharray={`${(percentage / 100) * 283} 283`}
             strokeLinecap="round"

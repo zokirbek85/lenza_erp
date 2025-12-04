@@ -1,7 +1,7 @@
 ﻿import type { FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Divider } from 'antd';
+import { Divider, message } from 'antd';
 
 import http from '../app/http';
 import { useAuthStore } from '../auth/useAuthStore';
@@ -20,10 +20,16 @@ const CurrencyRatesPage = () => {
   const isSalesManager = role === 'sales';
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [form, setForm] = useState({ rate_date: '', usd_to_uzs: '' });
+  const [loading, setLoading] = useState(false);
 
   const loadRates = useCallback(async () => {
-    const response = await http.get('/currency-rates/');
-    setRates(toArray<CurrencyRate>(response.data));
+    try {
+      const response = await http.get('/finance/exchange-rates/');
+      setRates(toArray<CurrencyRate>(response.data));
+    } catch (error: any) {
+      console.error('Failed to load rates:', error);
+      message.error(error.response?.data?.detail || 'Failed to load exchange rates');
+    }
   }, []);
 
   useEffect(() => {
@@ -38,12 +44,37 @@ const CurrencyRatesPage = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    await http.post('/currency-rates/', {
-      rate_date: form.rate_date,
-      usd_to_uzs: Number(form.usd_to_uzs || 0),
-    });
-    setForm({ rate_date: '', usd_to_uzs: '' });
-    loadRates();
+    setLoading(true);
+    
+    try {
+      const payload = {
+        rate_date: form.rate_date,
+        usd_to_uzs: Number(form.usd_to_uzs || 0),
+      };
+      
+      console.log('Submitting exchange rate:', payload);
+      
+      const response = await http.post('/finance/exchange-rates/', payload);
+      
+      console.log('Exchange rate created:', response.data);
+      message.success(t('currencyRates.messages.success', 'Exchange rate saved successfully'));
+      
+      setForm({ rate_date: '', usd_to_uzs: '' });
+      loadRates();
+    } catch (error: any) {
+      console.error('Failed to save exchange rate:', error);
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.detail 
+        || error.response?.data?.rate_date?.[0]
+        || error.response?.data?.usd_to_uzs?.[0]
+        || JSON.stringify(error.response?.data)
+        || 'Failed to save exchange rate';
+      
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,10 +112,11 @@ const CurrencyRatesPage = () => {
           </div>
           <div className="flex items-end">
             <button
-              className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900 dark:hover:bg-emerald-400"
+              className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white transition hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-500 dark:text-slate-900 dark:hover:bg-emerald-400"
               type="submit"
+              disabled={loading}
             >
-              {t('actions.save')}
+              {loading ? t('common.saving', 'Saving...') : t('actions.save')}
             </button>
           </div>
         </form>

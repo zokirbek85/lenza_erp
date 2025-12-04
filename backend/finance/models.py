@@ -7,6 +7,29 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+class ExchangeRate(models.Model):
+    """
+    USD to UZS exchange rates
+    Used for currency conversion in transactions
+    """
+    rate_date = models.DateField(unique=True, db_index=True)
+    usd_to_uzs = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text=_('Exchange rate: 1 USD = X UZS')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ('-rate_date',)
+        verbose_name = _('Exchange Rate')
+        verbose_name_plural = _('Exchange Rates')
+    
+    def __str__(self):
+        return f"{self.rate_date}: 1 USD = {self.usd_to_uzs} UZS"
+
+
 class FinanceAccount(models.Model):
     """
     Moliya hisoblari - kassa, karta, bank
@@ -190,26 +213,28 @@ class FinanceTransaction(models.Model):
             self.exchange_rate = None
             self.exchange_rate_date = None
         elif self.currency == 'UZS':
-            # Kurs modulidan kurs olish
-            from catalog.models import CurrencyRate
-            try:
-                rate_obj = CurrencyRate.objects.filter(
-                    date__lte=self.date
-                ).order_by('-date').first()
-                
-                if not rate_obj:
-                    raise ValidationError({
-                        'date': _('No exchange rate found for this date or earlier')
-                    })
-                
-                self.exchange_rate = rate_obj.usd_to_uzs
-                self.exchange_rate_date = rate_obj.date
-                # UZS -> USD konvertatsiya
+            if self.exchange_rate and self.exchange_rate > 0:
+                # Use manually provided exchange rate
                 self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
-            except CurrencyRate.DoesNotExist:
-                raise ValidationError({
-                    'date': _('Exchange rate not found')
-                })
+                if not self.exchange_rate_date:
+                    self.exchange_rate_date = self.date
+            else:
+                # No exchange rate provided - try to get latest rate from ExchangeRate model
+                latest_rate = ExchangeRate.objects.filter(
+                    rate_date__lte=self.date
+                ).order_by('-rate_date').first()
+                
+                if latest_rate and latest_rate.usd_to_uzs > 0:
+                    # Use latest available exchange rate
+                    self.exchange_rate = latest_rate.usd_to_uzs
+                    self.exchange_rate_date = latest_rate.rate_date
+                    self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
+                else:
+                    # No exchange rate available - use default rate of 12700 as fallback
+                    default_rate = Decimal('12700')
+                    self.exchange_rate = default_rate
+                    self.exchange_rate_date = self.date
+                    self.amount_usd = (self.amount / default_rate).quantize(Decimal('0.01'))
         
         super().save(*args, **kwargs)
     

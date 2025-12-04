@@ -94,6 +94,22 @@ class OrderSerializer(serializers.ModelSerializer):
     can_edit = serializers.SerializerMethodField()
     can_change_status = serializers.SerializerMethodField()
     allowed_next_statuses = serializers.SerializerMethodField()
+    currency_rate = serializers.SerializerMethodField()
+
+    def get_currency_rate(self, obj):
+        """Get USD to UZS exchange rate on order creation date."""
+        from finance.models import ExchangeRate
+        # Get rate on or before order creation date
+        rate = ExchangeRate.objects.filter(
+            rate_date__lte=obj.value_date
+        ).order_by('-rate_date').first()
+        
+        if rate:
+            return float(rate.usd_to_uzs)
+        
+        # Fallback: get latest available rate
+        latest_rate = ExchangeRate.objects.order_by('-rate_date').first()
+        return float(latest_rate.usd_to_uzs) if latest_rate else 12700.0
 
     def get_can_edit(self, obj):
         """Return whether current user can edit order items."""
@@ -136,6 +152,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'can_edit',
             'can_change_status',
             'allowed_next_statuses',
+            'currency_rate',
             'items',
             'status_logs',
             'returns',

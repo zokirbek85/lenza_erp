@@ -9,7 +9,7 @@ export type DealerMobileItem = {
   code: string;
   contact: string;
   region?: { name?: string } | null;
-  manager_user?: string | null;
+  manager_user?: string | { full_name?: string; first_name?: string; last_name?: string; username?: string } | null;
   balance: string | number;
   opening_balance_usd: number;
 };
@@ -35,11 +35,19 @@ export const DealersMobileCard = ({ dealer, handlers, permissions }: DealersMobi
   const balance = typeof dealer.balance === 'string' ? parseFloat(dealer.balance) : dealer.balance;
   const balanceVariant = balance >= 0 ? 'info' : 'warning';
 
+  const getManagerLabel = (manager?: DealerMobileItem['manager_user']): string => {
+    if (!manager) return '—';
+    if (typeof manager === 'object' && manager !== null) {
+      return manager.full_name || `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username || '—';
+    }
+    return manager;
+  };
+
   const fields = [
     { label: 'Code', value: dealer.code },
     { label: 'Contact', value: dealer.contact || '—' },
     { label: 'Region', value: dealer.region?.name ?? '—' },
-    { label: 'Manager', value: dealer.manager_user ?? '—' },
+    { label: 'Manager', value: getManagerLabel(dealer.manager_user) },
     { label: 'Balance', value: formatCurrency(balance) },
     { label: 'Opening Balance', value: formatCurrency(dealer.opening_balance_usd) },
   ];

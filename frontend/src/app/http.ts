@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { useAuthStore } from '../auth/useAuthStore';
-import { getApiBase } from './apiBase';
 
 const http = axios.create({
-  baseURL: `${getApiBase()}/api`,
+  baseURL: '/api',
   withCredentials: true,
   timeout: 15000,
   headers: {

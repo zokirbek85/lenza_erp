@@ -51,7 +51,7 @@ const ManualSection = ({ section }: ManualSectionProps) => {
         <Card
           title={
             <Space>
-              <CheckCircleTwoTone twoToneColor="#22c55e" />
+              <CheckCircleTwoTone twoToneColor={getComputedStyle(document.documentElement).getPropertyValue('--success').trim()} />
               <span>Checklist</span>
             </Space>
           }
@@ -75,7 +75,7 @@ const ManualSection = ({ section }: ManualSectionProps) => {
           message={
             <Space direction="vertical">
               <Space>
-                <WarningTwoTone twoToneColor="#f97316" />
+                <WarningTwoTone twoToneColor={getComputedStyle(document.documentElement).getPropertyValue('--warning').trim()} />
                 <Text strong>Ogohlantirish</Text>
               </Space>
               <ul className="list-disc pl-5 text-slate-700 dark:text-slate-200">

@@ -8,7 +8,6 @@ from django.db.models import DecimalField, F, Sum
 from django.utils import timezone
 
 from core.utils.order_numbers import generate_order_number
-# Payment module removed - rate_on function no longer available
 
 # Warehouse uchun qat'iy ketma-ketlik
 WAREHOUSE_FLOW = {
@@ -162,9 +161,22 @@ class Order(models.Model):
             or Decimal('0')
         )
         self.total_usd = total
-        # Payment module removed - currency rate conversion disabled
-        # Set UZS total to a default conversion rate or zero
-        self.total_uzs = (total * Decimal('12600')).quantize(Decimal('0.01'))  # Using hardcoded rate
+        
+        # Get latest exchange rate for UZS conversion
+        try:
+            from finance.models import ExchangeRate
+            latest_rate = ExchangeRate.objects.filter(
+                rate_date__lte=self.value_date
+            ).order_by('-rate_date').first()
+            
+            if latest_rate and latest_rate.usd_to_uzs > 0:
+                rate = latest_rate.usd_to_uzs
+            else:
+                rate = Decimal('12700')  # Default fallback rate
+        except Exception:
+            rate = Decimal('12700')  # Fallback if finance app not available
+        
+        self.total_uzs = (total * rate).quantize(Decimal('0.01'))
         super().save(update_fields=('total_usd', 'total_uzs', 'updated_at'))
 
 

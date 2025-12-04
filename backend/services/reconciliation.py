@@ -11,7 +11,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 
 from dealers.models import Dealer
 from orders.models import Order, OrderReturn
-# Payment model removed
+from finance.models import FinanceTransaction
 from returns.models import Return as ProductReturn
 from returns.models import ReturnItem as ProductReturnItem
 
@@ -61,8 +61,17 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
         ).aggregate(total=Sum('total_usd'))['total']
         or Decimal('0')
     )
-    # Payment module removed - payments_total is zero
-    payments_total = Decimal('0')
+    # Get approved income transactions (payments from dealer)
+    payments_total = (
+        FinanceTransaction.objects.filter(
+            dealer=dealer,
+            type=FinanceTransaction.TransactionType.INCOME,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            date__gte=start,
+            date__lte=end,
+        ).aggregate(total=Sum('amount_usd'))['total']
+        or Decimal('0')
+    )
     returns_total = (
         OrderReturn.objects.filter(
             order__dealer=dealer,
@@ -124,8 +133,19 @@ def get_reconciliation_data(
     )
     logger.info(f"Found {len(orders)} orders")
 
-    # Payment module removed - payments list is empty
-    payments = []
+    # Get approved income transactions (payments from dealer)
+    payments = list(
+        FinanceTransaction.objects.filter(
+            dealer=dealer,
+            type=FinanceTransaction.TransactionType.INCOME,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            date__gte=start,
+            date__lte=end,
+        )
+        .select_related('account')
+        .order_by('date')
+        .values('date', 'amount_usd', 'currency', 'account__name', 'account__type', 'comment')
+    )
     logger.info(f"Found {len(payments)} payments")
 
     returns = list(
@@ -182,30 +202,27 @@ def get_reconciliation_data(
 
     def _format_payments():
         for row in payments:
-            masked = ''
-            number = row.get('card__number')
-            if number:
-                masked = f"{number[:4]} **** {number[-4:]}"
-            card_label = None
-            if row.get('card__name'):
-                card_label = row['card__name']
-            label = row['method']
-            # Build method label with card short if present
-            if row['method'] == 'card' and (masked or card_label):
-                parts = []
-                if card_label:
-                    parts.append(card_label)
-                if masked:
-                    parts.append(masked)
-                holder = row.get('card__holder_name')
-                if holder:
-                    parts.append(f"({holder})")
-                label = ' '.join(parts) or 'card'
+            # Build payment label from account info
+            account_name = row.get('account__name') or 'Payment'
+            account_type = row.get('account__type') or ''
+            currency = row.get('currency') or ''
+            comment = row.get('comment') or ''
+            
+            # Build label: "Account Name (Type) - Comment" or just "Account Name"
+            label_parts = [account_name]
+            if account_type:
+                account_type_display = account_type.capitalize()
+                label_parts.append(f"({account_type_display})")
+            if comment:
+                label_parts.append(f"- {comment}")
+            
+            label = ' '.join(label_parts)
+            
             yield {
-                'date': row['pay_date'],
+                'date': row['date'],
                 'method': label,
-                'card_masked': masked,
                 'amount_usd': float(row['amount_usd'] or 0),
+                'currency': currency,
             }
 
     def _format_returns():
@@ -230,8 +247,13 @@ def get_reconciliation_data(
                 'source': 'inventory',
             }
 
+    # Convert generators to lists to allow multiple iterations
+    formatted_orders = list(_format_orders())
+    formatted_payments = list(_format_payments())
+    combined_returns = [*list(_format_returns()), *list(_format_new_returns())]
+
     movements = []
-    for order in _format_orders():
+    for order in formatted_orders:
         movements.append(
             {
                 'date': order['date'],
@@ -241,7 +263,7 @@ def get_reconciliation_data(
                 'type': 'order',
             }
         )
-    for payment in _format_payments():
+    for payment in formatted_payments:
         movements.append(
             {
                 'date': payment['date'],
@@ -251,7 +273,6 @@ def get_reconciliation_data(
                 'type': 'payment',
             }
         )
-    combined_returns = [*list(_format_returns()), *list(_format_new_returns())]
 
     for ret in combined_returns:
         movements.append(
@@ -276,8 +297,8 @@ def get_reconciliation_data(
         'to_date': end,
         'opening_balance': float(opening_balance),
         'closing_balance': float(closing_balance),
-        'orders': list(_format_orders()),
-        'payments': list(_format_payments()),
+        'orders': formatted_orders,
+        'payments': formatted_payments,
         'returns': combined_returns,
         'returns_items': product_return_items,
         'movements': movements,

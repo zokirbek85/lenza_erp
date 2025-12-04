@@ -277,13 +277,19 @@ export default function FinanceTransactions() {
                     {transaction.dealer_name || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {formatNumber(transaction.amount || 0)} {transaction.currency || 'USD'}
-                    </div>
-                    {transaction.currency && transaction.currency !== 'USD' && transaction.amount_usd && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        ${formatNumber(transaction.amount_usd)}
+                    {transaction.currency === 'USD' ? (
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        ${formatNumber(transaction.amount || 0)}
                       </div>
+                    ) : (
+                      <>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {formatNumber(transaction.amount || 0)} {transaction.currency}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          ≈ ${formatNumber(transaction.amount_usd || 0)}
+                        </div>
+                      </>
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">

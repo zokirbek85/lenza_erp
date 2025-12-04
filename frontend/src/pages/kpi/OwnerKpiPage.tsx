@@ -121,7 +121,7 @@ const OwnerKpiPage = () => {
           }))}
           xKey="name"
           yKey="total"
-          color="#0ea5e9"
+          
           legendLabel={t('kpi.salesUsd')}
         />
       </KpiSection>

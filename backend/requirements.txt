@@ -7,6 +7,7 @@ daphne==4.2.1
 django-filter==24.3
 psycopg[binary]==3.2.3
 WeasyPrint==62.3
+pydyf==0.10.0
 whitenoise==6.7.0
 Pillow==12.0.0
 rembg==2.0.59

@@ -10,15 +10,33 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.permissions import IsAdmin, IsOwner
+from core.permissions import IsAdmin, IsOwner, IsAccountant
 from django_filters import rest_framework as filters
 
-from .models import FinanceAccount, FinanceTransaction
+from .models import ExchangeRate, FinanceAccount, FinanceTransaction
 from .serializers import (
     CashSummaryResponseSerializer,
+    ExchangeRateSerializer,
     FinanceAccountSerializer,
     FinanceTransactionSerializer,
 )
+
+
+class ExchangeRateViewSet(viewsets.ModelViewSet):
+    """ExchangeRate CRUD - Valyuta kurslari"""
+    queryset = ExchangeRate.objects.all()
+    serializer_class = ExchangeRateSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['rate_date']
+    ordering = ['-rate_date']
+    
+    def get_permissions(self):
+        """Read - hamma, Write - faqat admin/accountant"""
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsAdmin | IsAccountant]
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
 
 class FinanceAccountFilter(filters.FilterSet):

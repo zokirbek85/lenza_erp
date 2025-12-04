@@ -152,10 +152,10 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
   const isCollapsed = isMobile ? false : collapsed;
 
   const renderNav = (
-    <div className="flex h-full flex-col bg-white dark:bg-[#0E1117] shadow-lg">
-      <div className="border-b border-slate-200 px-4 py-5 dark:border-slate-800">
-        <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('app.title')}</p>
-        <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{t('app.suite')}</p>
+    <div className="flex h-full flex-col shadow-lg" style={{ backgroundColor: 'var(--bg-body)' }}>
+      <div className="px-4 py-5" style={{ borderBottom: '1px solid var(--border-base)' }}>
+        <p className="text-lg font-semibold font-heading" style={{ color: 'var(--text-primary)' }}>{t('app.title')}</p>
+        <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{t('app.suite')}</p>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-4">
         {menuItems.map((item) => (
@@ -166,10 +166,25 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
               clsx(
                 'flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200',
                 isActive
-                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/10'
+                  ? 'border-l-4'
+                  : ''
               )
             }
+            style={({ isActive }) => ({
+              backgroundColor: isActive ? 'var(--lenza-gold-light)' : 'transparent',
+              color: isActive ? 'var(--lenza-gold)' : 'var(--text-secondary)',
+              borderLeftColor: isActive ? 'var(--lenza-gold)' : 'transparent',
+            })}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('border-l-4')) {
+                e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('border-l-4')) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
           >
             <span className="text-lg">{item.icon}</span>
             <span className={clsx(isCollapsed && 'hidden')}>{t(item.label)}</span>
@@ -198,8 +213,12 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
 
   return (
     <aside
-      className="fixed left-0 top-0 z-20 flex h-screen flex-col border-r border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-[#0E1117]"
-      style={{ width: collapsed ? 80 : 260 }}
+      className="fixed left-0 top-0 z-20 flex h-screen flex-col shadow-lg"
+      style={{ 
+        width: collapsed ? 80 : 260,
+        backgroundColor: 'var(--bg-body)',
+        borderRight: '1px solid var(--border-base)',
+      }}
     >
       {renderNav}
     </aside>

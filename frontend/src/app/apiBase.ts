@@ -1,20 +1,37 @@
 /**
  * Get API base URL from environment variables or fallback.
- * In production, VITE_API_URL must be set to https://erp.lenza.uz
- * In development, it falls back to http://localhost:8000
+ * Automatically uses HTTPS in production and HTTP in development.
  * 
- * Updated: 2025-11-24 - Fixed mixed content HTTPS issue with proper fallback
+ * Production: https://erp.lenza.uz or current window.location.origin
+ * Development: http://localhost:8000
+ * 
+ * Updated: 2025-12-04 - Fixed mixed content with automatic protocol detection
  */
 export const getApiBase = (): string => {
-  // First try environment variable (set at build time in Docker)
+  // First try environment variable (set at build time)
   const envUrl = import.meta.env.VITE_API_URL as string | undefined;
   
-  // If no env var, use production URL as default (safer than localhost)
-  // This ensures HTTPS in production even if env var is missing
-  const raw = envUrl || 'https://erp.lenza.uz';
+  if (envUrl && envUrl.trim()) {
+    // Normalize: remove trailing slashes and /api suffix
+    const normalized = envUrl.replace(/\/+$/, '').replace(/\/api$/, '');
+    return normalized;
+  }
   
-  // Normalize: remove trailing slashes and /api suffix
-  const normalized = raw.replace(/\/+$/, '');
-  const withoutApi = normalized.replace(/\/api$/, '');
-  return withoutApi || normalized;
+  // In browser: use current origin (respects HTTPS automatically)
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    
+    // Production domain detection
+    if (hostname.includes('erp.lenza.uz') || hostname.includes('lenza')) {
+      return `${protocol}//erp.lenza.uz`;
+    }
+    
+    // For any other production domain, use current origin
+    if (protocol === 'https:') {
+      return window.location.origin;
+    }
+  }
+  
+  // Development fallback
+  return import.meta.env.DEV ? 'http://localhost:8000' : 'https://erp.lenza.uz';
 };

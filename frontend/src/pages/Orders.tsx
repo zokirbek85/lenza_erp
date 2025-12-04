@@ -246,13 +246,28 @@ const OrdersPage = () => {
   const loadRefs = useCallback(async () => {
     try {
       console.log('Loading dealers, users, brands, categories...');
-      const [dealersData, usersData, brandsData, categoriesData] = await Promise.all([
-        fetchAllPages<DealerOption>('/dealers/'),
+      
+      // Load dealers using unpaginated list-all endpoint with is_active filter
+      const dealersResponse = await http.get('/dealers/list-all/', { 
+        params: { is_active: true } 
+      });
+      const dealersData = Array.isArray(dealersResponse.data) 
+        ? dealersResponse.data 
+        : [];
+      
+      const [usersData, brandsData, categoriesData] = await Promise.all([
         fetchAllPages<UserOption>('/users/'),
         fetchAllPages<BrandOption>('/brands/'),
         fetchAllPages<CategoryOption>('/categories/'),
       ]);
-      console.log('Loaded data:', { dealers: dealersData.length, users: usersData.length, brands: brandsData.length, categories: categoriesData.length });
+      
+      console.log('Loaded data:', { 
+        dealers: dealersData.length, 
+        users: usersData.length, 
+        brands: brandsData.length, 
+        categories: categoriesData.length 
+      });
+      
       setDealers(dealersData);
       setUsers(usersData);
       setBrands(brandsData);
@@ -912,7 +927,7 @@ const OrdersPage = () => {
                         className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                       >
                         <option value="">{t('orders.form.dealerPlaceholder')}</option>
-                        {dealers.map((dealer) => (
+                        {(dealers || []).map((dealer) => (
                           <option key={dealer.id} value={dealer.id}>
                             {dealer.name}
                           </option>

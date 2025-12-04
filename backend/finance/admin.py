@@ -2,23 +2,34 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import FinanceAccount, FinanceTransaction
+from .models import ExchangeRate, FinanceAccount, FinanceTransaction
+
+
+@admin.register(ExchangeRate)
+class ExchangeRateAdmin(admin.ModelAdmin):
+    """ExchangeRate admin interface"""
+    list_display = ['rate_date', 'usd_to_uzs', 'created_at']
+    list_filter = ['rate_date', 'created_at']
+    search_fields = ['rate_date']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-rate_date']
 
 
 @admin.register(FinanceAccount)
 class FinanceAccountAdmin(admin.ModelAdmin):
     """FinanceAccount admin interface"""
-    list_display = ['name', 'type', 'currency', 'balance_display', 'is_active_display', 'created_at']
+    list_display = ['name', 'type', 'currency', 'is_active_display', 'created_at']
     list_filter = ['type', 'currency', 'is_active', 'created_at']
     search_fields = ['name']
-    readonly_fields = ['balance', 'created_at', 'updated_at']
+    readonly_fields = ['balance_display_detail', 'created_at', 'updated_at']
     
     fieldsets = (
         (_('Asosiy malumotlar'), {
             'fields': ('name', 'type', 'currency')
         }),
         (_('Balans'), {
-            'fields': ('balance',)
+            'fields': ('balance_display_detail',),
+            'description': _('Balance is calculated from approved transactions')
         }),
         (_('Status'), {
             'fields': ('is_active',)
@@ -29,16 +40,17 @@ class FinanceAccountAdmin(admin.ModelAdmin):
         }),
     )
     
-    def balance_display(self, obj):
-        """Display balance with color"""
-        color = 'green' if obj.balance >= 0 else 'red'
+    def balance_display_detail(self, obj):
+        """Display balance with color (only in detail view to avoid N+1 queries)"""
+        balance = obj.balance
+        color = 'green' if balance >= 0 else 'red'
         return format_html(
-            '<span style="color: {};">{:,.2f} {}</span>',
+            '<span style="color: {}; font-size: 16px; font-weight: bold;">{:,.2f} {}</span>',
             color,
-            obj.balance,
+            balance,
             obj.currency
         )
-    balance_display.short_description = _('Balans')
+    balance_display_detail.short_description = _('Balans')
     
     def is_active_display(self, obj):
         """Display active status with icon"""
@@ -64,6 +76,8 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
     ]
     list_filter = ['type', 'status', 'currency', 'date', 'created_at', 'account']
     search_fields = ['comment', 'category', 'dealer__name', 'account__name']
+    autocomplete_fields = ['dealer']
+    raw_id_fields = ['account']
     readonly_fields = [
         'amount_usd',
         'exchange_rate',
@@ -75,6 +89,7 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
         'approved_at'
     ]
     date_hierarchy = 'date'
+    list_select_related = ['account', 'dealer', 'created_by', 'approved_by']
     
     fieldsets = (
         (_('Asosiy malumotlar'), {
@@ -105,10 +120,11 @@ class FinanceTransactionAdmin(admin.ModelAdmin):
     def amount_display(self, obj):
         """Display amount with currency"""
         color = 'green' if obj.type == FinanceTransaction.TransactionType.INCOME else 'red'
+        amount_formatted = f'{float(obj.amount):,.2f}'
         return format_html(
-            '<span style="color: {};">{:,.2f} {}</span>',
+            '<span style="color: {};">{} {}</span>',
             color,
-            obj.amount,
+            amount_formatted,
             obj.currency
         )
     amount_display.short_description = _('Summa')

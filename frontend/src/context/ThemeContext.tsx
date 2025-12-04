@@ -63,9 +63,9 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         theme={{
           algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
           token: {
-            // Primary colors - Lenza Gold
-            colorPrimary: '#d4af37',
-            colorInfo: '#d4af37',
+            // Primary colors - Lenza Gold (from CSS variables)
+            colorPrimary: getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim() || '#C9A86C',
+            colorInfo: getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim() || '#C9A86C',
             
             // Background colors - Lenza brand palette
             colorBgBase: isDark ? '#0d1117' : '#ffffff',

@@ -1,0 +1,89 @@
+/* ==========================================================================
+   LENZA ERP — Brand Design Tokens (2025 Corporate Refresh)
+   Compliant with WCAG 2.1 AA standards
+   ========================================================================== */
+
+:root {
+  /* ===== BRAND COLORS ===== */
+  --lenza-gold: #C9A86C;
+  --lenza-gold-hover: #B89357;
+  --lenza-gold-light: #E4CDA0;
+  --lenza-graphite: #1A1A1A;
+  --lenza-graphite-light: #2A2A2A;
+  
+  /* ===== TYPOGRAPHY SYSTEM ===== */
+  /* Body font: Inter for readability and modern feel */
+  --font-family-base: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  
+  /* Headings and Sidebar: Rubik for personality */
+  --font-family-heading: 'Rubik', 'Inter', sans-serif;
+  
+  /* Font Sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-h2: 22px;
+  --font-size-h1: 28px;
+  
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* ===== SPACING SCALE ===== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+  
+  /* ===== SHADOW SCALE ===== */
+  --shadow-soft: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-lifted: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  
+  /* ===== FOCUS RING ===== */
+  --focus-ring-color: rgba(201, 168, 108, 0.3);
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ===== Z-INDEX SCALE ===== */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 2700;
+  --z-modal: 2800;
+  --z-drawer: 3000;
+  --z-mobile-sticky: 3200;
+  --z-tooltip: 3500;
+}

@@ -6,10 +6,10 @@ import { useAuthStore } from '../auth/useAuthStore';
 import { usePwa } from '../hooks/usePwa';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSidebarStore } from '../store/useSidebarStore';
-import { useTheme } from '../context/ThemeContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './NotificationBell';
 import HeaderAudioPlayer from './HeaderAudioPlayer';
+import ThemeToggle from './ThemeToggle';
 import Sidebar from './layout/Sidebar';
 import Container from './responsive/Container';
 
@@ -19,7 +19,6 @@ const Layout = () => {
   const { logout, userName } = useAuthStore();
   const { offline, canInstall, promptInstall } = usePwa();
   const { collapsed, setCollapsed, pinned, toggleCollapsed } = useSidebarStore();
-  const { mode, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { isMobile, isTablet } = useIsMobile();
 
@@ -66,9 +65,6 @@ const Layout = () => {
     ? t('layout.operationsWithUser', { name: userName, operations: t('app.operations') })
     : t('layout.operationsAnonymous', { operations: t('app.operations') });
 
-  const themeLabel = mode === 'dark' ? t('layout.lightMode') : t('layout.darkMode');
-  const themeIcon = mode === 'dark' ? '☀' : '🌙';
-
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <Sidebar
@@ -105,13 +101,7 @@ const Layout = () => {
               <HeaderAudioPlayer />
               <NotificationBell />
               <LanguageSwitcher />
-              <button
-                onClick={toggleTheme}
-                aria-label={themeLabel}
-                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                {`${themeIcon} ${themeLabel}`}
-              </button>
+              <ThemeToggle size="middle" />
               {canInstall && (
                 <button
                   onClick={promptInstall}

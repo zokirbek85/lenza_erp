@@ -116,7 +116,7 @@ const ManagerKpiPage = () => {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <KpiSection title={t('kpi.manager.salesByRegion')} description={t('kpi.manager.myRegions')}>
-          <ChartBar data={barData} xKey="name" yKey="total" color="#22c55e" legendLabel={t('kpi.salesUsd')} />
+          <ChartBar data={barData} xKey="name" yKey="total" legendLabel={t('kpi.salesUsd')} />
         </KpiSection>
         <KpiSection title={t('kpi.manager.topDealersShare')}>
           <ChartPie data={pieData} nameKey="name" valueKey="value" />

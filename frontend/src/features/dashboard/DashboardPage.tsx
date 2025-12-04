@@ -199,7 +199,7 @@ const DashboardPage = () => {
             icon={<DollarOutlined className="dashboard-icon" />}
             tooltip={t('dashboard.kpi.debtTooltip')}
             loading={loading}
-            valueStyle={{ color: '#dc2626' }}
+            valueStyle={{ color: 'var(--error)' }}
           />
         </div>
 

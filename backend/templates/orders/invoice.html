@@ -241,6 +241,13 @@
           <strong>{% if order.is_reserve %}{% trans 'Reserve' %}{% else %}{% trans 'Regular' %}{% endif %}</strong>
           <div>{% trans 'Total Items' %}: {{ items|length }}</div>
         </div>
+        <div class="info-card">
+          <span class="meta-label">{% trans 'Exchange rate' %}</span>
+          <strong>1 USD = {{ currency_rate|floatformat:2 }} UZS</strong>
+          <div>
+            {% trans 'Rate date' %}: {{ currency_rate_date|date:"d.m.Y" }}
+          </div>
+        </div>
       </section>
 
       <table>
@@ -282,6 +289,15 @@
           <tr>
             <td>{% trans 'Total (USD)' %}</td>
             <td>${{ order.total_usd }}</td>
+          </tr>
+          <tr style="border-top: 1px solid var(--border);">
+            <td>{% trans 'Total (UZS)' %}</td>
+            <td>{{ order.total_uzs|floatformat:2 }} UZS</td>
+          </tr>
+          <tr style="font-size: 11px; color: var(--text-muted);">
+            <td colspan="2" style="text-align: right; padding-top: 4px;">
+              {% trans 'Calculated at rate' %}: 1 USD = {{ currency_rate|floatformat:2 }} UZS
+            </td>
           </tr>
         </table>
       </div>

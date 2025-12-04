@@ -1,0 +1,68 @@
+/* ==========================================================================
+   LENZA ERP — Light Theme Tokens (2025 Corporate Refresh)
+   Compliant with WCAG 2.1 AA standards
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  
+  /* ===== BACKGROUND COLORS ===== */
+  --bg-base: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --bg-body: #FFFFFF;
+  --bg-container: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-tertiary: #E2E8F0;
+  --bg-overlay: rgba(26, 26, 26, 0.5);
+  
+  /* ===== TEXT COLORS ===== */
+  --text-color: #1A1A1A;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B7280;
+  --text-tertiary: #94A3B8;
+  --text-disabled: #CBD5E1;
+  --text-inverse: #FFFFFF;
+  
+  /* ===== BORDER COLORS ===== */
+  --border-color: #E5E7EB;
+  --border-base: #E5E7EB;
+  --border-strong: #D1D5DB;
+  --border-subtle: #F3F4F6;
+  
+  /* ===== STATE COLORS ===== */
+  --success: #16A34A;
+  --success-bg: #DCFCE7;
+  --warning: #F59E0B;
+  --warning-bg: #FEF3C7;
+  --error: #DC2626;
+  --error-bg: #FEE2E2;
+  --info: #3B82F6;
+  --info-bg: #DBEAFE;
+  
+  /* Legacy state colors */
+  --state-success: #16A34A;
+  --state-success-bg: #DCFCE7;
+  --state-warning: #F59E0B;
+  --state-warning-bg: #FEF3C7;
+  --state-error: #DC2626;
+  --state-error-bg: #FEE2E2;
+  --state-info: #3B82F6;
+  --state-info-bg: #DBEAFE;
+  
+  /* ===== INTERACTIVE COLORS ===== */
+  --interactive-default: var(--lenza-gold);
+  --interactive-hover: var(--lenza-gold-hover);
+  --interactive-active: #A68847;
+  --interactive-disabled: #E5E7EB;
+  
+  /* ===== SHADOW COLORS ===== */
+  --shadow-color: rgba(26, 26, 26, 0.08);
+  --shadow-strong-color: rgba(26, 26, 26, 0.12);
+  
+  /* ===== SHADOWS ===== */
+  --shadow-soft: 0 1px 2px 0 rgba(26, 26, 26, 0.04);
+  --shadow-base: 0 1px 3px 0 rgba(26, 26, 26, 0.08), 0 1px 2px -1px rgba(26, 26, 26, 0.08);
+  --shadow-medium: 0 4px 6px -1px rgba(26, 26, 26, 0.08), 0 2px 4px -2px rgba(26, 26, 26, 0.08);
+  --shadow-strong: 0 10px 15px -3px rgba(26, 26, 26, 0.08), 0 4px 6px -4px rgba(26, 26, 26, 0.08);
+  --shadow-lifted: 0 20px 25px -5px rgba(26, 26, 26, 0.08), 0 8px 10px -6px rgba(26, 26, 26, 0.08);
+}

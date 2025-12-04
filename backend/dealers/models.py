@@ -105,18 +105,13 @@ class Dealer(models.Model):
     def current_debt_uzs(self) -> Decimal:
         """
         Dealer's current debt in UZS.
-        Converts USD debt to UZS using latest exchange rate.
+        Uses hardcoded exchange rate (1 USD = 12600 UZS) for conversion.
+        Note: Dynamic exchange rate model not available in system.
         """
-        from catalog.models import CurrencyRate
-        
         debt_usd = self.current_debt_usd
         if debt_usd == 0:
             return Decimal('0')
         
-        # Get latest exchange rate
-        try:
-            rate = CurrencyRate.objects.latest('date')
-            return (debt_usd * rate.usd_to_uzs).quantize(Decimal('0.01'))
-        except CurrencyRate.DoesNotExist:
-            # If no rate available, return 0
-            return Decimal('0')
+        # Hardcoded exchange rate matching orders.models.Order
+        USD_TO_UZS_RATE = Decimal('12600')
+        return (debt_usd * USD_TO_UZS_RATE).quantize(Decimal('0.01'))
