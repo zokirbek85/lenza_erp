@@ -39,9 +39,12 @@ interface Dealer {
   opening_balance_usd: number;
   region: Region | null;
   region_id?: number | null;
-  manager_user?: string | Manager | null;
+  manager_user?: string | null; // String from API (StringRelatedField)
   manager_user_id?: number | null;
-  balance: string | number;
+  balance?: number; // balance_usd from API
+  debt?: number; // debt_usd from API
+  current_debt_usd?: number;
+  current_debt_uzs?: number;
 }
 
 interface OrderSummary {
@@ -249,26 +252,54 @@ const DealersPage = () => {
     setDetailOpen(true);
     setDetailLoading(true);
     try {
-      const [ordersRes, paymentsRes] = await Promise.all([
-        http.get('/orders/', { params: { dealer: dealer.id, ordering: '-created_at' } }),
-        http.get('/payments/', { params: { dealer: dealer.id, ordering: '-pay_date' } }),
-      ]);
+      // Only fetch orders - payments endpoint doesn't exist
+      // Use reconciliation endpoint for full financial data if needed
+      const ordersRes = await http.get('/orders/', { 
+        params: { 
+          dealer: dealer.id, 
+          ordering: '-created_at',
+          page_size: 10 // Limit to recent 10 orders
+        } 
+      });
       setOrders(toArray<OrderSummary>(ordersRes.data));
-      setPayments(toArray<PaymentSummary>(paymentsRes.data));
+      
+      // Try to fetch finance transactions (new endpoint)
+      try {
+        const financeRes = await http.get('/finance/transactions/', {
+          params: {
+            dealer: dealer.id,
+            type: 'income',
+            ordering: '-date',
+            page_size: 10
+          }
+        });
+        // Map finance transactions to payment format for compatibility
+        const transactions = toArray(financeRes.data);
+        const mappedPayments: PaymentSummary[] = transactions.map((t: any) => ({
+          id: t.id,
+          pay_date: t.date,
+          amount: t.amount,
+          currency: t.currency,
+          method: t.category || 'finance',
+        }));
+        setPayments(mappedPayments);
+      } catch (financeError) {
+        console.warn('Finance transactions not available:', financeError);
+        setPayments([]);
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Failed to load dealer details:', error);
       toast.error(t('dealers.messages.loadHistoryError'));
+      setOrders([]);
+      setPayments([]);
     } finally {
       setDetailLoading(false);
     }
   };
 
   const managerLabel = (manager?: Dealer['manager_user']) => {
-    if (!manager) return '—';
-    if (typeof manager === 'object' && manager !== null) {
-      return manager.full_name || `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || manager.username || '—';
-    }
-    return manager;
+    // manager_user is a string from API (StringRelatedField)
+    return manager || '—';
   };
 
   const handleExport = async () => {
@@ -482,8 +513,8 @@ const DealersPage = () => {
             )}
             {!loading &&
               dealers.map((dealer) => {
-                const rawBalance = typeof dealer.balance === 'string' ? parseFloat(dealer.balance) : dealer.balance ?? 0;
-                const balanceValue = Number.isFinite(rawBalance) ? rawBalance : 0;
+                // Balance is already a number from API
+                const balanceValue = dealer.balance ?? 0;
                 const balanceClass =
                   balanceValue < 0
                     ? 'text-rose-600 dark:text-rose-300'
