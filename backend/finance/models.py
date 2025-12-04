@@ -213,18 +213,28 @@ class FinanceTransaction(models.Model):
             self.exchange_rate = None
             self.exchange_rate_date = None
         elif self.currency == 'UZS':
-            # CurrencyRate model removed from system
-            # For UZS transactions, use manual exchange_rate or default conversion
             if self.exchange_rate and self.exchange_rate > 0:
                 # Use manually provided exchange rate
                 self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
                 if not self.exchange_rate_date:
                     self.exchange_rate_date = self.date
             else:
-                # No exchange rate provided - set amount_usd same as amount (will need manual correction)
-                self.amount_usd = self.amount
-                self.exchange_rate = None
-                self.exchange_rate_date = None
+                # No exchange rate provided - try to get latest rate from ExchangeRate model
+                latest_rate = ExchangeRate.objects.filter(
+                    rate_date__lte=self.date
+                ).order_by('-rate_date').first()
+                
+                if latest_rate and latest_rate.usd_to_uzs > 0:
+                    # Use latest available exchange rate
+                    self.exchange_rate = latest_rate.usd_to_uzs
+                    self.exchange_rate_date = latest_rate.rate_date
+                    self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
+                else:
+                    # No exchange rate available - use default rate of 12700 as fallback
+                    default_rate = Decimal('12700')
+                    self.exchange_rate = default_rate
+                    self.exchange_rate_date = self.date
+                    self.amount_usd = (self.amount / default_rate).quantize(Decimal('0.01'))
         
         super().save(*args, **kwargs)
     
