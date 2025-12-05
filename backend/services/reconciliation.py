@@ -305,6 +305,11 @@ def get_reconciliation_data(
         'returns_items': product_return_items,
         'movements': movements,
         'generated_at': timezone.now(),
+        'totals': {
+            'orders': float(totals.orders),
+            'payments': float(totals.payments),
+            'returns': float(totals.returns),
+        },
     }
 
     if detailed:
