@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Brand, Category, Collection, DoorColor, DoorModel, Product, ProductMeta, Style
+from .models import Brand, Category, Product, ProductModel, ProductSKU, ProductVariant, Style
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -148,125 +148,162 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 # ============================================================================
-# DOOR CATALOG SERIALIZERS (for "Дверное полотно" category)
+# VARIANT-BASED CATALOG SERIALIZERS (for "Дверное полотно" category)
 # ============================================================================
 
-
-class CollectionSerializer(serializers.ModelSerializer):
-    """Serializer for door collections"""
-    class Meta:
-        model = Collection
-        fields = ('id', 'name', 'description', 'is_active')
+from .models import ProductModel, ProductVariant, ProductSKU
 
 
-class DoorModelSerializer(serializers.ModelSerializer):
-    """Serializer for door models"""
-    collection_name = serializers.CharField(source='collection.name', read_only=True)
+class ProductModelSerializer(serializers.ModelSerializer):
+    """Serializer for product models"""
+    brand_name = serializers.CharField(source='brand.name', read_only=True)
+    variants_count = serializers.SerializerMethodField()
     
     class Meta:
-        model = DoorModel
-        fields = ('id', 'name', 'collection', 'collection_name', 'description', 'is_active')
-
-
-class DoorColorSerializer(serializers.ModelSerializer):
-    """Serializer for door colors"""
-    class Meta:
-        model = DoorColor
-        fields = ('id', 'name', 'code', 'is_active')
-
-
-class ProductMetaSerializer(serializers.ModelSerializer):
-    """Serializer for product metadata"""
-    collection_name = serializers.CharField(source='collection.name', read_only=True)
-    model_name = serializers.CharField(source='model.name', read_only=True)
-    color_name = serializers.CharField(source='color.name', read_only=True)
-    door_type_display = serializers.CharField(source='get_door_type_display', read_only=True)
-    door_size_display = serializers.CharField(source='get_door_size_display', read_only=True)
-    
-    class Meta:
-        model = ProductMeta
+        model = ProductModel
         fields = (
-            'product',
+            'id',
+            'brand',
+            'brand_name',
             'collection',
-            'collection_name',
-            'model',
             'model_name',
-            'color',
-            'color_name',
-            'door_type',
-            'door_type_display',
-            'door_size',
-            'door_size_display',
+            'preview_image',
+            'description',
+            'is_active',
+            'variants_count',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
+    
+    def get_variants_count(self, obj):
+        return obj.variants.filter(is_active=True).count()
+
+
+class ProductSKUSerializer(serializers.ModelSerializer):
+    """Serializer for product SKUs"""
+    variant_name = serializers.CharField(source='variant.__str__', read_only=True)
+    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    price_usd = serializers.DecimalField(source='product.sell_price_usd', max_digits=12, decimal_places=2, read_only=True)
+    stock = serializers.DecimalField(source='product.stock_ok', max_digits=14, decimal_places=2, read_only=True)
+    size_display = serializers.CharField(source='get_size_display', read_only=True)
+    
+    class Meta:
+        model = ProductSKU
+        fields = (
+            'id',
+            'variant',
+            'variant_name',
+            'size',
+            'size_display',
             'custom_size',
-            'notes',
+            'product',
+            'product_sku',
+            'product_name',
+            'price_usd',
+            'stock',
             'created_at',
             'updated_at',
         )
         read_only_fields = ('created_at', 'updated_at')
 
 
-class ProductWithMetaSerializer(ProductSerializer):
-    """Extended product serializer that includes metadata for door products"""
-    meta = ProductMetaSerializer(read_only=True)
+class ProductVariantDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for product variants with SKUs"""
+    brand_name = serializers.CharField(source='product_model.brand.name', read_only=True)
+    collection = serializers.CharField(source='product_model.collection', read_only=True)
+    model_name = serializers.CharField(source='product_model.model_name', read_only=True)
+    door_type_display = serializers.CharField(source='get_door_type_display', read_only=True)
+    skus = ProductSKUSerializer(many=True, read_only=True)
     
-    class Meta(ProductSerializer.Meta):
-        fields = ProductSerializer.Meta.fields + ('meta',)
+    class Meta:
+        model = ProductVariant
+        fields = (
+            'id',
+            'product_model',
+            'brand_name',
+            'collection',
+            'model_name',
+            'color',
+            'door_type',
+            'door_type_display',
+            'image',
+            'is_active',
+            'skus',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
 
 
-class DoorCatalogItemSerializer(serializers.Serializer):
+class VariantCatalogSerializer(serializers.ModelSerializer):
     """
-    Serializer for individual door product in catalog structure.
-    Represents: Brand → Collection → Model → (Color + Type) → Size (SKU)
+    Serializer for catalog card view.
+    Returns variant as main unit with size/stock breakdown.
+    
+    Example output:
+    {
+      "id": 512,
+      "model": "Бета Софт",
+      "color": "тач-серый",
+      "door_type": "ПГ",
+      "brand": "ДУБРАВА СИБИРЬ",
+      "collection": "Эмалит",
+      "image": "https://.../variant.png",
+      "price_usd": 102.50,
+      "price_uzs": 1250000.00,
+      "sizes": [
+         {"size": "400мм", "stock": 0},
+         {"size": "600мм", "stock": 3},
+         {"size": "700мм", "stock": 12},
+         {"size": "800мм", "stock": 5},
+         {"size": "900мм", "stock": 0}
+      ]
+    }
     """
-    product_id = serializers.IntegerField()
-    sku = serializers.CharField()
-    name = serializers.CharField()
-    door_type = serializers.CharField()
-    door_type_display = serializers.CharField()
-    door_size = serializers.CharField()
-    door_size_display = serializers.CharField()
-    custom_size = serializers.CharField(allow_blank=True)
-    cost_usd = serializers.DecimalField(max_digits=12, decimal_places=2)
-    sell_price_usd = serializers.DecimalField(max_digits=12, decimal_places=2)
-    stock_ok = serializers.DecimalField(max_digits=14, decimal_places=2)
-    stock_defect = serializers.DecimalField(max_digits=14, decimal_places=2)
-    is_active = serializers.BooleanField()
-    image = serializers.CharField(allow_null=True)
-
-
-class DoorCatalogColorTypeSerializer(serializers.Serializer):
-    """
-    Groups products by Color + Type combination
-    """
-    color_id = serializers.IntegerField()
-    color_name = serializers.CharField()
-    color_code = serializers.CharField(allow_blank=True)
-    products = DoorCatalogItemSerializer(many=True)
-
-
-class DoorCatalogModelSerializer(serializers.Serializer):
-    """
-    Groups products by Model
-    """
-    model_id = serializers.IntegerField()
-    model_name = serializers.CharField()
-    color_groups = DoorCatalogColorTypeSerializer(many=True)
-
-
-class DoorCatalogCollectionSerializer(serializers.Serializer):
-    """
-    Groups products by Collection
-    """
-    collection_id = serializers.IntegerField()
-    collection_name = serializers.CharField()
-    models = DoorCatalogModelSerializer(many=True)
-
-
-class DoorCatalogSerializer(serializers.Serializer):
-    """
-    Top-level catalog structure grouped by Brand
-    Structure: Brand → Collection → Model → (Color + Type) → Size (SKU)
-    """
-    brand_id = serializers.IntegerField()
-    brand_name = serializers.CharField()
-    collections = DoorCatalogCollectionSerializer(many=True)
+    brand = serializers.CharField(source='brand_name', read_only=True)
+    collection = serializers.CharField(source='collection_name', read_only=True)
+    model = serializers.CharField(source='model_name', read_only=True)
+    door_type_display = serializers.CharField(source='get_door_type_display', read_only=True)
+    price_usd = serializers.SerializerMethodField()
+    price_uzs = serializers.SerializerMethodField()
+    sizes = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductVariant
+        fields = (
+            'id',
+            'brand',
+            'collection',
+            'model',
+            'color',
+            'door_type',
+            'door_type_display',
+            'image',
+            'price_usd',
+            'price_uzs',
+            'sizes',
+        )
+    
+    def get_price_usd(self, obj):
+        """Минимальная цена USD"""
+        return float(obj.get_min_price_usd())
+    
+    def get_price_uzs(self, obj):
+        """Минимальная цена UZS"""
+        return float(obj.get_min_price_uzs())
+    
+    def get_sizes(self, obj):
+        """Список размеров с остатками"""
+        return obj.get_size_stock()
+    
+    def get_image(self, obj):
+        """Полный URL изображения"""
+        request = self.context.get('request')
+        if obj.image:
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None

@@ -69,55 +69,40 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
 
-class Collection(models.Model):
-    """Коллекция дверей (напр. Классика, Модерн)"""
-    name = models.CharField(max_length=150, unique=True)
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ('name',)
-
-    def __str__(self) -> str:
-        return self.name
+# ============================================================================
+# VARIANT-BASED CATALOG MODELS (for "Дверное полотно" category)
+# ============================================================================
 
 
-class DoorModel(models.Model):
-    """Модель двери (напр. М1, М2, Венеция)"""
-    name = models.CharField(max_length=150)
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name='models')
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ('collection', 'name')
-        unique_together = ('collection', 'name')
-        verbose_name = 'Door Model'
-        verbose_name_plural = 'Door Models'
-
-    def __str__(self) -> str:
-        return f"{self.collection.name} - {self.name}"
-
-
-class DoorColor(models.Model):
-    """Цвет/ранг двери"""
-    name = models.CharField(max_length=150, unique=True)
-    code = models.CharField(max_length=50, blank=True, help_text="Цветовой код или артикул")
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = ('name',)
-        verbose_name = 'Door Color'
-        verbose_name_plural = 'Door Colors'
-
-    def __str__(self) -> str:
-        return self.name
-
-
-class ProductMeta(models.Model):
+class ProductModel(models.Model):
     """
-    Дополнительная мета-информация для продукта категории "Дверное полотно".
-    Не затрагивает Product.name и существующие данные.
+    Модель продукта (Brand + Collection + Model Name).
+    Пример: "ДУБРАВА СИБИРЬ Эмалит Бета Софт"
+    """
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='product_models')
+    collection = models.CharField(max_length=200, help_text="Коллекция (Эмалит, Вертикаль, 50001/50002)")
+    model_name = models.CharField(max_length=200, help_text="Название модели (Бета Софт, Имидж Эмалит белый)")
+    preview_image = models.ImageField(upload_to='catalog/models/', null=True, blank=True, help_text="Превью модели")
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('brand__name', 'collection', 'model_name')
+        unique_together = ('brand', 'collection', 'model_name')
+        verbose_name = 'Product Model'
+        verbose_name_plural = 'Product Models'
+
+    def __str__(self) -> str:
+        return f"{self.brand.name} {self.collection} - {self.model_name}"
+
+
+class ProductVariant(models.Model):
+    """
+    Вариант продукта (Model + Color + Door Type).
+    Это основная единица для каталога.
+    Пример: "Бета Софт тач-серый ПГ"
     """
     
     class DoorType(models.TextChoices):
@@ -126,7 +111,91 @@ class ProductMeta(models.Model):
         PDO = 'ПДО', 'ПДО (Полотно частично остеклённое)'
         PDG = 'ПДГ', 'ПДГ (Полотно с декоративными элементами)'
     
-    class DoorSize(models.TextChoices):
+    product_model = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name='variants')
+    color = models.CharField(max_length=150, help_text="Цвет/ранг (белый, кремовый, тач-серый, дуб грей)")
+    door_type = models.CharField(max_length=10, choices=DoorType.choices)
+    image = models.ImageField(upload_to='catalog/variants/', null=True, blank=True, help_text="Основное изображение варианта")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('product_model', 'color', 'door_type')
+        unique_together = ('product_model', 'color', 'door_type')
+        verbose_name = 'Product Variant'
+        verbose_name_plural = 'Product Variants'
+        indexes = [
+            models.Index(fields=['product_model', 'is_active']),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.product_model.model_name} {self.color} {self.door_type}"
+    
+    @property
+    def brand_name(self) -> str:
+        return self.product_model.brand.name
+    
+    @property
+    def collection_name(self) -> str:
+        return self.product_model.collection
+    
+    @property
+    def model_name(self) -> str:
+        return self.product_model.model_name
+    
+    def get_min_price_usd(self):
+        """Минимальная цена USD среди всех SKU этого варианта"""
+        skus = self.skus.filter(product__is_active=True)
+        if not skus.exists():
+            return Decimal('0.00')
+        return skus.aggregate(min_price=models.Min('product__sell_price_usd'))['min_price'] or Decimal('0.00')
+    
+    def get_min_price_uzs(self):
+        """Минимальная цена UZS среди всех SKU этого варианта"""
+        skus = self.skus.filter(product__is_active=True)
+        if not skus.exists():
+            return Decimal('0.00')
+        # Calculate from USD price using latest exchange rate
+        from finance.models import ExchangeRate
+        min_price_usd = self.get_min_price_usd()
+        rate = ExchangeRate.objects.order_by('-rate_date').first()
+        if rate and min_price_usd:
+            return (min_price_usd * rate.usd_to_uzs).quantize(Decimal('0.01'))
+        return Decimal('0.00')
+    
+    def get_size_stock(self):
+        """
+        Возвращает список размеров и остатков для этого варианта.
+        [
+            {"size": "400мм", "stock": 0},
+            {"size": "600мм", "stock": 3},
+            {"size": "700мм", "stock": 12},
+            {"size": "800мм", "stock": 5},
+            {"size": "900мм", "stock": 0}
+        ]
+        """
+        standard_sizes = ['400мм', '600мм', '700мм', '800мм', '900мм']
+        size_stock = []
+        
+        for size in standard_sizes:
+            sku = self.skus.filter(size=size, product__is_active=True).first()
+            stock = int(sku.product.stock_ok) if sku and sku.product else 0
+            size_stock.append({
+                'size': size,
+                'stock': stock
+            })
+        
+        return size_stock
+
+
+class ProductSKU(models.Model):
+    """
+    SKU продукта (Variant + Size).
+    Связывает вариант с реальным Product из ERP.
+    Пример: "Бета Софт тач-серый ПГ 800мм" → Product ID 123
+    """
+    
+    class SizeChoices(models.TextChoices):
         SIZE_400 = '400мм', '400мм'
         SIZE_600 = '600мм', '600мм'
         SIZE_700 = '700мм', '700мм'
@@ -142,41 +211,51 @@ class ProductMeta(models.Model):
         SIZE_21_9 = '21-9', '21-9'
         SIZE_OTHER = 'other', 'Другой размер'
     
-    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='meta', primary_key=True)
-    
-    # Catalog structure fields
-    collection = models.ForeignKey(Collection, on_delete=models.SET_NULL, null=True, blank=True, related_name='product_metas')
-    model = models.ForeignKey(DoorModel, on_delete=models.SET_NULL, null=True, blank=True, related_name='product_metas')
-    color = models.ForeignKey(DoorColor, on_delete=models.SET_NULL, null=True, blank=True, related_name='product_metas')
-    door_type = models.CharField(max_length=10, choices=DoorType.choices, blank=True)
-    door_size = models.CharField(max_length=20, choices=DoorSize.choices, blank=True)
-    
-    # Optional: custom size if SIZE_OTHER
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='skus')
+    size = models.CharField(max_length=20, choices=SizeChoices.choices)
     custom_size = models.CharField(max_length=100, blank=True, help_text="Если размер не из списка")
     
-    # Additional metadata
-    notes = models.TextField(blank=True, help_text="Дополнительные заметки")
+    # Связь с реальным Product из ERP (не изменяем существующие данные!)
+    product = models.OneToOneField(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='catalog_sku',
+        help_text="Существующий продукт из ERP (orderlar, to'lovlar va boshqa ma'lumotlar bu yerda)"
+    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        verbose_name = 'Product Metadata'
-        verbose_name_plural = 'Product Metadata'
-    
+        ordering = ('variant', 'size')
+        unique_together = ('variant', 'size')
+        verbose_name = 'Product SKU'
+        verbose_name_plural = 'Product SKUs'
+        indexes = [
+            models.Index(fields=['variant', 'size']),
+            models.Index(fields=['product']),
+        ]
+
     def __str__(self) -> str:
-        parts = []
-        if self.collection:
-            parts.append(self.collection.name)
-        if self.model:
-            parts.append(self.model.name)
-        if self.color:
-            parts.append(self.color.name)
-        if self.door_type:
-            parts.append(self.get_door_type_display())
-        if self.door_size:
-            parts.append(self.get_door_size_display())
-        
-        if parts:
-            return f"{self.product.sku}: {' | '.join(parts)}"
-        return f"{self.product.sku}: (не заполнено)"
+        size_display = self.custom_size if self.size == 'other' else self.get_size_display()
+        return f"{self.variant} {size_display} → {self.product.sku}"
+    
+    @property
+    def price_usd(self):
+        """Цена USD из связанного Product"""
+        return self.product.sell_price_usd
+    
+    @property
+    def cost_usd(self):
+        """Себестоимость USD из связанного Product"""
+        return self.product.cost_usd
+    
+    @property
+    def stock_quantity(self):
+        """Остаток из связанного Product"""
+        return self.product.stock_ok
+    
+    @property
+    def sku_code(self):
+        """SKU код из связанного Product"""
+        return self.product.sku

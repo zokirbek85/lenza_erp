@@ -1020,251 +1020,124 @@ class PriceListExcelView(APIView):
 
 
 # ============================================================================
-# DOOR CATALOG VIEWS (for "Дверное полотно" category)
+# VARIANT-BASED CATALOG VIEWS (for "Дверное полотно" category)
 # ============================================================================
 
-from collections import defaultdict
-from .models import Collection, DoorColor, DoorModel, ProductMeta
+from .models import ProductModel, ProductVariant, ProductSKU
 from .serializers import (
-    CollectionSerializer,
-    DoorColorSerializer,
-    DoorModelSerializer,
-    ProductMetaSerializer,
-    ProductWithMetaSerializer,
-    DoorCatalogSerializer,
+    ProductModelSerializer,
+    ProductVariantDetailSerializer,
+    ProductSKUSerializer,
+    VariantCatalogSerializer,
 )
 
 
-class CollectionViewSet(viewsets.ModelViewSet):
-    """ViewSet for door collections"""
-    queryset = Collection.objects.filter(is_active=True)
-    serializer_class = CollectionSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ('name',)
-    ordering_fields = ('name',)
-    ordering = ('name',)
-
-
-class DoorModelViewSet(viewsets.ModelViewSet):
-    """ViewSet for door models"""
-    queryset = DoorModel.objects.filter(is_active=True).select_related('collection')
-    serializer_class = DoorModelSerializer
+class ProductModelViewSet(viewsets.ModelViewSet):
+    """ViewSet for product models"""
+    queryset = ProductModel.objects.filter(is_active=True).select_related('brand')
+    serializer_class = ProductModelSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ('collection',)
-    search_fields = ('name', 'collection__name')
-    ordering_fields = ('name', 'collection__name')
-    ordering = ('collection__name', 'name')
+    filterset_fields = ('brand', 'collection')
+    search_fields = ('model_name', 'collection', 'brand__name')
+    ordering_fields = ('brand__name', 'collection', 'model_name')
+    ordering = ('brand__name', 'collection', 'model_name')
 
 
-class DoorColorViewSet(viewsets.ModelViewSet):
-    """ViewSet for door colors"""
-    queryset = DoorColor.objects.filter(is_active=True)
-    serializer_class = DoorColorSerializer
+class ProductVariantViewSet(viewsets.ModelViewSet):
+    """ViewSet for product variants"""
+    queryset = ProductVariant.objects.filter(is_active=True).select_related('product_model__brand')
+    serializer_class = ProductVariantDetailSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ('name', 'code')
-    ordering_fields = ('name',)
-    ordering = ('name',)
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ('product_model', 'door_type')
+    search_fields = ('product_model__model_name', 'color', 'product_model__brand__name')
+    ordering_fields = ('product_model__brand__name', 'product_model__model_name', 'color')
+    ordering = ('product_model__brand__name', 'product_model__model_name', 'color')
 
 
-class ProductMetaViewSet(viewsets.ModelViewSet):
-    """ViewSet for product metadata"""
-    queryset = ProductMeta.objects.all().select_related(
-        'product',
-        'product__brand',
-        'collection',
-        'model',
-        'color'
+class ProductSKUViewSet(viewsets.ModelViewSet):
+    """ViewSet for product SKUs"""
+    queryset = ProductSKU.objects.all().select_related(
+        'variant__product_model__brand',
+        'product'
     )
-    serializer_class = ProductMetaSerializer
+    serializer_class = ProductSKUSerializer
     permission_classes = [IsAdmin | IsWarehouse | IsSales | IsAccountant | IsOwner]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ('collection', 'model', 'color', 'door_type', 'door_size')
-    search_fields = ('product__sku', 'product__name', 'model__name', 'color__name')
-    ordering_fields = ('product__sku', 'collection__name', 'model__name')
-    ordering = ('product__sku',)
+    filterset_fields = ('variant', 'size')
+    search_fields = ('product__sku', 'product__name')
+    ordering_fields = ('variant', 'size')
+    ordering = ('variant', 'size')
 
 
-class DoorCatalogViewSet(viewsets.ReadOnlyModelViewSet):
+class VariantCatalogViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for hierarchical door catalog structure.
-    Returns nested structure: Brand → Collection → Model → (Color + Type) → Size (SKU)
+    Main API endpoint for variant-based catalog.
+    Returns ProductVariant as card unit with size/stock breakdown.
     
     Filters:
-    - brand: Filter by brand ID
-    - collection: Filter by collection ID
-    - model: Filter by door model ID
-    - color: Filter by color ID
+    - brand: Filter by brand name (partial match)
+    - model: Filter by model name (partial match)
+    - color: Filter by color (partial match)
     - door_type: Filter by door type (ПГ, ПО, ПДО, ПДГ)
-    - door_size: Filter by door size
-    - search: Search in SKU or product name
+    - size: Filter by available size
+    - search: Search in model name, color, brand
+    
+    Example:
+    GET /api/catalog/variants/?brand=ДУБРАВА&door_type=ПГ&size=800мм
     """
+    queryset = ProductVariant.objects.filter(is_active=True).select_related(
+        'product_model__brand'
+    ).prefetch_related('skus__product')
+    serializer_class = VariantCatalogSerializer
     permission_classes = [IsAuthenticated]
-    serializer_class = DoorCatalogSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ('product_model__model_name', 'color', 'product_model__brand__name', 'product_model__collection')
+    ordering_fields = ('product_model__brand__name', 'product_model__model_name', 'color')
+    ordering = ('product_model__brand__name', 'product_model__model_name', 'color')
     
     def get_queryset(self):
-        """
-        Get products with metadata, filtered by "Дверное полотно" category
-        """
-        # Get "Дверное полотно" category
-        door_category = Category.objects.filter(name="Дверное полотно").first()
-        if not door_category:
-            return ProductMeta.objects.none()
+        queryset = super().get_queryset()
         
-        queryset = ProductMeta.objects.filter(
-            product__category=door_category,
-            product__is_active=True
-        ).select_related(
-            'product',
-            'product__brand',
-            'collection',
-            'model',
-            'color'
-        )
+        # Filter by brand name (partial match)
+        brand = self.request.query_params.get('brand')
+        if brand:
+            queryset = queryset.filter(product_model__brand__name__icontains=brand)
         
-        # Apply filters
-        brand_id = self.request.query_params.get('brand')
-        if brand_id:
-            queryset = queryset.filter(product__brand_id=brand_id)
+        # Filter by model name (partial match)
+        model = self.request.query_params.get('model')
+        if model:
+            queryset = queryset.filter(product_model__model_name__icontains=model)
         
-        collection_id = self.request.query_params.get('collection')
-        if collection_id:
-            queryset = queryset.filter(collection_id=collection_id)
+        # Filter by collection
+        collection = self.request.query_params.get('collection')
+        if collection:
+            queryset = queryset.filter(product_model__collection__icontains=collection)
         
-        model_id = self.request.query_params.get('model')
-        if model_id:
-            queryset = queryset.filter(model_id=model_id)
+        # Filter by color (partial match)
+        color = self.request.query_params.get('color')
+        if color:
+            queryset = queryset.filter(color__icontains=color)
         
-        color_id = self.request.query_params.get('color')
-        if color_id:
-            queryset = queryset.filter(color_id=color_id)
-        
+        # Filter by door type
         door_type = self.request.query_params.get('door_type')
         if door_type:
             queryset = queryset.filter(door_type=door_type)
         
-        door_size = self.request.query_params.get('door_size')
-        if door_size:
-            queryset = queryset.filter(door_size=door_size)
-        
-        search = self.request.query_params.get('search')
-        if search:
-            queryset = queryset.filter(
-                models.Q(product__sku__icontains=search) |
-                models.Q(product__name__icontains=search)
-            )
+        # Filter by size (variants that have SKUs with this size)
+        size = self.request.query_params.get('size')
+        if size:
+            queryset = queryset.filter(skus__size=size).distinct()
         
         return queryset
-    
-    def list(self, request, *args, **kwargs):
-        """
-        Build hierarchical catalog structure
-        """
-        queryset = self.get_queryset()
-        
-        # Build nested dictionary structure
-        catalog_tree = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
-        
-        for meta in queryset:
-            product = meta.product
-            brand = product.brand
-            collection = meta.collection
-            model = meta.model
-            color = meta.color
-            
-            # Skip if any required field is missing
-            if not all([brand, collection, model, color]):
-                continue
-            
-            # Build product item
-            product_item = {
-                'product_id': product.id,
-                'sku': product.sku,
-                'name': product.name,
-                'door_type': meta.door_type,
-                'door_type_display': meta.get_door_type_display() if meta.door_type else '',
-                'door_size': meta.door_size,
-                'door_size_display': meta.get_door_size_display() if meta.door_size else '',
-                'custom_size': meta.custom_size or '',
-                'cost_usd': product.cost_usd,
-                'sell_price_usd': product.sell_price_usd,
-                'stock_ok': product.stock_ok,
-                'stock_defect': product.stock_defect,
-                'is_active': product.is_active,
-                'image': request.build_absolute_uri(product.image.url) if product.image else None,
-            }
-            
-            # Group by: brand → collection → model → color
-            catalog_tree[brand.id][collection.id][model.id][color.id].append(product_item)
-        
-        # Convert nested dict to list structure
-        result = []
-        for brand_id, collections in catalog_tree.items():
-            brand = Brand.objects.get(id=brand_id)
-            brand_data = {
-                'brand_id': brand.id,
-                'brand_name': brand.name,
-                'collections': []
-            }
-            
-            for collection_id, models_dict in collections.items():
-                collection = Collection.objects.get(id=collection_id)
-                collection_data = {
-                    'collection_id': collection.id,
-                    'collection_name': collection.name,
-                    'models': []
-                }
-                
-                for model_id, colors_dict in models_dict.items():
-                    model = DoorModel.objects.get(id=model_id)
-                    model_data = {
-                        'model_id': model.id,
-                        'model_name': model.name,
-                        'color_groups': []
-                    }
-                    
-                    for color_id, products in colors_dict.items():
-                        color = DoorColor.objects.get(id=color_id)
-                        color_data = {
-                            'color_id': color.id,
-                            'color_name': color.name,
-                            'color_code': color.code or '',
-                            'products': products
-                        }
-                        model_data['color_groups'].append(color_data)
-                    
-                    collection_data['models'].append(model_data)
-                
-                brand_data['collections'].append(collection_data)
-            
-            result.append(brand_data)
-        
-        serializer = self.get_serializer(result, many=True)
-        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def filters(self, request):
         """
-        Return available filter options
+        Return available filter options from active variants
         """
-        door_category = Category.objects.filter(name="Дверное полотно").first()
-        if not door_category:
-            return Response({
-                'brands': [],
-                'collections': [],
-                'models': [],
-                'colors': [],
-                'door_types': [],
-                'door_sizes': [],
-            })
-        
-        # Get all product metas for door category
-        metas = ProductMeta.objects.filter(
-            product__category=door_category,
-            product__is_active=True
-        ).select_related('product__brand', 'collection', 'model', 'color')
+        variants = ProductVariant.objects.filter(is_active=True).select_related('product_model__brand')
         
         # Extract unique values
         brands = set()
@@ -1272,27 +1145,25 @@ class DoorCatalogViewSet(viewsets.ReadOnlyModelViewSet):
         models = set()
         colors = set()
         door_types = set()
-        door_sizes = set()
         
-        for meta in metas:
-            if meta.product.brand:
-                brands.add((meta.product.brand.id, meta.product.brand.name))
-            if meta.collection:
-                collections.add((meta.collection.id, meta.collection.name))
-            if meta.model:
-                models.add((meta.model.id, meta.model.name))
-            if meta.color:
-                colors.add((meta.color.id, meta.color.name))
-            if meta.door_type:
-                door_types.add((meta.door_type, meta.get_door_type_display()))
-            if meta.door_size:
-                door_sizes.add((meta.door_size, meta.get_door_size_display()))
+        for variant in variants:
+            brands.add(variant.product_model.brand.name)
+            collections.add(variant.product_model.collection)
+            models.add(variant.product_model.model_name)
+            colors.add(variant.color)
+            door_types.add((variant.door_type, variant.get_door_type_display()))
         
         return Response({
-            'brands': [{'id': id, 'name': name} for id, name in sorted(brands, key=lambda x: x[1])],
-            'collections': [{'id': id, 'name': name} for id, name in sorted(collections, key=lambda x: x[1])],
-            'models': [{'id': id, 'name': name} for id, name in sorted(models, key=lambda x: x[1])],
-            'colors': [{'id': id, 'name': name} for id, name in sorted(colors, key=lambda x: x[1])],
+            'brands': sorted(list(brands)),
+            'collections': sorted(list(collections)),
+            'models': sorted(list(models)),
+            'colors': sorted(list(colors)),
             'door_types': [{'value': val, 'label': label} for val, label in sorted(door_types, key=lambda x: x[1])],
-            'door_sizes': [{'value': val, 'label': label} for val, label in sorted(door_sizes, key=lambda x: x[1])],
+            'sizes': [
+                {'value': '400мм', 'label': '400мм'},
+                {'value': '600мм', 'label': '600мм'},
+                {'value': '700мм', 'label': '700мм'},
+                {'value': '800мм', 'label': '800мм'},
+                {'value': '900мм', 'label': '900мм'},
+            ]
         })
