@@ -23,8 +23,8 @@ ProductSKU (Variant + Size → Product)
 http://127.0.0.1:8000/api/catalog/
 ```
 
-### 1. **GET /api/catalog/variants/** - Asosiy katalog API
-Barcha variantlarni ro'yxatini qaytaradi, har biri o'z hajm va sklad ma'lumotlari bilan.
+### 1. **GET /api/catalog/variants/** - Asosiy katalog API (with Komplektatsiya)
+Barcha variantlarni ro'yxatini qaytaradi, har biri o'z hajm, sklad va komplektatsiya (kit) ma'lumotlari bilan.
 
 #### Response format:
 ```json
@@ -38,15 +38,53 @@ Barcha variantlarni ro'yxatini qaytaradi, har biri o'z hajm va sklad ma'lumotlar
     "door_type": "ПГ",
     "door_type_display": "ПГ (Полотно глухое)",
     "image": "http://127.0.0.1:8000/media/catalog/variants/beta_soft_gray.jpg",
-    "price_usd": 102.50,
-    "price_uzs": 1250000.00,
+    
+    "polotno_price_usd": 102.50,
+    "kit_price_usd": 25.00,
+    "full_set_price_usd": 127.50,
+    
+    "price_usd": 127.50,
+    "price_uzs": 1594375.00,
+    
     "sizes": [
       {"size": "400мм", "stock": 0},
       {"size": "600мм", "stock": 3},
       {"size": "700мм", "stock": 12},
       {"size": "800мм", "stock": 5},
       {"size": "900мм", "stock": 0}
-    ]
+    ],
+    
+    "kit_details": [
+      {
+        "id": 1,
+        "component": 345,
+        "component_sku": "NAL-70-LOFT-WHITE",
+        "component_name": "Наличник 70мм Лофт белый",
+        "component_price_usd": 3.50,
+        "quantity": 2.50,
+        "total_price_usd": 8.75
+      },
+      {
+        "id": 2,
+        "component": 346,
+        "component_sku": "KOR-100-LOFT-WHITE",
+        "component_name": "Коробка 100мм Лофт белый",
+        "component_price_usd": 4.50,
+        "quantity": 2.50,
+        "total_price_usd": 11.25
+      },
+      {
+        "id": 3,
+        "component": 347,
+        "component_sku": "DOB-100-LOFT-WHITE",
+        "component_name": "Добор 100мм Лофт белый",
+        "component_price_usd": 5.00,
+        "quantity": 1.00,
+        "total_price_usd": 5.00
+      }
+    ],
+    
+    "max_full_sets_by_stock": 48
   },
   ...
 ]
@@ -526,6 +564,204 @@ export default CatalogFiltersPanel;
 
 ---
 
+## 🎨 Frontend Implementation - Three-Tier Pricing Display
+
+### TypeScript Types
+
+```typescript
+// frontend/src/api/productsApi.ts
+
+export type DoorKitComponent = {
+  id: number;
+  component: number;
+  component_sku: string;
+  component_name: string;
+  component_price_usd: number;
+  quantity: number;
+  total_price_usd: number;
+};
+
+export type VariantSize = {
+  size: string;
+  stock: number;
+};
+
+export type VariantCatalog = {
+  id: number;
+  brand: string;
+  collection: string | null;
+  model: string;
+  color: string;
+  door_type: string;
+  door_type_display: string;
+  image: string | null;
+  
+  // Three-tier pricing (komplektatsiya)
+  polotno_price_usd: number | null;  // Door panel only
+  kit_price_usd: number | null;       // Kit components (pogonaj)
+  full_set_price_usd: number | null;  // Total = polotno + kit
+  
+  // Legacy field (backward compatibility)
+  price_usd: number;
+  price_uzs: number;
+  
+  // Sizes and stock
+  sizes: VariantSize[];
+  
+  // Kit details
+  kit_details: DoorKitComponent[];
+  max_full_sets_by_stock: number | null;
+};
+```
+
+### API Fetch Function
+
+```typescript
+export const fetchVariantCatalog = async (): Promise<VariantCatalog[]> => {
+  const response = await http.get<VariantCatalog[]>('/catalog/variants/');
+  return Array.isArray(response.data) ? response.data : [];
+};
+```
+
+### React Component - Card View with Komplektatsiya
+
+```tsx
+// frontend/src/pages/Catalog.tsx
+
+const renderVariant = (variant: VariantCatalog) => {
+  const hasKit = variant.kit_details && variant.kit_details.length > 0;
+  const variantTitle = `${variant.model} ${variant.color} ${variant.door_type}`;
+  
+  return (
+    <Card hoverable>
+      <Card.Meta
+        title={<Text strong>{variantTitle}</Text>}
+        description={
+          <div>
+            <Text type="secondary">{variant.brand}</Text>
+            
+            {/* Three-tier pricing */}
+            <div style={{ marginTop: 10 }}>
+              {hasKit ? (
+                <div className="catalog-price-breakdown">
+                  {/* Polotno price */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text type="secondary">Полотно:</Text>
+                    <Text strong>${variant.polotno_price_usd?.toFixed(2)}</Text>
+                  </div>
+                  
+                  {/* Kit price */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text type="secondary">+ Комплект:</Text>
+                    <Text strong style={{ color: '#52c41a' }}>
+                      + ${variant.kit_price_usd?.toFixed(2)}
+                    </Text>
+                  </div>
+                  
+                  {/* Kit components tooltip */}
+                  <Tooltip title={
+                    <div>
+                      {variant.kit_details.map((item) => (
+                        <div key={item.id}>
+                          {item.component_name} × {item.quantity}: ${item.total_price_usd.toFixed(2)}
+                        </div>
+                      ))}
+                    </div>
+                  }>
+                    <Text type="secondary" style={{ fontSize: 10, fontStyle: 'italic' }}>
+                      ({variant.kit_details.length} компонентов)
+                    </Text>
+                  </Tooltip>
+                  
+                  <Divider style={{ margin: '8px 0' }} />
+                  
+                  {/* Full set price */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Text strong>= Итого:</Text>
+                    <Text strong style={{ fontSize: 18, color: '#1890ff' }}>
+                      ${variant.full_set_price_usd?.toFixed(2)}
+                    </Text>
+                  </div>
+                  
+                  {/* Stock availability */}
+                  {variant.max_full_sets_by_stock !== null && (
+                    <div style={{ marginTop: 6 }}>
+                      <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                      <Text type="secondary" style={{ fontSize: 10, marginLeft: 4 }}>
+                        Доступно: {variant.max_full_sets_by_stock} комплектов
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Simple polotno-only pricing
+                <Text strong style={{ fontSize: 18 }}>
+                  ${variant.polotno_price_usd?.toFixed(2)}
+                </Text>
+              )}
+            </div>
+            
+            {/* Sizes and stock */}
+            <div style={{ marginTop: 12 }}>
+              <Text type="secondary">Размеры и остатки:</Text>
+              {variant.sizes.map((sizeItem) => (
+                <div key={sizeItem.size}>
+                  <Text>{sizeItem.size}: </Text>
+                  <Text strong style={{ color: sizeItem.stock > 0 ? '#52c41a' : '#ff4d4f' }}>
+                    {sizeItem.stock > 0 ? sizeItem.stock : 'Нет в наличии'}
+                  </Text>
+                </div>
+              ))}
+            </div>
+          </div>
+        }
+      />
+    </Card>
+  );
+};
+```
+
+### Visual Example
+
+**Card with Kit (Full Set):**
+```
+╔════════════════════════════════════╗
+║  Бета Софт тач-серый ПГ           ║
+║  ДУБРАВА СИБИРЬ                    ║
+║                                    ║
+║  Полотно:              $102.50     ║
+║  + Комплект:          + $25.00     ║
+║    (3 компонентов) ℹ️              ║
+║  ─────────────────────────────     ║
+║  = Итого:              $127.50     ║
+║                                    ║
+║  ✓ Доступно: 48 комплектов         ║
+║                                    ║
+║  Размеры и остатки:                ║
+║  400мм: Нет в наличии              ║
+║  600мм: 3                          ║
+║  700мм: 12                         ║
+║  800мм: 5                          ║
+║  900мм: Нет в наличии              ║
+╚════════════════════════════════════╝
+```
+
+**Card without Kit (Polotno Only):**
+```
+╔════════════════════════════════════╗
+║  Венеция Ясень белый ПГ           ║
+║  ДУБРАВА СИБИРЬ                    ║
+║                                    ║
+║  $102.50                           ║
+║                                    ║
+║  Размеры и остатки:                ║
+║  400мм: Нет в наличии              ║
+║  600мм: 3                          ║
+╚════════════════════════════════════╝
+```
+
+---
+
 ## 📊 Admin panel
 
 ### ProductModel (Model boshqaruvi):
@@ -538,13 +774,22 @@ export default CatalogFiltersPanel;
 - Rang, eshik turi
 - Variant rasmi
 - **Inline SKU editing** - variantga SKU lar qo'shish
+- **Inline Kit Components** - pogonaj komponentlarini qo'shish (NEW)
 - SKU selection filtered to "Дверное полотно" category
+- Kit component selection filtered to pogonaj keywords
+- **Three price columns**: Полотно, + Комплект, = Итого (NEW)
 
 ### ProductSKU (SKU boshqaruvi):
 - Variant (ForeignKey)
 - Hajm (400мм, 600мм, etc.)
 - Product (OneToOne - existing ERP product)
 - Readonly: price_usd, stock_quantity (from Product)
+
+### DoorKitComponent (Kit Components):
+- Variant (ForeignKey)
+- Component (ForeignKey to Product - pogonaj)
+- Quantity (Decimal - e.g., 2.50)
+- Auto-calculated: component_price, total_price
 
 ---
 

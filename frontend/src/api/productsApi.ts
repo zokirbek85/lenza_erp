@@ -104,7 +104,7 @@ export const removeProductImage = async (productId: number): Promise<Product> =>
   return response.data;
 };
 
-// Catalog API
+// Catalog API (Old product-based - deprecated)
 export type CatalogProduct = {
   id: number;
   name: string;
@@ -122,5 +122,53 @@ export type CatalogProduct = {
 
 export const fetchCatalogProducts = async (): Promise<CatalogProduct[]> => {
   const response = await http.get<CatalogProduct[]>('/catalog/');
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+// NEW: Variant-based Catalog API with Kit Komplektatsiya
+export type DoorKitComponent = {
+  id: number;
+  component: number;
+  component_sku: string;
+  component_name: string;
+  component_price_usd: number;
+  quantity: number;
+  total_price_usd: number;
+};
+
+export type VariantSize = {
+  size: string;
+  stock: number;
+};
+
+export type VariantCatalog = {
+  id: number;
+  brand: string;
+  collection: string | null;
+  model: string;
+  color: string;
+  door_type: string;
+  door_type_display: string;
+  image: string | null;
+  
+  // Three-tier pricing (komplektatsiya)
+  polotno_price_usd: number | null;  // Door panel only
+  kit_price_usd: number | null;       // Kit components (pogonaj)
+  full_set_price_usd: number | null;  // Total = polotno + kit
+  
+  // Legacy field (backward compatibility)
+  price_usd: number;
+  price_uzs: number;
+  
+  // Sizes and stock
+  sizes: VariantSize[];
+  
+  // Kit details
+  kit_details: DoorKitComponent[];
+  max_full_sets_by_stock: number | null;
+};
+
+export const fetchVariantCatalog = async (): Promise<VariantCatalog[]> => {
+  const response = await http.get<VariantCatalog[]>('/catalog/variants/');
   return Array.isArray(response.data) ? response.data : [];
 };

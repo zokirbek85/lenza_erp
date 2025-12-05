@@ -16,20 +16,13 @@
  *   Output: Single card "Венеция Ясень белый ПГ" with stock for both 600mm and 800mm
  */
 
-import { Card, Col, Input, Row, Select, Spin, Typography, Image, Empty, Button, Space, Segmented, Tooltip, message } from 'antd';
-import { AppstoreOutlined, FileExcelOutlined, FilePdfOutlined, LayoutOutlined, PictureOutlined } from '@ant-design/icons';
+import { Card, Col, Input, Row, Select, Spin, Typography, Image, Empty, Button, Space, Segmented, Tooltip, message, Divider } from 'antd';
+import { AppstoreOutlined, FileExcelOutlined, FilePdfOutlined, LayoutOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchCatalogProducts, type CatalogProduct } from '../api/productsApi';
+import { fetchVariantCatalog, type VariantCatalog } from '../api/productsApi';
 import { matchesSearch } from '../utils/transliteration';
-import { useIsMobile } from '../hooks/useIsMobile';
 import http from '../app/http';
-import MobileCatalogCards from './_mobile/MobileCatalogCards';
-import {
-  type GroupedProduct,
-  groupProducts,
-  widthLabels
-} from '../utils/catalogGrouper';
 import './Catalog.css';
 
 const { Title, Text } = Typography;
@@ -40,9 +33,8 @@ type ViewMode = 'cards' | 'gallery-comfort' | 'gallery-compact' | 'gallery-ultra
 
 const Catalog = () => {
   const { t } = useTranslation();
-  const { isMobile } = useIsMobile();
   const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [variants, setVariants] = useState<VariantCatalog[]>([]);
   const [searchText, setSearchText] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
@@ -55,8 +47,8 @@ const Catalog = () => {
   const loadCatalog = async () => {
     setLoading(true);
     try {
-      const data = await fetchCatalogProducts();
-      setProducts(data);
+      const data = await fetchVariantCatalog();
+      setVariants(data);
     } catch (error) {
       console.error('Failed to load catalog:', error);
     } finally {
@@ -139,44 +131,38 @@ const Catalog = () => {
     }
   };
 
-  // Group products by base name
-  const groupedProducts = useMemo(() => {
-    return groupProducts(products);
-  }, [products]);
-
-  // Extract unique brands from grouped products
+  // Extract unique brands from variants
   const brands = useMemo(() => {
     const brandSet = new Set<string>();
-    groupedProducts.forEach((g) => {
-      if (g.brand_name) brandSet.add(g.brand_name);
+    variants.forEach((v) => {
+      if (v.brand) brandSet.add(v.brand);
     });
     return Array.from(brandSet).sort();
-  }, [groupedProducts]);
+  }, [variants]);
 
-  // Filter grouped products by brand and search (with transliteration)
-  const filteredProducts = useMemo(() => {
-    let result = groupedProducts;
+  // Filter variants by brand and search (with transliteration)
+  const filteredVariants = useMemo(() => {
+    let result = variants;
 
     // Brand filter
     if (selectedBrand !== 'all') {
-      result = result.filter((g) => g.brand_name === selectedBrand);
+      result = result.filter((v) => v.brand === selectedBrand);
     }
 
     // Search filter (with transliteration support)
-    // Search should match either the base name OR any of the original product names
+    // Search should match model, color, or door type
     if (searchText.trim()) {
-      result = result.filter((g) => {
-        // Check base name
-        if (matchesSearch(g.baseName, searchText)) {
-          return true;
-        }
-        // Check any original product name in the group
-        return g.originalProducts.some((p) => matchesSearch(p.name, searchText));
+      result = result.filter((v) => {
+        const fullName = `${v.model} ${v.color} ${v.door_type}`.toLowerCase();
+        return matchesSearch(fullName, searchText) ||
+               matchesSearch(v.model, searchText) ||
+               matchesSearch(v.color, searchText) ||
+               matchesSearch(v.brand, searchText);
       });
     }
 
     return result;
-  }, [groupedProducts, selectedBrand, searchText]);
+  }, [variants, selectedBrand, searchText]);
 
   const getGridColumns = () => {
     switch (viewMode) {
@@ -193,19 +179,23 @@ const Catalog = () => {
     }
   };
 
-  const renderProduct = (group: GroupedProduct) => {
+  // Render variant with three-tier pricing (komplektatsiya)
+  const renderVariant = (variant: VariantCatalog) => {
+    const hasKit = variant.kit_details && variant.kit_details.length > 0;
+    const variantTitle = `${variant.model} ${variant.color} ${variant.door_type}`;
+    
     if (viewMode === 'cards') {
-      // Original card view
+      // Card view with detailed pricing
       return (
-        <Col key={group.id} {...getGridColumns()}>
+        <Col key={variant.id} {...getGridColumns()}>
           <Card
             hoverable
             cover={
-              group.image ? (
+              variant.image ? (
                 <div className="catalog-card-image">
                   <Image
-                    src={group.image}
-                    alt={group.baseName}
+                    src={variant.image}
+                    alt={variantTitle}
                     preview={true}
                     style={{ objectFit: 'cover' }}
                   />
@@ -219,40 +209,103 @@ const Catalog = () => {
             className="catalog-card"
           >
             <Card.Meta
-              title={<Text strong>{group.baseName}</Text>}
+              title={<Text strong style={{ fontSize: 14 }}>{variantTitle}</Text>}
               description={
                 <div>
-                  <Text type="secondary" style={{ fontSize: 12 }} className="catalog-brand-text">
-                    {group.brand_name}
+                  <Text type="secondary" style={{ fontSize: 11 }} className="catalog-brand-text">
+                    {variant.brand}
                   </Text>
-                  <div style={{ marginTop: 8 }}>
-                    <Text strong style={{ fontSize: 18 }} className="catalog-price-text">
-                      ${group.price_usd}
-                    </Text>
+                  
+                  {/* Three-tier pricing */}
+                  <div style={{ marginTop: 10, marginBottom: 10 }}>
+                    {hasKit ? (
+                      // Show three-tier pricing
+                      <div className="catalog-price-breakdown">
+                        {/* Polotno price */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>Полотно:</Text>
+                          <Text strong style={{ fontSize: 14 }}>${variant.polotno_price_usd?.toFixed(2)}</Text>
+                        </div>
+                        
+                        {/* Kit price */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <Text type="secondary" style={{ fontSize: 12 }}>+ Комплект:</Text>
+                          <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
+                            + ${variant.kit_price_usd?.toFixed(2)}
+                          </Text>
+                        </div>
+                        
+                        {/* Kit components tooltip */}
+                        <Tooltip 
+                          placement="topLeft"
+                          title={
+                            <div style={{ fontSize: 11 }}>
+                              {variant.kit_details.map((item) => (
+                                <div key={item.id} style={{ marginBottom: 4 }}>
+                                  {item.component_name} × {item.quantity}: ${item.total_price_usd.toFixed(2)}
+                                </div>
+                              ))}
+                            </div>
+                          }
+                        >
+                          <Text type="secondary" style={{ fontSize: 10, fontStyle: 'italic', cursor: 'help' }}>
+                            ({variant.kit_details.length} компонентов)
+                          </Text>
+                        </Tooltip>
+                        
+                        <Divider style={{ margin: '8px 0' }} />
+                        
+                        {/* Full set price */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text strong style={{ fontSize: 13 }}>= Итого:</Text>
+                          <Text strong style={{ fontSize: 18, color: '#1890ff' }} className="catalog-price-text">
+                            ${variant.full_set_price_usd?.toFixed(2)}
+                          </Text>
+                        </div>
+                        
+                        {/* Stock availability */}
+                        {variant.max_full_sets_by_stock !== null && (
+                          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <CheckCircleOutlined style={{ fontSize: 12, color: '#52c41a' }} />
+                            <Text type="secondary" style={{ fontSize: 10 }}>
+                              Доступно: {variant.max_full_sets_by_stock} комплектов
+                            </Text>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // Simple polotno-only pricing
+                      <div>
+                        <Text strong style={{ fontSize: 18 }} className="catalog-price-text">
+                          ${variant.polotno_price_usd?.toFixed(2)}
+                        </Text>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Sizes and stock */}
                   <div className="catalog-stock" style={{ marginTop: 12 }}>
-                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
+                    <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 6 }}>
                       {t('catalog.stockByWidth')}:
                     </Text>
                     <div className="catalog-stock-grid">
-                      {widthLabels.map((width) => {
-                        const stock = group.stock[width];
-                        const inStock = stock > 0;
+                      {variant.sizes.map((sizeItem) => {
+                        const inStock = sizeItem.stock > 0;
                         return (
                           <div 
-                            key={width} 
+                            key={sizeItem.size} 
                             className="catalog-stock-item"
                             data-in-stock={inStock}
                           >
-                            <Text type="secondary" style={{ fontSize: 11 }}>{width}mm:</Text>
+                            <Text type="secondary" style={{ fontSize: 10 }}>{sizeItem.size}:</Text>
                             <Text
                               strong
                               style={{
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: inStock ? 'var(--success)' : 'var(--error)',
                               }}
                             >
-                              {inStock ? `${stock} ${t('catalog.inStock')}` : t('catalog.notAvailable')}
+                              {inStock ? `${sizeItem.stock}` : t('catalog.notAvailable')}
                             </Text>
                           </div>
                         );
@@ -271,20 +324,20 @@ const Catalog = () => {
     const isUltra = viewMode === 'gallery-ultra';
     const isCompact = viewMode === 'gallery-compact';
 
-    const stockText = widthLabels
-      .filter((w) => group.stock[w] > 0)
-      .map((w) => `${w}: ${group.stock[w]}`)
+    const stockText = variant.sizes
+      .filter((s) => s.stock > 0)
+      .map((s) => `${s.size}: ${s.stock}`)
       .join(', ') || t('catalog.notAvailable');
 
     const content = (
       <Card
         hoverable
         cover={
-          group.image ? (
+          variant.image ? (
             <div className={`catalog-gallery-image ${viewMode}`}>
               <Image
-                src={group.image}
-                alt={group.baseName}
+                src={variant.image}
+                alt={variantTitle}
                 preview={!isUltra}
                 style={{ objectFit: 'cover' }}
               />
@@ -311,16 +364,30 @@ const Catalog = () => {
               marginBottom: 4 
             }}
           >
-            {group.baseName}
+            {variantTitle}
           </Text>
           {!isUltra && (
             <>
               <Text type="secondary" style={{ fontSize: isCompact ? 9 : 10, display: 'block' }} className="catalog-brand-text">
-                {group.brand_name}
+                {variant.brand}
               </Text>
-              <Text strong style={{ fontSize: isCompact ? 13 : 14, display: 'block', marginTop: 4 }} className="catalog-price-text">
-                ${group.price_usd}
-              </Text>
+              
+              {/* Gallery pricing */}
+              {hasKit ? (
+                <div style={{ marginTop: 4 }}>
+                  <Text strong style={{ fontSize: isCompact ? 12 : 13, display: 'block', color: '#1890ff' }} className="catalog-price-text">
+                    ${variant.full_set_price_usd?.toFixed(2)}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: isCompact ? 8 : 9 }}>
+                    ({variant.kit_details.length} компонентов)
+                  </Text>
+                </div>
+              ) : (
+                <Text strong style={{ fontSize: isCompact ? 13 : 14, display: 'block', marginTop: 4 }} className="catalog-price-text">
+                  ${variant.polotno_price_usd?.toFixed(2)}
+                </Text>
+              )}
+              
               {!isCompact && (
                 <Text type="secondary" style={{ fontSize: 9, display: 'block', marginTop: 4 }}>
                   {stockText}
@@ -334,13 +401,15 @@ const Catalog = () => {
 
     if (isUltra) {
       return (
-        <Col key={group.id} {...getGridColumns()}>
+        <Col key={variant.id} {...getGridColumns()}>
           <Tooltip
             title={
               <div>
-                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{group.baseName}</div>
-                <div>{group.brand_name}</div>
-                <div style={{ marginTop: 4 }}>${group.price_usd}</div>
+                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{variantTitle}</div>
+                <div>{variant.brand}</div>
+                <div style={{ marginTop: 4 }}>
+                  ${hasKit ? variant.full_set_price_usd?.toFixed(2) : variant.polotno_price_usd?.toFixed(2)}
+                </div>
                 <div style={{ marginTop: 4, fontSize: 11 }}>{stockText}</div>
               </div>
             }
@@ -352,7 +421,7 @@ const Catalog = () => {
     }
 
     return (
-      <Col key={group.id} {...getGridColumns()}>
+      <Col key={variant.id} {...getGridColumns()}>
         {content}
       </Col>
     );
@@ -436,21 +505,11 @@ const Catalog = () => {
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
           <Spin size="large" />
         </div>
-      ) : filteredProducts.length === 0 ? (
+      ) : filteredVariants.length === 0 ? (
         <Empty description={t('catalog.noProducts')} style={{ marginTop: 60 }} />
-      ) : isMobile ? (
-        <div style={{ marginTop: 24 }}>
-          <MobileCatalogCards
-            products={filteredProducts}
-            viewMode={viewMode}
-            onProductClick={(product) => {
-              console.log('Selected product:', product.baseName);
-            }}
-          />
-        </div>
       ) : (
         <Row gutter={[16, 16]} className="catalog-grid" style={{ marginTop: 24 }}>
-          {filteredProducts.map((group) => renderProduct(group))}
+          {filteredVariants.map((variant) => renderVariant(variant))}
         </Row>
       )}
     </div>
