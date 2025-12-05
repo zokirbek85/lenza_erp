@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Brand, Category, Product, Style
+from .models import Brand, Category, Collection, DoorColor, DoorModel, Product, ProductMeta, Style
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -145,3 +145,128 @@ class ProductSerializer(serializers.ModelSerializer):
             data.pop('cost_usd', None)
             data.pop('sell_price_usd', None)
         return data
+
+
+# ============================================================================
+# DOOR CATALOG SERIALIZERS (for "Дверное полотно" category)
+# ============================================================================
+
+
+class CollectionSerializer(serializers.ModelSerializer):
+    """Serializer for door collections"""
+    class Meta:
+        model = Collection
+        fields = ('id', 'name', 'description', 'is_active')
+
+
+class DoorModelSerializer(serializers.ModelSerializer):
+    """Serializer for door models"""
+    collection_name = serializers.CharField(source='collection.name', read_only=True)
+    
+    class Meta:
+        model = DoorModel
+        fields = ('id', 'name', 'collection', 'collection_name', 'description', 'is_active')
+
+
+class DoorColorSerializer(serializers.ModelSerializer):
+    """Serializer for door colors"""
+    class Meta:
+        model = DoorColor
+        fields = ('id', 'name', 'code', 'is_active')
+
+
+class ProductMetaSerializer(serializers.ModelSerializer):
+    """Serializer for product metadata"""
+    collection_name = serializers.CharField(source='collection.name', read_only=True)
+    model_name = serializers.CharField(source='model.name', read_only=True)
+    color_name = serializers.CharField(source='color.name', read_only=True)
+    door_type_display = serializers.CharField(source='get_door_type_display', read_only=True)
+    door_size_display = serializers.CharField(source='get_door_size_display', read_only=True)
+    
+    class Meta:
+        model = ProductMeta
+        fields = (
+            'product',
+            'collection',
+            'collection_name',
+            'model',
+            'model_name',
+            'color',
+            'color_name',
+            'door_type',
+            'door_type_display',
+            'door_size',
+            'door_size_display',
+            'custom_size',
+            'notes',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class ProductWithMetaSerializer(ProductSerializer):
+    """Extended product serializer that includes metadata for door products"""
+    meta = ProductMetaSerializer(read_only=True)
+    
+    class Meta(ProductSerializer.Meta):
+        fields = ProductSerializer.Meta.fields + ('meta',)
+
+
+class DoorCatalogItemSerializer(serializers.Serializer):
+    """
+    Serializer for individual door product in catalog structure.
+    Represents: Brand → Collection → Model → (Color + Type) → Size (SKU)
+    """
+    product_id = serializers.IntegerField()
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    door_type = serializers.CharField()
+    door_type_display = serializers.CharField()
+    door_size = serializers.CharField()
+    door_size_display = serializers.CharField()
+    custom_size = serializers.CharField(allow_blank=True)
+    cost_usd = serializers.DecimalField(max_digits=12, decimal_places=2)
+    sell_price_usd = serializers.DecimalField(max_digits=12, decimal_places=2)
+    stock_ok = serializers.DecimalField(max_digits=14, decimal_places=2)
+    stock_defect = serializers.DecimalField(max_digits=14, decimal_places=2)
+    is_active = serializers.BooleanField()
+    image = serializers.CharField(allow_null=True)
+
+
+class DoorCatalogColorTypeSerializer(serializers.Serializer):
+    """
+    Groups products by Color + Type combination
+    """
+    color_id = serializers.IntegerField()
+    color_name = serializers.CharField()
+    color_code = serializers.CharField(allow_blank=True)
+    products = DoorCatalogItemSerializer(many=True)
+
+
+class DoorCatalogModelSerializer(serializers.Serializer):
+    """
+    Groups products by Model
+    """
+    model_id = serializers.IntegerField()
+    model_name = serializers.CharField()
+    color_groups = DoorCatalogColorTypeSerializer(many=True)
+
+
+class DoorCatalogCollectionSerializer(serializers.Serializer):
+    """
+    Groups products by Collection
+    """
+    collection_id = serializers.IntegerField()
+    collection_name = serializers.CharField()
+    models = DoorCatalogModelSerializer(many=True)
+
+
+class DoorCatalogSerializer(serializers.Serializer):
+    """
+    Top-level catalog structure grouped by Brand
+    Structure: Brand → Collection → Model → (Color + Type) → Size (SKU)
+    """
+    brand_id = serializers.IntegerField()
+    brand_name = serializers.CharField()
+    collections = DoorCatalogCollectionSerializer(many=True)

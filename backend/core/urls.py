@@ -27,6 +27,12 @@ from catalog.views import (
     BrandCatalogExcelView,
     PriceListPDFView,
     PriceListExcelView,
+    # Door catalog views
+    CollectionViewSet,
+    DoorModelViewSet,
+    DoorColorViewSet,
+    ProductMetaViewSet,
+    DoorCatalogViewSet,
 )
 from dealers.views_list_all import DealerListAllView
 from core.views import (
@@ -98,6 +104,12 @@ router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
 router.register('company-info', CompanyInfoViewSet, basename='company-info')
 router.register('returns', ReturnViewSet, basename='return')
+# Door catalog routes
+router.register('catalog/collections', CollectionViewSet, basename='collection')
+router.register('catalog/door-models', DoorModelViewSet, basename='door-model')
+router.register('catalog/door-colors', DoorColorViewSet, basename='door-color')
+router.register('catalog/product-meta', ProductMetaViewSet, basename='product-meta')
+router.register('catalog/doors', DoorCatalogViewSet, basename='door-catalog')
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
 
 urlpatterns = [
