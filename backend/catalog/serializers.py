@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Brand, Category, Product, ProductModel, ProductSKU, ProductVariant, Style
+from .models import Brand, Category, DoorKitComponent, Product, ProductModel, ProductSKU, ProductVariant, Style
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -237,10 +237,42 @@ class ProductVariantDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
 
+class DoorKitComponentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for door kit components (pogonaj).
+    Shows component details in catalog.
+    """
+    component_name = serializers.CharField(source='component.name', read_only=True)
+    component_sku = serializers.CharField(source='component.sku', read_only=True)
+    component_price_usd = serializers.DecimalField(
+        source='component.sell_price_usd',
+        max_digits=12,
+        decimal_places=2,
+        read_only=True
+    )
+    total_price_usd = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = DoorKitComponent
+        fields = (
+            'id',
+            'component',
+            'component_sku',
+            'component_name',
+            'component_price_usd',
+            'quantity',
+            'total_price_usd',
+        )
+    
+    def get_total_price_usd(self, obj):
+        """Component narxi * quantity"""
+        return float(obj.total_price_usd)
+
+
 class VariantCatalogSerializer(serializers.ModelSerializer):
     """
     Serializer for catalog card view.
-    Returns variant as main unit with size/stock breakdown.
+    Returns variant as main unit with size/stock breakdown AND komplektatsiya info.
     
     Example output:
     {
@@ -251,25 +283,46 @@ class VariantCatalogSerializer(serializers.ModelSerializer):
       "brand": "ДУБРАВА СИБИРЬ",
       "collection": "Эмалит",
       "image": "https://.../variant.png",
-      "price_usd": 102.50,
-      "price_uzs": 1250000.00,
+      "polotno_price_usd": 102.50,
+      "kit_price_usd": 40.00,
+      "full_set_price_usd": 142.50,
       "sizes": [
          {"size": "400мм", "stock": 0},
          {"size": "600мм", "stock": 3},
-         {"size": "700мм", "stock": 12},
-         {"size": "800мм", "stock": 5},
-         {"size": "900мм", "stock": 0}
-      ]
+      ],
+      "kit_details": [
+         {
+            "id": 1,
+            "component": 345,
+            "component_name": "Наличник 70мм Лофт белый",
+            "component_price_usd": 3.50,
+            "quantity": 2.50,
+            "total_price_usd": 8.75
+         }
+      ],
+      "max_full_sets_by_stock": 27
     }
     """
     brand = serializers.CharField(source='brand_name', read_only=True)
     collection = serializers.CharField(source='collection_name', read_only=True)
     model = serializers.CharField(source='model_name', read_only=True)
     door_type_display = serializers.CharField(source='get_door_type_display', read_only=True)
+    
+    # Narx maydonlari (komplektatsiya bilan)
+    polotno_price_usd = serializers.SerializerMethodField()
+    kit_price_usd = serializers.SerializerMethodField()
+    full_set_price_usd = serializers.SerializerMethodField()
+    
+    # Eski maydon (backward compatibility)
     price_usd = serializers.SerializerMethodField()
     price_uzs = serializers.SerializerMethodField()
+    
     sizes = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    
+    # Komplektatsiya detallari
+    kit_details = DoorKitComponentSerializer(source='kit_components', many=True, read_only=True)
+    max_full_sets_by_stock = serializers.SerializerMethodField()
     
     class Meta:
         model = ProductVariant
@@ -282,18 +335,55 @@ class VariantCatalogSerializer(serializers.ModelSerializer):
             'door_type',
             'door_type_display',
             'image',
+            # Yangi narx fieldlari
+            'polotno_price_usd',
+            'kit_price_usd',
+            'full_set_price_usd',
+            # Eski fieldlar (backward compatibility)
             'price_usd',
             'price_uzs',
             'sizes',
+            # Komplektatsiya
+            'kit_details',
+            'max_full_sets_by_stock',
         )
     
+    def get_polotno_price_usd(self, obj):
+        """Faqat polotno narxi (minimal SKU narxi)"""
+        price = obj.min_price_usd
+        return float(price) if price else None
+    
+    def get_kit_price_usd(self, obj):
+        """Komplektatsiya (pogonaj) narxi"""
+        price = obj.kit_total_price_usd
+        return float(price) if price else None
+    
+    def get_full_set_price_usd(self, obj):
+        """To'liq komplekt narxi (polotno + komplektatsiya)"""
+        price = obj.full_set_price_usd
+        return float(price) if price else None
+    
     def get_price_usd(self, obj):
-        """Минимальная цена USD"""
-        return float(obj.get_min_price_usd())
+        """Backward compatibility: default to full_set_price or polotno"""
+        full_price = obj.full_set_price_usd
+        if full_price:
+            return float(full_price)
+        polotno_price = obj.min_price_usd
+        return float(polotno_price) if polotno_price else 0.0
     
     def get_price_uzs(self, obj):
-        """Минимальная цена UZS"""
-        return float(obj.get_min_price_uzs())
+        """UZS narxi (full set yoki polotno)"""
+        # Full set narxidan hisoblash
+        usd_price = self.get_price_usd(obj)
+        if not usd_price:
+            return 0.0
+        
+        from finance.models import ExchangeRate
+        rate = ExchangeRate.objects.order_by('-rate_date').first()
+        if rate:
+            uzs_price = Decimal(str(usd_price)) * rate.usd_to_uzs
+            return float(uzs_price.quantize(Decimal('0.01')))
+        return 0.0
     
     def get_sizes(self, obj):
         """Список размеров с остатками"""
@@ -307,3 +397,7 @@ class VariantCatalogSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.image.url)
             return obj.image.url
         return None
+    
+    def get_max_full_sets_by_stock(self, obj):
+        """Nechta to'liq komplekt skladdagi pogonaj bilan yig'ish mumkin"""
+        return obj.max_full_sets_by_stock

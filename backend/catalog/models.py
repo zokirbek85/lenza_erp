@@ -186,6 +186,123 @@ class ProductVariant(models.Model):
             })
         
         return size_stock
+    
+    # ============================================================================
+    # DOOR KIT (KOMPLEKTATSIYA) METHODS
+    # ============================================================================
+    
+    @property
+    def min_price_usd(self):
+        """
+        Polotno minimal narxi (barcha SKUlar ichidan).
+        Katalog uchun asosiy polotno narxi.
+        """
+        return self.get_min_price_usd()
+    
+    @property
+    def kit_total_price_usd(self):
+        """
+        Komplektatsiya (pogonaj) narxlari yig'indisi.
+        Har bir komponent: component.sell_price_usd * quantity
+        """
+        total = Decimal('0.00')
+        
+        for kit_item in self.kit_components.select_related('component'):
+            component_price = kit_item.component.sell_price_usd or Decimal('0.00')
+            quantity = Decimal(str(kit_item.quantity))
+            total += component_price * quantity
+        
+        return total if total > 0 else None
+    
+    @property
+    def full_set_price_usd(self):
+        """
+        To'liq komplekt narxi: polotno + komplektatsiya.
+        Bu narx katalogda "итого" sifatida ko'rsatiladi.
+        """
+        polotno_price = self.min_price_usd or Decimal('0.00')
+        kit_price = self.kit_total_price_usd or Decimal('0.00')
+        total = polotno_price + kit_price
+        
+        return total if total > 0 else None
+    
+    @property
+    def max_full_sets_by_stock(self):
+        """
+        Skladdagi pogonaj komponentlari bo'yicha 
+        nechta to'liq eshik komplekti yig'ish mumkinligini hisoblaydi.
+        
+        Har bir komponent uchun: floor(component_stock / required_quantity)
+        va minimal qiymat olinadi.
+        """
+        if not self.kit_components.exists():
+            return None
+        
+        ratios = []
+        
+        for kit_item in self.kit_components.select_related('component'):
+            component = kit_item.component
+            stock = component.stock_ok or Decimal('0.00')
+            quantity = kit_item.quantity
+            
+            if quantity <= 0:
+                continue
+            
+            # Nechta komplekt chiqishi mumkin
+            ratio = int(stock // quantity)
+            ratios.append(ratio)
+        
+        return min(ratios) if ratios else None
+
+
+class DoorKitComponent(models.Model):
+    """
+    Eshik komplektatsiyasiga kiradigan komponent (погонаж).
+    Har bir ProductVariant uchun qo'lda belgilanadi.
+    
+    Misol: "Бета Софт тач-серый ПГ" uchun:
+    - 2.5 ta Наличник 70мм Лофт белый
+    - 2.5 ta Коробка 100мм Лофт белый
+    - 1.0 ta Добор 100мм Лофт белый
+    """
+    variant = models.ForeignKey(
+        'ProductVariant',
+        on_delete=models.CASCADE,
+        related_name='kit_components',
+        verbose_name="Вариант двери"
+    )
+    component = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        limit_choices_to={'is_active': True},
+        verbose_name="Компонент",
+        help_text="Погонаж: наличник, коробка, добор и т.д."
+    )
+    quantity = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        verbose_name="Количество",
+        help_text="Количество на 1 дверь (например, 2.50)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Комплектующий элемент двери"
+        verbose_name_plural = "Комплектующие элементы двери"
+        ordering = ('variant', 'component')
+        indexes = [
+            models.Index(fields=['variant']),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.variant} → {self.component.name} × {self.quantity}"
+    
+    @property
+    def total_price_usd(self):
+        """Bu komponentning umumiy narxi (price * quantity)"""
+        component_price = self.component.sell_price_usd or Decimal('0.00')
+        return component_price * self.quantity
 
 
 class ProductSKU(models.Model):
