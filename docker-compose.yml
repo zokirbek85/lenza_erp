@@ -29,8 +29,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend:/app
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - ./backend/staticfiles:/app/staticfiles  # Local dev
+      - ./backend/media:/app/media              # Local dev
     env_file:
       - .env.backend
     ports:
@@ -51,7 +51,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend:/app
-      - media_volume:/app/media
+      - ./backend/media:/app/media  # Local dev
     env_file:
       - .env.backend
     depends_on:
@@ -77,8 +77,7 @@ services:
 
 volumes:
   postgres_data:
-  static_volume:
-  media_volume:
+  # static_volume va media_volume o'chirildi - endi bind mount ishlatiladi
 
 networks:
   lenza_network:

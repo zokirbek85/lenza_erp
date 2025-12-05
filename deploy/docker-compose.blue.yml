@@ -55,8 +55,8 @@ services:
     env_file:
       - /opt/lenza_erp/.env
     volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - /var/www/lenza_erp/staticfiles:/app/staticfiles  # Host bind mount
+      - /var/www/lenza_erp/media:/app/media              # Host bind mount
       - ../backend/logs:/app/logs
     environment:
       - ENV=production
@@ -123,10 +123,7 @@ volumes:
     name: lenza_postgres_data
   redis_data:
     name: lenza_redis_data
-  static_volume:
-    name: lenza_static_blue
-  media_volume:
-    name: lenza_media_shared
+  # static_volume va media_volume o'chirildi - endi host bind mount ishlatiladi
 
 networks:
   lenza_network:
