@@ -1,0 +1,26 @@
+{
+  "kpi": {
+    "title": "KPI Показатели",
+    "noData": "Данные не найдены",
+    "totalSales": "Общие Продажи",
+    "totalPayments": "Общие Платежи",
+    "bonus": "Бонус",
+    "bonusFormula": "Формула расчёта",
+    "ofPayments": "от платежей",
+    "dealers": "Дилеры",
+    "activeDealers": "Активные дилеры",
+    "weeklySales": "Еженедельные Продажи",
+    "weeklySalesTrend": "Тренд Еженедельных Продаж",
+    "monthlyPayments": "Месячные Платежи",
+    "monthlyPaymentsTrend": "Тренд Месячных Платежей",
+    "salesByRegion": "Продажи по Регионам",
+    "topProducts": "Топ Продукты",
+    "noRegionData": "Нет данных по регионам",
+    "noProductData": "Нет данных по продуктам"
+  },
+  "units": "шт",
+  "currency": {
+    "usd": "USD",
+    "uzs": "сум"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "kpi": {
+    "title": "KPI Metrics",
+    "noData": "No data found",
+    "totalSales": "Total Sales",
+    "totalPayments": "Total Payments",
+    "bonus": "Bonus",
+    "bonusFormula": "Calculation formula",
+    "ofPayments": "of payments",
+    "dealers": "Dealers",
+    "activeDealers": "Active dealers",
+    "weeklySales": "Weekly Sales",
+    "weeklySalesTrend": "Weekly Sales Trend",
+    "monthlyPayments": "Monthly Payments",
+    "monthlyPaymentsTrend": "Monthly Payments Trend",
+    "salesByRegion": "Sales by Region",
+    "topProducts": "Top Products",
+    "noRegionData": "No region data",
+    "noProductData": "No product data"
+  },
+  "units": "units",
+  "currency": {
+    "usd": "USD",
+    "uzs": "UZS"
+  }
+}

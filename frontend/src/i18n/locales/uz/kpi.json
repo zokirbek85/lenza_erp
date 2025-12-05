@@ -1,0 +1,26 @@
+{
+  "kpi": {
+    "title": "KPI Ko'rsatkichlari",
+    "noData": "Ma'lumot topilmadi",
+    "totalSales": "Jami Savdo",
+    "totalPayments": "Jami To'lovlar",
+    "bonus": "Bonus",
+    "bonusFormula": "Hisoblash formulasi",
+    "ofPayments": "to'lovlardan",
+    "dealers": "Dilerlar",
+    "activeDealers": "Faol dilerlar",
+    "weeklySales": "Haftalik Savdo",
+    "weeklySalesTrend": "Haftalik Savdo Trendi",
+    "monthlyPayments": "Oylik To'lovlar",
+    "monthlyPaymentsTrend": "Oylik To'lovlar Trendi",
+    "salesByRegion": "Hududlar Bo'yicha Savdo",
+    "topProducts": "Top Mahsulotlar",
+    "noRegionData": "Hudud ma'lumotlari yo'q",
+    "noProductData": "Mahsulot ma'lumotlari yo'q"
+  },
+  "units": "dona",
+  "currency": {
+    "usd": "USD",
+    "uzs": "so'm"
+  }
+}
