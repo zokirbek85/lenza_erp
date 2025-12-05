@@ -71,6 +71,8 @@ from kpis.views import (
     ProductTrendAnalyticsView,
     TopCategoriesAnalyticsView,
     TopDealersAnalyticsView,
+    ManagerKPIOverviewView,
+    KPILeaderboardView,
 )
 from notifications.views import NotificationViewSet
 from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet
@@ -154,6 +156,9 @@ urlpatterns = [
     path('api/kpis/accountant/', AccountantKPIView.as_view(), name='kpi-accountant'),
     path('api/kpi/cards/', CardKPIView.as_view(), name='kpi-cards'),
     path('api/kpi/inventory-stats/', InventoryStatsView.as_view(), name='kpi-inventory-stats'),
+    # NEW: Manager KPI Module
+    path('api/kpi/manager/<int:manager_id>/overview/', ManagerKPIOverviewView.as_view(), name='manager-kpi-overview'),
+    path('api/kpi/leaderboard/', KPILeaderboardView.as_view(), name='kpi-leaderboard'),
     # Sales Analytics endpoints
     path('api/analytics/top-products/', TopProductsAnalyticsView.as_view(), name='analytics-top-products'),
     path('api/analytics/region-products/', RegionProductAnalyticsView.as_view(), name='analytics-region-products'),
