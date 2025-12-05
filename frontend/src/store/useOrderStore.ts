@@ -12,6 +12,7 @@ export interface OrderProduct {
   total_stock?: number;
   brand?: { id: number; name: string } | null;
   category?: { id: number; name: string } | null;
+  size?: string;
 }
 
 export interface OrderItem {
