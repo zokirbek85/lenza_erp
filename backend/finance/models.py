@@ -219,22 +219,13 @@ class FinanceTransaction(models.Model):
                 if not self.exchange_rate_date:
                     self.exchange_rate_date = self.date
             else:
-                # No exchange rate provided - try to get latest rate from ExchangeRate model
-                latest_rate = ExchangeRate.objects.filter(
-                    rate_date__lte=self.date
-                ).order_by('-rate_date').first()
+                # No exchange rate provided - use currency utility to get rate
+                from core.utils.currency import get_exchange_rate
                 
-                if latest_rate and latest_rate.usd_to_uzs > 0:
-                    # Use latest available exchange rate
-                    self.exchange_rate = latest_rate.usd_to_uzs
-                    self.exchange_rate_date = latest_rate.rate_date
-                    self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
-                else:
-                    # No exchange rate available - use default rate of 12700 as fallback
-                    default_rate = Decimal('12700')
-                    self.exchange_rate = default_rate
-                    self.exchange_rate_date = self.date
-                    self.amount_usd = (self.amount / default_rate).quantize(Decimal('0.01'))
+                rate, rate_date = get_exchange_rate(self.date)
+                self.exchange_rate = rate
+                self.exchange_rate_date = rate_date
+                self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
         
         super().save(*args, **kwargs)
     

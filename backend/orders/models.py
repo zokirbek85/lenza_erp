@@ -48,6 +48,18 @@ class Order(models.Model):
     value_date = models.DateField(default=timezone.localdate)
     total_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     total_uzs = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    exchange_rate = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Exchange rate used for this order (1 USD = X UZS)'
+    )
+    exchange_rate_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text='Date when exchange rate was applied'
+    )
     is_reserve = models.BooleanField(default=False)
     is_imported = models.BooleanField(default=False)
 
@@ -154,6 +166,12 @@ class Order(models.Model):
         return []
 
     def recalculate_totals(self):
+        """
+        Recalculate order totals in USD and UZS.
+        Uses exchange rate from value_date if not already set.
+        """
+        from core.utils.currency import get_exchange_rate
+        
         total = (
             self.items.aggregate(
                 total=Sum(F('qty') * F('price_usd'), output_field=DecimalField(max_digits=14, decimal_places=2))
@@ -162,22 +180,15 @@ class Order(models.Model):
         )
         self.total_usd = total
         
-        # Get latest exchange rate for UZS conversion
-        try:
-            from finance.models import ExchangeRate
-            latest_rate = ExchangeRate.objects.filter(
-                rate_date__lte=self.value_date
-            ).order_by('-rate_date').first()
-            
-            if latest_rate and latest_rate.usd_to_uzs > 0:
-                rate = latest_rate.usd_to_uzs
-            else:
-                rate = Decimal('12700')  # Default fallback rate
-        except Exception:
-            rate = Decimal('12700')  # Fallback if finance app not available
+        # Get or use existing exchange rate
+        if not self.exchange_rate:
+            rate, rate_date = get_exchange_rate(self.value_date)
+            self.exchange_rate = rate
+            self.exchange_rate_date = rate_date
         
-        self.total_uzs = (total * rate).quantize(Decimal('0.01'))
-        super().save(update_fields=('total_usd', 'total_uzs', 'updated_at'))
+        # Calculate UZS total using stored exchange rate
+        self.total_uzs = (total * self.exchange_rate).quantize(Decimal('0.01'))
+        super().save(update_fields=('total_usd', 'total_uzs', 'exchange_rate', 'exchange_rate_date', 'updated_at'))
 
 
 class OrderItem(models.Model):

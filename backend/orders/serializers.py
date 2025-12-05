@@ -98,18 +98,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_currency_rate(self, obj):
         """Get USD to UZS exchange rate on order creation date."""
-        from finance.models import ExchangeRate
-        # Get rate on or before order creation date
-        rate = ExchangeRate.objects.filter(
-            rate_date__lte=obj.value_date
-        ).order_by('-rate_date').first()
+        from core.utils.currency import get_exchange_rate
         
-        if rate:
-            return float(rate.usd_to_uzs)
-        
-        # Fallback: get latest available rate
-        latest_rate = ExchangeRate.objects.order_by('-rate_date').first()
-        return float(latest_rate.usd_to_uzs) if latest_rate else 12700.0
+        rate, _ = get_exchange_rate(obj.value_date)
+        return float(rate)
 
     def get_can_edit(self, obj):
         """Return whether current user can edit order items."""
@@ -147,6 +139,8 @@ class OrderSerializer(serializers.ModelSerializer):
             'value_date',
             'total_usd',
             'total_uzs',
+            'exchange_rate',
+            'exchange_rate_date',
             'is_reserve',
             'is_imported',
             'can_edit',
@@ -157,7 +151,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'status_logs',
             'returns',
         )
-        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'can_edit', 'can_change_status', 'allowed_next_statuses')
+        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'exchange_rate', 'exchange_rate_date', 'can_edit', 'can_change_status', 'allowed_next_statuses')
 
     def to_internal_value(self, data):
         if hasattr(data, 'copy'):

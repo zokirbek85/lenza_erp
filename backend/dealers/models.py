@@ -119,15 +119,16 @@ class Dealer(models.Model):
         )
         
         # Total of returns in UZS (convert from USD since OrderReturn only has amount_usd)
+        from core.utils.currency import usd_to_uzs
+        
         returns_usd = (
             OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
             .aggregate(total=Sum('amount_usd'))
             .get('total')
             or Decimal('0')
         )
-        # Convert USD returns to UZS using hardcoded rate
-        USD_TO_UZS_RATE = Decimal('12600')
-        returns_total = (returns_usd * USD_TO_UZS_RATE).quantize(Decimal('0.01'))
+        # Convert USD returns to UZS using current exchange rate
+        returns_total, _ = usd_to_uzs(returns_usd)
         
         # Total of approved income transactions in UZS
         payments_total = (
@@ -167,13 +168,13 @@ class Dealer(models.Model):
     def current_debt_uzs(self) -> Decimal:
         """
         Dealer's current debt in UZS.
-        Uses hardcoded exchange rate (1 USD = 12600 UZS) for conversion.
-        Note: Dynamic exchange rate model not available in system.
+        Uses current exchange rate for conversion.
         """
+        from core.utils.currency import usd_to_uzs
+        
         debt_usd = self.current_debt_usd
         if debt_usd == 0:
             return Decimal('0')
         
-        # Hardcoded exchange rate matching orders.models.Order
-        USD_TO_UZS_RATE = Decimal('12600')
-        return (debt_usd * USD_TO_UZS_RATE).quantize(Decimal('0.01'))
+        debt_uzs, _ = usd_to_uzs(debt_usd)
+        return debt_uzs.quantize(Decimal('0.01'))
