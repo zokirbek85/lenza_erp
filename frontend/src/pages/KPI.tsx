@@ -50,7 +50,7 @@ interface KPIData {
 }
 
 export default function KPIPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('kpi');
   const userId = useAuthStore((state) => state.userId);
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export default function KPIPage() {
   if (!kpiData) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-500 dark:text-gray-400">{t('kpi.noData')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('noData')}</p>
       </div>
     );
   }
@@ -105,7 +105,7 @@ export default function KPIPage() {
     labels: kpiData.weekly_sales.map((w) => new Date(w.week).toLocaleDateString()),
     datasets: [
       {
-        label: t('kpi.weeklySales'),
+        label: t('weeklySales'),
         data: kpiData.weekly_sales.map((w) => w.total_usd),
         borderColor: 'rgb(234, 179, 8)',
         backgroundColor: 'rgba(234, 179, 8, 0.2)',
@@ -118,7 +118,7 @@ export default function KPIPage() {
     labels: kpiData.monthly_payments.map((m) => new Date(m.month).toLocaleDateString('default', { month: 'short' })),
     datasets: [
       {
-        label: t('kpi.monthlyPayments'),
+        label: t('monthlyPayments'),
         data: kpiData.monthly_payments.map((m) => m.total_usd),
         backgroundColor: 'rgba(34, 197, 94, 0.7)',
       },
@@ -129,7 +129,7 @@ export default function KPIPage() {
     labels: kpiData.sales_by_region.map((r) => r.region),
     datasets: [
       {
-        label: t('kpi.salesByRegion'),
+        label: t('salesByRegion'),
         data: kpiData.sales_by_region.map((r) => r.total_usd),
         backgroundColor: [
           'rgba(234, 179, 8, 0.7)',
@@ -148,7 +148,7 @@ export default function KPIPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-            {t('kpi.title')} - {kpiData.manager_name}
+            {t('title')} - {kpiData.manager_name}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             {new Date(kpiData.period_start).toLocaleDateString()} - {new Date(kpiData.period_end).toLocaleDateString()}
@@ -178,7 +178,7 @@ export default function KPIPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('kpi.totalSales')}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalSales')}</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">
                 ${kpiData.total_sales_usd.toLocaleString()}
               </p>
@@ -194,7 +194,7 @@ export default function KPIPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('kpi.totalPayments')}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalPayments')}</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">
                 ${kpiData.total_payments_usd.toLocaleString()}
               </p>
@@ -210,7 +210,7 @@ export default function KPIPage() {
         <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-6 rounded-xl shadow-xl">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-yellow-100">{t('kpi.bonus')} 🎉</p>
+              <p className="text-sm text-yellow-100">{t('bonus')} 🎉</p>
               <p className="text-3xl font-black text-white">
                 ${kpiData.bonus_usd.toLocaleString()}
               </p>
@@ -221,7 +221,7 @@ export default function KPIPage() {
             <span className="text-5xl animate-pulse">🏆</span>
           </div>
           <div className="mt-3 pt-3 border-t border-yellow-300">
-            <p className="text-xs text-yellow-100">{t('kpi.bonusFormula')}: 1% {t('kpi.ofPayments')}</p>
+            <p className="text-xs text-yellow-100">{t('bonusFormula')}: 1% {t('ofPayments')}</p>
           </div>
         </div>
 
@@ -229,11 +229,11 @@ export default function KPIPage() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('kpi.dealers')}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t('dealers')}</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">
                 {kpiData.active_dealers} / {kpiData.total_dealers}
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('kpi.activeDealers')}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('activeDealers')}</p>
             </div>
             <span className="text-4xl">👥</span>
           </div>
@@ -244,13 +244,13 @@ export default function KPIPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Sales Trend */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('kpi.weeklySalesTrend')}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('weeklySalesTrend')}</h2>
           <Line data={weeklySalesData} options={{ responsive: true, maintainAspectRatio: true }} />
         </div>
 
         {/* Monthly Payments */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('kpi.monthlyPaymentsTrend')}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('monthlyPaymentsTrend')}</h2>
           <Bar data={monthlyPaymentsData} options={{ responsive: true, maintainAspectRatio: true }} />
         </div>
       </div>
@@ -259,17 +259,17 @@ export default function KPIPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales by Region */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('kpi.salesByRegion')}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('salesByRegion')}</h2>
           {kpiData.sales_by_region.length > 0 ? (
             <Pie data={regionSalesData} options={{ responsive: true, maintainAspectRatio: true }} />
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t('kpi.noRegionData')}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t('noRegionData')}</p>
           )}
         </div>
 
         {/* Top Products */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('kpi.topProducts')}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('topProducts')}</h2>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {kpiData.top_products.map((product, idx) => (
               <div
@@ -287,7 +287,7 @@ export default function KPIPage() {
               </div>
             ))}
             {kpiData.top_products.length === 0 && (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t('kpi.noProductData')}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t('noProductData')}</p>
             )}
           </div>
         </div>

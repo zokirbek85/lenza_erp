@@ -20,7 +20,7 @@ interface LeaderboardData {
 }
 
 export default function KPILeaderboard() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('kpi');
   const [leaderboard, setLeaderboard] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
@@ -57,7 +57,7 @@ export default function KPILeaderboard() {
   if (!leaderboard || leaderboard.managers.length === 0) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-500 dark:text-gray-400">{t('leaderboard.noData')}</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('noData')}</p>
       </div>
     );
   }
