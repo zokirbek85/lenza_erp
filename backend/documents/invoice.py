@@ -87,7 +87,7 @@ class InvoiceDocument(BaseDocument):
             total_usd = qty * price_usd
             
             items.append({
-                'product': item.product_detail.name if item.product_detail else f'Product #{item.product}',
+                'product': item.product.name if item.product else f'Product #{item.product_id}',
                 'qty': self.format_quantity(qty),
                 'price_usd': self.format_currency(price_usd, 'USD'),
                 'total_usd': self.format_currency(total_usd, 'USD'),
