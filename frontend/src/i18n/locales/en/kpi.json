@@ -2,6 +2,7 @@
   "kpi": {
     "title": "KPI Metrics",
     "noData": "No data found",
+    "selectManager": "Select Manager",
     "totalSales": "Total Sales",
     "totalPayments": "Total Payments",
     "bonus": "Bonus",

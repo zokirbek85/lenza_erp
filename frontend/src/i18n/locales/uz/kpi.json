@@ -2,6 +2,7 @@
   "kpi": {
     "title": "KPI Ko'rsatkichlari",
     "noData": "Ma'lumot topilmadi",
+    "selectManager": "Menејеr tanlang",
     "totalSales": "Jami Savdo",
     "totalPayments": "Jami To'lovlar",
     "bonus": "Bonus",

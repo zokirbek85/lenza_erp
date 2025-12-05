@@ -49,24 +49,35 @@ interface KPIData {
   active_dealers: number;
 }
 
+interface Manager {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+}
+
 export default function KPIPage() {
   const { t } = useTranslation('kpi');
   const userId = useAuthStore((state) => state.userId);
+  const role = useAuthStore((state) => state.role);
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [managers, setManagers] = useState<Manager[]>([]);
+  const [selectedManagerId, setSelectedManagerId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState({
     from_date: new Date().getFullYear() + '-01-01',
     to_date: new Date().toISOString().split('T')[0],
   });
 
   const fetchKPIData = async () => {
-    if (!userId) {
-      console.error('User ID not available');
+    const managerId = role === 'admin' ? selectedManagerId : userId;
+    if (!managerId) {
+      console.error('Manager ID not available');
       return;
     }
     try {
       setLoading(true);
-      const response = await http.get(`/kpi/manager/${userId}/overview/`, {
+      const response = await http.get(`/kpi/manager/${managerId}/overview/`, {
         params: dateRange,
       });
       setKpiData(response.data);
@@ -77,12 +88,33 @@ export default function KPIPage() {
     }
   };
 
+  // Fetch managers list for admin
   useEffect(() => {
+    const fetchManagers = async () => {
+      if (role === 'admin') {
+        try {
+          const response = await http.get('/users/', { params: { role: 'sales' } });
+          const salesManagers = response.data.results || response.data;
+          setManagers(salesManagers);
+          if (salesManagers.length > 0 && !selectedManagerId) {
+            setSelectedManagerId(salesManagers[0].id);
+          }
+        } catch (error) {
+          console.error('Failed to fetch managers:', error);
+        }
+      }
+    };
+    fetchManagers();
+  }, [role]);
+
+  useEffect(() => {
+    if (role === 'admin' && !selectedManagerId) return;
+    if (role !== 'admin' && !userId) return;
     fetchKPIData();
     // Poll for updates every 30 seconds
     const interval = setInterval(fetchKPIData, 30000);
     return () => clearInterval(interval);
-  }, [dateRange]);
+  }, [dateRange, selectedManagerId]);
 
   if (loading) {
     return (
@@ -155,8 +187,21 @@ export default function KPIPage() {
           </p>
         </div>
         
-        {/* Date Range Picker */}
+        {/* Manager Selector (Admin only) + Date Range Picker */}
         <div className="flex gap-3">
+          {role === 'admin' && managers.length > 0 && (
+            <select
+              value={selectedManagerId || ''}
+              onChange={(e) => setSelectedManagerId(Number(e.target.value))}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
+            >
+              {managers.map((manager) => (
+                <option key={manager.id} value={manager.id}>
+                  {manager.first_name} {manager.last_name} ({manager.username})
+                </option>
+              ))}
+            </select>
+          )}
           <input
             type="date"
             value={dateRange.from_date}

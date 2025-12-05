@@ -2,6 +2,7 @@
   "kpi": {
     "title": "KPI Показатели",
     "noData": "Данные не найдены",
+    "selectManager": "Выберите менеджера",
     "totalSales": "Общие Продажи",
     "totalPayments": "Общие Платежи",
     "bonus": "Бонус",
