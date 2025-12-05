@@ -74,6 +74,9 @@ interface Order {
   dealer: DealerOption;
   status: string;
   total_usd: number;
+  total_uzs?: number;
+  exchange_rate?: number;
+  exchange_rate_date?: string;
   value_date: string;
   is_reserve: boolean;
   can_edit?: boolean;
@@ -1239,6 +1242,28 @@ const OrdersPage = () => {
                           </div>
                         ) : (
                           <div className="text-center text-slate-500 dark:text-slate-300">{t('orders.details.noItems')}</div>
+                        )}
+                        
+                        {/* Exchange rate info */}
+                        {order.exchange_rate && !isWarehouse && (
+                          <div className="mt-3 flex items-center gap-4 rounded-lg bg-blue-50 px-3 py-2 text-sm dark:bg-blue-900/20">
+                            <span className="text-slate-700 dark:text-slate-300">
+                              {t('orders.details.exchangeRate', 'Valyuta kursi')}:
+                            </span>
+                            <span className="font-semibold text-slate-900 dark:text-white">
+                              1 USD = {formatCurrency(order.exchange_rate)} UZS
+                            </span>
+                            {order.exchange_rate_date && (
+                              <span className="text-slate-600 dark:text-slate-400">
+                                ({formatDate(order.exchange_rate_date)})
+                              </span>
+                            )}
+                            {order.total_uzs && (
+                              <span className="ml-auto font-medium text-slate-700 dark:text-slate-300">
+                                ≈ {formatCurrency(order.total_uzs)} UZS
+                              </span>
+                            )}
+                          </div>
                         )}
                         
                         {/* Status o'zgarishlari tarixi */}
