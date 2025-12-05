@@ -14,6 +14,7 @@ import KPILeaderboard from '../pages/KPILeaderboard'; // Leaderboard for directo
 import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
+import ReturnEditPage from '../pages/returns/ReturnEditPage';
 import ProductsPage from '../pages/Products';
 import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
@@ -167,6 +168,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
             <ReturnsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'returns/:id/edit',
+        element: (
+          <ProtectedRoute roles={['admin']}>
+            <ReturnEditPage />
           </ProtectedRoute>
         ),
       },

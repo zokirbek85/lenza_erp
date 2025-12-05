@@ -25,13 +25,30 @@ type CartItem = {
 };
 
 type CreateReturnFormProps = {
-  onCreated: () => void;
+  onCreated: (payload: ReturnPayload) => void | Promise<void>;
   onCancel: () => void;
+  initialData?: {
+    id: number;
+    dealer: number;
+    dealer_name: string;
+    items: Array<{
+      id: number;
+      product_id: number;
+      product_name: string;
+      brand_name?: string;
+      category_name?: string;
+      quantity: number;
+      status: StatusType;
+      comment?: string;
+    }>;
+    general_comment?: string;
+  };
+  isEdit?: boolean;
 };
 
 const statusOptions: StatusType[] = ['healthy', 'defect'];
 
-const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
+const CreateReturnForm = ({ onCreated, onCancel, initialData, isEdit = false }: CreateReturnFormProps) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const [dealers, setDealers] = useState<DealerDto[]>([]);
@@ -49,6 +66,29 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
   const dealerId = Form.useWatch('dealer', form);
   const brandId = Form.useWatch('brand_id', form);
   const categoryId = Form.useWatch('category_id', form);
+
+  // Initialize form with existing data (edit mode)
+  useEffect(() => {
+    if (initialData) {
+      form.setFieldsValue({
+        dealer: initialData.dealer,
+        general_comment: initialData.general_comment || '',
+      });
+      
+      // Convert initial items to cart format
+      const cartItems: CartItem[] = initialData.items.map((item, index) => ({
+        key: item.product_id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        brand_name: item.brand_name,
+        category_name: item.category_name,
+        quantity: item.quantity,
+        status: item.status,
+        comment: item.comment || '',
+      }));
+      setCart(cartItems);
+    }
+  }, [initialData, form]);
 
   useEffect(() => {
     const loadDealers = async () => {
@@ -227,14 +267,21 @@ const CreateReturnForm = ({ onCreated, onCancel }: CreateReturnFormProps) => {
         })),
         general_comment: form.getFieldValue('general_comment') || '',
       };
-      await createReturn(payload);
-      message.success(t('returns.messages.created'));
-      setCart([]);
-      form.resetFields();
-      onCreated();
+      
+      if (isEdit) {
+        // Edit mode - call onCreated with payload for parent to handle update
+        await onCreated(payload);
+      } else {
+        // Create mode - create directly
+        await createReturn(payload);
+        message.success(t('returns.messages.created'));
+        setCart([]);
+        form.resetFields();
+        onCreated();
+      }
     } catch (error) {
       console.error(error);
-      message.error(t('returns.messages.createError'));
+      message.error(isEdit ? t('returns.messages.updateError') : t('returns.messages.createError'));
     } finally {
       setSaving(false);
     }

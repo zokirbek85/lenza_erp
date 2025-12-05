@@ -130,6 +130,80 @@ class ReturnSerializer(serializers.ModelSerializer):
 
         return return_obj
 
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """
+        Update existing return document.
+        Admin can update dealer, items, general_comment.
+        Stock adjustments are recalculated.
+        """
+        items_data = validated_data.pop('items', None)
+        
+        # Rollback old stock changes before updating
+        old_items = instance.items.select_related('product').all()
+        for old_item in old_items:
+            qty = old_item.quantity
+            product = old_item.product
+            if old_item.status == ReturnItem.Status.HEALTHY:
+                product.stock_ok = (product.stock_ok or Decimal('0')) - qty
+                product.save(update_fields=['stock_ok'])
+            else:
+                product.stock_defect = (product.stock_defect or Decimal('0')) - qty
+                product.save(update_fields=['stock_defect'])
+        
+        # Rollback dealer debt
+        old_total = instance.total_sum
+        old_dealer = instance.dealer
+        if hasattr(old_dealer, 'debt_usd'):
+            old_dealer.debt_usd = (old_dealer.debt_usd or Decimal('0.00')) + old_total
+            old_dealer.save(update_fields=['debt_usd'])
+        
+        # Update basic fields
+        instance.dealer = validated_data.get('dealer', instance.dealer)
+        instance.general_comment = validated_data.get('general_comment', instance.general_comment)
+        instance.status = validated_data.get('status', instance.status)
+        
+        # Clear old items
+        instance.items.all().delete()
+        
+        # Calculate new total and create new items
+        total_sum = Decimal('0.00')
+        if items_data:
+            for item in items_data:
+                product: Product = item['product']
+                qty = Decimal(item['quantity'])
+                total_sum += (product.sell_price_usd or Decimal('0.00')) * qty
+            
+            instance.total_sum = total_sum
+            instance.save()
+            
+            # Create new items and update stock
+            for item in items_data:
+                product: Product = item['product']
+                qty = Decimal(item['quantity'])
+                status = item['status']
+                ReturnItem.objects.create(
+                    return_document=instance,
+                    product=product,
+                    quantity=qty,
+                    status=status,
+                    comment=item.get('comment', ''),
+                )
+                if status == ReturnItem.Status.HEALTHY:
+                    product.stock_ok = (product.stock_ok or Decimal('0')) + qty
+                    product.save(update_fields=['stock_ok'])
+                else:
+                    product.stock_defect = (product.stock_defect or Decimal('0')) + qty
+                    product.save(update_fields=['stock_defect'])
+        
+        # Update dealer debt with new total
+        new_dealer = instance.dealer
+        if hasattr(new_dealer, 'debt_usd'):
+            new_dealer.debt_usd = (new_dealer.debt_usd or Decimal('0.00')) - total_sum
+            new_dealer.save(update_fields=['debt_usd'])
+        
+        return instance
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')

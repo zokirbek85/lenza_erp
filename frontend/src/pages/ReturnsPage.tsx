@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, Collapse, Space, Table, Tag } from 'antd';
+import { Button, Card, Collapse, Space, Table, Tag, Popconfirm } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 import { useAuthStore } from '../auth/useAuthStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
-import { fetchReturns, type ReturnRecord } from '../api/returnsApi';
+import { fetchReturns, deleteReturn, type ReturnRecord } from '../api/returnsApi';
 import ReturnsMobileCards from './_mobile/ReturnsMobileCards';
 import type { ReturnsMobileHandlers } from './_mobile/ReturnsMobileCards';
 import CreateReturnForm from './returns/components/CreateReturnForm';
 
 const ReturnsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const role = useAuthStore((state) => state.role);
   const { isMobile } = useIsMobile();
   const isWarehouse = role === 'warehouse';
   const isSalesManager = role === 'sales';
+  const isAdmin = role === 'admin';
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -37,6 +42,21 @@ const ReturnsPage = () => {
 
   const handleExportPdf = () => downloadFile('/returns/export/pdf/', 'returns_report.pdf');
   const handleExportExcel = () => downloadFile('/returns/export/excel/', 'returns.xlsx');
+
+  const handleEdit = (returnId: number) => {
+    navigate(`/returns/${returnId}/edit`);
+  };
+
+  const handleDelete = async (returnId: number) => {
+    try {
+      await deleteReturn(returnId);
+      toast.success(t('returns.deleteSuccess'));
+      loadReturns();
+    } catch (error) {
+      toast.error(t('returns.deleteError'));
+      console.error('Delete error:', error);
+    }
+  };
 
   const mobileHandlers: ReturnsMobileHandlers = {
     onView: (returnId: number) => {
@@ -162,6 +182,39 @@ const ReturnsPage = () => {
             dataIndex: 'created_at',
             render: (value: string) => formatDate(value),
           },
+          ...(isAdmin ? [{
+            title: t('common:actions.title'),
+            key: 'actions',
+            width: 150,
+            render: (_: unknown, record: ReturnRecord) => (
+              <Space size="small">
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record.id)}
+                >
+                  {t('common:actions.edit')}
+                </Button>
+                <Popconfirm
+                  title={t('returns.deleteConfirm')}
+                  description={t('returns.deleteDescription')}
+                  onConfirm={() => handleDelete(record.id)}
+                  okText={t('common:actions.yes')}
+                  cancelText={t('common:actions.no')}
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                  >
+                    {t('common:actions.delete')}
+                  </Button>
+                </Popconfirm>
+              </Space>
+            ),
+          }] : []),
         ]}
         dataSource={returns}
         loading={loading}

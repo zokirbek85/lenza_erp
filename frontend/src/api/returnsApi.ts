@@ -51,3 +51,17 @@ export const fetchReturns = async () => {
   return records;
 };
 
+export const fetchReturnById = async (id: number): Promise<ReturnRecord> => {
+  const response = await http.get<ReturnRecord>(`/returns/${id}/`);
+  return response.data;
+};
+
+export const updateReturn = async (id: number, payload: ReturnPayload): Promise<ReturnRecord> => {
+  const response = await http.put<ReturnRecord>(`/returns/${id}/`, payload);
+  return response.data;
+};
+
+export const deleteReturn = async (id: number): Promise<void> => {
+  await http.delete(`/returns/${id}/`);
+};
+
