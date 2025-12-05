@@ -390,12 +390,17 @@ class VariantCatalogSerializer(serializers.ModelSerializer):
         return obj.get_size_stock()
     
     def get_image(self, obj):
-        """Полный URL изображения"""
+        """Полный URL изображения (null agar fayl yo'q bo'lsa)"""
         request = self.context.get('request')
         if obj.image:
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
+            # Check if file actually exists
+            try:
+                if obj.image.storage.exists(obj.image.name):
+                    if request:
+                        return request.build_absolute_uri(obj.image.url)
+                    return obj.image.url
+            except Exception:
+                pass
         return None
     
     def get_max_full_sets_by_stock(self, obj):
