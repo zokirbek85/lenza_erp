@@ -93,7 +93,7 @@ class ReconciliationDocument(BaseDocument):
             all_items.append({
                 'date': payment['date'],
                 'type': 'payment',
-                'description': f"Payment ({payment.get('account_name', 'Cash')})",
+                'description': f"Payment ({payment.get('method', 'Cash')})",
                 'amount': Decimal(str(payment['amount_usd'])),
                 'is_debit': False,
             })
