@@ -11,7 +11,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehouse
 from core.mixins.export_mixins import ExportMixin
@@ -1089,9 +1089,9 @@ class VariantCatalogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = ProductVariant.objects.filter(is_active=True).select_related(
         'product_model__brand'
-    ).prefetch_related('skus__product')
+    ).prefetch_related('skus__product', 'kit_components__component')
     serializer_class = VariantCatalogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Katalog umumiy (public)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ('product_model__model_name', 'color', 'product_model__brand__name', 'product_model__collection')
     ordering_fields = ('product_model__brand__name', 'product_model__model_name', 'color')

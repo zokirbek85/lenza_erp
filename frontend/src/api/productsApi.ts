@@ -169,6 +169,11 @@ export type VariantCatalog = {
 };
 
 export const fetchVariantCatalog = async (): Promise<VariantCatalog[]> => {
-  const response = await http.get<VariantCatalog[]>('/catalog/variants/');
+  const response = await http.get<{ count: number; results: VariantCatalog[] }>('/catalog/variants/');
+  // Handle paginated response
+  if (response.data && typeof response.data === 'object' && 'results' in response.data) {
+    return Array.isArray(response.data.results) ? response.data.results : [];
+  }
+  // Fallback for non-paginated response
   return Array.isArray(response.data) ? response.data : [];
 };
