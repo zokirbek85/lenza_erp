@@ -76,7 +76,7 @@ const CreateReturnForm = ({ onCreated, onCancel, initialData, isEdit = false }: 
       });
       
       // Convert initial items to cart format
-      const cartItems: CartItem[] = initialData.items.map((item, index) => ({
+      const cartItems: CartItem[] = initialData.items.map((item) => ({
         key: item.product_id,
         product_id: item.product_id,
         product_name: item.product_name,
@@ -277,7 +277,7 @@ const CreateReturnForm = ({ onCreated, onCancel, initialData, isEdit = false }: 
         message.success(t('returns.messages.created'));
         setCart([]);
         form.resetFields();
-        onCreated();
+        onCreated(payload);
       }
     } catch (error) {
       console.error(error);
