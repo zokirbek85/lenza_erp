@@ -8,18 +8,24 @@ from datetime import date
 
 from django.db.models import Q, Sum, F, Value, Case, When, DecimalField, QuerySet
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 
 def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     """
-    Calculate dealer balance with proper formula:
+    Calculate dealer balance with proper formula using historical exchange rates:
     
     balance = opening_balance + orders - returns - payments
+    
+    NEW LOGIC:
+    1. Opening balance converted using opening_balance_date rate
+    2. Orders use stored exchange rates from order.exchange_rate
+    3. Payments use stored exchange rates from transaction.exchange_rate
     
     Where:
     - orders: confirmed/packed/shipped/delivered, not imported
     - returns: both OrderReturn and ReturnItem (all types including defective)
-    - payments: approved INCOME transactions only, converted to USD
+    - payments: approved INCOME transactions only
     
     Args:
         dealer: Dealer instance
@@ -33,6 +39,21 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     from finance.models import FinanceTransaction
     from core.utils.currency import get_exchange_rate
     
+    # 1. Calculate opening balance with historical rate
+    opening_balance_amount = dealer.opening_balance or Decimal('0')
+    opening_currency = dealer.opening_balance_currency or 'USD'
+    opening_date = dealer.opening_balance_date or dealer.created_at.date() if dealer.created_at else timezone.localdate()
+    
+    # Get exchange rate for opening balance date
+    opening_rate, _ = get_exchange_rate(opening_date)
+    
+    if opening_currency == 'USD':
+        opening_usd = opening_balance_amount
+        opening_uzs = (opening_balance_amount * opening_rate).quantize(Decimal('0.01'))
+    else:  # UZS
+        opening_uzs = opening_balance_amount
+        opening_usd = (opening_balance_amount / opening_rate).quantize(Decimal('0.01')) if opening_rate > 0 else Decimal('0')
+    
     # Base filters
     order_filter = Q(
         status__in=Order.Status.active_statuses(),
@@ -41,7 +62,7 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     if as_of_date:
         order_filter &= Q(value_date__lte=as_of_date)
     
-    # 1. Calculate total orders (USD and UZS)
+    # 2. Calculate total orders (USD and UZS) - using stored exchange rates
     orders_qs = dealer.orders.filter(order_filter)
     total_orders_usd = orders_qs.aggregate(
         total=Coalesce(Sum('total_usd'), Value(0, output_field=DecimalField()))
@@ -100,10 +121,7 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     total_payments_usd = payments['usd'] or Decimal('0')
     total_payments_uzs = payments['uzs'] or Decimal('0')
     
-    # 5. Calculate final balance
-    opening_usd = dealer.opening_balance_usd or Decimal('0')
-    opening_uzs = dealer.opening_balance_uzs or Decimal('0')
-    
+    # 5. Calculate final balance using historical opening balance
     balance_usd = opening_usd + total_orders_usd - total_returns_usd - total_payments_usd
     balance_uzs = opening_uzs + total_orders_uzs - total_returns_uzs - total_payments_uzs
     
@@ -111,8 +129,17 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
         'balance_usd': balance_usd,
         'balance_uzs': balance_uzs,
         'breakdown': {
+            # New fields with historical rate conversion
+            'opening_balance': opening_balance_amount,
+            'opening_balance_currency': opening_currency,
+            'opening_balance_date': opening_date,
+            'opening_balance_rate': opening_rate,
             'opening_balance_usd': opening_usd,
             'opening_balance_uzs': opening_uzs,
+            # Legacy fields (kept for compatibility)
+            'legacy_opening_balance_usd': dealer.opening_balance_usd or Decimal('0'),
+            'legacy_opening_balance_uzs': dealer.opening_balance_uzs or Decimal('0'),
+            # Transaction totals
             'total_orders_usd': total_orders_usd,
             'total_orders_uzs': total_orders_uzs,
             'total_returns_usd': total_returns_usd,

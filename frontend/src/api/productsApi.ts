@@ -20,6 +20,7 @@ export type Product = {
   brand: { id: number; name: string } | null;
   category: { id: number; name: string } | null;
   style?: { id: number; name: string; description?: string } | null;
+  size?: string;
   sell_price_usd: number;
   stock_ok: number;
   stock_defect: number;

@@ -35,6 +35,13 @@ class DealerSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), source='manager_user', allow_null=True, required=False
     )
     
+    # New opening balance fields with historical rate support
+    opening_balance = serializers.DecimalField(max_digits=18, decimal_places=2, required=False)
+    opening_balance_currency = serializers.ChoiceField(choices=['USD', 'UZS'], required=False)
+    opening_balance_date = serializers.DateField(required=False)
+    historical_opening_balance_usd = serializers.SerializerMethodField()
+    historical_opening_balance_uzs = serializers.SerializerMethodField()
+    
     # Computed balance fields
     current_balance_usd = serializers.SerializerMethodField()
     current_balance_uzs = serializers.SerializerMethodField()
@@ -44,6 +51,46 @@ class DealerSerializer(serializers.ModelSerializer):
     balance = serializers.SerializerMethodField()
     current_debt_usd = serializers.SerializerMethodField()
     current_debt_uzs = serializers.SerializerMethodField()
+    
+    def get_historical_opening_balance_usd(self, obj):
+        """
+        Calculate opening balance in USD using historical exchange rate from opening_balance_date.
+        Returns the amount already stored if currency is USD, otherwise converts from UZS.
+        """
+        from decimal import Decimal
+        from core.utils.currency import get_exchange_rate
+        
+        opening_amount = obj.opening_balance or Decimal('0')
+        opening_currency = obj.opening_balance_currency or 'USD'
+        opening_date = obj.opening_balance_date or obj.created_at.date() if obj.created_at else None
+        
+        if opening_currency == 'USD':
+            return opening_amount
+        else:  # UZS → USD
+            if opening_date:
+                rate, _ = get_exchange_rate(opening_date)
+                return (opening_amount / rate).quantize(Decimal('0.01')) if rate > 0 else Decimal('0')
+            return Decimal('0')
+    
+    def get_historical_opening_balance_uzs(self, obj):
+        """
+        Calculate opening balance in UZS using historical exchange rate from opening_balance_date.
+        Returns the amount already stored if currency is UZS, otherwise converts from USD.
+        """
+        from decimal import Decimal
+        from core.utils.currency import get_exchange_rate
+        
+        opening_amount = obj.opening_balance or Decimal('0')
+        opening_currency = obj.opening_balance_currency or 'USD'
+        opening_date = obj.opening_balance_date or obj.created_at.date() if obj.created_at else None
+        
+        if opening_currency == 'UZS':
+            return opening_amount
+        else:  # USD → UZS
+            if opening_date:
+                rate, _ = get_exchange_rate(opening_date)
+                return (opening_amount * rate).quantize(Decimal('0.01'))
+            return Decimal('0')
     
     def get_current_balance_usd(self, obj):
         """Use annotated value if available, otherwise calculate from property"""
@@ -102,8 +149,17 @@ class DealerSerializer(serializers.ModelSerializer):
             'region_id',
             'manager',
             'manager_user_id',
+            # New opening balance fields (read/write)
+            'opening_balance',
+            'opening_balance_currency',
+            'opening_balance_date',
+            # Historical opening balance (read-only, calculated from date)
+            'historical_opening_balance_usd',
+            'historical_opening_balance_uzs',
+            # Legacy opening balance fields (kept for compatibility)
             'opening_balance_usd',
             'opening_balance_uzs',
+            # Current balance fields (read-only, calculated)
             'current_balance_usd',
             'current_balance_uzs',
             'converted_balance_uzs',
@@ -125,6 +181,8 @@ class DealerSerializer(serializers.ModelSerializer):
             'converted_balance_uzs',
             'current_debt_usd',
             'current_debt_uzs',
+            'historical_opening_balance_usd',
+            'historical_opening_balance_uzs',
         )
     
     def get_region(self, obj):

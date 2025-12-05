@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Sum, Q, F, Value, Case, When, DecimalField
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 
 class Region(models.Model):
@@ -53,8 +54,28 @@ class Dealer(models.Model):
         null=True,
         blank=True,
     )
+    # New unified opening balance fields
+    opening_balance = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        help_text='Opening balance amount in opening_balance_currency'
+    )
+    opening_balance_currency = models.CharField(
+        max_length=3,
+        choices=[('USD', 'USD'), ('UZS', 'UZS')],
+        default='USD',
+        help_text='Currency of opening balance'
+    )
+    opening_balance_date = models.DateField(
+        default=timezone.localdate,
+        help_text='Date when opening balance was set'
+    )
+    
+    # Legacy fields - kept for backward compatibility, will be deprecated
     opening_balance_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     opening_balance_uzs = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

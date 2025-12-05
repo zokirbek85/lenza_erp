@@ -10,6 +10,7 @@ type ProductOption = {
   stock_ok?: number;
   brand?: { id: number; name: string } | null;
   category?: { id: number; name: string } | null;
+  size?: string;
 };
 
 type MobileProductSelectorProps = {
@@ -166,6 +167,17 @@ const MobileProductSelector = ({
               const isOutOfStock = stock <= 0;
               const brandLabel = product.brand?.name ?? '-';
               const categoryLabel = product.category?.name ?? '-';
+              
+              // Show size if category is NOT "Дверное полотно" and size exists
+              const categoryName = product.category?.name?.toLowerCase() || '';
+              const showSize = 
+                !categoryName.includes('дверное полотно') &&
+                product.size &&
+                product.size.trim().length > 0;
+              
+              const displayName = showSize
+                ? `${cleanName(product.name)} — ${product.size}`
+                : cleanName(product.name);
 
               return (
                 <button
@@ -182,7 +194,7 @@ const MobileProductSelector = ({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-slate-900 dark:text-white">
-                        {cleanName(product.name)}
+                        {displayName}
                       </h3>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {brandLabel} • {categoryLabel}

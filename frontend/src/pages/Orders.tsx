@@ -48,6 +48,7 @@ interface ProductOption {
   total_stock?: number;
   brand?: { id: number; name: string } | null;
   category?: { id: number; name: string } | null;
+  size?: string;
 }
 
 interface BrandOption {
@@ -1032,6 +1033,18 @@ const OrdersPage = () => {
                             const brandLabel = product.brand?.name ?? '-';
                             const categoryLabel = product.category?.name ?? '-';
                             const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(OK: ${stock})`;
+                            
+                            // Show size if category is NOT "Дверное полотно" and size exists
+                            const categoryName = product.category?.name?.toLowerCase() || '';
+                            const showSize = 
+                              !categoryName.includes('дверное полотно') &&
+                              product.size &&
+                              product.size.trim().length > 0;
+                            
+                            const displayName = showSize
+                              ? `${cleanName(product.name)} — ${product.size}`
+                              : cleanName(product.name);
+                            
                             return (
                               <option
                                 key={product.id}
@@ -1039,7 +1052,7 @@ const OrdersPage = () => {
                                 disabled={isOutOfStock}
                                 style={isOutOfStock ? { color: '#999', fontStyle: 'italic' } : undefined}
                               >
-                                {cleanName(product.name)} - {brandLabel} - {categoryLabel}{' '}
+                                {displayName} - {brandLabel} - {categoryLabel}{' '}
                                 {stockLabel}
                               </option>
                             );
