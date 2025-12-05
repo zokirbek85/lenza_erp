@@ -254,3 +254,9 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_allowed_origins if ori
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + ['Authorization']
+
+# File Upload Settings
+# Maximum size of request body (in bytes): 50MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
+# Maximum size of uploaded file (in bytes): 50MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
