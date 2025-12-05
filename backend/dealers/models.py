@@ -97,7 +97,10 @@ class Dealer(models.Model):
     
     @property
     def balance_uzs(self) -> Decimal:
-        """Calculate dealer balance in UZS using same formula as USD."""
+        """
+        Calculate dealer balance in UZS.
+        Note: OrderReturn only has amount_usd, so we convert it to UZS.
+        """
         from orders.models import Order, OrderReturn
         from finance.models import FinanceTransaction
 
@@ -115,13 +118,16 @@ class Dealer(models.Model):
             or Decimal('0')
         )
         
-        # Total of returns in UZS
-        returns_total = (
+        # Total of returns in UZS (convert from USD since OrderReturn only has amount_usd)
+        returns_usd = (
             OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
-            .aggregate(total=Sum('amount_uzs'))
+            .aggregate(total=Sum('amount_usd'))
             .get('total')
             or Decimal('0')
         )
+        # Convert USD returns to UZS using hardcoded rate
+        USD_TO_UZS_RATE = Decimal('12600')
+        returns_total = (returns_usd * USD_TO_UZS_RATE).quantize(Decimal('0.01'))
         
         # Total of approved income transactions in UZS
         payments_total = (
