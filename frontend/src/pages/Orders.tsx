@@ -720,21 +720,12 @@ const OrdersPage = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="space-y-4 px-4 pb-6">
+      <div className="space-y-4 px-4 pb-24">
         <header className="flex items-center justify-between py-4">
           <div>
             <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
           </div>
-          {!isWarehouse && (
-            <button
-              onClick={handleToggleCreateForm}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-              style={{ position: 'relative', zIndex: 2100 }}
-            >
-              {showCreateForm ? t('orders.header.hideForm') : t('orders.header.showForm')}
-            </button>
-          )}
         </header>
 
         {/* Mobile Create Form */}
@@ -796,6 +787,17 @@ const OrdersPage = () => {
           </div>
         ) : (
           <OrdersMobileCards data={orders} handlers={mobileHandlers} />
+        )}
+
+        {/* Floating Action Button (FAB) for creating new order */}
+        {!isWarehouse && (
+          <button
+            onClick={handleToggleCreateForm}
+            className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all dark:bg-emerald-500"
+            aria-label={t('orders.header.showForm')}
+          >
+            <PlusOutlined className="text-2xl" />
+          </button>
         )}
 
         <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">

@@ -1,6 +1,7 @@
 ﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PlusOutlined } from '@ant-design/icons';
 import toast from 'react-hot-toast';
 
 import http from '../app/http';
@@ -482,18 +483,12 @@ const DealersPage = () => {
   // Mobile view
   if (isMobile) {
     return (
-      <div className="space-y-4 px-4 pb-6">
+      <div className="space-y-4 px-4 pb-24">
         <header className="flex items-center justify-between py-4">
           <div>
             <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t('dealers.title')}</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('dealers.subtitle')}</p>
           </div>
-          <button
-            onClick={() => openModal()}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-          >
-            {t('dealers.new')}
-          </button>
         </header>
 
         <FilterTrigger onClick={() => setFiltersOpen(true)} />
@@ -516,6 +511,15 @@ const DealersPage = () => {
             permissions={mobilePermissions}
           />
         )}
+
+        {/* Floating Action Button (FAB) for creating new dealer */}
+        <button
+          onClick={() => openModal()}
+          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all dark:bg-emerald-500"
+          aria-label={t('dealers.new')}
+        >
+          <PlusOutlined className="text-2xl" />
+        </button>
 
         <PaginationControls
           page={page}
@@ -922,19 +926,25 @@ const DealersPage = () => {
               <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">{t('dealers.recentPayments')}</h4>
               {payments.length === 0 && <p className="text-sm text-slate-500">{t('dealers.messages.noPayments')}</p>}
               {payments.length > 0 && (
-                <ul className="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                <div className="mt-3 space-y-3">
                   {payments.slice(0, 5).map((payment) => (
-                    <li key={payment.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">
-                    <Money value={payment.amount} currency={payment.currency || 'USD'} />
-                        </p>
-                        <p className="text-xs uppercase tracking-widest text-slate-500">{payment.method}</p>
+                    <div key={payment.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-lg font-bold text-slate-900 dark:text-white">
+                            <Money value={payment.amount} currency={payment.currency || 'USD'} />
+                          </p>
+                          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            {payment.method}
+                          </p>
+                        </div>
+                        <div className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                          {payment.pay_date}
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500">{payment.pay_date}</p>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           </div>

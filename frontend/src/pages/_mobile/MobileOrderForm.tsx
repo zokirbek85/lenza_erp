@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import MobileDrawerForm from '../../components/responsive/MobileDrawerForm';
 import MobileFormField from '../../components/responsive/MobileFormField';
+import MobileProductSelector from '../../components/responsive/MobileProductSelector';
 import { cleanName, formatCurrency, formatQuantity } from '../../utils/formatters';
 
 type OrderItem = {
@@ -104,6 +105,16 @@ const MobileOrderForm = ({
 }: MobileOrderFormProps) => {
   const { t } = useTranslation();
   const [expandedProduct, setExpandedProduct] = useState<number | null>(null);
+  const [productSelectorOpen, setProductSelectorOpen] = useState(false);
+
+  const handleOpenProductSelector = () => {
+    setProductSelectorOpen(true);
+  };
+
+  const handleProductSelected = (productId: number) => {
+    onProductSelect(String(productId));
+    setProductSelectorOpen(false);
+  };
 
   const totalAmount = selectedItems.reduce(
     (sum, item) => sum + item.qty * item.price_usd,
@@ -244,53 +255,29 @@ const MobileOrderForm = ({
             </MobileFormField>
           </div>
 
-          {/* Product Search */}
-          <MobileFormField label={t('orders.form.productSearch')}>
-            <input
-              type="text"
-              value={productSearch}
-              onChange={(e) => onProductSearchChange(e.target.value)}
-              placeholder={t('orders.form.productSearchPlaceholder')}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              style={{ minHeight: '44px', fontSize: '16px' }}
-            />
+          {/* Product Search Button */}
+          <MobileFormField label={t('orders.form.productSelect')}>
+            <button
+              type="button"
+              onClick={handleOpenProductSelector}
+              className="mobile-btn w-full rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+            >
+              <PlusOutlined className="mr-2" />
+              {t('orders.form.productSearchPlaceholder')}
+            </button>
           </MobileFormField>
 
-          {/* Product Select */}
-          <MobileFormField label={t('orders.form.productSelect')}>
-            <select
-              value={selectedProduct?.id ?? ''}
-              onChange={(e) => onProductSelect(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              style={{ minHeight: '44px', fontSize: '16px' }}
-            >
-              <option value="">{t('orders.form.productSelectPlaceholder')}</option>
-              {products.map((product) => {
-                // Only show good stock (stock_ok) - defect stock is not used in orders
-                const stock = product.stock_ok ?? 0;
-                const isOutOfStock = stock <= 0;
-                const brandLabel = product.brand?.name ?? '-';
-                const categoryLabel = product.category?.name ?? '-';
-                const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(OK: ${stock})`;
-                return (
-                  <option
-                    key={product.id}
-                    value={product.id}
-                    disabled={isOutOfStock}
-                    style={isOutOfStock ? { color: '#999', fontStyle: 'italic' } : undefined}
-                  >
-                    {cleanName(product.name)} - {brandLabel} - {categoryLabel} {stockLabel}
-                  </option>
-                );
-              })}
-            </select>
-            {productsLoading && (
-              <p className="mt-1 text-xs text-slate-500">{t('orders.form.productsLoading')}</p>
-            )}
-            {!products.length && !productsLoading && (
-              <p className="mt-1 text-xs text-slate-500">Mos mahsulot topilmadi.</p>
-            )}
-          </MobileFormField>
+          {/* Selected Product Display */}
+          {selectedProduct && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-900/20">
+              <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                {cleanName(selectedProduct.name)}
+              </p>
+              <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                {selectedProduct.brand?.name ?? '-'} • {selectedProduct.category?.name ?? '-'}
+              </p>
+            </div>
+          )}
 
           {/* Quantity and Price */}
           <div className="grid grid-cols-2 gap-3">
@@ -427,6 +414,23 @@ const MobileOrderForm = ({
         {/* Bottom spacing for fixed footer */}
         <div style={{ height: '120px' }} />
       </form>
+
+      {/* Full-screen Product Selector */}
+      <MobileProductSelector
+        open={productSelectorOpen}
+        onClose={() => setProductSelectorOpen(false)}
+        products={products}
+        brands={brands}
+        categories={categories}
+        brandId={brandId}
+        categoryId={categoryId}
+        productSearch={productSearch}
+        productsLoading={productsLoading}
+        onBrandChange={onBrandChange}
+        onCategoryChange={onCategoryChange}
+        onProductSearchChange={onProductSearchChange}
+        onProductSelect={handleProductSelected}
+      />
     </MobileDrawerForm>
   );
 };

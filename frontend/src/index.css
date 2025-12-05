@@ -850,6 +850,127 @@ body {
 }
 
 /* ==========================================================================
+   MOBILE UX IMPROVEMENTS
+   ========================================================================== */
+
+/* Touch-friendly buttons for mobile devices */
+@media (max-width: 768px) {
+  .mobile-btn {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* Larger input fields for mobile */
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 12px;
+  }
+
+  /* Improve touch target sizes */
+  button,
+  a,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* FAB button styles */
+  .fab {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .fab:active {
+    transform: scale(0.95);
+  }
+
+  /* Card-based layout for mobile */
+  .mobile-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-base);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease;
+  }
+
+  .mobile-card:active {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Sticky bottom panels */
+  .mobile-sticky-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-base);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 40;
+  }
+
+  /* Full-screen modals on mobile */
+  .mobile-fullscreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Collapsible filter panels */
+  .mobile-filter-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .mobile-filter-panel.expanded {
+    max-height: 1000px;
+  }
+
+  /* Smooth scrolling for mobile */
+  .mobile-scroll {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Safe area padding for notched devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ==========================================================================
    PERFORMANCE OPTIMIZATIONS
    ========================================================================== */
 
@@ -867,7 +988,8 @@ body {
 .lenza-card,
 .react-grid-item,
 .ant-card,
-.mobile-sticky-footer {
+.mobile-sticky-footer,
+.fab {
   transform: translateZ(0);
   backface-visibility: hidden;
   will-change: auto;
