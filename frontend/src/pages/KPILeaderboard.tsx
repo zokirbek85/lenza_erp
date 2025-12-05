@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import api from '../api/client';
-import { FaMedal, FaTrophy, FaAward, FaUsers, FaDollarSign } from 'react-icons/fa';
+import http from '../app/http';
+// Icons replaced with Unicode emojis for lightweight bundle
 
 interface LeaderboardItem {
   manager_id: number;
@@ -31,7 +31,7 @@ export default function KPILeaderboard() {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/kpi/leaderboard/', {
+      const response = await http.get('/api/kpi/leaderboard/', {
         params: dateRange,
       });
       setLeaderboard(response.data);
@@ -65,11 +65,11 @@ export default function KPILeaderboard() {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <FaTrophy className="text-4xl text-yellow-400" />;
+        return <span className="text-4xl">🥇</span>;
       case 2:
-        return <FaMedal className="text-4xl text-gray-400" />;
+        return <span className="text-4xl">🥈</span>;
       case 3:
-        return <FaAward className="text-4xl text-amber-700" />;
+        return <span className="text-4xl">🥉</span>;
       default:
         return <span className="text-2xl font-bold text-gray-400">#{rank}</span>;
     }
@@ -102,8 +102,7 @@ export default function KPILeaderboard() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
-            <FaTrophy className="text-yellow-500" />
-            {t('leaderboard.title')}
+            🏆 {t('leaderboard.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             {new Date(leaderboard.period_start).toLocaleDateString()} -{' '}
@@ -234,7 +233,7 @@ export default function KPILeaderboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-blue-50 dark:bg-blue-900 p-6 rounded-xl">
           <div className="flex items-center gap-3">
-            <FaUsers className="text-3xl text-blue-600 dark:text-blue-300" />
+            <span className="text-3xl">👥</span>
             <div>
               <p className="text-sm text-blue-600 dark:text-blue-300">{t('leaderboard.totalManagers')}</p>
               <p className="text-2xl font-bold text-blue-800 dark:text-white">{leaderboard.managers.length}</p>
@@ -244,7 +243,7 @@ export default function KPILeaderboard() {
 
         <div className="bg-green-50 dark:bg-green-900 p-6 rounded-xl">
           <div className="flex items-center gap-3">
-            <FaDollarSign className="text-3xl text-green-600 dark:text-green-300" />
+            <span className="text-3xl">💵</span>
             <div>
               <p className="text-sm text-green-600 dark:text-green-300">{t('leaderboard.totalSales')}</p>
               <p className="text-2xl font-bold text-green-800 dark:text-white">
@@ -256,7 +255,7 @@ export default function KPILeaderboard() {
 
         <div className="bg-purple-50 dark:bg-purple-900 p-6 rounded-xl">
           <div className="flex items-center gap-3">
-            <FaDollarSign className="text-3xl text-purple-600 dark:text-purple-300" />
+            <span className="text-3xl">💰</span>
             <div>
               <p className="text-sm text-purple-600 dark:text-purple-300">{t('leaderboard.totalPayments')}</p>
               <p className="text-2xl font-bold text-purple-800 dark:text-white">
@@ -268,7 +267,7 @@ export default function KPILeaderboard() {
 
         <div className="bg-yellow-50 dark:bg-yellow-900 p-6 rounded-xl">
           <div className="flex items-center gap-3">
-            <FaTrophy className="text-3xl text-yellow-600 dark:text-yellow-300" />
+            <span className="text-3xl">🏆</span>
             <div>
               <p className="text-sm text-yellow-600 dark:text-yellow-300">{t('leaderboard.totalBonus')}</p>
               <p className="text-2xl font-bold text-yellow-800 dark:text-white">

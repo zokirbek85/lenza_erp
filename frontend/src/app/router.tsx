@@ -8,7 +8,6 @@ import DealersPage from '../pages/Dealers';
 
 import KpiPage from '../pages/KpiPage';
 import OwnerKpiPage from '../pages/kpi/OwnerKpiPage';
-import ManagerKpiPage from '../pages/kpi/ManagerKpiPage';
 import WarehouseKpiPage from '../pages/kpi/WarehouseKpiPage';
 import KPIPage from '../pages/KPI'; // New comprehensive KPI module
 import KPILeaderboard from '../pages/KPILeaderboard'; // Leaderboard for directors

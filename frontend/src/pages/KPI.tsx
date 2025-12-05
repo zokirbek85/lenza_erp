@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import api from '../api/client';
+import http from '../app/http';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +14,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Line, Bar, Pie } from 'react-chartjs-2';
-import { FaMoneyBillWave, FaDollarSign, FaTrophy, FaUsers, FaChartLine } from 'react-icons/fa';
+// Icons replaced with Unicode emojis for lightweight bundle
 
 // Register ChartJS components
 ChartJS.register(
@@ -61,7 +61,7 @@ export default function KPIPage() {
     try {
       setLoading(true);
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const response = await api.get(`/api/kpi/manager/${user.id}/overview/`, {
+      const response = await http.get(`/api/kpi/manager/${user.id}/overview/`, {
         params: dateRange,
       });
       setKpiData(response.data);
@@ -181,7 +181,7 @@ export default function KPIPage() {
                 {kpiData.total_sales_uzs.toLocaleString()} {t('currency.uzs')}
               </p>
             </div>
-            <FaChartLine className="text-4xl text-blue-500" />
+            <span className="text-4xl">📈</span>
           </div>
         </div>
 
@@ -197,7 +197,7 @@ export default function KPIPage() {
                 {kpiData.total_payments_uzs.toLocaleString()} {t('currency.uzs')}
               </p>
             </div>
-            <FaMoneyBillWave className="text-4xl text-green-500" />
+            <span className="text-4xl">💵</span>
           </div>
         </div>
 
@@ -213,7 +213,7 @@ export default function KPIPage() {
                 {kpiData.bonus_uzs.toLocaleString()} {t('currency.uzs')}
               </p>
             </div>
-            <FaTrophy className="text-5xl text-white animate-pulse" />
+            <span className="text-5xl animate-pulse">🏆</span>
           </div>
           <div className="mt-3 pt-3 border-t border-yellow-300">
             <p className="text-xs text-yellow-100">{t('kpi.bonusFormula')}: 1% {t('kpi.ofPayments')}</p>
@@ -230,7 +230,7 @@ export default function KPIPage() {
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('kpi.activeDealers')}</p>
             </div>
-            <FaUsers className="text-4xl text-purple-500" />
+            <span className="text-4xl">👥</span>
           </div>
         </div>
       </div>
