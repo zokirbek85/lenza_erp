@@ -22,5 +22,20 @@
   "currency": {
     "usd": "USD",
     "uzs": "so'm"
+  },
+  "leaderboard": {
+    "title": "Menejerlar Reytingi",
+    "noData": "Ma'lumot topilmadi",
+    "rank": "O'rin",
+    "manager": "Menejer",
+    "sales": "Savdo",
+    "payments": "To'lovlar",
+    "bonus": "Bonus",
+    "dealers": "Dilerlar",
+    "allManagers": "Barcha Menejerlar",
+    "totalManagers": "Jami Menejerlar",
+    "totalSales": "Jami Savdo",
+    "totalPayments": "Jami To'lovlar",
+    "totalBonus": "Jami Bonus"
   }
 }

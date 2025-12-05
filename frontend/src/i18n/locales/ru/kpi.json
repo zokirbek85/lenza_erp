@@ -22,5 +22,20 @@
   "currency": {
     "usd": "USD",
     "uzs": "сум"
+  },
+  "leaderboard": {
+    "title": "Рейтинг Менеджеров",
+    "noData": "Данные не найдены",
+    "rank": "Место",
+    "manager": "Менеджер",
+    "sales": "Продажи",
+    "payments": "Платежи",
+    "bonus": "Бонус",
+    "dealers": "Дилеры",
+    "allManagers": "Все Менеджеры",
+    "totalManagers": "Всего Менеджеров",
+    "totalSales": "Общие Продажи",
+    "totalPayments": "Общие Платежи",
+    "totalBonus": "Общий Бонус"
   }
 }

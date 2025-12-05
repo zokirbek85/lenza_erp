@@ -22,5 +22,20 @@
   "currency": {
     "usd": "USD",
     "uzs": "UZS"
+  },
+  "leaderboard": {
+    "title": "Manager Leaderboard",
+    "noData": "No data found",
+    "rank": "Rank",
+    "manager": "Manager",
+    "sales": "Sales",
+    "payments": "Payments",
+    "bonus": "Bonus",
+    "dealers": "Dealers",
+    "allManagers": "All Managers",
+    "totalManagers": "Total Managers",
+    "totalSales": "Total Sales",
+    "totalPayments": "Total Payments",
+    "totalBonus": "Total Bonus"
   }
 }

@@ -11,6 +11,7 @@ import OwnerKpiPage from '../pages/kpi/OwnerKpiPage';
 import ManagerKpiPage from '../pages/kpi/ManagerKpiPage';
 import WarehouseKpiPage from '../pages/kpi/WarehouseKpiPage';
 import KPIPage from '../pages/KPI'; // New comprehensive KPI module
+import KPILeaderboard from '../pages/KPILeaderboard'; // Leaderboard for directors
 import Login from '../pages/Login';
 import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
@@ -143,6 +144,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'warehouse']}>
             <WarehouseKpiPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'kpi/leaderboard',
+        element: (
+          <ProtectedRoute roles={['admin', 'owner']}>
+            <KPILeaderboard />
           </ProtectedRoute>
         ),
       },
