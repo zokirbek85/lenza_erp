@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import CurrencyRatesPage from '../pages/CurrencyRates';
 import DealersPage from '../pages/Dealers';
+import PublicCatalogue from '../pages/PublicCatalogue';
 
 import KpiPage from '../pages/KpiPage';
 import OwnerKpiPage from '../pages/kpi/OwnerKpiPage';
@@ -228,6 +229,10 @@ const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/catalogue',
+    element: <PublicCatalogue />,
   },
   {
     path: '/login',

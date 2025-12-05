@@ -1029,6 +1029,7 @@ from .serializers import (
     ProductVariantDetailSerializer,
     ProductSKUSerializer,
     VariantCatalogSerializer,
+    PublicVariantCatalogSerializer,
 )
 
 
@@ -1166,4 +1167,103 @@ class VariantCatalogViewSet(viewsets.ReadOnlyModelViewSet):
                 {'value': '800мм', 'label': '800мм'},
                 {'value': '900мм', 'label': '900мм'},
             ]
+        })
+
+
+# ============================================================================
+# PUBLIC CATALOG API (for external customers)
+# ============================================================================
+
+class PublicVariantCatalogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Public catalog API for external customers.
+    
+    Available at: /api/public/catalog/variants/
+    
+    Features:
+    - No authentication required
+    - No prices shown
+    - No stock quantities shown
+    - Only active products with images
+    - Fully responsive for mobile devices
+    
+    Used for public catalogue page at https://lenza.uz/catalogue
+    
+    Query Parameters:
+    - brand: Filter by brand name (partial match)
+    - model: Filter by model name (partial match)
+    - color: Filter by color (partial match)
+    - door_type: Filter by door type (ПГ, ПО, ПДО, ПДГ)
+    - search: Search in model name, color, brand
+    """
+    serializer_class = PublicVariantCatalogSerializer
+    permission_classes = []  # No authentication required
+    authentication_classes = []  # No authentication
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ('product_model__model_name', 'color', 'product_model__brand__name')
+    ordering_fields = ('product_model__brand__name', 'product_model__model_name', 'color')
+    ordering = ('product_model__brand__name', 'product_model__model_name', 'color')
+    
+    def get_queryset(self):
+        """
+        Return only active variants with images.
+        Public customers should only see products with images.
+        """
+        queryset = ProductVariant.objects.filter(
+            is_active=True,
+            image__isnull=False  # Only variants with images
+        ).exclude(
+            image=''  # Exclude empty image paths
+        ).select_related(
+            'product_model__brand'
+        ).prefetch_related(
+            'skus__product'
+        )
+        
+        # Filter by brand name (partial match)
+        brand = self.request.query_params.get('brand')
+        if brand:
+            queryset = queryset.filter(product_model__brand__name__icontains=brand)
+        
+        # Filter by model name (partial match)
+        model = self.request.query_params.get('model')
+        if model:
+            queryset = queryset.filter(product_model__model_name__icontains=model)
+        
+        # Filter by color (partial match)
+        color = self.request.query_params.get('color')
+        if color:
+            queryset = queryset.filter(color__icontains=color)
+        
+        # Filter by door type (exact match)
+        door_type = self.request.query_params.get('door_type')
+        if door_type:
+            queryset = queryset.filter(door_type=door_type)
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'])
+    def filter_options(self, request):
+        """
+        Return available filter options for public catalog.
+        Useful for filter dropdowns in frontend.
+        """
+        queryset = self.get_queryset()
+        
+        brands = set()
+        models = set()
+        colors = set()
+        door_types = set()
+        
+        for variant in queryset:
+            brands.add(variant.product_model.brand.name)
+            models.add(variant.product_model.model_name)
+            colors.add(variant.color)
+            door_types.add((variant.door_type, variant.get_door_type_display()))
+        
+        return Response({
+            'brands': sorted(list(brands)),
+            'models': sorted(list(models)),
+            'colors': sorted(list(colors)),
+            'door_types': [{'value': val, 'label': label} for val, label in sorted(door_types, key=lambda x: x[1])],
         })

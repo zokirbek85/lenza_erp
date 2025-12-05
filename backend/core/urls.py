@@ -32,6 +32,7 @@ from catalog.views import (
     ProductVariantViewSet,
     ProductSKUViewSet,
     VariantCatalogViewSet,
+    PublicVariantCatalogViewSet,
 )
 from dealers.views_list_all import DealerListAllView
 from core.views import (
@@ -108,6 +109,8 @@ router.register('catalog/models', ProductModelViewSet, basename='product-model')
 router.register('catalog/variants', VariantCatalogViewSet, basename='variant-catalog')
 router.register('catalog/variants-detail', ProductVariantViewSet, basename='product-variant')
 router.register('catalog/skus', ProductSKUViewSet, basename='product-sku')
+# Public catalog (no auth required)
+router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename='public-catalog')
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
 
 urlpatterns = [

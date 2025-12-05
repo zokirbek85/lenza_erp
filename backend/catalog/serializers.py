@@ -406,3 +406,63 @@ class VariantCatalogSerializer(serializers.ModelSerializer):
     def get_max_full_sets_by_stock(self, obj):
         """Nechta to'liq komplekt skladdagi pogonaj bilan yig'ish mumkin"""
         return obj.max_full_sets_by_stock
+
+
+# ============================================================================
+# PUBLIC CATALOG SERIALIZER (for external customers)
+# ============================================================================
+
+class PublicVariantCatalogSerializer(serializers.ModelSerializer):
+    """
+    Public catalog serializer for external customers.
+    
+    DOES NOT INCLUDE:
+    - Prices (no pricing information)
+    - Stock quantities (no inventory data)
+    - Internal IDs
+    
+    ONLY SHOWS:
+    - Product information (model, brand, color, type)
+    - Available sizes (without stock quantities)
+    - Product images
+    
+    Used for public catalogue at https://lenza.uz/catalogue
+    No authentication required.
+    """
+    model = serializers.CharField(source='model_name', read_only=True)
+    brand = serializers.CharField(source='brand_name', read_only=True)
+    door_type_display = serializers.CharField(source='get_door_type_display', read_only=True)
+    image = serializers.SerializerMethodField()
+    sizes = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductVariant
+        fields = (
+            'id',
+            'model',
+            'brand',
+            'color',
+            'door_type',
+            'door_type_display',
+            'image',
+            'sizes',
+        )
+    
+    def get_image(self, obj):
+        """Full URL to product image"""
+        request = self.context.get('request')
+        if obj.image:
+            try:
+                if obj.image.storage.exists(obj.image.name):
+                    if request:
+                        return request.build_absolute_uri(obj.image.url)
+                    return obj.image.url
+            except Exception:
+                pass
+        return None
+    
+    def get_sizes(self, obj):
+        """List of available sizes (without stock quantities)"""
+        size_stock = obj.get_size_stock()
+        # Return only sizes, no stock information
+        return [item['size'] for item in size_stock]
