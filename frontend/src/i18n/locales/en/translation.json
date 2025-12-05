@@ -45,6 +45,8 @@
     "returns": "Returns",
     "reconciliation": "Reconciliation",
     "kpi": "KPI",
+    "kpiLeaderboard": "KPI Leaderboard",
+    "kpiManager": "KPI Manager",
     "settings": "Settings",
     "notifications": "Notifications",
     "userManual": "User Manual"

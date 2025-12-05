@@ -39,6 +39,8 @@
     "currency": "Курс",
     "reconciliation": "Акт сверки",
     "kpi": "KPI",
+    "kpiLeaderboard": "Таблица лидеров",
+    "kpiManager": "Управление KPI",
     "settings": "Настройки",
     "returns": "Возвраты",
     "notifications": "Уведомления",

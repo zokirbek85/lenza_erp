@@ -46,6 +46,18 @@ const BASE_MENU: MenuItem[] = [
       roles: ['admin', 'sales', 'warehouse', 'accountant', 'owner'],
     },
     {
+      path: '/kpi/leaderboard',
+      label: 'nav.kpiLeaderboard',
+      icon: <RiseOutlined />,
+      roles: ['admin'],
+    },
+    {
+      path: '/kpi/manager',
+      label: 'nav.kpiManager',
+      icon: <TeamOutlined />,
+      roles: ['admin'],
+    },
+    {
       path: '/orders',
       label: 'nav.orders',
       icon: <ShoppingOutlined />,
