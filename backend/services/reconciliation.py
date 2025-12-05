@@ -131,7 +131,7 @@ def get_reconciliation_data(
             is_imported=False,
         )
         .order_by('value_date', 'display_no')
-        .values('value_date', 'display_no', 'total_usd')
+        .values('value_date', 'display_no', 'total_usd', 'total_uzs', 'exchange_rate', 'exchange_rate_date')
     )
     logger.info(f"Found {len(orders)} orders")
 
@@ -146,7 +146,7 @@ def get_reconciliation_data(
         )
         .select_related('account')
         .order_by('date')
-        .values('date', 'amount_usd', 'currency', 'account__name', 'account__type', 'comment')
+        .values('date', 'amount_usd', 'currency', 'exchange_rate', 'exchange_rate_date', 'account__name', 'account__type', 'comment')
     )
     logger.info(f"Found {len(payments)} payments")
 
@@ -158,7 +158,7 @@ def get_reconciliation_data(
         )
         .select_related('order')
         .order_by('created_at')
-        .values('created_at', 'amount_usd', 'order__display_no')
+        .values('created_at', 'amount_usd', 'amount_uzs', 'exchange_rate', 'exchange_rate_date', 'order__display_no')
     )
     logger.info(f"Found {len(returns)} order returns")
     
@@ -200,6 +200,9 @@ def get_reconciliation_data(
                 'date': row['value_date'],
                 'order_no': row['display_no'],
                 'amount_usd': float(row['total_usd'] or 0),
+                'amount_uzs': float(row['total_uzs'] or 0),
+                'exchange_rate': float(row['exchange_rate']) if row['exchange_rate'] else None,
+                'exchange_rate_date': row['exchange_rate_date'],
             }
 
     def _format_payments():
@@ -225,6 +228,8 @@ def get_reconciliation_data(
                 'method': label,
                 'amount_usd': float(row['amount_usd'] or 0),
                 'currency': currency,
+                'exchange_rate': float(row['exchange_rate']) if row.get('exchange_rate') else None,
+                'exchange_rate_date': row.get('exchange_rate_date'),
             }
 
     def _format_returns():
@@ -235,6 +240,9 @@ def get_reconciliation_data(
                 'date': created_date,
                 'order_no': row['order__display_no'],
                 'amount_usd': float(row['amount_usd'] or 0),
+                'amount_uzs': float(row['amount_uzs'] or 0),
+                'exchange_rate': float(row['exchange_rate']) if row['exchange_rate'] else None,
+                'exchange_rate_date': row['exchange_rate_date'],
                 'source': 'order',
             }
 

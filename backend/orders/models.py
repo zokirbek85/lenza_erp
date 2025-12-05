@@ -244,6 +244,24 @@ class OrderReturn(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='processed_returns'
     )
     amount_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    amount_uzs = models.DecimalField(
+        max_digits=18, 
+        decimal_places=2, 
+        default=0,
+        help_text='Return amount in UZS (using order exchange rate)'
+    )
+    exchange_rate = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text='Exchange rate from order (1 USD = X UZS)'
+    )
+    exchange_rate_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text='Exchange rate date from order'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -253,4 +271,20 @@ class OrderReturn(models.Model):
         if not self.amount_usd:
             quantity = self.quantity or Decimal('0.00')
             self.amount_usd = (self.item.price_usd * quantity).quantize(Decimal('0.01'))
+        
+        # Get exchange rate from order if available
+        if self.order and self.order.exchange_rate and not self.exchange_rate:
+            self.exchange_rate = self.order.exchange_rate
+            self.exchange_rate_date = self.order.exchange_rate_date
+        
+        # Calculate UZS amount using order's exchange rate
+        if self.exchange_rate and self.exchange_rate > 0:
+            self.amount_uzs = (self.amount_usd * self.exchange_rate).quantize(Decimal('0.01'))
+        else:
+            # Fallback: use current rate if order doesn't have rate
+            from core.utils.currency import usd_to_uzs
+            self.amount_uzs, self.exchange_rate = usd_to_uzs(self.amount_usd, self.order.value_date if self.order else None)
+            if not self.exchange_rate_date and self.order:
+                self.exchange_rate_date = self.order.value_date
+        
         super().save(*args, **kwargs)

@@ -65,11 +65,23 @@ class OrderReturnSerializer(serializers.ModelSerializer):
         min_value=Decimal('0.01'),
         coerce_to_string=False,
     )
+    exchange_rate = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = OrderReturn
-        fields = ('id', 'item', 'quantity', 'is_defect', 'amount_usd', 'created_at')
-        read_only_fields = ('amount_usd', 'created_at')
+        fields = (
+            'id', 'item', 'quantity', 'is_defect', 
+            'amount_usd', 'amount_uzs', 
+            'exchange_rate', 'exchange_rate_date',
+            'created_at'
+        )
+        read_only_fields = ('amount_usd', 'amount_uzs', 'exchange_rate', 'exchange_rate_date', 'created_at')
 
 class DealerShortSerializer(serializers.ModelSerializer):
     region = serializers.CharField(source='region.name', read_only=True)

@@ -99,14 +99,14 @@ class Dealer(models.Model):
     def balance_uzs(self) -> Decimal:
         """
         Calculate dealer balance in UZS.
-        Note: OrderReturn only has amount_usd, so we convert it to UZS.
+        Each operation uses its own stored exchange rate.
         """
         from orders.models import Order, OrderReturn
         from finance.models import FinanceTransaction
 
         opening = self.opening_balance_uzs or Decimal('0')
 
-        # Total of active orders in UZS
+        # Total of active orders in UZS (each order has its own rate)
         orders_total = (
             Order.objects.filter(
                 dealer=self, 
@@ -118,20 +118,16 @@ class Dealer(models.Model):
             or Decimal('0')
         )
         
-        # Total of returns in UZS (convert from USD since OrderReturn only has amount_usd)
-        from core.utils.currency import usd_to_uzs
-        
-        returns_usd = (
+        # Total of returns in UZS (each return has its own rate from order)
+        returns_total = (
             OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
-            .aggregate(total=Sum('amount_usd'))
+            .aggregate(total=Sum('amount_uzs'))
             .get('total')
             or Decimal('0')
         )
-        # Convert USD returns to UZS using current exchange rate
-        returns_total, _ = usd_to_uzs(returns_usd)
         
-        # Total of approved income transactions in UZS
-        payments_total = (
+        # Total of approved UZS income transactions (each has its own rate)
+        payments_uzs = (
             FinanceTransaction.objects.filter(
                 dealer=self,
                 type=FinanceTransaction.TransactionType.INCOME,
@@ -142,6 +138,24 @@ class Dealer(models.Model):
             .get('total')
             or Decimal('0')
         )
+        
+        # Total of approved USD income transactions converted to UZS (each has its own rate)
+        # For USD payments, we need to convert to UZS using current rate for display
+        from core.utils.currency import usd_to_uzs
+        payments_usd = (
+            FinanceTransaction.objects.filter(
+                dealer=self,
+                type=FinanceTransaction.TransactionType.INCOME,
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                currency='USD'
+            )
+            .aggregate(total=Sum('amount'))
+            .get('total')
+            or Decimal('0')
+        )
+        payments_usd_in_uzs, _ = usd_to_uzs(payments_usd) if payments_usd > 0 else (Decimal('0'), None)
+        
+        payments_total = payments_uzs + payments_usd_in_uzs
 
         return opening + orders_total - returns_total - payments_total
     
