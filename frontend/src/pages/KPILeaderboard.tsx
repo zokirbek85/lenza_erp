@@ -31,7 +31,7 @@ export default function KPILeaderboard() {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const response = await http.get('/api/kpi/leaderboard/', {
+      const response = await http.get('/kpi/leaderboard/', {
         params: dateRange,
       });
       setLeaderboard(response.data);

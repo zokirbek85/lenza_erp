@@ -61,7 +61,7 @@ export default function KPIPage() {
     try {
       setLoading(true);
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const response = await http.get(`/api/kpi/manager/${user.id}/overview/`, {
+      const response = await http.get(`/kpi/manager/${user.id}/overview/`, {
         params: dateRange,
       });
       setKpiData(response.data);
