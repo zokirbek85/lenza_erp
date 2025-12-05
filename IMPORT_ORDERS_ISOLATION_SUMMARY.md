@@ -6,12 +6,17 @@ Excel orqali tarixiy orderlar import qilinganda, ular real biznes operatsiyalari
 
 1. **Inventar buzilishi**: Import qilingan orderlar mahsulot stock'ini kamaytirardi
 2. **Diler balans xatosi**: Import orderlar diler qarziga qo'shilib, noto'g'ri balans ko'rsatilardi
-3. **Notificationlar spam**: Har bir import order uchun keraksiz bildirishnomalar yuborilardi
-4. **Ombor harakati xatosi**: Tarixiy orderlar haqiqiy tovar harakati bilan aralashardi
+3. **KPI xatosi**: Import orderlar dashboard statistikalariga qo'shilib, noto'g'ri KPI ko'rsatkichlar berardi
+4. **Sverka xatosi**: Diler akt svekalarida tarixiy orderlar aralashib, hisob-kitob to'g'ri emasligi
+5. **Notificationlar spam**: Har bir import order uchun keraksiz bildirishnomalar yuborilardi
+6. **Statistika xatosi**: Umumiy hisobotlar va qidiruvlarda tarixiy orderlar chiqib, operatsion ma'lumotlar aralashardi
 
-## ✅ Yechim
+## ✅ Yechim (Variant 1 - Minimal O'zgarishlar)
 
-Order modeliga `is_imported` flag qo'shildi va barcha biznes logikaga guardlar o'rnatildi.
+Order modelidagi `is_imported` flag barcha query joylarda filter sifatida qo'shildi:
+- `is_imported=False` - Faqat real operatsion orderlarni olish
+- Import qilingan orderlar faqat statistika uchun bazada saqlanadi
+- Barcha biznes logikadan to'liq izolatsiya qilingan
 
 ---
 
@@ -91,7 +96,219 @@ returns_total = (
 
 ---
 
-### 4. Import Function (orders/utils/excel_tools.py)
+---
+
+### 4. KPI Views (kpis/views.py) - ✅ YANGI QO'SHILDI
+
+#### OwnerKPIView (Line 46)
+```python
+# OLDIN
+active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
+
+# KEYIN
+active_orders = Order.objects.filter(
+    status__in=Order.Status.active_statuses(),
+    is_imported=False
+)
+```
+
+#### SalesManagerKPIView (Line 102)
+```python
+# OLDIN
+user_orders = Order.objects.filter(
+    created_by=user,
+    status__in=Order.Status.active_statuses()
+)
+
+# KEYIN
+user_orders = Order.objects.filter(
+    created_by=user,
+    status__in=Order.Status.active_statuses(),
+    is_imported=False
+)
+```
+
+#### AccountantKPIView (Lines 137, 139)
+```python
+# OLDIN
+active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
+returns_total = OrderReturn.objects.aggregate(total=Sum('amount_usd'))
+
+# KEYIN
+active_orders = Order.objects.filter(
+    status__in=Order.Status.active_statuses(),
+    is_imported=False
+)
+returns_total = OrderReturn.objects.filter(
+    order__is_imported=False
+).aggregate(total=Sum('amount_usd'))
+```
+
+**Natija**: Owner, Sales Manager va Accountant dashboard'lari endi faqat real operatsion orderlarni ko'rsatadi.
+
+---
+
+### 5. Reconciliation Service (services/reconciliation.py) - ✅ YANGI QO'SHILDI
+
+#### _aggregate_totals Function (Line 56)
+```python
+# OLDIN
+orders_total = Order.objects.filter(
+    dealer=dealer,
+    value_date__gte=start,
+    value_date__lte=end,
+    status__in=Order.Status.active_statuses(),
+).aggregate(total=Sum('total_usd'))
+
+# KEYIN
+orders_total = Order.objects.filter(
+    dealer=dealer,
+    value_date__gte=start,
+    value_date__lte=end,
+    status__in=Order.Status.active_statuses(),
+    is_imported=False,
+).aggregate(total=Sum('total_usd'))
+```
+
+#### build_reconciliation - orders list (Line 125)
+```python
+# OLDIN
+orders = list(
+    Order.objects.filter(
+        dealer=dealer,
+        value_date__gte=start,
+        value_date__lte=end,
+        status__in=Order.Status.active_statuses(),
+    )
+    .order_by('value_date', 'display_no')
+    .values('value_date', 'display_no', 'total_usd')
+)
+
+# KEYIN
+orders = list(
+    Order.objects.filter(
+        dealer=dealer,
+        value_date__gte=start,
+        value_date__lte=end,
+        status__in=Order.Status.active_statuses(),
+        is_imported=False,
+    )
+    .order_by('value_date', 'display_no')
+    .values('value_date', 'display_no', 'total_usd')
+)
+```
+
+#### build_reconciliation - detailed orders (Line 311)
+```python
+# OLDIN
+detailed_orders_qs = Order.objects.filter(
+    dealer=dealer,
+    value_date__gte=start,
+    value_date__lte=end,
+    status__in=Order.Status.active_statuses(),
+).order_by('value_date', 'display_no')
+
+# KEYIN
+detailed_orders_qs = Order.objects.filter(
+    dealer=dealer,
+    value_date__gte=start,
+    value_date__lte=end,
+    status__in=Order.Status.active_statuses(),
+    is_imported=False,
+).order_by('value_date', 'display_no')
+```
+
+**Natija**: Diler sverkalari (akt sverka) endi faqat real operatsion orderlarni ko'rsatadi.
+
+---
+
+### 6. Core Views (core/views.py) - ✅ YANGI QO'SHILDI
+
+#### Search View (Line 76)
+```python
+# OLDIN
+orders = Order.objects.filter(display_no__icontains=query)[:10]
+
+# KEYIN
+orders = Order.objects.filter(
+    display_no__icontains=query,
+    is_imported=False
+)[:10]
+```
+
+#### ReportView (Line 156)
+```python
+# OLDIN
+orders_qs = Order.objects.filter(order_filter).exclude(status=Order.Status.CANCELLED)
+
+# KEYIN
+orders_qs = Order.objects.filter(order_filter).exclude(
+    status=Order.Status.CANCELLED
+).filter(is_imported=False)
+```
+
+#### DealerListView order_subquery (Line 243)
+```python
+# OLDIN
+order_subquery = Order.objects.filter(dealer=OuterRef('pk'))
+    .values('dealer')
+    .annotate(total=Sum('total_usd'))
+
+# KEYIN
+order_subquery = Order.objects.filter(
+    dealer=OuterRef('pk'),
+    is_imported=False
+).values('dealer')
+    .annotate(total=Sum('total_usd'))
+```
+
+#### MonthlyStatsView (Line 311)
+```python
+# OLDIN
+orders_monthly = Order.objects.filter(
+    dealer_id__in=dealer_ids,
+    value_date__gte=start_date
+).annotate(month=TruncMonth('value_date'))
+
+# KEYIN
+orders_monthly = Order.objects.filter(
+    dealer_id__in=dealer_ids,
+    value_date__gte=start_date,
+    is_imported=False
+).annotate(month=TruncMonth('value_date'))
+```
+
+**Natija**: Qidiruv natijalari, hisobotlar, diler ro'yxatlari va oylik statistikalar endi faqat real orderlarni ko'rsatadi.
+
+---
+
+### 7. Telegram Bot (bot/handlers.py) - ✅ YANGI QO'SHILDI
+
+#### today_orders_command (Line 93)
+```python
+# OLDIN
+stats = await sync_to_async(list)(
+    Order.objects.filter(created_at__date=today)
+    .values('status')
+    .annotate(total=Count('id'))
+)
+
+# KEYIN
+stats = await sync_to_async(list)(
+    Order.objects.filter(
+        created_at__date=today,
+        is_imported=False
+    )
+    .values('status')
+    .annotate(total=Count('id'))
+)
+```
+
+**Natija**: Telegram bot bugungi orderlar statistikasida faqat real orderlarni ko'rsatadi.
+
+---
+
+### 8. Import Function (orders/utils/excel_tools.py)
 
 #### Order Creation (Line 295)
 ```python
@@ -159,25 +376,61 @@ fields = (
 
 ---
 
+## 📊 O'zgarishlar Xulosasi
+
+### Fayllar Ro'yxati
+
+| Fayl | O'zgarishlar | Joylashuvlar | Ta'sir Darajasi |
+|------|-------------|-------------|----------------|
+| `backend/kpis/views.py` | ✅ 3 filter qo'shildi | OwnerKPIView, SalesManagerKPIView, AccountantKPIView | **YUQORI** - Dashboard KPIs |
+| `backend/services/reconciliation.py` | ✅ 3 filter qo'shildi | _aggregate_totals, orders list, detailed orders | **YUQORI** - Moliyaviy hisobotlar |
+| `backend/core/views.py` | ✅ 4 filter qo'shildi | Search, ReportView, DealerList, MonthlyStats | **O'RTA** - Umumiy statistika |
+| `backend/bot/handlers.py` | ✅ 1 filter qo'shildi | today_orders_command | **PAST** - Bot xabarnomalar |
+| `backend/orders/signals.py` | ✅ Oldindan mavjud | inventory guards | **YUQORI** - Ombor harakati |
+| `backend/dealers/models.py` | ✅ Oldindan mavjud | balance calculations | **YUQORI** - Diler balanslari |
+
+**Jami**: 4 yangi fayl o'zgartirildi, 11 filter qo'shildi
+
+### Query Pattern
+
+Barcha o'zgarishlar bir xil pattern bo'yicha:
+```python
+# Standart filter qo'shish
+Order.objects.filter(...existing_filters..., is_imported=False)
+
+# OrderReturn relationship orqali
+OrderReturn.objects.filter(order__is_imported=False)
+```
+
+### Tekshirish Natijalari
+
+#### Django Check
+```bash
+python manage.py check
+# ✅ System check identified no issues (0 silenced).
+```
+
+#### Syntax Validation
+```bash
+python -m py_compile kpis/views.py services/reconciliation.py core/views.py bot/handlers.py
+# ✅ All files compiled successfully without errors
+```
+
+---
+
 ## 🗃️ Database Migration
 
 ### Migration File: orders/migrations/0007_order_is_imported.py
 
+**Holat**: ✅ Allaqachon deploy qilingan
+
 ```bash
-# Auto-generated by makemigrations
+# Oldingi sessiyada yaratilgan va migrate qilingan
 python manage.py makemigrations orders
-
-# Outputs:
-# Migrations for 'orders':
-#   orders\migrations\0007_order_is_imported.py
-#     + Add field is_imported to order
-```
-
-### Migration Execute
-```bash
-# VPS da deploy qilganda avtomatik ishga tushadi
 python manage.py migrate orders
 ```
+
+**Muhim**: Yangi o'zgarishlar uchun migration kerak emas - faqat query filter qo'shildi.
 
 ---
 
@@ -229,30 +482,39 @@ Only real orders counted ✓
 
 ## 🧪 Testing Checklist
 
-### 1. Import Test
-- [ ] Excel file import qiling
-- [ ] Import qilingan orderlar yaratilganini tekshiring
-- [ ] `is_imported=True` ekanligini tasdiqlang
+### Backend Tests (Manual)
+- [ ] Import Excel file orqali order yarating
+- [ ] Import qilingan orderlar `is_imported=True` ekanligini tekshiring
+- [ ] Quyidagi joylardan import orderlar YO'QLIGINI tasdiqlang:
+  - [ ] Owner KPI dashboard totals
+  - [ ] Sales Manager KPI statistics  
+  - [ ] Accountant KPI reports
+  - [ ] Diler reconciliation (sverka) hujjatlari
+  - [ ] Umumiy qidiruv natijalari (search)
+  - [ ] Oylik statistika graflari (monthly stats)
+  - [ ] Telegram bot bugungi orderlar statistikasi
+- [ ] Import orderlar quyidagilarga TA'SIR QILMAGANINI tekshiring:
+  - [ ] Diler balans hisoblari (balance_usd, balance_uzs)
+  - [ ] Ombor stock miqdorlari (Product stock)
+  - [ ] Mahsulot availability holati (stock_ok)
+  - [ ] Notification bildirishnomalar (hech qanday spam yo'q)
 
-### 2. Stock Test
-- [ ] Mahsulot stock'ini import oldidan yozib oling
-- [ ] Excel import qiling
-- [ ] Stock o'zgarmagan bo'lishini tekshiring ✓
-
-### 3. Balance Test
-- [ ] Diler balansini import oldidan yozib oling
-- [ ] Excel import qiling  
-- [ ] Balans o'zgarmagan bo'lishini tekshiring ✓
-
-### 4. Notification Test
-- [ ] Notification tizimini oching
-- [ ] Excel import qiling
-- [ ] Bildirishnoma kelmaganligini tekshiring ✓
-
-### 5. UI Test
-- [ ] Frontend orders sahifasini oching
-- [ ] Import orderlarni `is_imported: true` flagli ko'ring
-- [ ] Badge yoki filter qo'shishni rejalashtiramiz
+### Automated Tests (Kelajak)
+```python
+# Tavsiya qilingan test case'lar
+def test_imported_orders_excluded_from_kpis():
+    # Import order yaratish
+    order = Order.objects.create(is_imported=True, ...)
+    # KPI viewlardan chiqmaganligini assert qilish
+    
+def test_imported_orders_excluded_from_reconciliation():
+    # Import order yaratish
+    # Sverka hisobotidan chiqmaganligini assert qilish
+    
+def test_imported_orders_no_inventory_adjustment():
+    # Import order yaratish
+    # Mahsulot stock o'zgarmaganligini assert qilish
+```
 
 ---
 

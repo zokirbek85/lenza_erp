@@ -73,7 +73,7 @@ class SearchView(APIView):
 
         products = Product.objects.filter(name__icontains=query)[:10]
         dealers = Dealer.objects.filter(name__icontains=query)[:10]
-        orders = Order.objects.filter(display_no__icontains=query)[:10]
+        orders = Order.objects.filter(display_no__icontains=query, is_imported=False)[:10]
 
         context = {'request': request}
         return Response(
@@ -153,7 +153,7 @@ class DashboardSummaryView(APIView):
         if end_date:
             order_filter &= Q(value_date__lte=end_date)
 
-        orders_qs = Order.objects.filter(order_filter).exclude(status=Order.Status.CANCELLED)
+        orders_qs = Order.objects.filter(order_filter).exclude(status=Order.Status.CANCELLED).filter(is_imported=False)
 
         # Calculate payments from FinanceTransaction (income) with proper USD conversion
         from finance.models import FinanceTransaction
@@ -240,7 +240,7 @@ class DebtAnalyticsView(APIView):
                 dealer_qs = dealer_qs.none()
 
         order_subquery = (
-            Order.objects.filter(dealer=OuterRef('pk'))
+            Order.objects.filter(dealer=OuterRef('pk'), is_imported=False)
             .values('dealer')
             .annotate(total=Sum('total_usd'))
             .values('total')[:1]
@@ -308,7 +308,7 @@ class DebtAnalyticsView(APIView):
 
         if dealer_ids:
             orders_monthly = (
-                Order.objects.filter(dealer_id__in=dealer_ids, value_date__gte=start_date)
+                Order.objects.filter(dealer_id__in=dealer_ids, value_date__gte=start_date, is_imported=False)
                 .annotate(month=TruncMonth('value_date'))
                 .values('month')
                 .annotate(total=Sum('total_usd'))

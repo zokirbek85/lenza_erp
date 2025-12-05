@@ -43,7 +43,7 @@ class OwnerKPIView(APIView):
     permission_classes = [IsAdmin | IsOwner | IsAccountant]
 
     def get(self, request):
-        active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
+        active_orders = Order.objects.filter(status__in=Order.Status.active_statuses(), is_imported=False)
         sales_total = active_orders.aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
         top_dealers = (
             active_orders.values('dealer__id', 'dealer__name')
@@ -99,7 +99,7 @@ class SalesManagerKPIView(APIView):
         previous_month_end = current_month_start - timedelta(days=1)
         previous_month_start = previous_month_end.replace(day=1)
 
-        user_orders = Order.objects.filter(created_by=user, status__in=Order.Status.active_statuses())
+        user_orders = Order.objects.filter(created_by=user, status__in=Order.Status.active_statuses(), is_imported=False)
         today_total = user_orders.filter(value_date=today).aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
         current_month_total = (
             user_orders.filter(value_date__gte=current_month_start).aggregate(total=Sum('total_usd'))['total']
@@ -134,9 +134,9 @@ class AccountantKPIView(APIView):
     permission_classes = [IsAdmin | IsAccountant | IsOwner]
 
     def get(self, request):
-        active_orders = Order.objects.filter(status__in=Order.Status.active_statuses())
+        active_orders = Order.objects.filter(status__in=Order.Status.active_statuses(), is_imported=False)
         sales_total = active_orders.aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
-        returns_total = OrderReturn.objects.aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
+        returns_total = OrderReturn.objects.filter(order__is_imported=False).aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
         net_profit = sales_total - returns_total
 
         data = {

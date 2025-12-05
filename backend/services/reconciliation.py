@@ -58,6 +58,7 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
             value_date__gte=start,
             value_date__lte=end,
             status__in=Order.Status.active_statuses(),
+            is_imported=False,
         ).aggregate(total=Sum('total_usd'))['total']
         or Decimal('0')
     )
@@ -127,6 +128,7 @@ def get_reconciliation_data(
             value_date__gte=start,
             value_date__lte=end,
             status__in=Order.Status.active_statuses(),
+            is_imported=False,
         )
         .order_by('value_date', 'display_no')
         .values('value_date', 'display_no', 'total_usd')
@@ -313,6 +315,7 @@ def get_reconciliation_data(
                 value_date__gte=start,
                 value_date__lte=end,
                 status__in=Order.Status.active_statuses(),
+                is_imported=False,
             )
             .order_by('value_date', 'display_no')
             .prefetch_related('items__product')

@@ -90,7 +90,7 @@ async def today_orders_command(update: Update, context: ContextTypes.DEFAULT_TYP
         return
     today = timezone.now().date()
     stats = await sync_to_async(list)(
-        Order.objects.filter(created_at__date=today)
+        Order.objects.filter(created_at__date=today, is_imported=False)
         .values('status')
         .annotate(total=Count('id'))
     )
