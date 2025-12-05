@@ -14,6 +14,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   role: UserRole | null;
+  userId: number | null;
   userName: string | null;
   isAuthenticated: boolean;
   loading: boolean;
@@ -56,24 +57,25 @@ const setStorage = (key: string, value: string | null): void => {
   }
 };
 
-const decodePayload = (token: string | null): { role: UserRole | null; username: string | null } => {
+const decodePayload = (token: string | null): { role: UserRole | null; userId: number | null; username: string | null } => {
   if (!token || typeof window === 'undefined') {
-    return { role: null, username: null };
+    return { role: null, userId: null, username: null };
   }
   try {
     const payload = token.split('.')[1];
     if (!payload) {
-      return { role: null, username: null };
+      return { role: null, userId: null, username: null };
     }
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
     const decoded = JSON.parse(window.atob(normalized));
     return {
       role: decoded.role ?? null,
+      userId: decoded.user_id ?? null,
       username: decoded.username ?? decoded.sub ?? null,
     };
   } catch (error) {
     console.warn('Unable to decode JWT payload', error);
-    return { role: null, username: null };
+    return { role: null, userId: null, username: null };
   }
 };
 
@@ -89,6 +91,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: getFromStorage(ACCESS_KEY),
   refreshToken: getFromStorage(REFRESH_KEY),
   role: (getFromStorage(ROLE_KEY) as UserRole | null) ?? decodePayload(getFromStorage(ACCESS_KEY)).role,
+  userId: decodePayload(getFromStorage(ACCESS_KEY)).userId,
   userName: decodePayload(getFromStorage(ACCESS_KEY)).username,
   isAuthenticated: Boolean(getFromStorage(ACCESS_KEY)),
   loading: false,
@@ -110,7 +113,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       );
       const { access: accessToken, refresh: refreshToken } = response.data;
-      const { role, username: decodedName } = decodePayload(accessToken);
+      const { role, userId, username: decodedName } = decodePayload(accessToken);
       persistTokens(accessToken, refreshToken, role);
       localStorage.setItem('token', accessToken);
       set((prev) => ({
@@ -118,6 +121,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         accessToken,
         refreshToken,
         role: role ?? 'sales',
+        userId,
         userName: decodedName,
         isAuthenticated: true,
         error: null,
@@ -182,6 +186,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       accessToken: null,
       refreshToken: null,
       role: null,
+      userId: null,
       userName: null,
       isAuthenticated: false,
       error: null,

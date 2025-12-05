@@ -13,6 +13,7 @@ class RoleAwareTokenSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['role'] = user.role
+        token['user_id'] = user.id
         token['username'] = user.username
         token['full_name'] = user.get_full_name()
         return token

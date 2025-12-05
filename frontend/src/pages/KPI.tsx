@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import http from '../app/http';
+import { useAuthStore } from '../auth/useAuthStore';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -50,6 +51,7 @@ interface KPIData {
 
 export default function KPIPage() {
   const { t } = useTranslation();
+  const userId = useAuthStore((state) => state.userId);
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
@@ -58,10 +60,13 @@ export default function KPIPage() {
   });
 
   const fetchKPIData = async () => {
+    if (!userId) {
+      console.error('User ID not available');
+      return;
+    }
     try {
       setLoading(true);
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const response = await http.get(`/kpi/manager/${user.id}/overview/`, {
+      const response = await http.get(`/kpi/manager/${userId}/overview/`, {
         params: dateRange,
       });
       setKpiData(response.data);
