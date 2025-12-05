@@ -30,73 +30,13 @@ class DealerQuerySet(models.QuerySet):
         """
         Annotate dealers with calculated balances using a single query.
         Eliminates N+1 queries when fetching dealer lists.
-        """
-        from orders.models import Order, OrderReturn
-        from finance.models import FinanceTransaction
         
-        return self.annotate(
-            # Orders total (active, not imported)
-            total_orders_usd=Sum(
-                'orders__total_usd',
-                filter=Q(
-                    orders__status__in=Order.Status.active_statuses(),
-                    orders__is_imported=False
-                ),
-                default=Value(0)
-            ),
-            total_orders_uzs=Sum(
-                'orders__total_uzs',
-                filter=Q(
-                    orders__status__in=Order.Status.active_statuses(),
-                    orders__is_imported=False
-                ),
-                default=Value(0)
-            ),
-            # Returns total (from non-imported orders)
-            # Note: Using reverse relation through Order's dealer field
-            total_returns_usd=Coalesce(
-                Sum(
-                    Case(
-                        When(orders__is_imported=False, then='orders__returns__amount_usd'),
-                        default=Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
-                        output_field=DecimalField(max_digits=18, decimal_places=2)
-                    )
-                ),
-                Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
-                output_field=DecimalField(max_digits=18, decimal_places=2)
-            ),
-            total_returns_uzs=Coalesce(
-                Sum(
-                    Case(
-                        When(orders__is_imported=False, then='orders__returns__amount_uzs'),
-                        default=Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
-                        output_field=DecimalField(max_digits=18, decimal_places=2)
-                    )
-                ),
-                Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
-                output_field=DecimalField(max_digits=18, decimal_places=2)
-            ),
-            # Payments total (approved income only)
-            total_payments_usd=Sum(
-                'finance_transactions__amount_usd',
-                filter=Q(
-                    finance_transactions__type=FinanceTransaction.TransactionType.INCOME,
-                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
-                ),
-                default=Value(0)
-            ),
-            total_payments_uzs=Sum(
-                'finance_transactions__amount_uzs',
-                filter=Q(
-                    finance_transactions__type=FinanceTransaction.TransactionType.INCOME,
-                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
-                ),
-                default=Value(0)
-            ),
-            # Calculated balances
-            calculated_balance_usd=F('opening_balance_usd') + F('total_orders_usd') - F('total_returns_usd') - F('total_payments_usd'),
-            calculated_balance_uzs=F('opening_balance_uzs') + F('total_orders_uzs') - F('total_returns_uzs') - F('total_payments_uzs'),
-        )
+        Note: This annotation only includes OrderReturn.
+        ReturnItem from returns module is NOT included here for performance.
+        For exact balance with all return types, use balance service per dealer.
+        """
+        from dealers.services.balance import annotate_dealers_with_balances
+        return annotate_dealers_with_balances(self)
 
 
 class Dealer(models.Model):
@@ -131,94 +71,25 @@ class Dealer(models.Model):
     @property
     def balance_usd(self) -> Decimal:
         """
-        Calculate dealer balance in USD.
-        Balance = Opening Balance + Orders Total - Returns Total - Payments Total
+        Calculate dealer balance in USD using balance service.
+        Includes both OrderReturn and ReturnItem.
+        Balance = Opening Balance + Orders - All Returns - Payments
         Positive balance = dealer owes money (debt)
         """
-        from orders.models import Order, OrderReturn
-        from finance.models import FinanceTransaction
-
-        opening = self.opening_balance_usd or Decimal('0')
-
-        # Total of active orders
-        orders_total = (
-            Order.objects.filter(
-                dealer=self, 
-                status__in=Order.Status.active_statuses(),
-                is_imported=False
-            )
-            .aggregate(total=Sum('total_usd'))
-            .get('total')
-            or Decimal('0')
-        )
-        
-        # Total of returns
-        returns_total = (
-            OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
-            .aggregate(total=Sum('amount_usd'))
-            .get('total')
-            or Decimal('0')
-        )
-        
-        # Total of approved income transactions (payments from dealer)
-        payments_total = (
-            FinanceTransaction.objects.filter(
-                dealer=self,
-                type=FinanceTransaction.TransactionType.INCOME,
-                status=FinanceTransaction.TransactionStatus.APPROVED
-            )
-            .aggregate(total=Sum('amount_usd'))
-            .get('total')
-            or Decimal('0')
-        )
-
-        return opening + orders_total - returns_total - payments_total
+        from dealers.services.balance import calculate_dealer_balance
+        result = calculate_dealer_balance(self)
+        return result['balance_usd']
     
     @property
     def balance_uzs(self) -> Decimal:
         """
-        Calculate dealer balance in UZS.
+        Calculate dealer balance in UZS using balance service.
+        Includes both OrderReturn and ReturnItem.
         Each operation uses its own stored exchange rate.
         """
-        from orders.models import Order, OrderReturn
-        from finance.models import FinanceTransaction
-
-        opening = self.opening_balance_uzs or Decimal('0')
-
-        # Total of active orders in UZS (each order has its own rate)
-        orders_total = (
-            Order.objects.filter(
-                dealer=self, 
-                status__in=Order.Status.active_statuses(),
-                is_imported=False
-            )
-            .aggregate(total=Sum('total_uzs'))
-            .get('total')
-            or Decimal('0')
-        )
-        
-        # Total of returns in UZS (each return has its own rate from order)
-        returns_total = (
-            OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
-            .aggregate(total=Sum('amount_uzs'))
-            .get('total')
-            or Decimal('0')
-        )
-        
-        # Total of approved income transactions in UZS (all currencies)
-        # Each transaction has its own stored amount_uzs with original exchange rate
-        payments_total = (
-            FinanceTransaction.objects.filter(
-                dealer=self,
-                type=FinanceTransaction.TransactionType.INCOME,
-                status=FinanceTransaction.TransactionStatus.APPROVED
-            )
-            .aggregate(total=Sum('amount_uzs'))
-            .get('total')
-            or Decimal('0')
-        )
-
-        return opening + orders_total - returns_total - payments_total
+        from dealers.services.balance import calculate_dealer_balance
+        result = calculate_dealer_balance(self)
+        return result['balance_uzs']
     
     @property
     def current_balance_usd(self) -> Decimal:

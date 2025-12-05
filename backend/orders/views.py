@@ -67,10 +67,11 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
     
     def perform_update(self, serializer):
         """
-        Edit order with separate permissions for status and items:
-        - Status change: admin/accountant always, manager for own orders, warehouse only following workflow
-        - Items edit: admin/accountant always, manager only for CREATED status
+        Edit order with FSM validation for status changes and permission checks for items.
+        FSM handles all status transition logic, we only check items permission here.
         """
+        from orders.services.fsm import validate_transition
+        
         order = self.get_object()
         user = self.request.user
         
@@ -83,20 +84,17 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
         is_status_change = 'status' in self.request.data
         is_items_change = 'items' in self.request.data
         
-        # Validate status change permission with new_status
+        # Validate status change with FSM
         if is_status_change:
             new_status = self.request.data.get('status')
-            if not order.can_change_status(user, new_status):
+            try:
+                # FSM will raise ValidationError if not allowed
+                validate_transition(order, new_status, user)
+            except ValidationError as e:
                 from rest_framework.exceptions import PermissionDenied
-                if hasattr(user, 'role') and user.role == 'warehouse':
-                    from orders.models import WAREHOUSE_FLOW
-                    allowed = WAREHOUSE_FLOW.get(order.status)
-                    if allowed:
-                        raise PermissionDenied(f'Warehouse faqat "{order.status}" dan "{allowed}" ga o\'tkazishi mumkin.')
-                    else:
-                        raise PermissionDenied(f'Warehouse "{order.status}" statusidan keyingi bosqichga o\'tkaza olmaydi.')
-                else:
-                    raise PermissionDenied('Sizda bu buyurtma statusini o\'zgartirish huquqi yo\'q.')
+                # Convert ValidationError to PermissionDenied for DRF
+                error_msg = e.message_dict.get('status', ['Status transition not allowed'])[0]
+                raise PermissionDenied(error_msg)
         
         # Validate items change permission
         if is_items_change and not order.can_edit_items(user):
@@ -106,6 +104,7 @@ class OrderViewSet(viewsets.ModelViewSet, BaseReportMixin):
             else:
                 raise PermissionDenied('Sizda bu buyurtma mahsulotlarini tahrirlash huquqi yo\'q.')
         
+        # Serializer.update() will handle the actual FSM transition
         serializer.save()
     
     def perform_destroy(self, instance):

@@ -1,0 +1,212 @@
+"""
+Dealer Balance Calculation Service
+Provides accurate multi-currency balance calculations with proper return handling.
+"""
+from decimal import Decimal
+from typing import Optional, Tuple
+from datetime import date
+
+from django.db.models import Q, Sum, F, Value, Case, When, DecimalField, QuerySet
+from django.db.models.functions import Coalesce
+
+
+def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
+    """
+    Calculate dealer balance with proper formula:
+    
+    balance = opening_balance + orders - returns - payments
+    
+    Where:
+    - orders: confirmed/packed/shipped/delivered, not imported
+    - returns: both OrderReturn and ReturnItem (all types including defective)
+    - payments: approved INCOME transactions only, converted to USD
+    
+    Args:
+        dealer: Dealer instance
+        as_of_date: Optional cutoff date (for historical balances)
+    
+    Returns:
+        dict with balance_usd, balance_uzs, and breakdown
+    """
+    from orders.models import Order, OrderReturn
+    from returns.models import Return, ReturnItem
+    from finance.models import FinanceTransaction
+    from core.utils.currency import get_exchange_rate
+    
+    # Base filters
+    order_filter = Q(
+        status__in=Order.Status.active_statuses(),
+        is_imported=False
+    )
+    if as_of_date:
+        order_filter &= Q(value_date__lte=as_of_date)
+    
+    # 1. Calculate total orders (USD and UZS)
+    orders_qs = dealer.orders.filter(order_filter)
+    total_orders_usd = orders_qs.aggregate(
+        total=Coalesce(Sum('total_usd'), Value(0, output_field=DecimalField()))
+    )['total'] or Decimal('0')
+    total_orders_uzs = orders_qs.aggregate(
+        total=Coalesce(Sum('total_uzs'), Value(0, output_field=DecimalField()))
+    )['total'] or Decimal('0')
+    
+    # 2. Calculate OrderReturn (from orders module)
+    order_return_filter = Q(order__dealer=dealer, order__is_imported=False)
+    if as_of_date:
+        order_return_filter &= Q(created_at__date__lte=as_of_date)
+    
+    order_returns = OrderReturn.objects.filter(order_return_filter).aggregate(
+        usd=Coalesce(Sum('amount_usd'), Value(0, output_field=DecimalField())),
+        uzs=Coalesce(Sum('amount_uzs'), Value(0, output_field=DecimalField()))
+    )
+    total_order_returns_usd = order_returns['usd'] or Decimal('0')
+    total_order_returns_uzs = order_returns['uzs'] or Decimal('0')
+    
+    # 3. Calculate ReturnItem (from returns module)
+    # Both healthy and defective returns reduce dealer balance (they're returning products)
+    return_item_filter = Q(return_document__dealer=dealer)
+    if as_of_date:
+        return_item_filter &= Q(return_document__created_at__date__lte=as_of_date)
+    
+    # Calculate return value: quantity * product.sell_price_usd
+    return_items = ReturnItem.objects.filter(return_item_filter).select_related('product')
+    total_return_items_usd = Decimal('0')
+    for item in return_items:
+        price = item.product.sell_price_usd or Decimal('0')
+        qty = item.quantity or Decimal('0')
+        total_return_items_usd += price * qty
+    
+    # Convert return items to UZS (use current rate or as_of_date rate)
+    rate, _ = get_exchange_rate(as_of_date)
+    total_return_items_uzs = (total_return_items_usd * rate).quantize(Decimal('0.01'))
+    
+    # Total returns (both types)
+    total_returns_usd = total_order_returns_usd + total_return_items_usd
+    total_returns_uzs = total_order_returns_uzs + total_return_items_uzs
+    
+    # 4. Calculate payments (INCOME only, APPROVED only)
+    payment_filter = Q(
+        dealer=dealer,
+        type=FinanceTransaction.TransactionType.INCOME,
+        status=FinanceTransaction.TransactionStatus.APPROVED
+    )
+    if as_of_date:
+        payment_filter &= Q(date__lte=as_of_date)
+    
+    payments = FinanceTransaction.objects.filter(payment_filter).aggregate(
+        usd=Coalesce(Sum('amount_usd'), Value(0, output_field=DecimalField())),
+        uzs=Coalesce(Sum('amount_uzs'), Value(0, output_field=DecimalField()))
+    )
+    total_payments_usd = payments['usd'] or Decimal('0')
+    total_payments_uzs = payments['uzs'] or Decimal('0')
+    
+    # 5. Calculate final balance
+    opening_usd = dealer.opening_balance_usd or Decimal('0')
+    opening_uzs = dealer.opening_balance_uzs or Decimal('0')
+    
+    balance_usd = opening_usd + total_orders_usd - total_returns_usd - total_payments_usd
+    balance_uzs = opening_uzs + total_orders_uzs - total_returns_uzs - total_payments_uzs
+    
+    return {
+        'balance_usd': balance_usd,
+        'balance_uzs': balance_uzs,
+        'breakdown': {
+            'opening_balance_usd': opening_usd,
+            'opening_balance_uzs': opening_uzs,
+            'total_orders_usd': total_orders_usd,
+            'total_orders_uzs': total_orders_uzs,
+            'total_returns_usd': total_returns_usd,
+            'total_returns_uzs': total_returns_uzs,
+            'order_returns_usd': total_order_returns_usd,
+            'order_returns_uzs': total_order_returns_uzs,
+            'return_items_usd': total_return_items_usd,
+            'return_items_uzs': total_return_items_uzs,
+            'total_payments_usd': total_payments_usd,
+            'total_payments_uzs': total_payments_uzs,
+        }
+    }
+
+
+def annotate_dealers_with_balances(queryset: QuerySet) -> QuerySet:
+    """
+    Annotate dealer queryset with calculated balances.
+    Optimized for list views to avoid N+1 queries.
+    
+    Note: This uses database aggregation which may not include ReturnItem.
+    For exact balance with ReturnItem, use calculate_dealer_balance() per dealer.
+    
+    Args:
+        queryset: Dealer queryset
+    
+    Returns:
+        Queryset with balance annotations
+    """
+    from orders.models import Order, OrderReturn
+    from finance.models import FinanceTransaction
+    
+    return queryset.annotate(
+        # Orders total (active, not imported)
+        total_orders_usd=Coalesce(
+            Sum(
+                'orders__total_usd',
+                filter=Q(
+                    orders__status__in=Order.Status.active_statuses(),
+                    orders__is_imported=False
+                )
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        total_orders_uzs=Coalesce(
+            Sum(
+                'orders__total_uzs',
+                filter=Q(
+                    orders__status__in=Order.Status.active_statuses(),
+                    orders__is_imported=False
+                )
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        
+        # OrderReturn total (from orders module)
+        total_order_returns_usd=Coalesce(
+            Sum(
+                'orders__returns__amount_usd',
+                filter=Q(orders__is_imported=False)
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        total_order_returns_uzs=Coalesce(
+            Sum(
+                'orders__returns__amount_uzs',
+                filter=Q(orders__is_imported=False)
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        
+        # Payments total (approved income only)
+        total_payments_usd=Coalesce(
+            Sum(
+                'finance_transactions__amount_usd',
+                filter=Q(
+                    finance_transactions__type=FinanceTransaction.TransactionType.INCOME,
+                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
+                )
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        total_payments_uzs=Coalesce(
+            Sum(
+                'finance_transactions__amount_uzs',
+                filter=Q(
+                    finance_transactions__type=FinanceTransaction.TransactionType.INCOME,
+                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
+                )
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        
+        # Calculated balance (without ReturnItem - for performance)
+        # For exact balance including ReturnItem, use calculate_dealer_balance()
+        calculated_balance_usd=F('opening_balance_usd') + F('total_orders_usd') - F('total_order_returns_usd') - F('total_payments_usd'),
+        calculated_balance_uzs=F('opening_balance_uzs') + F('total_orders_uzs') - F('total_order_returns_uzs') - F('total_payments_uzs'),
+    )

@@ -123,18 +123,20 @@ class OrderSerializer(serializers.ModelSerializer):
         return False
 
     def get_can_change_status(self, obj):
-        """Return whether current user can change order status."""
+        """Return whether current user can change order status using FSM."""
+        from orders.services.fsm import can_change_status
+        
         request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            return obj.can_change_status(request.user)
-        return False
+        user = request.user if request and hasattr(request, 'user') else None
+        return can_change_status(obj, user)
     
     def get_allowed_next_statuses(self, obj):
-        """Return list of statuses user can change to from current status."""
+        """Return list of statuses user can change to from current status using FSM."""
+        from orders.services.fsm import get_allowed_next_statuses
+        
         request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            return obj.get_allowed_next_statuses(request.user)
-        return []
+        user = request.user if request and hasattr(request, 'user') else None
+        return get_allowed_next_statuses(obj, user)
 
     class Meta:
         model = Order
@@ -186,18 +188,35 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """
-        Update order - permissions are checked in ViewSet.perform_update().
-        Status and items have separate permission checks.
+        Update order with FSM validation for status changes.
+        Uses transaction-safe status transitions with locking.
         """
+        from orders.services.fsm import apply_status_transition
+        
         items_data = validated_data.pop('items', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        new_status = validated_data.pop('status', None)
+        user = self.context.get('request').user if self.context.get('request') else None
+        
         with transaction.atomic():
-            instance.save()
+            # Lock order for update to prevent race conditions
+            locked_instance = instance.__class__.objects.select_for_update().get(pk=instance.pk)
+            
+            # Update non-status fields
+            for attr, value in validated_data.items():
+                setattr(locked_instance, attr, value)
+            
+            # Apply status transition if requested (with FSM validation)
+            if new_status and new_status != locked_instance.status:
+                apply_status_transition(locked_instance, new_status, user)
+            else:
+                locked_instance.save()
+            
+            # Update items if provided
             if items_data is not None:
-                instance.items.all().delete()
-                self._sync_items(instance, items_data)
-            instance.recalculate_totals()
+                locked_instance.items.all().delete()
+                self._sync_items(locked_instance, items_data)
+            
+            locked_instance.recalculate_totals()
         return instance
 
     def to_representation(self, instance):
