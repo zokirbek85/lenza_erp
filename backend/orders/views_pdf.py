@@ -2,49 +2,55 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 
 from core.permissions import IsAdmin, IsOwner, IsSales
-from core.utils.company_info import get_company_info
-from core.mixins.export_mixins import ExportMixin
+from documents import InvoiceDocument
 
 from .models import Order
 
 
-class OrderInvoiceView(APIView, ExportMixin):
+class OrderInvoiceView(APIView):
+    """
+    Generate professional invoice PDF using document system.
+    
+    GET /api/orders/{id}/invoice/
+    """
     permission_classes = [IsAdmin | IsSales | IsOwner]
 
     def get(self, request, pk):
-        order = get_object_or_404(Order.objects.prefetch_related('items__product', 'dealer'), pk=pk)
-        
-        # Get exchange rate on order date
-        from core.utils.currency import get_exchange_rate
-        
-        currency_rate, currency_rate_date = get_exchange_rate(order.value_date)
-        
-        context = {
-            'order': order,
-            'items': order.items.all(),
-            'company': get_company_info(),
-            'currency_rate': currency_rate,
-            'currency_rate_date': currency_rate_date,
-        }
-        return self.render_pdf_with_qr(
-            'orders/invoice.html',
-            context,
-            filename_prefix=order.display_no,
-            request=request,
-            doc_type='order',
-            doc_id=order.pk,
+        order = get_object_or_404(
+            Order.objects.prefetch_related('items__product', 'dealer'),
+            pk=pk
         )
+        
+        # Generate invoice using document system
+        invoice = InvoiceDocument(
+            order=order,
+            request=request,
+            show_qr=True,
+            language=request.headers.get('Accept-Language', 'uz')[:2],
+        )
+        
+        filename = f'invoice_{order.display_no}.pdf'
+        return invoice.get_response(filename=filename, inline=True)
 
 
-class OrderSummaryPDFView(APIView, ExportMixin):
+class OrderSummaryPDFView(APIView):
+    """
+    Generate orders summary report (legacy view - kept for backward compatibility).
+    Consider using new document system in future.
+    """
     permission_classes = [IsAdmin | IsSales | IsOwner]
 
     def get(self, request):
+        from core.mixins.export_mixins import ExportMixin
+        
         orders = Order.objects.select_related('dealer').prefetch_related('items').all()
         context = {
             'orders': orders,
         }
-        return self.render_pdf_with_qr(
+        
+        # Use legacy export mixin temporarily
+        mixin = ExportMixin()
+        return mixin.render_pdf_with_qr(
             'reports/orders_report.html',
             context,
             filename_prefix='orders_report',

@@ -1,0 +1,354 @@
+{% load tz i18n %}
+<!DOCTYPE html>
+<html lang="{{ language|default:'uz' }}">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', 'Arial Unicode MS', 'Inter', 'Segoe UI', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #0f172a;
+            background: #f8fafc;
+        }
+
+        .document {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #0d9488;
+        }
+
+        .logo-img {
+            height: 48px;
+            object-fit: contain;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 0.04em;
+            color: #0f172a;
+        }
+
+        .tagline {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 3px;
+        }
+
+        .recon-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .recon-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .recon-period {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .dealer-info {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            border-left: 4px solid #0d9488;
+        }
+
+        .dealer-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .balance-summary {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .balance-card {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .balance-card.positive {
+            border-left: 4px solid #10b981;
+        }
+
+        .balance-card.negative {
+            border-left: 4px solid #ef4444;
+        }
+
+        .balance-label {
+            font-size: 10px;
+            color: #6b7280;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .balance-value {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            font-size: 11px;
+        }
+
+        thead {
+            background: #eef2ff;
+        }
+
+        th {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 9px 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .transaction-row.type-opening {
+            background: #f0f9ff !important;
+            font-weight: 600;
+        }
+
+        .transaction-row.type-order {
+            background: #fef3c7 !important;
+        }
+
+        .transaction-row.type-payment {
+            background: #d1fae5 !important;
+        }
+
+        .transaction-row.type-return {
+            background: #fee2e2 !important;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: 700; }
+        .text-muted { color: #6b7280; }
+        .text-accent { color: #0d9488; }
+        .text-success { color: #10b981; }
+        .text-warning { color: #f59e0b; }
+        .text-error { color: #ef4444; }
+
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 140px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.02);
+            z-index: -1;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .signature-box {
+            flex: 1;
+        }
+
+        .signature-line {
+            width: 100%;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            padding-top: 7px;
+            margin-top: 40px;
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        .document-footer {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #6b7280;
+        }
+
+        .footer-text {
+            font-size: 10px;
+        }
+
+        .footer-date {
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% if add_watermark %}
+    <div class="watermark">{{ watermark_text }}</div>
+    {% endif %}
+
+    <main class="document">
+        <!-- Header -->
+        <header class="document-header">
+            <div class="company-info">
+                {% if company.logo %}
+                <img src="{{ company.logo }}" alt="{{ company.name }}" class="logo-img" />
+                {% endif %}
+                <div class="brand">{{ company.name }}</div>
+                <div class="tagline">{{ company.tagline }}</div>
+            </div>
+        </header>
+
+        <!-- Reconciliation Header -->
+        <div class="recon-header">
+            <h1 class="recon-title">{% trans "Reconciliation Statement" %} (Akt Sverka)</h1>
+            <div class="recon-period">
+                {{ from_date|date:"d.m.Y" }} — {{ to_date|date:"d.m.Y" }}
+            </div>
+        </div>
+
+        <!-- Dealer Info -->
+        <div class="dealer-info">
+            <div class="dealer-name">{{ dealer }}</div>
+        </div>
+
+        <!-- Balance Summary -->
+        <div class="balance-summary">
+            <div class="balance-card">
+                <div class="balance-label">{% trans "Opening Balance" %}</div>
+                <div class="balance-value">{{ opening_balance_fmt }}</div>
+            </div>
+
+            <div class="balance-card">
+                <div class="balance-label">{% trans "Orders" %}</div>
+                <div class="balance-value text-warning">+{{ total_orders_fmt }}</div>
+            </div>
+
+            <div class="balance-card">
+                <div class="balance-label">{% trans "Returns" %}</div>
+                <div class="balance-value text-error">-{{ total_returns_fmt }}</div>
+            </div>
+
+            <div class="balance-card">
+                <div class="balance-label">{% trans "Payments" %}</div>
+                <div class="balance-value text-success">-{{ total_payments_fmt }}</div>
+            </div>
+
+            <div class="balance-card {% if summary.closing_balance > 0 %}positive{% else %}negative{% endif %}">
+                <div class="balance-label">{% trans "Closing Balance" %}</div>
+                <div class="balance-value">{{ closing_balance_fmt }}</div>
+            </div>
+        </div>
+
+        {% if show_detailed %}
+        <!-- Transactions Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 12%;">{% trans "Date" %}</th>
+                    <th style="width: 35%;">{% trans "Description" %}</th>
+                    <th class="text-right" style="width: 16%;">{% trans "Debit" %}</th>
+                    <th class="text-right" style="width: 16%;">{% trans "Credit" %}</th>
+                    <th class="text-right" style="width: 21%;">{% trans "Balance" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trans in transactions %}
+                <tr class="transaction-row type-{{ trans.type }}">
+                    <td>{{ trans.date|date:"d.m.Y" }}</td>
+                    <td><strong>{{ trans.description }}</strong></td>
+                    <td class="text-right">{{ trans.debit }}</td>
+                    <td class="text-right">{{ trans.credit }}</td>
+                    <td class="text-right font-bold">{{ trans.balance_formatted }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line">
+                    {% trans "Company Representative" %}
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line">
+                    {% trans "Dealer Representative" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="document-footer">
+            <div>
+                <div class="footer-text">
+                    {{ company.name }} | {{ company.phone }} | {{ company.email }}
+                </div>
+                <div class="footer-date" style="margin-top: 3px;">
+                    {{ today|date:"d.m.Y" }}
+                </div>
+            </div>
+        </footer>
+    </main>
+</body>
+</html>

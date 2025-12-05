@@ -178,16 +178,21 @@ class DealerReconciliationView(APIView):
         return Response(payload)
 
 
-class DealerReconciliationPDFView(APIView, ExportMixin):
+class DealerReconciliationPDFView(APIView):
+    """
+    Generate professional reconciliation PDF using document system.
+    
+    GET /api/dealers/{id}/reconciliation/pdf/
+    """
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
     def get(self, request, pk: int):
-        from django.utils import translation
+        from documents import ReconciliationDocument
         
-        # Activate language from Accept-Language header
-        lang = request.headers.get('Accept-Language', 'uz')
-        translation.activate(lang)
+        # Get language from Accept-Language header
+        lang = request.headers.get('Accept-Language', 'uz')[:2]
         
+        # Get reconciliation data
         detailed = request.query_params.get('detailed') == 'true'
         data = get_reconciliation_data(
             dealer_id=pk,
@@ -196,22 +201,19 @@ class DealerReconciliationPDFView(APIView, ExportMixin):
             user=request.user,
             detailed=detailed,
         )
-        pdf_response = self.render_pdf_with_qr(
-            'reports/reconciliation.html',
-            {
-                'data': data,
-                'company': get_company_info(),
-            },
-            filename_prefix='reconciliation',
-            request=request,
-            doc_type='reconciliation',
-            doc_id=pk,
+        
+        # Generate reconciliation using document system
+        reconciliation = ReconciliationDocument(
+            data=data,
+            show_detailed=detailed,
+            language=lang,
         )
+        
         dealer_slug = slugify(data['dealer']) or f'dealer-{pk}'
         statement_date = data['to_date'].strftime('%Y%m%d')
         filename = f'reconciliation_{dealer_slug}_{statement_date}.pdf'
-        pdf_response['Content-Disposition'] = f'inline; filename="{filename}"'
-        return pdf_response
+        
+        return reconciliation.get_response(filename=filename, inline=True)
 
 
 class DealerReconciliationExcelView(APIView):

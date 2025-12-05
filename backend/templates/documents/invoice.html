@@ -1,0 +1,394 @@
+{% load tz i18n %}
+<!DOCTYPE html>
+<html lang="{{ language|default:'uz' }}">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        @page {
+            size: A4;
+            margin: 32px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', 'Arial Unicode MS', 'Inter', 'Segoe UI', Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #0f172a;
+            background: #f8fafc;
+        }
+
+        .document {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #0d9488;
+        }
+
+        .logo-img {
+            height: 56px;
+            object-fit: contain;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: 0.04em;
+            color: #0f172a;
+        }
+
+        .tagline {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .document-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .info-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 16px 18px;
+            background: #fdfefe;
+        }
+
+        .info-card-label {
+            color: #6b7280;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .info-card-value {
+            display: block;
+            margin-top: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+
+        thead {
+            background: #eef2ff;
+        }
+
+        th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6b7280;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 14px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: 700; }
+        .text-muted { color: #6b7280; }
+        .text-accent { color: #0d9488; }
+        .text-success { color: #10b981; }
+        .text-warning { color: #f59e0b; }
+        .text-error { color: #ef4444; }
+
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.03);
+            z-index: -1;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .qr-box {
+            text-align: right;
+            font-size: 11px;
+        }
+
+        .qr-img {
+            height: 80px;
+            width: 80px;
+        }
+
+        .totals-table {
+            width: auto;
+            margin-left: auto;
+            border-radius: 14px;
+        }
+
+        .totals-table td {
+            padding: 8px 16px;
+            font-weight: 600;
+        }
+
+        .totals-table tr:last-child td {
+            font-size: 16px;
+            color: #0d9488;
+        }
+
+        .signature-section {
+            margin-top: 48px;
+            display: flex;
+            justify-content: space-between;
+            gap: 32px;
+        }
+
+        .signature-box {
+            flex: 1;
+        }
+
+        .signature-line {
+            width: 100%;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            padding-top: 8px;
+            margin-top: 48px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .notes {
+            margin-top: 32px;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px dashed #e5e7eb;
+            background: #fefce8;
+            font-size: 11px;
+        }
+
+        /* Invoice specific */
+        .invoice-meta {
+            text-align: right;
+        }
+
+        .invoice-number {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0d9488;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .reserve-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .exchange-rate-box {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #eff6ff;
+            border-radius: 14px;
+            border-left: 4px solid #0d9488;
+        }
+
+        .exchange-rate-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .exchange-rate-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    {% if add_watermark %}
+    <div class="watermark">{{ watermark_text }}</div>
+    {% endif %}
+
+    <main class="document">
+        <!-- Header -->
+        <header class="document-header">
+            <div class="company-info">
+                {% if company.logo %}
+                <img src="{{ company.logo }}" alt="{{ company.name }}" class="logo-img" />
+                {% endif %}
+                <div class="brand">{{ company.name }}</div>
+                <div class="tagline">{{ company.tagline }}</div>
+            </div>
+            <div class="invoice-meta">
+                <span class="meta-label">{% trans "Invoice" %}</span>
+                <div class="invoice-number">#{{ document_number }}</div>
+                <div class="text-muted" style="margin-top: 8px;">
+                    {{ document_date|date:"d.m.Y" }}
+                </div>
+                {% if is_reserve %}
+                <span class="status-badge reserve-badge">
+                    {% trans "Reserve" %}
+                </span>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Info Cards -->
+        <div class="info-cards">
+            <div class="info-card">
+                <span class="info-card-label">{% trans "Dealer" %}</span>
+                <strong class="info-card-value">{{ dealer.name }}</strong>
+                <div class="text-muted" style="margin-top: 4px;">
+                    {{ dealer.code }}
+                </div>
+            </div>
+
+            <div class="info-card">
+                <span class="info-card-label">{% trans "Status" %}</span>
+                <strong class="info-card-value">{{ status }}</strong>
+            </div>
+
+            {% if dealer.phone %}
+            <div class="info-card">
+                <span class="info-card-label">{% trans "Contact" %}</span>
+                <strong class="info-card-value">{{ dealer.phone }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Items Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>{% trans "Product" %}</th>
+                    <th class="text-right">{% trans "Quantity" %}</th>
+                    <th class="text-right">{% trans "Price (USD)" %}</th>
+                    <th class="text-right">{% trans "Total (USD)" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><strong>{{ item.product }}</strong></td>
+                    <td class="text-right">{{ item.qty }}</td>
+                    <td class="text-right">{{ item.price_usd }}</td>
+                    <td class="text-right font-bold">{{ item.total_usd }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Exchange Rate Info -->
+        <div class="exchange-rate-box">
+            <div class="exchange-rate-label">
+                {% trans "Exchange Rate" %} ({{ totals.exchange_rate.date|date:"d.m.Y" }})
+            </div>
+            <div class="exchange-rate-value">
+                1 USD = {{ totals.exchange_rate.formatted }} UZS
+            </div>
+        </div>
+
+        <!-- Totals -->
+        <div style="margin-top: 24px;">
+            <table class="totals-table">
+                <tr>
+                    <td>{% trans "Total (USD)" %}:</td>
+                    <td class="text-right">{{ totals.total_usd_formatted }}</td>
+                </tr>
+                <tr>
+                    <td>{% trans "Total (UZS)" %}:</td>
+                    <td class="text-right">{{ totals.total_uzs_formatted }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Signatures -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line">
+                    {% trans "Prepared by" %}
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line">
+                    {% trans "Approved by" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer with QR -->
+        <footer class="document-footer">
+            <div>
+                <div class="footer-text">
+                    {{ company.name }} | {{ company.phone }} | {{ company.email }}
+                </div>
+                <div class="footer-date" style="margin-top: 4px;">
+                    {{ today|date:"d.m.Y" }}
+                </div>
+            </div>
+            {% if qr_code %}
+            <div class="qr-box">
+                <img src="{{ qr_code }}" alt="QR Code" class="qr-img" />
+                <div style="margin-top: 4px;">{% trans "Scan to verify" %}</div>
+            </div>
+            {% endif %}
+        </footer>
+    </main>
+</body>
+</html>
