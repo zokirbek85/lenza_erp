@@ -11,6 +11,7 @@ export type DealerMobileItem = {
   manager: string; // Manager name with role from backend SerializerMethodField
   current_balance_usd: number;
   current_balance_uzs: number;
+  converted_balance_uzs: number; // USD balance × current exchange rate
   opening_balance_usd: number;
   opening_balance_uzs: number;
   phone: string;
@@ -37,6 +38,11 @@ type DealersMobileCardProps = {
 
 export const DealersMobileCard = ({ dealer, handlers, permissions }: DealersMobileCardProps) => {
   const balanceUsd = dealer.current_balance_usd ?? 0;
+  
+  // Use real UZS balance if exists, otherwise use converted balance
+  const balanceUzs = (dealer.current_balance_uzs && dealer.current_balance_uzs !== 0) 
+    ? dealer.current_balance_uzs 
+    : dealer.converted_balance_uzs;
 
   const fields = [
     { label: 'Code', value: dealer.code },
@@ -45,7 +51,7 @@ export const DealersMobileCard = ({ dealer, handlers, permissions }: DealersMobi
     { label: 'Region', value: dealer.region },
     { label: 'Manager', value: dealer.manager },
     { label: 'Balance USD', value: `$${balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
-    { label: 'Balance UZS', value: `${dealer.current_balance_uzs.toLocaleString('uz-UZ')} so'm` },
+    { label: 'Balance UZS', value: `${balanceUzs.toLocaleString('uz-UZ')} so'm` },
   ];
 
   const badges: NonNullable<MobileCardProps['badges']> = [

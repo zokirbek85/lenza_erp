@@ -48,6 +48,7 @@ interface Dealer {
   opening_balance_uzs: number;
   current_balance_usd: number;
   current_balance_uzs: number;
+  converted_balance_uzs: number; // USD balance × current exchange rate
   is_active: boolean;
   phone: string;
   address: string;
@@ -606,7 +607,12 @@ const DealersPage = () => {
             {!loading &&
               dealers.map((dealer) => {
                 const balanceUsd = dealer.current_balance_usd ?? 0;
-                const balanceUzs = dealer.current_balance_uzs ?? 0;
+                
+                // Use real UZS balance if exists, otherwise use converted balance
+                const balanceUzs = (dealer.current_balance_uzs && dealer.current_balance_uzs !== 0) 
+                  ? dealer.current_balance_uzs 
+                  : dealer.converted_balance_uzs;
+                
                 const balanceUsdClass =
                   balanceUsd < 0
                     ? 'text-rose-600 dark:text-rose-300'

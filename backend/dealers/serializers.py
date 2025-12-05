@@ -38,6 +38,7 @@ class DealerSerializer(serializers.ModelSerializer):
     # Computed balance fields
     current_balance_usd = serializers.SerializerMethodField()
     current_balance_uzs = serializers.SerializerMethodField()
+    converted_balance_uzs = serializers.SerializerMethodField()
     
     # Legacy compatibility
     balance = serializers.SerializerMethodField()
@@ -55,6 +56,27 @@ class DealerSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'calculated_balance_uzs'):
             return obj.calculated_balance_uzs
         return obj.balance_uzs
+    
+    def get_converted_balance_uzs(self, obj):
+        """
+        Convert USD balance to UZS using today's exchange rate.
+        Always returns a value (never 0 or None if USD balance exists).
+        Formula: USD balance × current exchange rate
+        """
+        from decimal import Decimal
+        from finance.models import ExchangeRate
+        
+        # Get USD balance
+        usd_balance = self.get_current_balance_usd(obj)
+        if usd_balance is None:
+            usd_balance = Decimal('0')
+        
+        # Get today's exchange rate
+        latest_rate = ExchangeRate.objects.order_by('-rate_date').first()
+        rate = latest_rate.usd_to_uzs if latest_rate else Decimal('1')
+        
+        # Convert: USD × rate = UZS
+        return (Decimal(str(usd_balance)) * Decimal(str(rate))).quantize(Decimal('0.01'))
     
     def get_balance(self, obj):
         """Legacy field - uses current_balance_usd"""
@@ -84,6 +106,7 @@ class DealerSerializer(serializers.ModelSerializer):
             'opening_balance_uzs',
             'current_balance_usd',
             'current_balance_uzs',
+            'converted_balance_uzs',
             'is_active',
             'phone',
             'address',
@@ -99,6 +122,7 @@ class DealerSerializer(serializers.ModelSerializer):
             'balance',
             'current_balance_usd',
             'current_balance_uzs',
+            'converted_balance_uzs',
             'current_debt_usd',
             'current_debt_uzs',
         )
