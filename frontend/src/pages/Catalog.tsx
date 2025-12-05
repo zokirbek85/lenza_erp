@@ -197,7 +197,6 @@ const Catalog = () => {
                     src={variant.image}
                     alt={variantTitle}
                     preview={true}
-                    style={{ objectFit: 'cover' }}
                   />
                 </div>
               ) : (
@@ -339,7 +338,6 @@ const Catalog = () => {
                 src={variant.image}
                 alt={variantTitle}
                 preview={!isUltra}
-                style={{ objectFit: 'cover' }}
               />
             </div>
           ) : (
