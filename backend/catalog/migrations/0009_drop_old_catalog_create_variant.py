@@ -11,15 +11,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # First, drop all old tables
+        # First, drop all old tables (database-agnostic)
         migrations.RunSQL(
             sql="""
-            PRAGMA foreign_keys = OFF;
-            DROP TABLE IF EXISTS catalog_productmeta;
-            DROP TABLE IF EXISTS catalog_doormodel;
-            DROP TABLE IF EXISTS catalog_doorcolor;
-            DROP TABLE IF EXISTS catalog_collection;
-            PRAGMA foreign_keys = ON;
+            DROP TABLE IF EXISTS catalog_productmeta CASCADE;
+            DROP TABLE IF EXISTS catalog_doormodel CASCADE;
+            DROP TABLE IF EXISTS catalog_doorcolor CASCADE;
+            DROP TABLE IF EXISTS catalog_collection CASCADE;
             """,
             reverse_sql="""
             -- Cannot reverse this migration
@@ -41,9 +39,9 @@ class Migration(migrations.Migration):
                 ('brand', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='product_models', to='catalog.brand')),
             ],
             options={
-                'verbose_name': 'Модель продукта',
-                'verbose_name_plural': 'Модели продуктов',
-                'ordering': ['brand', 'collection', 'model_name'],
+                'verbose_name': 'Product Model',
+                'verbose_name_plural': 'Product Models',
+                'ordering': ['brand__name', 'collection', 'model_name'],
                 'unique_together': {('brand', 'collection', 'model_name')},
             },
         ),
@@ -65,15 +63,14 @@ class Migration(migrations.Migration):
                     max_length=10
                 )),
                 ('image', models.ImageField(blank=True, help_text='Изображение варианта', null=True, upload_to='catalog/variants/')),
-                ('description', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('product_model', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='variants', to='catalog.productmodel')),
             ],
             options={
-                'verbose_name': 'Вариант продукта',
-                'verbose_name_plural': 'Варианты продуктов',
+                'verbose_name': 'Product Variant',
+                'verbose_name_plural': 'Product Variants',
                 'ordering': ['product_model', 'color', 'door_type'],
                 'unique_together': {('product_model', 'color', 'door_type')},
             },
@@ -110,6 +107,7 @@ class Migration(migrations.Migration):
                     help_text='Размер дверного полотна',
                     max_length=20
                 )),
+                ('custom_size', models.CharField(max_length=100, blank=True, help_text='Если размер не из списка')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('product', models.OneToOneField(
@@ -125,8 +123,8 @@ class Migration(migrations.Migration):
                 )),
             ],
             options={
-                'verbose_name': 'SKU продукта',
-                'verbose_name_plural': 'SKU продуктов',
+                'verbose_name': 'Product SKU',
+                'verbose_name_plural': 'Product SKUs',
                 'ordering': ['variant', 'size'],
                 'unique_together': {('variant', 'size')},
             },
