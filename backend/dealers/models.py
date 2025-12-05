@@ -27,6 +27,8 @@ class Dealer(models.Model):
     code = models.CharField(max_length=32, unique=True)
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, related_name='dealers')
     contact = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=50, blank=True, default='')
+    address = models.TextField(blank=True, default='')
     manager_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -35,6 +37,7 @@ class Dealer(models.Model):
         blank=True,
     )
     opening_balance_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    opening_balance_uzs = models.DecimalField(max_digits=18, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -91,6 +94,59 @@ class Dealer(models.Model):
         )
 
         return opening + orders_total - returns_total - payments_total
+    
+    @property
+    def balance_uzs(self) -> Decimal:
+        """Calculate dealer balance in UZS using same formula as USD."""
+        from orders.models import Order, OrderReturn
+        from finance.models import FinanceTransaction
+
+        opening = self.opening_balance_uzs or Decimal('0')
+
+        # Total of active orders in UZS
+        orders_total = (
+            Order.objects.filter(
+                dealer=self, 
+                status__in=Order.Status.active_statuses(),
+                is_imported=False
+            )
+            .aggregate(total=Sum('total_uzs'))
+            .get('total')
+            or Decimal('0')
+        )
+        
+        # Total of returns in UZS
+        returns_total = (
+            OrderReturn.objects.filter(order__dealer=self, order__is_imported=False)
+            .aggregate(total=Sum('amount_uzs'))
+            .get('total')
+            or Decimal('0')
+        )
+        
+        # Total of approved income transactions in UZS
+        payments_total = (
+            FinanceTransaction.objects.filter(
+                dealer=self,
+                type=FinanceTransaction.TransactionType.INCOME,
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                currency='UZS'
+            )
+            .aggregate(total=Sum('amount'))
+            .get('total')
+            or Decimal('0')
+        )
+
+        return opening + orders_total - returns_total - payments_total
+    
+    @property
+    def current_balance_usd(self) -> Decimal:
+        """Alias for balance_usd for API compatibility."""
+        return self.balance_usd
+    
+    @property
+    def current_balance_uzs(self) -> Decimal:
+        """Alias for balance_uzs for API compatibility."""
+        return self.balance_uzs
     
     @property
     def current_debt_usd(self) -> Decimal:

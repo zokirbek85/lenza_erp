@@ -31,18 +31,29 @@ interface Manager {
   full_name?: string;
 }
 
+/**
+ * Dealer interface matching backend DealerSerializer
+ * Backend: dealers/serializers.py -> DealerSerializer
+ */
 interface Dealer {
   id: number;
-  name: string;
   code: string;
-  contact: string;
-  opening_balance_usd: number;
-  region: Region | null;
+  name: string;
+  region: string; // Region name or '—' from SerializerMethodField
   region_id?: number | null;
-  manager_user?: string | null; // String from API (StringRelatedField)
+  manager: string; // Manager name with role or '—' from SerializerMethodField
   manager_user_id?: number | null;
-  balance?: number; // balance_usd from API
-  debt?: number; // debt_usd from API
+  opening_balance_usd: number;
+  opening_balance_uzs: number;
+  current_balance_usd: number;
+  current_balance_uzs: number;
+  is_active: boolean;
+  phone: string;
+  address: string;
+  contact: string; // Legacy field
+  created_at: string;
+  // Legacy fields for backward compatibility
+  balance?: number;
   current_debt_usd?: number;
   current_debt_uzs?: number;
 }
@@ -109,7 +120,10 @@ const emptyForm = {
   name: '',
   code: '',
   contact: '',
+  phone: '',
+  address: '',
   opening_balance_usd: '',
+  opening_balance_uzs: '',
   region_id: '' as number | '',
   manager_user_id: '' as number | '',
 };
@@ -235,8 +249,11 @@ const DealersPage = () => {
         name: dealer.name,
         code: dealer.code,
         contact: dealer.contact || '',
+        phone: dealer.phone || '',
+        address: dealer.address || '',
         opening_balance_usd: String(dealer.opening_balance_usd ?? 0),
-        region_id: dealer.region?.id ?? '',
+        opening_balance_uzs: String(dealer.opening_balance_uzs ?? 0),
+        region_id: dealer.region_id ?? '',
         manager_user_id: dealer.manager_user_id ?? '',
       });
     } else {
@@ -253,7 +270,10 @@ const DealersPage = () => {
       name: form.name,
       code: form.code,
       contact: form.contact,
+      phone: form.phone,
+      address: form.address,
       opening_balance_usd: Number(form.opening_balance_usd || 0),
+      opening_balance_uzs: Number(form.opening_balance_uzs || 0),
       region_id: form.region_id || null,
       manager_user_id: form.manager_user_id || null,
     };
@@ -346,11 +366,6 @@ const DealersPage = () => {
     } finally {
       setDetailLoading(false);
     }
-  };
-
-  const managerLabel = (manager?: Dealer['manager_user']) => {
-    // manager_user is a string from API (StringRelatedField)
-    return manager || '—';
   };
 
   /**
@@ -569,27 +584,38 @@ const DealersPage = () => {
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.region')}</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.manager')}</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.balanceUsd')}</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.balanceUzs')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.phone')}</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.address')}</th>
+              <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.status')}</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
             {loading && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
+                <td colSpan={9} className="px-4 py-6 text-center text-sm text-slate-500">
                   {t('dealers.messages.loading')}
                 </td>
               </tr>
             )}
             {!loading &&
               dealers.map((dealer) => {
-                // Balance is already a number from API (balance_usd property)
-                const balanceValue = Number(dealer.balance ?? 0);
-                const balanceClass =
-                  balanceValue < 0
+                const balanceUsd = dealer.current_balance_usd ?? 0;
+                const balanceUzs = dealer.current_balance_uzs ?? 0;
+                const balanceUsdClass =
+                  balanceUsd < 0
                     ? 'text-rose-600 dark:text-rose-300'
-                    : balanceValue > 0
+                    : balanceUsd > 0
                       ? 'text-emerald-600 dark:text-emerald-300'
                       : 'text-slate-600 dark:text-slate-200';
+                const balanceUzsClass =
+                  balanceUzs < 0
+                    ? 'text-rose-600 dark:text-rose-300'
+                    : balanceUzs > 0
+                      ? 'text-emerald-600 dark:text-emerald-300'
+                      : 'text-slate-600 dark:text-slate-200';
+                
                 return (
                   <tr key={dealer.id}>
                     <td className="px-4 py-3">
@@ -597,13 +623,35 @@ const DealersPage = () => {
                       <p className="text-xs text-slate-500">{dealer.code}</p>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
-                      {dealer.region?.name ?? '—'}
+                      {dealer.region}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
-                      {managerLabel(dealer.manager_user)}
+                      {dealer.manager}
                     </td>
-                    <td className={`px-4 py-3 text-right font-semibold ${balanceClass}`}>
-                      {formatCurrency(balanceValue)}
+                    <td className={`px-4 py-3 text-right font-semibold ${balanceUsdClass}`}>
+                      ${balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-semibold ${balanceUzsClass}`}>
+                      {balanceUzs.toLocaleString('uz-UZ')} so'm
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
+                      {dealer.phone || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
+                      <div className="max-w-xs truncate" title={dealer.address}>
+                        {dealer.address || '—'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {dealer.is_active ? (
+                        <span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                          {t('dealers.status.active')}
+                        </span>
+                      ) : (
+                        <span className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          {t('dealers.status.inactive')}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -742,12 +790,35 @@ const DealersPage = () => {
               />
             </div>
           </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.phone')}</label>
+              <input
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="+998 90 123-45-67"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.contact')}</label>
+              <input
+                name="contact"
+                value={form.contact}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+          </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.contact')}</label>
-            <input
-              name="contact"
-              value={form.contact}
-              onChange={handleChange}
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.address')}</label>
+            <textarea
+              name="address"
+              value={form.address}
+              onChange={handleChange as any}
+              rows={2}
+              placeholder={t('dealers.form.addressPlaceholder')}
               className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
@@ -785,16 +856,31 @@ const DealersPage = () => {
               </select>
             </div>
           </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.openingBalance')}</label>
-            <input
-              type="number"
-              step="0.01"
-              name="opening_balance_usd"
-              value={form.opening_balance_usd}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.openingBalanceUsd')}</label>
+              <input
+                type="number"
+                step="0.01"
+                name="opening_balance_usd"
+                value={form.opening_balance_usd}
+                onChange={handleChange}
+                placeholder="0.00"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.openingBalanceUzs')}</label>
+              <input
+                type="number"
+                step="0.01"
+                name="opening_balance_uzs"
+                value={form.opening_balance_uzs}
+                onChange={handleChange}
+                placeholder="0.00"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
           </div>
         </form>
       </Modal>

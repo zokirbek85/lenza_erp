@@ -1,5 +1,4 @@
 import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
-import { formatCurrency } from '../../utils/formatters';
 import MobileCard, { type MobileCardProps } from '../../components/responsive/cards/MobileCard';
 import MobileCardList from '../../components/responsive/cards/MobileCardList';
 
@@ -8,10 +7,15 @@ export type DealerMobileItem = {
   name: string;
   code: string;
   contact: string;
-  region?: { name?: string } | null;
-  manager_user?: string | null;
-  balance?: number;
-  opening_balance_usd?: number;
+  region: string; // Region name from backend SerializerMethodField
+  manager: string; // Manager name with role from backend SerializerMethodField
+  current_balance_usd: number;
+  current_balance_uzs: number;
+  opening_balance_usd: number;
+  opening_balance_uzs: number;
+  phone: string;
+  address: string;
+  is_active: boolean;
 };
 
 export type DealersMobileHandlers = {
@@ -32,26 +36,22 @@ type DealersMobileCardProps = {
 };
 
 export const DealersMobileCard = ({ dealer, handlers, permissions }: DealersMobileCardProps) => {
-  const balance = dealer.balance ?? 0;
-  const balanceVariant = balance >= 0 ? 'info' : 'warning';
-
-  const getManagerLabel = (manager?: string | null): string => {
-    return manager || '—';
-  };
+  const balanceUsd = dealer.current_balance_usd ?? 0;
 
   const fields = [
     { label: 'Code', value: dealer.code },
-    { label: 'Contact', value: dealer.contact || '—' },
-    { label: 'Region', value: dealer.region?.name ?? '—' },
-    { label: 'Manager', value: getManagerLabel(dealer.manager_user) },
-    { label: 'Balance', value: formatCurrency(balance) },
-    { label: 'Opening Balance', value: formatCurrency(dealer.opening_balance_usd) },
+    { label: 'Phone', value: dealer.phone || '—' },
+    { label: 'Address', value: dealer.address || '—' },
+    { label: 'Region', value: dealer.region },
+    { label: 'Manager', value: dealer.manager },
+    { label: 'Balance USD', value: `$${balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
+    { label: 'Balance UZS', value: `${dealer.current_balance_uzs.toLocaleString('uz-UZ')} so'm` },
   ];
 
   const badges: NonNullable<MobileCardProps['badges']> = [
     {
-      label: balance >= 0 ? 'Active' : 'In Debt',
-      variant: balanceVariant,
+      label: dealer.is_active ? 'Active' : 'Inactive',
+      variant: dealer.is_active ? 'info' : 'warning',
     },
   ];
 
@@ -68,7 +68,7 @@ export const DealersMobileCard = ({ dealer, handlers, permissions }: DealersMobi
   return (
     <MobileCard
       title={dealer.name}
-      subtitle={dealer.region?.name ?? 'No region'}
+      subtitle={dealer.region}
       badges={badges}
       fields={fields}
       actions={actions}

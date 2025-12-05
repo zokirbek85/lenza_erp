@@ -813,9 +813,17 @@
       "region": "Hudud",
       "manager": "Menejer",
       "balanceUsd": "Balans (USD)",
+      "balanceUzs": "Balans (UZS)",
+      "phone": "Telefon",
+      "address": "Manzil",
+      "status": "Status",
       "name": "Nomi",
       "code": "Kod",
       "contact": "Kontakt"
+    },
+    "status": {
+      "active": "Faol",
+      "inactive": "Faol emas"
     },
     "form": {
       "name": "Diler nomi",
@@ -823,7 +831,12 @@
       "region": "Hudud",
       "manager": "Menejer",
       "contact": "Kontakt ma'lumot",
+      "phone": "Telefon raqami",
+      "address": "Manzil",
+      "addressPlaceholder": "Masalan: Toshkent, Yunusobod tumani",
       "openingBalance": "Boshlang'ich balans (USD)",
+      "openingBalanceUsd": "Boshlang'ich balans (USD)",
+      "openingBalanceUzs": "Boshlang'ich balans (UZS)",
       "selectRegion": "Hudud tanlang",
       "unassigned": "Tayinlanmagan",
       "excelFile": "Excel fayli"

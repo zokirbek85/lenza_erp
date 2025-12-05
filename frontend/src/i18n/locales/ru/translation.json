@@ -429,9 +429,17 @@
       "region": "Регион",
       "manager": "Менеджер",
       "balanceUsd": "Баланс (USD)",
+      "balanceUzs": "Баланс (UZS)",
+      "phone": "Телефон",
+      "address": "Адрес",
+      "status": "Статус",
       "name": "Название",
       "code": "Код",
       "contact": "Контакт"
+    },
+    "status": {
+      "active": "Активен",
+      "inactive": "Неактивен"
     },
     "form": {
       "name": "Название дилера",
@@ -439,7 +447,12 @@
       "region": "Регион",
       "manager": "Менеджер",
       "contact": "Контактная информация",
+      "phone": "Номер телефона",
+      "address": "Адрес",
+      "addressPlaceholder": "Например: Ташкент, Юнусабадский район",
       "openingBalance": "Начальный баланс (USD)",
+      "openingBalanceUsd": "Начальный баланс (USD)",
+      "openingBalanceUzs": "Начальный баланс (UZS)",
       "selectRegion": "Выберите регион",
       "unassigned": "Не назначен",
       "excelFile": "Файл Excel"

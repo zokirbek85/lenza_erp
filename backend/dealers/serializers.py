@@ -25,37 +25,85 @@ class RegionSerializer(serializers.ModelSerializer):
 
 
 class DealerSerializer(serializers.ModelSerializer):
-    region = RegionSerializer(read_only=True)
+    # Nested read, ID write for relations
+    region = serializers.SerializerMethodField()
     region_id = serializers.PrimaryKeyRelatedField(
         queryset=Region.objects.all(), source='region', write_only=True, allow_null=True
     )
-    manager_user = serializers.StringRelatedField(read_only=True)
+    manager = serializers.SerializerMethodField()
     manager_user_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), source='manager_user', allow_null=True, required=False
     )
-    balance = serializers.DecimalField(max_digits=14, decimal_places=2, source='balance_usd', read_only=True)
-    debt = serializers.DecimalField(max_digits=14, decimal_places=2, source='debt_usd', read_only=True)
-    current_debt_usd = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
-    current_debt_uzs = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    
+    # Computed balance fields
+    current_balance_usd = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True, coerce_to_string=False
+    )
+    current_balance_uzs = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True, coerce_to_string=False
+    )
+    
+    # Legacy compatibility
+    balance = serializers.DecimalField(
+        max_digits=14, decimal_places=2, source='balance_usd', read_only=True, coerce_to_string=False
+    )
+    current_debt_usd = serializers.DecimalField(
+        max_digits=14, decimal_places=2, read_only=True, coerce_to_string=False
+    )
+    current_debt_uzs = serializers.DecimalField(
+        max_digits=14, decimal_places=2, read_only=True, coerce_to_string=False
+    )
 
     class Meta:
         model = Dealer
         fields = (
             'id',
-            'name',
             'code',
+            'name',
             'region',
             'region_id',
-            'contact',
-            'manager_user',
+            'manager',
             'manager_user_id',
             'opening_balance_usd',
-            'debt',
+            'opening_balance_uzs',
+            'current_balance_usd',
+            'current_balance_uzs',
             'is_active',
+            'phone',
+            'address',
+            'contact',
+            'created_at',
+            # Legacy fields for backward compatibility
             'balance',
             'current_debt_usd',
             'current_debt_uzs',
-            'created_at',
-            'updated_at',
         )
-        read_only_fields = ('created_at', 'updated_at', 'balance')
+        read_only_fields = (
+            'created_at',
+            'balance',
+            'current_balance_usd',
+            'current_balance_uzs',
+            'current_debt_usd',
+            'current_debt_uzs',
+        )
+    
+    def get_region(self, obj):
+        """Return region name or '—' if null."""
+        if obj.region:
+            return obj.region.name
+        return '—'
+    
+    def get_manager(self, obj):
+        """Return manager full name with role or '—' if null."""
+        if obj.manager_user:
+            user = obj.manager_user
+            full_name = user.get_full_name() if hasattr(user, 'get_full_name') else user.username
+            role = getattr(user, 'role', '').capitalize() if hasattr(user, 'role') else ''
+            
+            if full_name and role:
+                return f"{full_name} ({role})"
+            elif full_name:
+                return full_name
+            else:
+                return user.username
+        return '—'
