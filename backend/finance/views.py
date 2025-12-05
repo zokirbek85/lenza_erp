@@ -142,15 +142,24 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         return self.queryset.none()
     
     def check_modification_permission(self):
-        """Check if user can create/modify transactions"""
+        """Check if user can modify transactions (not create)"""
         user = self.request.user
         role = getattr(user, 'role', None)
         
         if not (user.is_superuser or role in ['admin', 'accountant']):
-            raise PermissionDenied(_('Sizda transaction yaratish/tahrirlash huquqi yo\'q'))
+            raise PermissionDenied(_('Sizda transaction tahrirlash huquqi yo\'q'))
+    
+    def check_create_permission(self):
+        """Check if user can create transactions"""
+        user = self.request.user
+        role = getattr(user, 'role', None)
+        
+        # Admin, accountant, sales yaratishi mumkin
+        if not (user.is_superuser or role in ['admin', 'accountant', 'sales']):
+            raise PermissionDenied(_('Sizda transaction yaratish huquqi yo\'q'))
     
     def create(self, request, *args, **kwargs):
-        self.check_modification_permission()
+        self.check_create_permission()
         return super().create(request, *args, **kwargs)
     
     def update(self, request, *args, **kwargs):

@@ -59,8 +59,14 @@ class FinanceTransactionSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True, allow_null=True)
     approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, allow_null=True)
     
-    # amount_usd va exchange_rate read-only, avtomatik hisoblanadi
+    # amount_usd, amount_uzs, exchange_rate read-only, avtomatik hisoblanadi
     amount_usd = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        read_only=True,
+        coerce_to_string=False
+    )
+    amount_uzs = serializers.DecimalField(
         max_digits=18,
         decimal_places=2,
         read_only=True,
@@ -68,7 +74,7 @@ class FinanceTransactionSerializer(serializers.ModelSerializer):
     )
     exchange_rate = serializers.DecimalField(
         max_digits=12,
-        decimal_places=4,
+        decimal_places=2,
         read_only=True,
         required=False,
         allow_null=True,
@@ -92,6 +98,7 @@ class FinanceTransactionSerializer(serializers.ModelSerializer):
             'currency',
             'amount',
             'amount_usd',
+            'amount_uzs',
             'exchange_rate',
             'exchange_rate_date',
             'category',
@@ -108,6 +115,7 @@ class FinanceTransactionSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             'amount_usd',
+            'amount_uzs',
             'exchange_rate',
             'exchange_rate_date',
             'created_by',

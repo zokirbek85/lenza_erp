@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Q, F, Value, Case, When, DecimalField
+from django.db.models.functions import Coalesce
 
 
 class Region(models.Model):
@@ -20,6 +21,82 @@ class Region(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class DealerQuerySet(models.QuerySet):
+    """Custom queryset for optimized balance calculations"""
+    
+    def with_balances(self):
+        """
+        Annotate dealers with calculated balances using a single query.
+        Eliminates N+1 queries when fetching dealer lists.
+        """
+        from orders.models import Order, OrderReturn
+        from finance.models import FinanceTransaction
+        
+        return self.annotate(
+            # Orders total (active, not imported)
+            total_orders_usd=Sum(
+                'orders__total_usd',
+                filter=Q(
+                    orders__status__in=Order.Status.active_statuses(),
+                    orders__is_imported=False
+                ),
+                default=Value(0)
+            ),
+            total_orders_uzs=Sum(
+                'orders__total_uzs',
+                filter=Q(
+                    orders__status__in=Order.Status.active_statuses(),
+                    orders__is_imported=False
+                ),
+                default=Value(0)
+            ),
+            # Returns total (from non-imported orders)
+            # Note: Using reverse relation through Order's dealer field
+            total_returns_usd=Coalesce(
+                Sum(
+                    Case(
+                        When(orders__is_imported=False, then='orders__returns__amount_usd'),
+                        default=Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
+                        output_field=DecimalField(max_digits=18, decimal_places=2)
+                    )
+                ),
+                Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
+                output_field=DecimalField(max_digits=18, decimal_places=2)
+            ),
+            total_returns_uzs=Coalesce(
+                Sum(
+                    Case(
+                        When(orders__is_imported=False, then='orders__returns__amount_uzs'),
+                        default=Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
+                        output_field=DecimalField(max_digits=18, decimal_places=2)
+                    )
+                ),
+                Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)),
+                output_field=DecimalField(max_digits=18, decimal_places=2)
+            ),
+            # Payments total (approved income only)
+            total_payments_usd=Sum(
+                'finance_transactions__amount_usd',
+                filter=Q(
+                    finance_transactions__type=FinanceTransaction.TransactionType.INCOME,
+                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
+                ),
+                default=Value(0)
+            ),
+            total_payments_uzs=Sum(
+                'finance_transactions__amount_uzs',
+                filter=Q(
+                    finance_transactions__type=FinanceTransaction.TransactionType.INCOME,
+                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
+                ),
+                default=Value(0)
+            ),
+            # Calculated balances
+            calculated_balance_usd=F('opening_balance_usd') + F('total_orders_usd') - F('total_returns_usd') - F('total_payments_usd'),
+            calculated_balance_uzs=F('opening_balance_uzs') + F('total_orders_uzs') - F('total_returns_uzs') - F('total_payments_uzs'),
+        )
 
 
 class Dealer(models.Model):
@@ -42,6 +119,8 @@ class Dealer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     debt_usd = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+
+    objects = DealerQuerySet.as_manager()
 
     class Meta:
         ordering = ('name',)
@@ -126,36 +205,18 @@ class Dealer(models.Model):
             or Decimal('0')
         )
         
-        # Total of approved UZS income transactions (each has its own rate)
-        payments_uzs = (
+        # Total of approved income transactions in UZS (all currencies)
+        # Each transaction has its own stored amount_uzs with original exchange rate
+        payments_total = (
             FinanceTransaction.objects.filter(
                 dealer=self,
                 type=FinanceTransaction.TransactionType.INCOME,
-                status=FinanceTransaction.TransactionStatus.APPROVED,
-                currency='UZS'
+                status=FinanceTransaction.TransactionStatus.APPROVED
             )
-            .aggregate(total=Sum('amount'))
+            .aggregate(total=Sum('amount_uzs'))
             .get('total')
             or Decimal('0')
         )
-        
-        # Total of approved USD income transactions converted to UZS (each has its own rate)
-        # For USD payments, we need to convert to UZS using current rate for display
-        from core.utils.currency import usd_to_uzs
-        payments_usd = (
-            FinanceTransaction.objects.filter(
-                dealer=self,
-                type=FinanceTransaction.TransactionType.INCOME,
-                status=FinanceTransaction.TransactionStatus.APPROVED,
-                currency='USD'
-            )
-            .aggregate(total=Sum('amount'))
-            .get('total')
-            or Decimal('0')
-        )
-        payments_usd_in_uzs, _ = usd_to_uzs(payments_usd) if payments_usd > 0 else (Decimal('0'), None)
-        
-        payments_total = payments_uzs + payments_usd_in_uzs
 
         return opening + orders_total - returns_total - payments_total
     

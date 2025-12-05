@@ -55,9 +55,15 @@ class DealerViewSet(viewsets.ModelViewSet):
         """
         Sales (menejer) roli faqat o'ziga tayinlangan dilerlarni ko'radi.
         Boshqa rollar barcha dilerlarni ko'radi.
+        
+        For list actions, uses optimized with_balances() to eliminate N+1 queries.
         """
         queryset = super().get_queryset()
         user = self.request.user
+        
+        # Use optimized queryset for list views
+        if self.action == 'list':
+            queryset = queryset.with_balances()
         
         # Superuser va admin/owner/accountant barcha dilerlarni ko'radi
         if user.is_superuser or getattr(user, 'role', None) in ['admin', 'owner', 'accountant']:

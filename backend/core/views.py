@@ -248,7 +248,7 @@ class DebtAnalyticsView(APIView):
         # Payment module removed - set payments to zero
         zero_value = Value(0, output_field=DecimalField(max_digits=20, decimal_places=2))
         return_subquery = (
-            OrderReturn.objects.filter(order__dealer=OuterRef('pk'))
+            OrderReturn.objects.filter(order__dealer=OuterRef('pk'), order__is_imported=False)
             .values('order__dealer')
             .annotate(total=Sum('amount_usd'))
             .values('total')[:1]
@@ -317,7 +317,7 @@ class DebtAnalyticsView(APIView):
             # Payment module removed - payments_monthly is empty list
             payments_monthly = []
             returns_monthly = (
-                OrderReturn.objects.filter(order__dealer_id__in=dealer_ids, created_at__date__gte=start_date)
+                OrderReturn.objects.filter(order__dealer_id__in=dealer_ids, created_at__date__gte=start_date, order__is_imported=False)
                 .annotate(month=TruncMonth('created_at'))
                 .values('month')
                 .annotate(total=Sum('amount_usd'))

@@ -36,23 +36,39 @@ class DealerSerializer(serializers.ModelSerializer):
     )
     
     # Computed balance fields
-    current_balance_usd = serializers.DecimalField(
-        max_digits=18, decimal_places=2, read_only=True, coerce_to_string=False
-    )
-    current_balance_uzs = serializers.DecimalField(
-        max_digits=18, decimal_places=2, read_only=True, coerce_to_string=False
-    )
+    current_balance_usd = serializers.SerializerMethodField()
+    current_balance_uzs = serializers.SerializerMethodField()
     
     # Legacy compatibility
-    balance = serializers.DecimalField(
-        max_digits=14, decimal_places=2, source='balance_usd', read_only=True, coerce_to_string=False
-    )
-    current_debt_usd = serializers.DecimalField(
-        max_digits=14, decimal_places=2, read_only=True, coerce_to_string=False
-    )
-    current_debt_uzs = serializers.DecimalField(
-        max_digits=14, decimal_places=2, read_only=True, coerce_to_string=False
-    )
+    balance = serializers.SerializerMethodField()
+    current_debt_usd = serializers.SerializerMethodField()
+    current_debt_uzs = serializers.SerializerMethodField()
+    
+    def get_current_balance_usd(self, obj):
+        """Use annotated value if available, otherwise calculate from property"""
+        if hasattr(obj, 'calculated_balance_usd'):
+            return obj.calculated_balance_usd
+        return obj.balance_usd
+    
+    def get_current_balance_uzs(self, obj):
+        """Use annotated value if available, otherwise calculate from property"""
+        if hasattr(obj, 'calculated_balance_uzs'):
+            return obj.calculated_balance_uzs
+        return obj.balance_uzs
+    
+    def get_balance(self, obj):
+        """Legacy field - uses current_balance_usd"""
+        return self.get_current_balance_usd(obj)
+    
+    def get_current_debt_usd(self, obj):
+        """Return debt (only positive balances)"""
+        balance = self.get_current_balance_usd(obj)
+        return balance if balance and balance > 0 else 0
+    
+    def get_current_debt_uzs(self, obj):
+        """Return debt in UZS (only positive balances)"""
+        balance = self.get_current_balance_uzs(obj)
+        return balance if balance and balance > 0 else 0
 
     class Meta:
         model = Dealer

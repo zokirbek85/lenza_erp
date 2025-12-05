@@ -122,12 +122,20 @@ class FinanceTransaction(models.Model):
         editable=False,
         help_text=_('Amount in USD equivalent (auto-calculated)')
     )
-    exchange_rate = models.DecimalField(
-        max_digits=12,
-        decimal_places=4,
+    amount_uzs = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
         null=True,
         blank=True,
-        help_text=_('Exchange rate UZS to USD (for UZS transactions)')
+        editable=False,
+        help_text=_('Amount in UZS equivalent (auto-calculated)')
+    )
+    exchange_rate = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_('Exchange rate: 1 USD = X UZS (for currency conversion)')
     )
     exchange_rate_date = models.DateField(
         null=True,
@@ -203,29 +211,40 @@ class FinanceTransaction(models.Model):
         # Validatsiya
         self.full_clean()
         
-        # Initialize amount_usd if not set
+        # Validate exchange rate
+        if self.exchange_rate is not None and self.exchange_rate <= 0:
+            raise ValidationError({'exchange_rate': _('Exchange rate must be greater than 0')})
+        
+        # Initialize amounts if not set
         if self.amount_usd is None:
             self.amount_usd = Decimal('0')
+        if self.amount_uzs is None:
+            self.amount_uzs = Decimal('0')
         
-        # USD miqdorini hisoblash
+        # Get exchange rate if not provided
+        if not self.exchange_rate:
+            from core.utils.currency import get_exchange_rate
+            rate, rate_date = get_exchange_rate(self.date)
+            self.exchange_rate = rate
+            self.exchange_rate_date = rate_date
+        elif not self.exchange_rate_date:
+            self.exchange_rate_date = self.date
+        
+        # Calculate both USD and UZS amounts based on currency
         if self.currency == 'USD':
+            # INCOME: USD currency
+            # amount = original USD
+            # amount_usd = same as amount
+            # amount_uzs = amount * exchange_rate
             self.amount_usd = self.amount
-            self.exchange_rate = None
-            self.exchange_rate_date = None
+            self.amount_uzs = (self.amount * self.exchange_rate).quantize(Decimal('0.01'))
         elif self.currency == 'UZS':
-            if self.exchange_rate and self.exchange_rate > 0:
-                # Use manually provided exchange rate
-                self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
-                if not self.exchange_rate_date:
-                    self.exchange_rate_date = self.date
-            else:
-                # No exchange rate provided - use currency utility to get rate
-                from core.utils.currency import get_exchange_rate
-                
-                rate, rate_date = get_exchange_rate(self.date)
-                self.exchange_rate = rate
-                self.exchange_rate_date = rate_date
-                self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
+            # INCOME: UZS currency
+            # amount = original UZS
+            # amount_uzs = same as amount
+            # amount_usd = amount / exchange_rate
+            self.amount_uzs = self.amount
+            self.amount_usd = (self.amount / self.exchange_rate).quantize(Decimal('0.01'))
         
         super().save(*args, **kwargs)
     
