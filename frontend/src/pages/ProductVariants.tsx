@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 import { useAuthStore } from '../auth/useAuthStore';
 import Modal from '../components/Modal';
@@ -12,7 +11,6 @@ import {
   type ProductVariant,
   type ProductVariantFilters,
 } from '../api/productVariantsApi';
-import { formatCurrency } from '../utils/formatters';
 
 const DOOR_TYPES = [
   { value: '', label: 'All Door Types' },
@@ -26,8 +24,8 @@ const PAGE_SIZE = 20;
 
 export default function ProductVariants() {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
-  const isAdmin = user?.role === 'admin' || user?.is_superuser;
+  const authState = useAuthStore();
+  const isAdmin = authState.role === 'admin' || authState.isOwner;
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +117,7 @@ export default function ProductVariants() {
           onClick={() => setShowCreateModal(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
+          <span className="mr-2">+</span>
           {t('variants.addVariant')}
         </button>
       </div>
@@ -133,7 +131,7 @@ export default function ProductVariants() {
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <span className="text-gray-400">🔍</span>
               </div>
               <input
                 type="text"
@@ -266,17 +264,17 @@ export default function ProductVariants() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <button
                         onClick={() => setEditingVariant(variant)}
-                        className="text-indigo-600 hover:text-indigo-900 inline-flex items-center"
+                        className="text-indigo-600 hover:text-indigo-900 inline-flex items-center px-2 py-1"
                         title={t('common.edit')}
                       >
-                        <PencilIcon className="h-5 w-5" />
+                        ✏️
                       </button>
                       <button
                         onClick={() => setDeletingVariant(variant)}
-                        className="text-red-600 hover:text-red-900 inline-flex items-center"
+                        className="text-red-600 hover:text-red-900 inline-flex items-center px-2 py-1"
                         title={t('common.delete')}
                       >
-                        <TrashIcon className="h-5 w-5" />
+                        🗑️
                       </button>
                     </td>
                   </tr>
@@ -385,7 +383,7 @@ export default function ProductVariants() {
       {/* Delete Confirmation Modal */}
       {deletingVariant && (
         <Modal
-          isOpen={true}
+          open={true}
           onClose={() => setDeletingVariant(null)}
           title={t('variants.deleteConfirmTitle')}
         >
