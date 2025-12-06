@@ -17,6 +17,7 @@ import OrdersPage from '../pages/Orders';
 import ReturnsPage from '../pages/ReturnsPage';
 import ReturnEditPage from '../pages/returns/ReturnEditPage';
 import ProductsPage from '../pages/Products';
+import ProductVariantsPage from '../pages/ProductVariants';
 import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
 import SettingsPage from '../pages/SettingsPage';
@@ -81,6 +82,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
             <ProductsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'products/variants',
+        element: (
+          <ProtectedRoute roles={['admin']}>
+            <ProductVariantsPage />
           </ProtectedRoute>
         ),
       },

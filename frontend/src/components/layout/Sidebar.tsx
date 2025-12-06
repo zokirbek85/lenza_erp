@@ -70,6 +70,12 @@ const BASE_MENU: MenuItem[] = [
       roles: ['admin', 'sales', 'warehouse', 'accountant'],
     },
     {
+      path: '/products/variants',
+      label: 'nav.productVariants',
+      icon: <AppstoreOutlined />,
+      roles: ['admin'],
+    },
+    {
       path: '/catalog',
       label: 'nav.catalog',
       icon: <AppstoreOutlined />,
