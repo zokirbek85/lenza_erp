@@ -143,12 +143,24 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
       onSuccess();
     } catch (error: any) {
       console.error('Failed to save variant:', error);
+      console.log('Error response:', error.response?.data);
       
       // Handle validation errors from backend
       if (error.response?.data) {
         const backendErrors = error.response.data;
-        const errorMessages: Record<string, string> = {};
         
+        // Check for detail message (500 errors with our custom handler)
+        if (backendErrors.detail) {
+          console.error('Backend error detail:', backendErrors.detail);
+          if (backendErrors.traceback) {
+            console.error('Traceback:', backendErrors.traceback);
+          }
+          toast.error(backendErrors.detail);
+          return;
+        }
+        
+        // Handle validation errors (400 errors)
+        const errorMessages: Record<string, string> = {};
         Object.keys(backendErrors).forEach((key) => {
           if (Array.isArray(backendErrors[key])) {
             errorMessages[key] = backendErrors[key][0];
