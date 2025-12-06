@@ -74,7 +74,7 @@ export async function fetchProductVariants(
   if (filters?.page_size) params.append('page_size', filters.page_size.toString());
 
   const response = await http.get<PaginatedResponse<ProductVariant>>(
-    `/api/catalog/variants-detail/?${params.toString()}`
+    `/catalog/variants-detail/?${params.toString()}`
   );
   return response.data;
 }
@@ -83,7 +83,7 @@ export async function fetchProductVariants(
  * Fetch a single product variant by ID
  */
 export async function fetchProductVariant(id: number): Promise<ProductVariant> {
-  const response = await http.get<ProductVariant>(`/api/catalog/variants-detail/${id}/`);
+  const response = await http.get<ProductVariant>(`/catalog/variants-detail/${id}/`);
   return response.data;
 }
 
@@ -102,7 +102,7 @@ export async function createProductVariant(data: ProductVariantPayload): Promise
     formData.append('image', data.image);
   }
 
-  const response = await http.post<ProductVariant>('/api/catalog/variants-detail/', formData, {
+  const response = await http.post<ProductVariant>('/catalog/variants-detail/', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -128,7 +128,7 @@ export async function updateProductVariant(
     formData.append('image', data.image);
   }
 
-  const response = await http.patch<ProductVariant>(`/api/catalog/variants-detail/${id}/`, formData, {
+  const response = await http.patch<ProductVariant>(`/catalog/variants-detail/${id}/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -140,7 +140,7 @@ export async function updateProductVariant(
  * Delete a product variant
  */
 export async function deleteProductVariant(id: number): Promise<void> {
-  await http.delete(`/api/catalog/variants-detail/${id}/`);
+  await http.delete(`/catalog/variants-detail/${id}/`);
 }
 
 /**
@@ -151,7 +151,7 @@ export async function uploadVariantImage(id: number, image: File): Promise<Produ
   formData.append('image', image);
 
   const response = await http.post<ProductVariant>(
-    `/api/catalog/variants-detail/${id}/upload-image/`,
+    `/catalog/variants-detail/${id}/upload-image/`,
     formData,
     {
       headers: {
@@ -166,7 +166,7 @@ export async function uploadVariantImage(id: number, image: File): Promise<Produ
  * Remove image from a product variant
  */
 export async function removeVariantImage(id: number): Promise<ProductVariant> {
-  const response = await http.delete<ProductVariant>(`/api/catalog/variants-detail/${id}/remove-image/`);
+  const response = await http.delete<ProductVariant>(`/catalog/variants-detail/${id}/remove-image/`);
   return response.data;
 }
 
@@ -178,7 +178,7 @@ export async function fetchProductModels(search?: string): Promise<ProductModel[
   if (search) params.append('search', search);
   
   const response = await http.get<PaginatedResponse<ProductModel> | ProductModel[]>(
-    `/api/catalog/models/?${params.toString()}`
+    `/catalog/models/?${params.toString()}`
   );
   
   // Handle both paginated and non-paginated responses
