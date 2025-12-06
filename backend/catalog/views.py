@@ -1046,15 +1046,54 @@ class ProductModelViewSet(viewsets.ModelViewSet):
 
 
 class ProductVariantViewSet(viewsets.ModelViewSet):
-    """ViewSet for product variants"""
-    queryset = ProductVariant.objects.filter(is_active=True).select_related('product_model__brand')
+    """ViewSet for product variants - Admin only for write operations"""
+    queryset = ProductVariant.objects.all().select_related('product_model__brand')
     serializer_class = ProductVariantDetailSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin | IsOwner]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ('product_model', 'door_type')
+    filterset_fields = ('product_model', 'door_type', 'is_active')
     search_fields = ('product_model__model_name', 'color', 'product_model__brand__name')
     ordering_fields = ('product_model__brand__name', 'product_model__model_name', 'color')
     ordering = ('product_model__brand__name', 'product_model__model_name', 'color')
+    
+    def create(self, request, *args, **kwargs):
+        """Create a new product variant with proper error handling"""
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ValidationError as e:
+            return Response(
+                {'detail': 'Validation error', 'errors': e.detail},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'detail': f'Error creating variant: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def update(self, request, *args, **kwargs):
+        """Update a product variant with proper error handling"""
+        try:
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except ValidationError as e:
+            return Response(
+                {'detail': 'Validation error', 'errors': e.detail},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'detail': f'Error updating variant: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ProductSKUViewSet(viewsets.ModelViewSet):
