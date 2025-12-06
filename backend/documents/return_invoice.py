@@ -26,7 +26,7 @@ class ReturnInvoiceDocument(BaseDocument):
         return invoice.get_response(filename=f'return_{return_doc.id}.pdf')
     """
     
-    template_name = None  # Using inline template
+    template_name = 'documents/return_invoice.html'
     document_type = 'return'
     
     def __init__(
@@ -131,11 +131,19 @@ class ReturnInvoiceDocument(BaseDocument):
             'name': dealer.name,
             'code': getattr(dealer, 'code', ''),
             'phone': getattr(dealer, 'phone', ''),
-            'region': getattr(dealer, 'region', {}).get('name', '') if hasattr(dealer, 'region') else '',
+            'region': dealer.region.name if dealer.region else '',
         }
         
         # Add base CSS
         context['base_css'] = self.get_base_css()
+        
+        # Get created by user name
+        created_by_name = ''
+        if self.return_document.created_by:
+            try:
+                created_by_name = self.return_document.created_by.get_full_name() or self.return_document.created_by.username
+            except AttributeError:
+                created_by_name = str(self.return_document.created_by)
         
         context.update({
             'return_document': self.return_document,
@@ -147,284 +155,7 @@ class ReturnInvoiceDocument(BaseDocument):
             'document_number': f'RETURN-{self.return_document.id}',
             'document_date': self.return_document.created_at.date(),
             'general_comment': self.return_document.general_comment or '',
-            'created_by': getattr(self.return_document.created_by, 'get_full_name', lambda: '')() if self.return_document.created_by else '',
+            'created_by': created_by_name,
         })
         
         return context
-    
-    def render_html(self, context: Optional[Dict[str, Any]] = None) -> str:
-        """Render document to HTML string using inline template."""
-        from django.template import Template, Context
-        
-        full_context = self.get_context()
-        if context:
-            full_context.update(context)
-        
-        template = Template(self._get_template_html())
-        return template.render(Context(full_context))
-    
-    def _get_template_html(self) -> str:
-        """Get inline HTML template."""
-        return ReturnInvoiceTemplate.get_html()
-
-
-class ReturnInvoiceTemplate:
-    """HTML template for return invoice."""
-    
-    @staticmethod
-    def get_html() -> str:
-        return '''
-{% load tz i18n %}
-<!DOCTYPE html>
-<html lang="{{ language|default:'uz' }}">
-<head>
-    <meta charset="utf-8" />
-    <style>
-        {{ base_css }}
-        
-        /* Return invoice specific styles */
-        .return-header {
-            text-align: right;
-        }
-        
-        .return-number {
-            font-size: {{ style.FONT_SIZE_XLARGE }};
-            font-weight: 700;
-            color: {{ style.ERROR }};
-        }
-        
-        .return-title {
-            font-size: {{ style.FONT_SIZE_LARGE }};
-            font-weight: 700;
-            color: {{ style.PRIMARY }};
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: {{ style.FONT_SIZE_SMALL }};
-            font-weight: 600;
-            margin-top: 8px;
-        }
-        
-        .status-healthy {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-defect {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .exchange-rate-box {
-            margin-top: 16px;
-            padding: 12px 16px;
-            background: #eff6ff;
-            border-radius: {{ style.BORDER_RADIUS }};
-            border-left: 4px solid {{ style.ACCENT }};
-        }
-        
-        .exchange-rate-label {
-            font-size: {{ style.FONT_SIZE_SMALL }};
-            color: {{ style.TEXT_MUTED }};
-            margin-bottom: 4px;
-        }
-        
-        .exchange-rate-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: {{ style.PRIMARY }};
-        }
-        
-        .notes-box {
-            margin-top: 24px;
-            padding: 14px 18px;
-            background: #fef3c7;
-            border-radius: {{ style.BORDER_RADIUS }};
-            border-left: 4px solid {{ style.WARNING }};
-        }
-        
-        .notes-label {
-            font-size: {{ style.FONT_SIZE_SMALL }};
-            font-weight: 600;
-            color: {{ style.TEXT_MUTED }};
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 6px;
-        }
-        
-        .notes-content {
-            font-size: {{ style.FONT_SIZE_BASE }};
-            color: {{ style.PRIMARY }};
-            line-height: 1.6;
-        }
-    </style>
-</head>
-<body>
-    {% if add_watermark %}
-    <div class="watermark">{{ watermark_text }}</div>
-    {% endif %}
-    
-    <main class="document">
-        <!-- Header -->
-        <header class="document-header">
-            <div class="company-info">
-                {% if company.logo %}
-                <img src="{{ company.logo }}" alt="{{ company.name }}" class="logo-img" />
-                {% endif %}
-                <div class="brand">{{ company.name }}</div>
-                <div class="tagline">{{ company.tagline }}</div>
-            </div>
-            <div class="return-header">
-                <div class="return-title">{% trans "Return Document" %}</div>
-                <div class="return-number">#{{ document_number }}</div>
-                <div class="text-muted" style="margin-top: 8px;">
-                    {{ document_date|date:"d.m.Y" }}
-                </div>
-            </div>
-        </header>
-        
-        <!-- Info Cards -->
-        <div class="info-cards">
-            <div class="info-card">
-                <span class="info-card-label">{% trans "Dealer" %}</span>
-                <strong class="info-card-value">{{ dealer.name }}</strong>
-                {% if dealer.code %}
-                <div class="text-muted" style="margin-top: 4px;">
-                    {{ dealer.code }}
-                </div>
-                {% endif %}
-            </div>
-            
-            {% if dealer.region %}
-            <div class="info-card">
-                <span class="info-card-label">{% trans "Region" %}</span>
-                <strong class="info-card-value">{{ dealer.region }}</strong>
-            </div>
-            {% endif %}
-            
-            {% if dealer.phone %}
-            <div class="info-card">
-                <span class="info-card-label">{% trans "Contact" %}</span>
-                <strong class="info-card-value">{{ dealer.phone }}</strong>
-            </div>
-            {% endif %}
-            
-            {% if created_by %}
-            <div class="info-card">
-                <span class="info-card-label">{% trans "Manager" %}</span>
-                <strong class="info-card-value">{{ created_by }}</strong>
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Items Table -->
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 50px;">№</th>
-                    <th>{% trans "Product" %}</th>
-                    <th style="width: 120px;">{% trans "Size" %}</th>
-                    <th class="text-center" style="width: 100px;">{% trans "Status" %}</th>
-                    <th class="text-right" style="width: 80px;">{% trans "Quantity" %}</th>
-                    <th class="text-right" style="width: 100px;">{% trans "Price (USD)" %}</th>
-                    <th class="text-right" style="width: 120px;">{% trans "Total (USD)" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td class="text-center">{{ item.number }}</td>
-                    <td><strong>{{ item.product }}</strong></td>
-                    <td>{{ item.size|default:"—" }}</td>
-                    <td class="text-center">
-                        <span class="status-badge status-{{ item.status_code }}">
-                            {{ item.status }}
-                        </span>
-                    </td>
-                    <td class="text-right">{{ item.qty }}</td>
-                    <td class="text-right">{{ item.price_usd }}</td>
-                    <td class="text-right font-bold">{{ item.total_usd }}</td>
-                </tr>
-                {% if item.comment %}
-                <tr>
-                    <td colspan="7" style="padding-top: 0; font-size: 11px; color: {{ style.TEXT_MUTED }};">
-                        {% trans "Note" %}: {{ item.comment }}
-                    </td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <!-- Exchange Rate Info -->
-        <div class="exchange-rate-box">
-            <div class="exchange-rate-label">
-                {% trans "Exchange Rate" %} ({{ totals.exchange_rate.date|date:"d.m.Y" }})
-            </div>
-            <div class="exchange-rate-value">
-                1 USD = {{ totals.exchange_rate.formatted }} UZS
-            </div>
-        </div>
-        
-        <!-- Totals -->
-        <div style="margin-top: 24px;">
-            <table class="totals-table">
-                <tr>
-                    <td>{% trans "Return Total (USD)" %}:</td>
-                    <td class="text-right">{{ totals.total_usd_formatted }}</td>
-                </tr>
-                <tr>
-                    <td>{% trans "Return Total (UZS)" %}:</td>
-                    <td class="text-right">{{ totals.total_uzs_formatted }}</td>
-                </tr>
-            </table>
-        </div>
-        
-        <!-- General Comment -->
-        {% if general_comment %}
-        <div class="notes-box">
-            <div class="notes-label">{% trans "General Comment" %}</div>
-            <div class="notes-content">{{ general_comment }}</div>
-        </div>
-        {% endif %}
-        
-        <!-- Signatures -->
-        <div class="signature-section">
-            <div class="signature-box">
-                <div class="signature-line">
-                    {% trans "Manager" %}
-                </div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-line">
-                    {% trans "Approved by" %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Footer with QR -->
-        <footer class="document-footer">
-            <div>
-                <div class="footer-text">
-                    {{ company.name }} | {{ company.phone }} | {{ company.email }}
-                </div>
-                <div class="footer-date" style="margin-top: 4px;">
-                    {% trans "Generated automatically by Lenza ERP" %} | {{ today|date:"d.m.Y" }}
-                </div>
-            </div>
-            {% if qr_code %}
-            <div class="qr-box">
-                <img src="{{ qr_code }}" alt="QR Code" class="qr-img" />
-                <div style="margin-top: 4px;">{% trans "Scan to verify" %}</div>
-            </div>
-            {% endif %}
-        </footer>
-    </main>
-</body>
-</html>
-        '''
