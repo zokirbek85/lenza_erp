@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   getFinanceTransactions,
@@ -14,38 +14,62 @@ export default function FinanceTransactions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FinanceTransactionFilters>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     loadTransactions();
-  }, [filters]);
+  }, [filters, page, pageSize]);
 
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getFinanceTransactions(filters);
+      
+      const params = {
+        ...filters,
+        page,
+        page_size: pageSize,
+      };
+      
+      const response = await getFinanceTransactions(params);
       
       // Normalize response - handle both paginated and non-paginated
       const data = response.data;
       let items: FinanceTransaction[] = [];
+      let count = 0;
       
       if (Array.isArray(data)) {
-        // Direct array response
+        // Direct array response (no pagination)
         items = data;
+        count = data.length;
       } else if (data && typeof data === 'object') {
-        // Paginated response with results, data, or items key
+        // Paginated response with results
         items = (data as any).results || (data as any).data || (data as any).items || [];
+        count = (data as any).count || items.length;
       }
       
-      // Ensure it's always an array
-      setTransactions(Array.isArray(items) ? items : []);
+      // Filter out any null/undefined items and ensure valid data
+      const validItems = items.filter((item): item is FinanceTransaction => {
+        return item !== null && 
+               item !== undefined && 
+               typeof item === 'object' &&
+               'id' in item &&
+               'amount' in item;
+      });
+      
+      setTransactions(validItems);
+      setTotalCount(count);
     } catch (err: any) {
+      console.error('Error loading transactions:', err);
       setError(err.response?.data?.detail || 'Failed to load transactions');
-      setTransactions([]); // Set empty array on error
+      setTransactions([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, page, pageSize]);
 
   const handleApprove = async (id: number) => {
     if (!window.confirm(t('finance.transaction.confirmApprove', 'Operatsiyani tasdiqlaysizmi?'))) {
@@ -278,17 +302,26 @@ export default function FinanceTransactions() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     {transaction.currency === 'USD' ? (
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                        ${formatNumber(transaction.amount || 0)}
-                      </div>
+                      <>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          ${formatNumber(transaction.amount || 0)}
+                        </div>
+                        {transaction.amount_uzs && transaction.amount_uzs > 0 && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            ≈ {formatNumber(transaction.amount_uzs)} UZS
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <>
                         <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {formatNumber(transaction.amount || 0)} {transaction.currency}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          ≈ ${formatNumber(transaction.amount_usd || 0)}
-                        </div>
+                        {transaction.amount_usd && transaction.amount_usd > 0 && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            ≈ ${formatNumber(transaction.amount_usd)}
+                          </div>
+                        )}
                       </>
                     )}
                   </td>
@@ -343,7 +376,7 @@ export default function FinanceTransactions() {
           </table>
         </div>
 
-        {transactions.length === 0 && (
+        {transactions.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">
               {t('finance.transactions.empty', 'Operatsiyalar topilmadi')}
@@ -351,6 +384,62 @@ export default function FinanceTransactions() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalCount > pageSize && (
+        <div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-md px-6 py-4">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            {t('common.showing', 'Ko\'rsatilmoqda')}{' '}
+            <span className="font-semibold">{Math.min((page - 1) * pageSize + 1, totalCount)}</span>
+            {' '}-{' '}
+            <span className="font-semibold">{Math.min(page * pageSize, totalCount)}</span>
+            {' '}{t('common.of', 'dan')}{' '}
+            <span className="font-semibold">{totalCount}</span>
+            {' '}{t('common.results', 'natija')}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t('common.previous', 'Oldingi')}
+            </button>
+            
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {t('common.page', 'Sahifa')} {page} / {Math.ceil(totalCount / pageSize)}
+            </span>
+            
+            <button
+              onClick={() => setPage(Math.min(Math.ceil(totalCount / pageSize), page + 1))}
+              disabled={page >= Math.ceil(totalCount / pageSize)}
+              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {t('common.next', 'Keyingi')}
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-700 dark:text-gray-300">
+              {t('common.perPage', 'Sahifada')}:
+            </label>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

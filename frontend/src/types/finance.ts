@@ -21,6 +21,7 @@ export interface FinanceAccount {
 export interface FinanceTransaction {
   id: number;
   type: TransactionType;
+  type_display?: string;
   dealer: number | null;
   dealer_name?: string;
   account: number;
@@ -29,11 +30,13 @@ export interface FinanceTransaction {
   currency: Currency;
   amount: number;
   amount_usd: number;
+  amount_uzs: number;
   exchange_rate: number | null;
   exchange_rate_date: string | null;
   category: string;
   comment: string;
   status: TransactionStatus;
+  status_display?: string;
   created_by: number | null;
   created_by_name?: string;
   approved_by: number | null;

@@ -98,17 +98,29 @@ class FinanceAccountViewSet(viewsets.ModelViewSet):
 class FinanceTransactionFilter(filters.FilterSet):
     """FinanceTransaction uchun filterlar"""
     type = filters.ChoiceFilter(choices=FinanceTransaction.TransactionType.choices)
-    status = filters.ChoiceFilter(choices=FinanceTransaction.TransactionStatus.choices)
+    status = filters.MultipleChoiceFilter(choices=FinanceTransaction.TransactionStatus.choices)
     currency = filters.ChoiceFilter(choices=FinanceAccount.Currency.choices)
     dealer = filters.NumberFilter(field_name='dealer__id')
     account = filters.NumberFilter(field_name='account__id')
     date_from = filters.DateFilter(field_name='date', lookup_expr='gte')
     date_to = filters.DateFilter(field_name='date', lookup_expr='lte')
     category = filters.CharFilter(lookup_expr='icontains')
+    # Add search filter for dealer name and comment
+    search = filters.CharFilter(method='filter_search')
     
     class Meta:
         model = FinanceTransaction
-        fields = ['type', 'status', 'currency', 'dealer', 'account', 'date_from', 'date_to', 'category']
+        fields = ['type', 'status', 'currency', 'dealer', 'account', 'date_from', 'date_to', 'category', 'search']
+    
+    def filter_search(self, queryset, name, value):
+        """Search in dealer name, category, and comment"""
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(dealer__name__icontains=value) |
+            Q(category__icontains=value) |
+            Q(comment__icontains=value)
+        )
 
 
 class FinanceTransactionViewSet(viewsets.ModelViewSet):
@@ -122,8 +134,10 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
     serializer_class = FinanceTransactionSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = FinanceTransactionFilter
-    ordering_fields = ['date', 'created_at', 'amount', 'amount_usd']
+    ordering_fields = ['date', 'created_at', 'amount', 'amount_usd', 'amount_uzs']
     ordering = ['-date', '-created_at']
+    # Enable pagination with large page size
+    pagination_class = None  # Disable pagination for now, or configure per view
     
     def get_queryset(self):
         """Filter by permissions"""
