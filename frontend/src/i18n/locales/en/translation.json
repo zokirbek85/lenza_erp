@@ -666,8 +666,11 @@
       "confirmReject": "Reject this return?",
       "loadError": "Error loading returns",
       "orderLoadError": "Error loading order items",
-      "notFound": "Return not found"
+      "notFound": "Return not found",
+      "exportSuccess": "PDF exported successfully",
+      "exportError": "Failed to export PDF"
     },
+    "exportPdf": "Export PDF",
     "stats": {
       "title": "Statistics",
       "noData": "No data available"

@@ -1,10 +1,13 @@
 from decimal import Decimal
 
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from documents import ReturnInvoiceDocument
 from .models import Return, ReturnItem
 from .serializers import ReturnSerializer
 from .permissions import IsReturnEditor
@@ -55,3 +58,33 @@ class ReturnViewSet(viewsets.ModelViewSet):
         instance.delete()
         
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=['get'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        """
+        Export individual return document as PDF.
+        
+        GET /api/returns/{id}/export-pdf/
+        
+        Returns:
+            PDF file download with return details, items table, totals, and QR code
+        """
+        return_document = get_object_or_404(
+            Return.objects.select_related('dealer', 'created_by')
+            .prefetch_related('items__product__brand', 'items__product__category'),
+            pk=pk
+        )
+        
+        # Get language from request headers
+        language = request.headers.get('Accept-Language', 'uz')[:2]
+        
+        # Generate return invoice PDF
+        invoice = ReturnInvoiceDocument(
+            return_document=return_document,
+            request=request,
+            show_qr=True,
+            language=language,
+        )
+        
+        filename = f'return_{return_document.id}.pdf'
+        return invoice.get_response(filename=filename, inline=False)

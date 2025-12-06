@@ -76,3 +76,19 @@ export const deleteReturn = async (id: number): Promise<void> => {
   await http.delete(`/returns/${id}/`);
 };
 
+export const exportReturnPdf = async (id: number): Promise<void> => {
+  const response = await http.get(`/returns/${id}/export-pdf/`, {
+    responseType: 'blob',
+  });
+  
+  // Create download link
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `return_${id}.pdf`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+

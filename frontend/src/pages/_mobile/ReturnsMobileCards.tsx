@@ -1,4 +1,4 @@
-import { EyeOutlined } from '@ant-design/icons';
+import { EyeOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import MobileCard, { type MobileCardProps } from '../../components/responsive/cards/MobileCard';
 import MobileCardList from '../../components/responsive/cards/MobileCardList';
@@ -27,6 +27,7 @@ export type ReturnMobileRecord = {
 
 export type ReturnsMobileHandlers = {
   onView: (returnId: number) => void;
+  onExportPdf?: (returnId: number) => void;
 };
 
 type ReturnsMobileCardProps = {
@@ -55,7 +56,10 @@ export const ReturnsMobileCard = ({ returnRecord, handlers, showPrice }: Returns
     },
   ];
 
-  const actions = [{ icon: <EyeOutlined />, label: 'View', onClick: () => handlers.onView(returnRecord.id) }];
+  const actions = [
+    { icon: <EyeOutlined />, label: 'View', onClick: () => handlers.onView(returnRecord.id) },
+    ...(handlers.onExportPdf ? [{ icon: <FilePdfOutlined />, label: 'PDF', onClick: () => handlers.onExportPdf!(returnRecord.id) }] : []),
+  ];
 
   return (
     <MobileCard

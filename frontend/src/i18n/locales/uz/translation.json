@@ -1089,8 +1089,11 @@
       "confirmReject": "Qaytishni rad etamizmi?",
       "loadError": "Qaytarishlarni yuklashda xatolik",
       "orderLoadError": "Buyurtma mahsulotlarini yuklashda xatolik",
-      "notFound": "Qaytarish topilmadi"
+      "notFound": "Qaytarish topilmadi",
+      "exportSuccess": "PDF muvaffaqiyatli eksport qilindi",
+      "exportError": "PDF eksport qilishda xatolik"
     },
+    "exportPdf": "PDF eksport",
     "stats": {
       "title": "Statistika",
       "noData": "Ma'lumot yo'q"

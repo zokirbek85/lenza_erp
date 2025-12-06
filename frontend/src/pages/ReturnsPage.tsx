@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Card, Collapse, Space, Table, Tag, Popconfirm } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -9,7 +9,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { downloadFile } from '../utils/download';
 import { formatCurrency, formatDate, formatQuantity } from '../utils/formatters';
-import { fetchReturns, deleteReturn, type ReturnRecord } from '../api/returnsApi';
+import { fetchReturns, deleteReturn, exportReturnPdf, type ReturnRecord } from '../api/returnsApi';
 import ReturnsMobileCards from './_mobile/ReturnsMobileCards';
 import type { ReturnsMobileHandlers } from './_mobile/ReturnsMobileCards';
 import CreateReturnForm from './returns/components/CreateReturnForm';
@@ -58,10 +58,21 @@ const ReturnsPage = () => {
     }
   };
 
+  const handleExportReturnPdf = async (returnId: number) => {
+    try {
+      await exportReturnPdf(returnId);
+      toast.success(t('returns.exportSuccess'));
+    } catch (error) {
+      toast.error(t('returns.exportError'));
+      console.error('Export error:', error);
+    }
+  };
+
   const mobileHandlers: ReturnsMobileHandlers = {
     onView: (returnId: number) => {
       console.log('View return:', returnId);
     },
+    onExportPdf: handleExportReturnPdf,
   };
 
   if (isMobile) {
@@ -182,39 +193,51 @@ const ReturnsPage = () => {
             dataIndex: 'created_at',
             render: (value: string) => formatDate(value),
           },
-          ...(isAdmin ? [{
+          {
             title: t('common:actions.title'),
             key: 'actions',
-            width: 150,
+            width: 200,
             render: (_: unknown, record: ReturnRecord) => (
               <Space size="small">
                 <Button
-                  type="primary"
                   size="small"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(record.id)}
+                  icon={<FilePdfOutlined />}
+                  onClick={() => handleExportReturnPdf(record.id)}
+                  title={t('returns.exportPdf')}
                 >
-                  {t('common:actions.edit')}
+                  PDF
                 </Button>
-                <Popconfirm
-                  title={t('returns.deleteConfirm')}
-                  description={t('returns.deleteDescription')}
-                  onConfirm={() => handleDelete(record.id)}
-                  okText={t('common:actions.yes')}
-                  cancelText={t('common:actions.no')}
-                  okButtonProps={{ danger: true }}
-                >
-                  <Button
-                    danger
-                    size="small"
-                    icon={<DeleteOutlined />}
-                  >
-                    {t('common:actions.delete')}
-                  </Button>
-                </Popconfirm>
+                {isAdmin && (
+                  <>
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => handleEdit(record.id)}
+                    >
+                      {t('common:actions.edit')}
+                    </Button>
+                    <Popconfirm
+                      title={t('returns.deleteConfirm')}
+                      description={t('returns.deleteDescription')}
+                      onConfirm={() => handleDelete(record.id)}
+                      okText={t('common:actions.yes')}
+                      cancelText={t('common:actions.no')}
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                      >
+                        {t('common:actions.delete')}
+                      </Button>
+                    </Popconfirm>
+                  </>
+                )}
               </Space>
             ),
-          }] : []),
+          },
         ]}
         dataSource={returns}
         loading={loading}

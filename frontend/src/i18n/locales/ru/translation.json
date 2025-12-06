@@ -705,8 +705,11 @@
       "confirmReject": "Отклонить возврат?",
       "loadError": "Ошибка загрузки возвратов",
       "orderLoadError": "Ошибка загрузки товаров заказа",
-      "notFound": "Возврат не найден"
+      "notFound": "Возврат не найден",
+      "exportSuccess": "PDF успешно экспортирован",
+      "exportError": "Не удалось экспортировать PDF"
     },
+    "exportPdf": "Экспорт PDF",
     "stats": {
       "title": "Статистика",
       "noData": "Нет данных"
