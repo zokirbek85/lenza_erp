@@ -25,7 +25,7 @@ const PAGE_SIZE = 20;
 export default function ProductVariants() {
   const { t } = useTranslation();
   const authState = useAuthStore();
-  const isAdmin = authState.role === 'admin' || authState.isOwner;
+  const isAdmin = authState.role === 'admin' || authState.role === 'owner';
 
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);

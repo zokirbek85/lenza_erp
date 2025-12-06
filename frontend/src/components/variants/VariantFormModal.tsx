@@ -172,7 +172,7 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
       open={true}
       onClose={onClose}
       title={isEditMode ? t('variants.editVariant') : t('variants.createVariant')}
-      size="lg"
+      widthClass="max-w-2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Product Model Select */}
