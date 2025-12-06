@@ -197,6 +197,11 @@ const Catalog = () => {
                     src={variant.image}
                     alt={variantTitle}
                     preview={true}
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'contain'
+                    }}
                   />
                 </div>
               ) : (
@@ -338,6 +343,11 @@ const Catalog = () => {
                 src={variant.image}
                 alt={variantTitle}
                 preview={!isUltra}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain'
+                }}
               />
             </div>
           ) : (

@@ -92,14 +92,26 @@
   overflow: hidden;
   background: var(--bg-elevated);
   border-radius: 12px;
+  padding: 8px;
+}
+
+/* Target both img and Ant Design Image wrapper */
+.catalog-card-image .ant-image,
+.catalog-card-image .ant-image-img {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .catalog-card-image img {
-  max-height: 100%;
-  max-width: 100%;
+  max-height: 100% !important;
+  max-width: 100% !important;
   width: auto !important;
   height: auto !important;
   object-fit: contain !important;
+  object-position: center !important;
 }
 
 .catalog-card-no-image {
@@ -184,6 +196,7 @@
   justify-content: center;
   overflow: hidden;
   background: var(--bg-elevated);
+  padding: 8px;
 }
 
 .catalog-gallery-image.gallery-comfort {
@@ -198,12 +211,23 @@
   height: 100px;
 }
 
+/* Target Ant Design Image wrapper in gallery */
+.catalog-gallery-image .ant-image,
+.catalog-gallery-image .ant-image-img {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .catalog-gallery-image img {
-  max-height: 100%;
-  max-width: 100%;
+  max-height: 100% !important;
+  max-width: 100% !important;
   width: auto !important;
   height: auto !important;
   object-fit: contain !important;
+  object-position: center !important;
 }
 
 .catalog-gallery-content {
@@ -283,18 +307,22 @@
 
   .catalog-card-image {
     height: 240px;
+    padding: 4px;
   }
 
   .catalog-gallery-image.gallery-comfort {
     height: 200px;
+    padding: 6px;
   }
 
   .catalog-gallery-image.gallery-compact {
     height: 140px;
+    padding: 4px;
   }
 
   .catalog-gallery-image.gallery-ultra {
     height: 80px;
+    padding: 2px;
   }
 
   .catalog-filters .ant-segmented {
