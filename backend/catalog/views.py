@@ -1055,23 +1055,31 @@ class ProductVariantViewSet(viewsets.ModelViewSet):
     search_fields = ('product_model__model_name', 'color', 'product_model__brand__name')
     ordering_fields = ('product_model__brand__name', 'product_model__model_name', 'color')
     ordering = ('product_model__brand__name', 'product_model__model_name', 'color')
+    parser_classes = [MultiPartParser, FormParser]
     
     def create(self, request, *args, **kwargs):
         """Create a new product variant with proper error handling"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
+            logger.info(f"Creating variant with data: {request.data}")
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except ValidationError as e:
+            logger.error(f"Validation error creating variant: {e.detail}")
             return Response(
                 {'detail': 'Validation error', 'errors': e.detail},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
+            logger.exception(f"Exception creating variant: {str(e)}")
+            import traceback
             return Response(
-                {'detail': f'Error creating variant: {str(e)}'},
+                {'detail': f'Error creating variant: {str(e)}', 'traceback': traceback.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
