@@ -62,7 +62,12 @@ RUN groupadd -r django && useradd -r -g django django
 COPY . .
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /app/staticfiles /app/media /app/logs && \
+RUN mkdir -p /app/staticfiles /app/media /app/logs \
+    /app/media/catalog/variants \
+    /app/media/catalog/products \
+    /app/media/catalog/kits \
+    /app/media/exports \
+    /app/media/temp && \
     chown -R django:django /app
 
 # Make entrypoint executable
