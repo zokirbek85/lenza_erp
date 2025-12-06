@@ -259,8 +259,8 @@ const CreateReturnForm = ({ onCreated, onCancel, initialData, isEdit = false }: 
         dealer: currentDealer,
         items: cart.map((item) => ({
           product_id: item.product_id,
-          brand_id: item.brand_id,
-          category_id: item.category_id,
+          // Remove brand_id and category_id to avoid validation mismatch
+          // Backend will use product's actual brand/category from database
           quantity: item.quantity,
           status: item.status,
           comment: item.comment || '',
@@ -280,7 +280,7 @@ const CreateReturnForm = ({ onCreated, onCancel, initialData, isEdit = false }: 
         onCreated(payload);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Return save error:', error);
       message.error(isEdit ? t('returns.messages.updateError') : t('returns.messages.createError'));
     } finally {
       setSaving(false);

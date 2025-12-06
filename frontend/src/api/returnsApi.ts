@@ -57,8 +57,19 @@ export const fetchReturnById = async (id: number): Promise<ReturnRecord> => {
 };
 
 export const updateReturn = async (id: number, payload: ReturnPayload): Promise<ReturnRecord> => {
-  const response = await http.put<ReturnRecord>(`/returns/${id}/`, payload);
-  return response.data;
+  try {
+    const response = await http.put<ReturnRecord>(`/returns/${id}/`, payload);
+    return response.data;
+  } catch (error: any) {
+    // Log detailed error for debugging
+    console.error('Update return failed:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      payload,
+    });
+    throw error;
+  }
 };
 
 export const deleteReturn = async (id: number): Promise<void> => {
