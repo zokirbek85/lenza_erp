@@ -210,7 +210,7 @@ class ProductSKUSerializer(serializers.ModelSerializer):
 
 
 class ProductVariantDetailSerializer(serializers.ModelSerializer):
-    """Detailed serializer for product variants with SKUs"""
+    """Detailed serializer for product variants with SKU and configurations"""
     brand_name = serializers.CharField(source='product_model.brand.name', read_only=True)
     collection = serializers.CharField(source='product_model.collection', read_only=True)
     model_name = serializers.CharField(source='product_model.model_name', read_only=True)
@@ -228,13 +228,52 @@ class ProductVariantDetailSerializer(serializers.ModelSerializer):
             'color',
             'door_type',
             'door_type_display',
+            'sku',
             'image',
+            'configurations',
             'is_active',
             'skus',
             'created_at',
             'updated_at',
         )
         read_only_fields = ('created_at', 'updated_at')
+    
+    def validate_sku(self, value):
+        """Validate SKU is unique (excluding current instance in update)"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("SKU is required")
+        
+        value = value.strip().upper()
+        
+        # Check uniqueness
+        queryset = ProductVariant.objects.filter(sku=value)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        
+        if queryset.exists():
+            raise serializers.ValidationError(f"Variant with SKU '{value}' already exists")
+        
+        return value
+    
+    def validate_configurations(self, value):
+        """Validate configurations format"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Configurations must be a list")
+        
+        for idx, config in enumerate(value):
+            if not isinstance(config, dict):
+                raise serializers.ValidationError(f"Configuration {idx + 1} must be an object")
+            
+            if 'name' not in config or 'value' not in config:
+                raise serializers.ValidationError(f"Configuration {idx + 1} must have 'name' and 'value' fields")
+            
+            if not config['name'] or not config['name'].strip():
+                raise serializers.ValidationError(f"Configuration {idx + 1} name cannot be empty")
+            
+            if not config['value'] or not config['value'].strip():
+                raise serializers.ValidationError(f"Configuration {idx + 1} value cannot be empty")
+        
+        return value
 
 
 class DoorKitComponentSerializer(serializers.ModelSerializer):
