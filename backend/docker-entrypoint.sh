@@ -48,6 +48,16 @@ done
 
 log_info "PostgreSQL is ready!"
 
+# Ensure media subdirectories exist with proper permissions
+log_info "Creating media subdirectories..."
+mkdir -p /app/media/catalog/variants \
+         /app/media/catalog/products \
+         /app/media/catalog/kits \
+         /app/media/exports \
+         /app/media/temp || {
+    log_warn "Could not create media directories (may already exist)"
+}
+
 # Run database migrations
 log_info "Running database migrations..."
 python manage.py migrate --noinput || {
