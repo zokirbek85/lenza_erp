@@ -20,6 +20,11 @@ export interface ProductSKU {
   stock: string;
 }
 
+export interface Configuration {
+  name: string;
+  value: string;
+}
+
 export interface ProductVariant {
   id: number;
   product_model: number;
@@ -29,7 +34,9 @@ export interface ProductVariant {
   color: string;
   door_type: 'ПГ' | 'ПО' | 'ПДО' | 'ПДГ';
   door_type_display: string;
+  sku: string;
   image?: string;
+  configurations: Configuration[];
   is_active: boolean;
   skus?: ProductSKU[];
   created_at: string;
@@ -40,7 +47,9 @@ export interface ProductVariantPayload {
   product_model: number;
   color: string;
   door_type: string;
+  sku: string;
   image?: File | string;
+  configurations: Configuration[];
   is_active: boolean;
 }
 

@@ -38,6 +38,8 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
     product_model: variant?.product_model || 0,
     color: variant?.color || '',
     door_type: variant?.door_type || 'ПГ',
+    sku: variant?.sku || '',
+    configurations: variant?.configurations || [],
     is_active: variant?.is_active ?? true,
   });
 
@@ -99,6 +101,29 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
     setImagePreview('');
   };
 
+  const handleAddConfiguration = () => {
+    setFormData((prev) => ({
+      ...prev,
+      configurations: [...prev.configurations, { name: '', value: '' }],
+    }));
+  };
+
+  const handleConfigurationChange = (index: number, field: 'name' | 'value', value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      configurations: prev.configurations.map((config, i) =>
+        i === index ? { ...config, [field]: value } : config
+      ),
+    }));
+  };
+
+  const handleRemoveConfiguration = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      configurations: prev.configurations.filter((_, i) => i !== index),
+    }));
+  };
+
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -111,6 +136,19 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
     if (!formData.door_type) {
       newErrors.door_type = t('variants.errors.doorTypeRequired');
     }
+    if (!formData.sku.trim()) {
+      newErrors.sku = t('variants.errors.skuRequired');
+    }
+
+    // Validate configurations
+    formData.configurations.forEach((config, idx) => {
+      if (!config.name.trim()) {
+        newErrors[`config_name_${idx}`] = t('variants.errors.configNameRequired');
+      }
+      if (!config.value.trim()) {
+        newErrors[`config_value_${idx}`] = t('variants.errors.configValueRequired');
+      }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -262,6 +300,24 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
           {errors.door_type && <p className="mt-1 text-sm text-red-600">{errors.door_type}</p>}
         </div>
 
+        {/* SKU */}
+        <div>
+          <label htmlFor="sku" className="block text-sm font-medium text-gray-700">
+            {t('variants.sku')} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="sku"
+            value={formData.sku}
+            onChange={(e) => handleInputChange('sku', e.target.value.toUpperCase())}
+            placeholder={t('variants.skuPlaceholder')}
+            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+              errors.sku ? 'border-red-300' : 'border-gray-300'
+            }`}
+          />
+          {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
+        </div>
+
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -299,6 +355,73 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
             </label>
           </div>
           <p className="mt-2 text-sm text-gray-500">{t('variants.imageHint')}</p>
+        </div>
+
+        {/* Configurations */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-sm font-medium text-gray-700">
+              {t('variants.configurations')}
+            </label>
+            <button
+              type="button"
+              onClick={handleAddConfiguration}
+              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              + {t('variants.addConfiguration')}
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {formData.configurations.map((config, index) => (
+              <div
+                key={index}
+                className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={config.name}
+                    onChange={(e) => handleConfigurationChange(index, 'name', e.target.value)}
+                    placeholder={t('variants.configName')}
+                    className={`block w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                      errors[`config_name_${index}`] ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors[`config_name_${index}`] && (
+                    <p className="mt-1 text-xs text-red-600">{errors[`config_name_${index}`]}</p>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={config.value}
+                    onChange={(e) => handleConfigurationChange(index, 'value', e.target.value)}
+                    placeholder={t('variants.configValue')}
+                    className={`block w-full px-3 py-2 border rounded-md shadow-sm text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                      errors[`config_value_${index}`] ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors[`config_value_${index}`] && (
+                    <p className="mt-1 text-xs text-red-600">{errors[`config_value_${index}`]}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveConfiguration(index)}
+                  className="self-start sm:self-center px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md text-sm font-medium"
+                  title={t('common.delete')}
+                >
+                  🗑️
+                </button>
+              </div>
+            ))}
+            {formData.configurations.length === 0 && (
+              <p className="text-sm text-gray-500 italic text-center py-2">
+                {t('variants.noConfigurations')}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Status */}

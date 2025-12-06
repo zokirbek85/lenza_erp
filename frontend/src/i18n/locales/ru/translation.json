@@ -299,13 +299,23 @@
     "colorPlaceholder": "например, белый, тач-серый, дуб грей",
     "chooseImage": "Выбрать изображение",
     "imageHint": "PNG, JPG, WebP до 10МБ. Фон будет удален автоматически.",
+    "sku": "Артикул (SKU)",
+    "skuPlaceholder": "например, 50002-PG-WHITE",
+    "configurations": "Комплектация",
+    "addConfiguration": "Добавить элемент",
+    "configName": "Название (например, Коробка, Ручка)",
+    "configValue": "Значение (например, МДФ 70мм)",
+    "noConfigurations": "Комплектация не добавлена",
     "created": "Вариант успешно создан",
     "updated": "Вариант успешно обновлен",
     "deleted": "Вариант успешно удален",
     "errors": {
       "modelRequired": "Модель продукта обязательна",
       "colorRequired": "Цвет обязателен",
-      "doorTypeRequired": "Тип двери обязателен"
+      "doorTypeRequired": "Тип двери обязателен",
+      "skuRequired": "Артикул обязателен",
+      "configNameRequired": "Название комплектации обязательно",
+      "configValueRequired": "Значение комплектации обязательно"
     }
   },
   "products": {

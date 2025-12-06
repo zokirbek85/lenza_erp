@@ -683,13 +683,23 @@
     "colorPlaceholder": "masalan, oq, kulrang, eman grey",
     "chooseImage": "Rasm tanlash",
     "imageHint": "PNG, JPG, WebP 10MB gacha. Fon avtomatik olib tashlanadi.",
+    "sku": "Artikul (SKU)",
+    "skuPlaceholder": "masalan, 50002-PG-WHITE",
+    "configurations": "Komplektatsiya",
+    "addConfiguration": "Element qo'shish",
+    "configName": "Nomi (masalan, Quti, Tutqich)",
+    "configValue": "Qiymati (masalan, MDF 70mm)",
+    "noConfigurations": "Komplektatsiya qo'shilmagan",
     "created": "Variant muvaffaqiyatli yaratildi",
     "updated": "Variant muvaffaqiyatli yangilandi",
     "deleted": "Variant muvaffaqiyatli o'chirildi",
     "errors": {
       "modelRequired": "Mahsulot modeli majburiy",
       "colorRequired": "Rang majburiy",
-      "doorTypeRequired": "Eshik turi majburiy"
+      "doorTypeRequired": "Eshik turi majburiy",
+      "skuRequired": "Artikul majburiy",
+      "configNameRequired": "Komplektatsiya nomi majburiy",
+      "configValueRequired": "Komplektatsiya qiymati majburiy"
     }
   },
   "products": {

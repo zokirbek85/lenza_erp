@@ -304,13 +304,23 @@
     "colorPlaceholder": "e.g., белый, тач-серый, дуб грей",
     "chooseImage": "Choose Image",
     "imageHint": "PNG, JPG, WebP up to 10MB. Background will be removed automatically.",
+    "sku": "SKU (Article)",
+    "skuPlaceholder": "e.g., 50002-PG-WHITE",
+    "configurations": "Configurations",
+    "addConfiguration": "Add Element",
+    "configName": "Name (e.g., Коробка, Ручка)",
+    "configValue": "Value (e.g., МДФ 70мм)",
+    "noConfigurations": "No configurations added yet",
     "created": "Variant created successfully",
     "updated": "Variant updated successfully",
     "deleted": "Variant deleted successfully",
     "errors": {
       "modelRequired": "Product model is required",
       "colorRequired": "Color is required",
-      "doorTypeRequired": "Door type is required"
+      "doorTypeRequired": "Door type is required",
+      "skuRequired": "SKU is required",
+      "configNameRequired": "Configuration name is required",
+      "configValueRequired": "Configuration value is required"
     }
   },
   "products": {
