@@ -39,7 +39,7 @@ def generate_sku_for_existing_variants(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('catalog', '0001_initial'),
+        ('catalog', '0010_add_door_kit_component'),
     ]
 
     operations = [
