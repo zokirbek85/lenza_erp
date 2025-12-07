@@ -157,12 +157,20 @@ class FinanceAccount(models.Model):
             status=FinanceTransaction.TransactionStatus.APPROVED
         ).exclude(type='opening_balance')
         
+        # Income: regular income + currency exchange in
         income = approved_transactions.filter(
-            type=FinanceTransaction.TransactionType.INCOME
+            type__in=[
+                FinanceTransaction.TransactionType.INCOME,
+                FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_IN
+            ]
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
+        # Expense: regular expense + currency exchange out
         expense = approved_transactions.filter(
-            type=FinanceTransaction.TransactionType.EXPENSE
+            type__in=[
+                FinanceTransaction.TransactionType.EXPENSE,
+                FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT
+            ]
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
         return balance + income - expense
@@ -177,13 +185,15 @@ class FinanceTransaction(models.Model):
         INCOME = 'income', _('Income')
         EXPENSE = 'expense', _('Expense')
         OPENING_BALANCE = 'opening_balance', _('Opening Balance')
+        CURRENCY_EXCHANGE_OUT = 'currency_exchange_out', _('Currency Exchange Out')
+        CURRENCY_EXCHANGE_IN = 'currency_exchange_in', _('Currency Exchange In')
     
     class TransactionStatus(models.TextChoices):
         DRAFT = 'draft', _('Draft')
         APPROVED = 'approved', _('Approved')
         CANCELLED = 'cancelled', _('Cancelled')
     
-    type = models.CharField(max_length=20, choices=TransactionType.choices)
+    type = models.CharField(max_length=30, choices=TransactionType.choices)
     dealer = models.ForeignKey(
         'dealers.Dealer',
         on_delete=models.PROTECT,
@@ -196,6 +206,21 @@ class FinanceTransaction(models.Model):
         FinanceAccount,
         on_delete=models.PROTECT,
         related_name='transactions'
+    )
+    related_account = models.ForeignKey(
+        FinanceAccount,
+        on_delete=models.PROTECT,
+        related_name='related_transactions',
+        null=True,
+        blank=True,
+        help_text=_('Related account for currency exchange transactions')
+    )
+    exchange_rate = models.DecimalField(
+        max_digits=18,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text=_('Exchange rate used for currency conversion')
     )
     date = models.DateField(default=timezone.now)
     currency = models.CharField(
@@ -222,13 +247,6 @@ class FinanceTransaction(models.Model):
         blank=True,
         editable=False,
         help_text=_('Amount in UZS equivalent (auto-calculated)')
-    )
-    exchange_rate = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_('Exchange rate: 1 USD = X UZS (for currency conversion)')
     )
     exchange_rate_date = models.DateField(
         null=True,
@@ -289,6 +307,25 @@ class FinanceTransaction(models.Model):
             # Currency must match account
             if self.account and self.account.currency != self.currency:
                 errors['currency'] = _(f'Currency must match account currency ({self.account.currency})')
+        
+        # Currency exchange transactions validation
+        elif self.type in [self.TransactionType.CURRENCY_EXCHANGE_OUT, self.TransactionType.CURRENCY_EXCHANGE_IN]:
+            # Must have related_account
+            if not self.related_account:
+                errors['related_account'] = _('Related account is required for currency exchange')
+            
+            # Must have exchange_rate
+            if not self.exchange_rate or self.exchange_rate <= 0:
+                errors['exchange_rate'] = _('Valid exchange rate is required')
+            
+            # Must not have dealer
+            if self.dealer:
+                errors['dealer'] = _('Currency exchange must not have dealer')
+            
+            # Currency must match account
+            if self.account and self.account.currency != self.currency:
+                errors['currency'] = _(f'Currency must match account currency ({self.account.currency})')
+        
         else:
             # Kirim uchun dealer majburiy
             if self.type == self.TransactionType.INCOME and not self.dealer:

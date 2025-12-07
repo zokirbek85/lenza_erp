@@ -215,3 +215,63 @@ class CashSummaryResponseSerializer(serializers.Serializer):
     total_income_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
     total_expense_uzs = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
     total_expense_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
+
+
+class CurrencyTransferSerializer(serializers.Serializer):
+    """Currency exchange/transfer from USD to UZS"""
+    from_account_id = serializers.IntegerField()
+    to_account_id = serializers.IntegerField()
+    usd_amount = serializers.DecimalField(max_digits=18, decimal_places=2, min_value=Decimal('0.01'))
+    rate = serializers.DecimalField(max_digits=18, decimal_places=4, min_value=Decimal('0.0001'))
+    date = serializers.DateField()
+    comment = serializers.CharField(required=False, allow_blank=True, max_length=500)
+    
+    def validate(self, data):
+        """Validate currency transfer"""
+        from_account_id = data.get('from_account_id')
+        to_account_id = data.get('to_account_id')
+        usd_amount = data.get('usd_amount')
+        
+        # Accounts must be different
+        if from_account_id == to_account_id:
+            raise serializers.ValidationError({
+                'to_account_id': _('Source and destination accounts must be different')
+            })
+        
+        # Get accounts
+        try:
+            from_account = FinanceAccount.objects.get(id=from_account_id)
+        except FinanceAccount.DoesNotExist:
+            raise serializers.ValidationError({
+                'from_account_id': _('Source account not found')
+            })
+        
+        try:
+            to_account = FinanceAccount.objects.get(id=to_account_id)
+        except FinanceAccount.DoesNotExist:
+            raise serializers.ValidationError({
+                'to_account_id': _('Destination account not found')
+            })
+        
+        # Validate currencies
+        if from_account.currency != 'USD':
+            raise serializers.ValidationError({
+                'from_account_id': _('Source account must be USD')
+            })
+        
+        if to_account.currency != 'UZS':
+            raise serializers.ValidationError({
+                'to_account_id': _('Destination account must be UZS')
+            })
+        
+        # Check sufficient balance in USD account
+        if from_account.balance < usd_amount:
+            raise serializers.ValidationError({
+                'usd_amount': _(f'Insufficient balance in USD account. Available: {from_account.balance} USD')
+            })
+        
+        # Store accounts in validated data for later use
+        data['from_account'] = from_account
+        data['to_account'] = to_account
+        
+        return data

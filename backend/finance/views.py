@@ -16,6 +16,7 @@ from django_filters import rest_framework as filters
 from .models import ExchangeRate, FinanceAccount, FinanceTransaction
 from .serializers import (
     CashSummaryResponseSerializer,
+    CurrencyTransferSerializer,
     ExchangeRateSerializer,
     FinanceAccountSerializer,
     FinanceTransactionSerializer,
@@ -310,3 +311,94 @@ class CashSummaryView(APIView):
         
         serializer = CashSummaryResponseSerializer(response_data)
         return Response(serializer.data)
+
+
+class CurrencyTransferView(APIView):
+    """
+    Currency transfer/exchange from USD to UZS
+    POST /api/finance/transfer-currency/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Transfer currency from USD account to UZS account"""
+        # Check permissions
+        user = request.user
+        if not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant']):
+            raise PermissionDenied(_('Sizda valyuta konvertatsiya qilish huquqi yo\'q'))
+        
+        serializer = CurrencyTransferSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Extract validated data
+        from_account = serializer.validated_data['from_account']
+        to_account = serializer.validated_data['to_account']
+        usd_amount = serializer.validated_data['usd_amount']
+        rate = serializer.validated_data['rate']
+        trans_date = serializer.validated_data['date']
+        comment = serializer.validated_data.get('comment', '')
+        
+        # Calculate UZS amount
+        uzs_amount = usd_amount * rate
+        
+        # Create two transactions atomically
+        from django.db import transaction as db_transaction
+        
+        with db_transaction.atomic():
+            # 1. USD account - currency exchange out (expense)
+            usd_transaction = FinanceTransaction.objects.create(
+                type=FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT,
+                account=from_account,
+                related_account=to_account,
+                date=trans_date,
+                currency=from_account.currency,
+                amount=usd_amount,
+                amount_usd=usd_amount,
+                amount_uzs=Decimal('0'),  # Not applicable for USD out
+                exchange_rate=rate,
+                category='Currency Exchange',
+                comment=comment or f'Currency exchange to {to_account.name}',
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                created_by=user,
+                approved_by=user,
+                approved_at=timezone.now()
+            )
+            
+            # 2. UZS account - currency exchange in (income)
+            uzs_transaction = FinanceTransaction.objects.create(
+                type=FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_IN,
+                account=to_account,
+                related_account=from_account,
+                date=trans_date,
+                currency=to_account.currency,
+                amount=uzs_amount,
+                amount_usd=Decimal('0'),  # Not applicable for UZS in
+                amount_uzs=uzs_amount,
+                exchange_rate=rate,
+                category='Currency Exchange',
+                comment=comment or f'Currency exchange from {from_account.name}',
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                created_by=user,
+                approved_by=user,
+                approved_at=timezone.now()
+            )
+        
+        return Response({
+            'success': True,
+            'message': _('Currency transfer completed successfully'),
+            'usd_transaction_id': usd_transaction.id,
+            'uzs_transaction_id': uzs_transaction.id,
+            'usd_amount': float(usd_amount),
+            'uzs_amount': float(uzs_amount),
+            'rate': float(rate),
+            'from_account': {
+                'id': from_account.id,
+                'name': from_account.name,
+                'new_balance': float(from_account.balance)
+            },
+            'to_account': {
+                'id': to_account.id,
+                'name': to_account.name,
+                'new_balance': float(to_account.balance)
+            }
+        }, status=status.HTTP_201_CREATED)
