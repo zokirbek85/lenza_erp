@@ -18,6 +18,7 @@ import ReturnsPage from '../pages/ReturnsPage';
 import ReturnEditPage from '../pages/returns/ReturnEditPage';
 import ProductsPage from '../pages/Products';
 import ProductVariantsPage from '../pages/ProductVariants';
+import InventoryAuditLogs from '../pages/InventoryAuditLogs';
 import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
 import SettingsPage from '../pages/SettingsPage';
@@ -90,6 +91,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin']}>
             <ProductVariantsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventory/audit-logs',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <InventoryAuditLogs />
           </ProtectedRoute>
         ),
       },

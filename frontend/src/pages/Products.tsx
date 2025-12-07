@@ -99,6 +99,11 @@ const ProductsPage = () => {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showAuditImportModal, setShowAuditImportModal] = useState(false);
+  const [auditFile, setAuditFile] = useState<File | null>(null);
+  const [auditImporting, setAuditImporting] = useState(false);
+  const [auditResult, setAuditResult] = useState<any>(null);
+  const auditFileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
   const { role } = useAuthStore();
   const isAdmin = role === 'admin' || role === 'owner';
@@ -108,6 +113,7 @@ const ProductsPage = () => {
   const canDelete = isAdmin;
   const canExport = isAdmin || isAccountant;
   const canAdjustStock = isWarehouse;
+  const canAudit = isAdmin || isWarehouse;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const formSectionRef = useRef<HTMLDivElement | null>(null);
   const { isMobile } = useIsMobile();
@@ -510,6 +516,62 @@ const ProductsPage = () => {
     }
   };
 
+  const handleAuditExport = async () => {
+    try {
+      await downloadFile('/inventory/audit/export/', `inventory_audit_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success('Audit fayl yuklab olindi');
+    } catch (error) {
+      console.error(error);
+      toast.error('Audit faylni yuklashda xatolik');
+    }
+  };
+
+  const handleAuditFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith('.xlsx')) {
+        toast.error('Faqat .xlsx fayl qabul qilinadi');
+        return;
+      }
+      setAuditFile(file);
+      setShowAuditImportModal(true);
+    }
+  };
+
+  const handleAuditImport = async () => {
+    if (!auditFile) return;
+
+    setAuditImporting(true);
+    const formData = new FormData();
+    formData.append('file', auditFile);
+    formData.append('date', new Date().toISOString().slice(0, 10));
+
+    try {
+      const response = await http.post('/inventory/audit/import/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setAuditResult(response.data);
+      toast.success(`✅ ${response.data.updated_products} ta mahsulot yangilandi`);
+      fetchProducts();
+    } catch (error: any) {
+      console.error(error);
+      const errorMsg = error?.response?.data?.error || 'Import xatosi';
+      toast.error(errorMsg);
+      setAuditResult({ success: false, error: errorMsg });
+    } finally {
+      setAuditImporting(false);
+    }
+  };
+
+  const closeAuditModal = () => {
+    setShowAuditImportModal(false);
+    setAuditFile(null);
+    setAuditResult(null);
+    if (auditFileInputRef.current) {
+      auditFileInputRef.current.value = '';
+    }
+  };
+
   const handleDownloadTemplate = async () => {
     try {
       await downloadFile('/products/import/template/', 'products_import_template.xlsx');
@@ -727,6 +789,38 @@ const ProductsPage = () => {
                 className="hidden"
                 onChange={handleFileChange}
                 disabled={importing}
+              />
+            </>
+          )}
+          {canAudit && (
+            <>
+              <button
+                type="button"
+                onClick={handleAuditExport}
+                className="rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-purple-700"
+              >
+                🔍 Audit Export
+              </button>
+              <button
+                type="button"
+                onClick={() => auditFileInputRef.current?.click()}
+                className="rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+              >
+                📥 Audit Import
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.href = '/inventory/audit-logs'}
+                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              >
+                📋 Audit Tarixchasi
+              </button>
+              <input
+                ref={auditFileInputRef}
+                type="file"
+                accept=".xlsx"
+                className="hidden"
+                onChange={handleAuditFileSelect}
               />
             </>
           )}
@@ -1231,6 +1325,110 @@ const ProductsPage = () => {
             </div>
           </div>
         </form>
+      </Modal>
+
+      {/* Audit Import Modal */}
+      <Modal
+        open={showAuditImportModal}
+        onClose={closeAuditModal}
+        title="Inventarizatsiya Import"
+        footer={
+          !auditResult ? (
+            <>
+              <button
+                type="button"
+                onClick={closeAuditModal}
+                disabled={auditImporting}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                {t('actions.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleAuditImport}
+                disabled={auditImporting || !auditFile}
+                className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+              >
+                {auditImporting ? t('common.loading') : 'Import'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={closeAuditModal}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
+            >
+              {t('actions.close')}
+            </button>
+          )
+        }
+      >
+        {!auditResult ? (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              📋 Tanlangan fayl: <strong>{auditFile?.name}</strong>
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Fayl tizimga yuklanadi va tafovutlar avtomatik hisoblanadi. Stock qiymatlari yangilanadi va InventoryAdjustment yozuvlari yaratiladi.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {auditResult.success ? (
+              <>
+                <div className="rounded-lg bg-emerald-50 p-4 dark:bg-emerald-900/20">
+                  <h4 className="font-semibold text-emerald-800 dark:text-emerald-200">✅ Import muvaffaqiyatli</h4>
+                  <div className="mt-2 space-y-1 text-sm text-emerald-700 dark:text-emerald-300">
+                    <p>• Jami mahsulotlar: {auditResult.total_products}</p>
+                    <p>• Yangilangan: {auditResult.updated_products}</p>
+                    <p>• O'zgarmagan: {auditResult.unchanged_products}</p>
+                  </div>
+                </div>
+                {auditResult.adjustments && auditResult.adjustments.length > 0 && (
+                  <div className="max-h-64 overflow-y-auto">
+                    <h5 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Tafovutlar:</h5>
+                    <div className="space-y-2">
+                      {auditResult.adjustments.map((adj: any, idx: number) => (
+                        <div key={idx} className="rounded border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-700 dark:bg-slate-800">
+                          <p className="font-semibold text-slate-800 dark:text-slate-100">{adj.product_name} ({adj.sku})</p>
+                          <p className="text-slate-600 dark:text-slate-300">
+                            OK: {adj.previous_ok} → {adj.new_ok} 
+                            <span className={adj.delta_ok >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                              {' '}({adj.delta_ok >= 0 ? '+' : ''}{adj.delta_ok})
+                            </span>
+                          </p>
+                          <p className="text-slate-600 dark:text-slate-300">
+                            Defect: {adj.previous_defect} → {adj.new_defect}
+                            <span className={adj.delta_defect >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                              {' '}({adj.delta_defect >= 0 ? '+' : ''}{adj.delta_defect})
+                            </span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {auditResult.errors && auditResult.errors.length > 0 && (
+                  <div className="rounded-lg bg-amber-50 p-4 dark:bg-amber-900/20">
+                    <h5 className="font-semibold text-amber-800 dark:text-amber-200">⚠️ Ogohlantirishlar:</h5>
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-amber-700 dark:text-amber-300">
+                      {auditResult.errors.map((err: string, idx: number) => (
+                        <li key={idx}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="rounded-lg bg-rose-50 p-4 dark:bg-rose-900/20">
+                <h4 className="font-semibold text-rose-800 dark:text-rose-200">❌ Xatolik</h4>
+                <p className="mt-2 text-sm text-rose-700 dark:text-rose-300">
+                  {auditResult.error || 'Import jarayonida xatolik yuz berdi'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </section>
   );

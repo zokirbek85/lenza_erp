@@ -59,6 +59,9 @@ from dealers.views import (
 )
 from returns.views import ReturnViewSet
 from inventory.views import (
+    AuditExportView,
+    AuditImportView,
+    InventoryAdjustmentViewSet,
     ReturnedProductStatsView,
     # ReturnedProductViewSet,
     ReturnsExportExcelView,
@@ -104,6 +107,7 @@ router.register('notifications', NotificationViewSet, basename='notification')
 router.register('audit', AuditLogViewSet, basename='audit')
 router.register('company-info', CompanyInfoViewSet, basename='company-info')
 router.register('returns', ReturnViewSet, basename='return')
+router.register('inventory/adjustments', InventoryAdjustmentViewSet, basename='inventory-adjustment')
 # Variant-based catalog routes
 router.register('catalog/models', ProductModelViewSet, basename='product-model')
 router.register('catalog/variants', VariantCatalogViewSet, basename='variant-catalog')
@@ -182,6 +186,9 @@ urlpatterns = [
     path('api/returns/export/pdf/', ReturnsReportPDFView.as_view(), name='returns-export-pdf'),
     path('api/returns/export/excel/', ReturnsExportExcelView.as_view(), name='returns-export-excel'),
     path('api/returns/stats/', ReturnedProductStatsView.as_view(), name='returns-stats'),
+    # Inventory audit endpoints
+    path('api/inventory/audit/export/', AuditExportView.as_view(), name='inventory-audit-export'),
+    path('api/inventory/audit/import/', AuditImportView.as_view(), name='inventory-audit-import'),
     path('api/2fa/setup/', TwoFactorSetupView.as_view(), name='two-factor-setup'),
     path('api/2fa/verify/', TwoFactorVerifyView.as_view(), name='two-factor-verify'),
     path('api/search/', SearchView.as_view(), name='global-search'),
