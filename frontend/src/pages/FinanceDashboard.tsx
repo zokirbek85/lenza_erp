@@ -18,6 +18,7 @@ export default function FinanceDashboard() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [selectedUsdAccount, setSelectedUsdAccount] = useState<FinanceAccount | null>(null);
+  const [selectedAccountForEdit, setSelectedAccountForEdit] = useState<FinanceAccount | null>(null);
 
   useEffect(() => {
     loadSummary();
@@ -316,10 +317,10 @@ export default function FinanceDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    {account.currency === 'USD' && account.is_active && (
+                    <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => {
-                          setSelectedUsdAccount({
+                          setSelectedAccountForEdit({
                             id: account.account_id,
                             name: account.account_name,
                             type: account.account_type,
@@ -331,17 +332,43 @@ export default function FinanceDashboard() {
                             created_at: '',
                             updated_at: ''
                           });
-                          setShowConvertModal(true);
+                          setShowAccountModal(true);
                         }}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
-                        title={t('finance.currencyTransfer.convertToUzs', 'UZS ga konvertatsiya qilish')}
+                        className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        title={t('common.edit', 'Tahrirlash')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        {t('finance.currencyTransfer.convert', 'Konvertatsiya')}
+                        {t('common.edit', 'Tahrirlash')}
                       </button>
-                    )}
+                      {account.currency === 'USD' && account.is_active && (
+                        <button
+                          onClick={() => {
+                            setSelectedUsdAccount({
+                              id: account.account_id,
+                              name: account.account_name,
+                              type: account.account_type,
+                              currency: account.currency,
+                              balance: account.balance,
+                              is_active: account.is_active,
+                              opening_balance_amount: account.opening_balance_amount,
+                              opening_balance_date: account.opening_balance_date,
+                              created_at: '',
+                              updated_at: ''
+                            });
+                            setShowConvertModal(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                          title={t('finance.currencyTransfer.convertToUzs', 'UZS ga konvertatsiya qilish')}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                          {t('finance.currencyTransfer.convert', 'Konvertatsiya')}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -363,8 +390,12 @@ export default function FinanceDashboard() {
       />
       <AccountModal
         visible={showAccountModal}
-        onClose={() => setShowAccountModal(false)}
+        onClose={() => {
+          setShowAccountModal(false);
+          setSelectedAccountForEdit(null);
+        }}
         onSuccess={handleTransactionSuccess}
+        account={selectedAccountForEdit}
       />
       <ConvertCurrencyModal
         visible={showConvertModal}
