@@ -763,7 +763,7 @@ const OrdersPage = () => {
             onRemoveItem={removeItem}
             onItemQtyChange={handleItemQtyChange}
             onItemPriceChange={handleItemPriceChange}
-            onSubmit={() => handleSubmit({} as any)}
+            onSubmit={handleSubmit}
             onClearDraft={handleClearDraft}
           />
         )}

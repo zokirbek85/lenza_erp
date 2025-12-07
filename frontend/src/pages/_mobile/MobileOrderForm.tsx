@@ -149,7 +149,6 @@ const MobileOrderForm = ({
         </button>
         <button
           type="submit"
-          onClick={handleSubmit}
           disabled={selectedItems.length === 0}
           className="mobile-btn flex-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500"
         >
