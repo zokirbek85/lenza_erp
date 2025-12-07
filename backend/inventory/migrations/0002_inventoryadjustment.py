@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('catalog', '0012_remove_doormodel_collection_and_more'),
+        ('catalog', '0011_add_sku_and_configurations'),
         ('inventory', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
