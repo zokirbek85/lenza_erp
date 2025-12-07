@@ -127,9 +127,43 @@ export default function FinanceTransactions() {
 
   const getTypeLabel = (type: string) => {
     if (!type) return '-';
-    return type === 'income' 
-      ? t('finance.transaction.income', 'Kirim')
-      : t('finance.transaction.expense', 'Chiqim');
+    const labels: Record<string, string> = {
+      income: t('finance.transaction.income', 'Kirim'),
+      expense: t('finance.transaction.expense', 'Chiqim'),
+      opening_balance: t('finance.transaction.openingBalance', 'Boshlang\'ich balans'),
+      currency_exchange_out: t('finance.transaction.currencyExchangeOut', 'Valyuta konvertatsiyasi (chiqim)'),
+      currency_exchange_in: t('finance.transaction.currencyExchangeIn', 'Valyuta konvertatsiyasi (kirim)'),
+    };
+    return labels[type] || type;
+  };
+
+  const getTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      income: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
+      expense: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
+      opening_balance: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
+      currency_exchange_out: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+      currency_exchange_in: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
+    };
+    return colors[type] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400';
+  };
+
+  const getTransactionIcon = (type: string) => {
+    if (type === 'currency_exchange_out') {
+      return (
+        <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+      );
+    }
+    if (type === 'currency_exchange_in') {
+      return (
+        <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+      );
+    }
+    return null;
   };
 
   const getStatusLabel = (status: string) => {
@@ -289,13 +323,22 @@ export default function FinanceTransactions() {
                     {formatDate(transaction.date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      transaction.type === 'income'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                        : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
-                    }`}>
-                      {getTypeLabel(transaction.type)}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
+                        {getTransactionIcon(transaction.type)}
+                        {getTypeLabel(transaction.type)}
+                      </span>
+                      {(transaction.type === 'currency_exchange_out' || transaction.type === 'currency_exchange_in') && transaction.related_account_name && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {transaction.type === 'currency_exchange_out' ? '→' : '←'} {transaction.related_account_name}
+                        </span>
+                      )}
+                      {(transaction.type === 'currency_exchange_out' || transaction.type === 'currency_exchange_in') && transaction.exchange_rate && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Rate: {formatNumber(transaction.exchange_rate)}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {transaction.dealer_name || '-'}
