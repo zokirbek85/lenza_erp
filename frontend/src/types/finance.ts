@@ -13,6 +13,8 @@ export interface FinanceAccount {
   currency: Currency;
   name: string;
   is_active: boolean;
+  opening_balance_amount: number;
+  opening_balance_date: string | null;
   balance: number;
   created_at: string;
   updated_at: string;
@@ -52,6 +54,8 @@ export interface AccountSummary {
   account_type: AccountType;
   account_type_display: string;
   currency: Currency;
+  opening_balance_amount: number;
+  opening_balance_date: string | null;
   income_total: number;
   expense_total: number;
   balance: number;

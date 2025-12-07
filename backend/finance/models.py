@@ -48,6 +48,17 @@ class FinanceAccount(models.Model):
     currency = models.CharField(max_length=3, choices=Currency.choices)
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
+    opening_balance_amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=Decimal('0'),
+        help_text=_('Opening balance amount')
+    )
+    opening_balance_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_('Opening balance date (required if amount > 0)')
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -58,13 +69,94 @@ class FinanceAccount(models.Model):
     def __str__(self):
         return f"{self.get_type_display()} - {self.name} ({self.currency})"
     
+    def clean(self):
+        """Validate business rules"""
+        errors = {}
+        
+        # Opening balance amount > 0 bo'lsa, date majburiy
+        if self.opening_balance_amount and self.opening_balance_amount > 0 and not self.opening_balance_date:
+            errors['opening_balance_date'] = _('Opening balance date is required when amount is set')
+        
+        if errors:
+            raise ValidationError(errors)
+    
+    def save(self, *args, **kwargs):
+        # Validate before save
+        self.full_clean()
+        
+        is_new = self.pk is None
+        old_opening_balance = None
+        old_opening_date = None
+        
+        # Track changes to opening balance
+        if not is_new:
+            try:
+                old_account = FinanceAccount.objects.get(pk=self.pk)
+                old_opening_balance = old_account.opening_balance_amount
+                old_opening_date = old_account.opening_balance_date
+            except FinanceAccount.DoesNotExist:
+                pass
+        
+        super().save(*args, **kwargs)
+        
+        # Create or update opening balance transaction
+        if self.opening_balance_amount and self.opening_balance_amount > 0:
+            self._sync_opening_balance_transaction(
+                is_new=is_new,
+                old_amount=old_opening_balance,
+                old_date=old_opening_date
+            )
+    
+    def _sync_opening_balance_transaction(self, is_new, old_amount, old_date):
+        """Create or update opening balance transaction"""
+        from django.contrib.auth import get_user_model
+        
+        User = get_user_model()
+        
+        # Get or create system user for opening balance transactions
+        system_user = User.objects.filter(is_superuser=True).first()
+        
+        # Check if opening balance transaction exists
+        opening_tx = self.transactions.filter(
+            type='opening_balance'
+        ).first()
+        
+        if opening_tx:
+            # Update existing transaction
+            opening_tx.amount = self.opening_balance_amount
+            opening_tx.date = self.opening_balance_date
+            opening_tx.currency = self.currency
+            opening_tx.save()
+        else:
+            # Create new opening balance transaction
+            FinanceTransaction.objects.create(
+                type='opening_balance',
+                account=self,
+                date=self.opening_balance_date,
+                currency=self.currency,
+                amount=self.opening_balance_amount,
+                category='Opening Balance',
+                comment='Automatically created opening balance',
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                created_by=system_user,
+                approved_by=system_user,
+                approved_at=timezone.now(),
+                dealer=None
+            )
+    
     @property
     def balance(self):
-        """Calculate account balance from approved transactions"""
+        """Calculate account balance including opening balance and approved transactions"""
         from django.db.models import Sum
+        
+        # Start with opening balance
+        balance = self.opening_balance_amount or Decimal('0')
+        
+        # Add approved transactions (excluding opening_balance type)
         approved_transactions = self.transactions.filter(
             status=FinanceTransaction.TransactionStatus.APPROVED
-        )
+        ).exclude(type='opening_balance')
+        
         income = approved_transactions.filter(
             type=FinanceTransaction.TransactionType.INCOME
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
@@ -73,7 +165,7 @@ class FinanceAccount(models.Model):
             type=FinanceTransaction.TransactionType.EXPENSE
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        return income - expense
+        return balance + income - expense
 
 
 class FinanceTransaction(models.Model):
@@ -84,13 +176,14 @@ class FinanceTransaction(models.Model):
     class TransactionType(models.TextChoices):
         INCOME = 'income', _('Income')
         EXPENSE = 'expense', _('Expense')
+        OPENING_BALANCE = 'opening_balance', _('Opening Balance')
     
     class TransactionStatus(models.TextChoices):
         DRAFT = 'draft', _('Draft')
         APPROVED = 'approved', _('Approved')
         CANCELLED = 'cancelled', _('Cancelled')
     
-    type = models.CharField(max_length=10, choices=TransactionType.choices)
+    type = models.CharField(max_length=20, choices=TransactionType.choices)
     dealer = models.ForeignKey(
         'dealers.Dealer',
         on_delete=models.PROTECT,
@@ -188,21 +281,30 @@ class FinanceTransaction(models.Model):
         """Validate business rules"""
         errors = {}
         
-        # Kirim uchun dealer majburiy
-        if self.type == self.TransactionType.INCOME and not self.dealer:
-            errors['dealer'] = _('Dealer is required for income transactions')
-        
-        # Chiqim uchun dealer bo'lmasligi kerak
-        if self.type == self.TransactionType.EXPENSE and self.dealer:
-            errors['dealer'] = _('Dealer must be null for expense transactions')
-        
-        # Chiqim uchun category majburiy
-        if self.type == self.TransactionType.EXPENSE and not self.category:
-            errors['category'] = _('Category is required for expense transactions')
-        
-        # Currency va account currency mos bo'lishi kerak
-        if self.account and self.account.currency != self.currency:
-            errors['currency'] = _(f'Currency must match account currency ({self.account.currency})')
+        # Opening balance transactions skip normal validation
+        if self.type == self.TransactionType.OPENING_BALANCE:
+            # Opening balance must not have dealer
+            if self.dealer:
+                errors['dealer'] = _('Opening balance must not have dealer')
+            # Currency must match account
+            if self.account and self.account.currency != self.currency:
+                errors['currency'] = _(f'Currency must match account currency ({self.account.currency})')
+        else:
+            # Kirim uchun dealer majburiy
+            if self.type == self.TransactionType.INCOME and not self.dealer:
+                errors['dealer'] = _('Dealer is required for income transactions')
+            
+            # Chiqim uchun dealer bo'lmasligi kerak
+            if self.type == self.TransactionType.EXPENSE and self.dealer:
+                errors['dealer'] = _('Dealer must be null for expense transactions')
+            
+            # Chiqim uchun category majburiy
+            if self.type == self.TransactionType.EXPENSE and not self.category:
+                errors['category'] = _('Category is required for expense transactions')
+            
+            # Currency va account currency mos bo'lishi kerak
+            if self.account and self.account.currency != self.currency:
+                errors['currency'] = _(f'Currency must match account currency ({self.account.currency})')
         
         if errors:
             raise ValidationError(errors)

@@ -19,6 +19,12 @@ class ExchangeRateSerializer(serializers.ModelSerializer):
 class FinanceAccountSerializer(serializers.ModelSerializer):
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     currency_display = serializers.CharField(source='get_currency_display', read_only=True)
+    balance = serializers.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        read_only=True,
+        coerce_to_string=False
+    )
     
     class Meta:
         model = FinanceAccount
@@ -30,10 +36,13 @@ class FinanceAccountSerializer(serializers.ModelSerializer):
             'currency_display',
             'name',
             'is_active',
+            'opening_balance_amount',
+            'opening_balance_date',
+            'balance',
             'created_at',
             'updated_at',
         )
-        read_only_fields = ('created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at', 'balance')
     
     def validate(self, data):
         """Validate account data"""
@@ -45,6 +54,15 @@ class FinanceAccountSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'type': _('Siz cash account yarata olmaysiz')
                 })
+        
+        # Opening balance amount > 0 bo'lsa, date majburiy
+        opening_amount = data.get('opening_balance_amount')
+        opening_date = data.get('opening_balance_date')
+        
+        if opening_amount and opening_amount > 0 and not opening_date:
+            raise serializers.ValidationError({
+                'opening_balance_date': _('Opening balance date is required when amount is set')
+            })
         
         return data
 
