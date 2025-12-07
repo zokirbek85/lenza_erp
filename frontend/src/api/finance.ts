@@ -6,6 +6,8 @@ import type {
   FinanceTransactionFilters,
   FinanceAccountFilters,
   PaginatedResponse,
+  CurrencyTransferRequest,
+  CurrencyTransferResponse,
 } from '../types/finance';
 
 // Accounts
@@ -49,3 +51,7 @@ export const cancelFinanceTransaction = (id: number) =>
 // Summary
 export const getCashSummary = () => 
   http.get<CashSummary>('/finance/summary/');
+
+// Currency Transfer
+export const transferCurrency = (data: CurrencyTransferRequest) => 
+  http.post<CurrencyTransferResponse>('/finance/transfer-currency/', data);

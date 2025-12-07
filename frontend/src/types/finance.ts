@@ -2,7 +2,7 @@ export type Currency = 'UZS' | 'USD';
 
 export type AccountType = 'cash' | 'card' | 'bank';
 
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'opening_balance' | 'currency_exchange_out' | 'currency_exchange_in';
 
 export type TransactionStatus = 'draft' | 'approved' | 'cancelled';
 
@@ -28,6 +28,8 @@ export interface FinanceTransaction {
   dealer_name?: string;
   account: number;
   account_name?: string;
+  related_account?: number | null;
+  related_account_name?: string;
   date: string;
   currency: Currency;
   amount: number;
@@ -89,6 +91,37 @@ export interface FinanceAccountFilters {
   currency?: Currency;
   is_active?: boolean;
   page_size?: number;
+}
+
+// Currency transfer request
+export interface CurrencyTransferRequest {
+  from_account_id: number;
+  to_account_id: number;
+  usd_amount: number;
+  rate: number;
+  date: string;
+  comment?: string;
+}
+
+// Currency transfer response
+export interface CurrencyTransferResponse {
+  success: boolean;
+  message: string;
+  usd_transaction_id: number;
+  uzs_transaction_id: number;
+  usd_amount: number;
+  uzs_amount: number;
+  rate: number;
+  from_account: {
+    id: number;
+    name: string;
+    new_balance: number;
+  };
+  to_account: {
+    id: number;
+    name: string;
+    new_balance: number;
+  };
 }
 
 // Pagination response from DRF

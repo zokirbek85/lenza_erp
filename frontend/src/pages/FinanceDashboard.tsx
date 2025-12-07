@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCashSummary } from '../api/finance';
-import type { CashSummary } from '../types/finance';
+import type { CashSummary, FinanceAccount } from '../types/finance';
 import AddIncomeModal from '../components/finance/AddIncomeModal';
 import AddExpenseModal from '../components/finance/AddExpenseModal';
 import AccountModal from '../components/finance/AccountModal';
+import ConvertCurrencyModal from '../components/finance/ConvertCurrencyModal';
 
 export default function FinanceDashboard() {
   const { t } = useTranslation();
@@ -15,6 +16,8 @@ export default function FinanceDashboard() {
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [selectedUsdAccount, setSelectedUsdAccount] = useState<FinanceAccount | null>(null);
 
   useEffect(() => {
     loadSummary();
@@ -255,6 +258,9 @@ export default function FinanceDashboard() {
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {t('finance.account.status', 'Status')}
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('common.actions', 'Amallar')}
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -309,6 +315,34 @@ export default function FinanceDashboard() {
                       {account.is_active ? t('common.active', 'Aktiv') : t('common.inactive', 'Noaktiv')}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    {account.currency === 'USD' && account.is_active && (
+                      <button
+                        onClick={() => {
+                          setSelectedUsdAccount({
+                            id: account.account_id,
+                            name: account.account_name,
+                            type: account.account_type,
+                            currency: account.currency,
+                            balance: account.balance,
+                            is_active: account.is_active,
+                            opening_balance_amount: account.opening_balance_amount,
+                            opening_balance_date: account.opening_balance_date,
+                            created_at: '',
+                            updated_at: ''
+                          });
+                          setShowConvertModal(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+                        title={t('finance.currencyTransfer.convertToUzs', 'UZS ga konvertatsiya qilish')}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        {t('finance.currencyTransfer.convert', 'Konvertatsiya')}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -331,6 +365,15 @@ export default function FinanceDashboard() {
         visible={showAccountModal}
         onClose={() => setShowAccountModal(false)}
         onSuccess={handleTransactionSuccess}
+      />
+      <ConvertCurrencyModal
+        visible={showConvertModal}
+        onClose={() => {
+          setShowConvertModal(false);
+          setSelectedUsdAccount(null);
+        }}
+        onSuccess={handleTransactionSuccess}
+        defaultFromAccount={selectedUsdAccount}
       />
     </div>
   );
