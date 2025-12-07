@@ -1763,6 +1763,9 @@
       "updateFailed": "Statusni yangilab bo'lmadi",
       "notAllowed": "Bu statusga o'tkazish uchun ruxsatingiz yo'q"
     },
+    "stats": {
+      "fetchError": "Statistikani yuklab bo'lmadi"
+    },
     "table": {
       "product": "Mahsulot",
       "quantity": "Miqdor",

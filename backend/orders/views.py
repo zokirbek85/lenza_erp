@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.db.models import Count
 from django.http import FileResponse, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -261,3 +262,22 @@ class OrderImportExcelView(APIView):
             'items_created': result['items_created'],
             'errors': result['errors'],
         }, status=status.HTTP_200_OK)
+
+
+class OrderStatusStatAPIView(APIView):
+    """Get order count statistics by status."""
+    permission_classes = [IsAdmin | IsSales | IsOwner | IsWarehouse | IsAccountant]
+
+    def get(self, request):
+        # Get count for each status
+        stats = Order.objects.values('status').annotate(count=Count('id'))
+        
+        # Convert to dictionary with status as key
+        result = {item['status']: item['count'] for item in stats}
+        
+        # Ensure all statuses are included (even if count is 0)
+        for status_value, _ in Order.Status.choices:
+            if status_value not in result:
+                result[status_value] = 0
+        
+        return Response(result, status=status.HTTP_200_OK)

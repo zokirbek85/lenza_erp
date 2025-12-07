@@ -1438,6 +1438,9 @@
       "updateFailed": "Failed to update status",
       "notAllowed": "You don't have permission to change to this status"
     },
+    "stats": {
+      "fetchError": "Failed to load statistics"
+    },
     "table": {
       "product": "Product",
       "quantity": "Quantity",

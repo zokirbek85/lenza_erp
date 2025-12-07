@@ -81,7 +81,7 @@ from kpis.views import (
     KPILeaderboardView,
 )
 from notifications.views import NotificationViewSet
-from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet
+from orders.views import OrderExportExcelView, OrderImportTemplateView, OrderImportExcelView, OrderViewSet, OrderStatusStatAPIView
 from orders.views_pdf import OrderInvoiceView, OrderSummaryPDFView
 from users.auth import RoleAwareTokenObtainPairView
 from users.views import TelegramLinkView, UserViewSet, DashboardLayoutView
@@ -127,6 +127,7 @@ urlpatterns = [
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),
 
     path('api/orders/<int:pk>/pdf/', OrderInvoiceView.as_view(), name='order-pdf'),
+    path('api/orders/status-stat/', OrderStatusStatAPIView.as_view(), name='orders-status-stat'),
     path('api/orders/export/excel/', OrderExportExcelView.as_view(), name='orders-export-excel'),
     path('api/orders/import/template/', OrderImportTemplateView.as_view(), name='orders-import-template'),
     path('api/orders/import/excel/', OrderImportExcelView.as_view(), name='orders-import-excel'),

@@ -27,6 +27,7 @@ import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import OrdersMobileCards from './_mobile/OrdersMobileCards';
 import type { OrdersMobileHandlers } from './_mobile/OrdersMobileCards';
 import MobileOrderForm from './_mobile/MobileOrderForm';
+import OrderStatusCards from '../components/orders/OrderStatusCards';
 
 interface DealerOption {
   id: number;
@@ -870,6 +871,15 @@ const OrdersPage = () => {
           </Button>
         </div>
       )}
+
+      {/* Order Status Statistics Cards */}
+      <OrderStatusCards
+        onStatusClick={(status) => {
+          setStatusFilter(status === statusFilter ? '' : status);
+          setPage(1);
+        }}
+        currentFilter={statusFilter}
+      />
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
         {/* Collapsible Filter Header */}
