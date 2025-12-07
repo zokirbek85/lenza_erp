@@ -188,20 +188,22 @@ export default function AccountModal({ visible, onClose, onSuccess, account }: A
           </div>
 
           {/* Opening Balance Date */}
-          {parseFloat(formData.opening_balance_amount || '0') > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('finance.account.openingBalanceDate', 'Boshlang\'ich balans sanasi')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                value={formData.opening_balance_date}
-                onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                required={parseFloat(formData.opening_balance_amount || '0') > 0}
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('finance.account.openingBalanceDate', 'Boshlang\'ich balans sanasi')}
+              {parseFloat(formData.opening_balance_amount || '0') > 0 && <span className="text-red-500"> *</span>}
+            </label>
+            <input
+              type="date"
+              value={formData.opening_balance_date}
+              onChange={(e) => setFormData({ ...formData, opening_balance_date: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              required={parseFloat(formData.opening_balance_amount || '0') > 0}
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('finance.account.openingBalanceDateHint', 'Boshlang\'ich balans kiritilgan paytdagina majburiy')}
+            </p>
+          </div>
 
           {/* Active Status */}
           <div className="flex items-center">
