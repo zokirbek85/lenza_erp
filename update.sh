@@ -210,6 +210,20 @@ docker cp "$BACKEND_CONTAINER:/app/staticfiles/." /var/www/lenza_erp/staticfiles
 chown -R www-data:www-data /var/www/lenza_erp
 chmod -R 755 /var/www/lenza_erp
 
+log_info "Ensuring media subdirectories exist with proper permissions..."
+# Create media subdirectories if they don't exist
+mkdir -p /var/www/lenza_erp/media/catalog/variants
+mkdir -p /var/www/lenza_erp/media/catalog/products
+mkdir -p /var/www/lenza_erp/media/catalog/kits
+mkdir -p /var/www/lenza_erp/media/exports
+mkdir -p /var/www/lenza_erp/media/tmp
+
+# Set proper permissions for media directories
+# Django user in container has UID 999, so make directories world-writable
+chmod -R 777 /var/www/lenza_erp/media
+
+log_info "${GREEN}✓ Media permissions configured${NC}"
+
 log_step "8. Switching Nginx Upstream"
 
 log_info "Updating Nginx to route traffic to $TARGET_STACK stack..."
