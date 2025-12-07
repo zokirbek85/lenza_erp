@@ -67,7 +67,7 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs \
     /app/media/catalog/products \
     /app/media/catalog/kits \
     /app/media/exports \
-    /app/media/temp && \
+    /app/media/tmp && \
     chown -R django:django /app
 
 # Make entrypoint executable

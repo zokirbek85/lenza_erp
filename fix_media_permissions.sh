@@ -13,7 +13,7 @@ mkdir -p "$MEDIA_DIR/catalog/variants"
 mkdir -p "$MEDIA_DIR/catalog/products"
 mkdir -p "$MEDIA_DIR/catalog/kits"
 mkdir -p "$MEDIA_DIR/exports"
-mkdir -p "$MEDIA_DIR/temp"
+mkdir -p "$MEDIA_DIR/tmp"
 
 echo "🔐 Setting permissions..."
 

@@ -54,7 +54,7 @@ mkdir -p /app/media/catalog/variants \
          /app/media/catalog/products \
          /app/media/catalog/kits \
          /app/media/exports \
-         /app/media/temp || {
+         /app/media/tmp || {
     log_warn "Could not create media directories (may already exist)"
 }
 
