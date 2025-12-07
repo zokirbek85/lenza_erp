@@ -134,9 +134,8 @@ class ExportMixin:
 
         filename = f"{filename_prefix}.xlsx"
         response = HttpResponse(
-            stream.read(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8',
+            stream.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        response['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8'
         return response

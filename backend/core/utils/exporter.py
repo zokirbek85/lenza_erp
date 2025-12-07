@@ -2,15 +2,13 @@ from io import BytesIO
 
 from openpyxl import Workbook
 
+from .excel_export import prepare_workbook, workbook_to_bytes
 from .temp_files import save_temp_file
 
 
 def _prepare_workbook(title: str, headers: list[str]):
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = title
-    worksheet.append(headers)
-    return workbook, worksheet
+    """Legacy wrapper - use prepare_workbook from excel_export instead."""
+    return prepare_workbook(title, headers)
 
 
 def export_orders_to_excel(orders):
@@ -75,12 +73,17 @@ def export_returns_to_excel(returns):
 # export_expenses_to_excel removed - Expense module deleted
 
 def _workbook_to_file(workbook: Workbook, prefix: str):
-    stream = BytesIO()
-    # Add UTF-8 BOM for better Excel compatibility with Cyrillic
-    stream.write(b'\xef\xbb\xbf')
-    workbook.save(stream)
-    stream.seek(0)
-    return save_temp_file(stream.getvalue(), prefix, '.xlsx')
+    """
+    Save openpyxl Workbook to temporary file.
+    
+    CRITICAL: Do NOT add UTF-8 BOM to XLSX files!
+    XLSX is a ZIP archive and must start with PK signature (0x504B0304).
+    Adding BOM corrupts the ZIP structure and Excel cannot open the file.
+    
+    UTF-8 BOM is only for CSV/TXT files, never for XLSX.
+    """
+    content = workbook_to_bytes(workbook)
+    return save_temp_file(content, prefix, '.xlsx')
 
 
 def export_reconciliation_to_excel(data: dict, detailed: bool = False, language: str = 'uz'):
