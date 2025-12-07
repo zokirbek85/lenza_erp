@@ -561,8 +561,8 @@ const OrdersPage = () => {
     </div>
   );
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: FormEvent) => {
+    event?.preventDefault();
     if (!dealerId) {
       toast.error(t('orders.toast.dealerRequired'));
       return;
