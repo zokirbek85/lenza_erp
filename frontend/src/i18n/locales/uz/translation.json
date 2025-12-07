@@ -1315,6 +1315,12 @@
       "custom": "Boshqa"
     },
     "noData": "Ma'lumot topilmadi",
+    "topCategories": "Top kategoriyalar",
+    "totalQty": "Jami miqdor",
+    "totalAmount": "Jami summa",
+    "qty": "Miqdor",
+    "noCategoryData": "Kategoriya ma'lumotlari topilmadi",
+    "noProducts": "Mahsulotlar yo'q",
     "sales": "Savdo",
     "salesUsd": "Savdo (USD)",
     "messages": {

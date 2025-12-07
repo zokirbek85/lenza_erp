@@ -296,6 +296,138 @@ class TopProductsAnalyticsView(APIView):
         return Response(data)
 
 
+class TopCategoriesAnalyticsView(APIView):
+    """Returns top categories with their top products.
+    
+    Query params:
+    - start_date: ISO date (YYYY-MM-DD)
+    - end_date: ISO date (YYYY-MM-DD)
+    - region_id: filter by region
+    - dealer_id: filter by dealer
+    - brand_id: filter by brand
+    - categories: comma-separated category IDs
+    
+    Returns:
+    {
+      "topCategories": [
+        {
+          "category": "Category Name",
+          "category_id": 1,
+          "total_qty": 9420,
+          "total_usd": 45800.50,
+          "products": [
+            {"name": "Product 1", "qty": 414, "total_usd": 2237.00},
+            {"name": "Product 2", "qty": 297, "total_usd": 1041.00}
+          ]
+        }
+      ]
+    }
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant | IsManager]
+
+    def get(self, request):
+        # Parse filters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        region_id = request.query_params.get('region_id')
+        dealer_id = request.query_params.get('dealer_id')
+        brand_id = request.query_params.get('brand_id')
+        categories_param = request.query_params.get('categories')
+        
+        # Base queryset: active orders only
+        filters = Q(order__status__in=Order.Status.active_statuses())
+        
+        # Apply date range
+        if start_date:
+            filters &= Q(order__value_date__gte=start_date)
+        if end_date:
+            filters &= Q(order__value_date__lte=end_date)
+        
+        # Apply region filter
+        if region_id:
+            filters &= Q(order__dealer__region_id=region_id)
+        
+        # Apply dealer filter
+        if dealer_id:
+            filters &= Q(order__dealer_id=dealer_id)
+        
+        # Apply brand filter
+        if brand_id:
+            filters &= Q(product__brand_id=brand_id)
+        
+        # Apply category filter
+        category_ids = parse_category_ids(categories_param)
+        if category_ids:
+            filters &= Q(product__category_id__in=category_ids)
+        
+        # Role-based filtering
+        user = request.user
+        if hasattr(user, 'role'):
+            if user.role == 'manager':
+                managed_dealers = Dealer.objects.filter(manager_user=user)
+                filters &= Q(order__dealer__in=managed_dealers)
+            elif user.role == 'sales':
+                filters &= Q(order__created_by=user)
+        
+        # Step 1: Aggregate by category
+        category_stats = (
+            OrderItem.objects.filter(filters)
+            .exclude(product__category__isnull=True)
+            .values(
+                'product__category_id',
+                'product__category__name'
+            )
+            .annotate(
+                total_qty=Sum('qty'),
+                total_usd=Sum(
+                    F('qty') * F('price_usd'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            .order_by('-total_usd')[:10]  # Top 10 categories
+        )
+        
+        # Step 2: For each category, get top 5 products
+        result = []
+        for cat_stat in category_stats:
+            category_id = cat_stat['product__category_id']
+            category_name = cat_stat['product__category__name']
+            
+            # Get top 5 products in this category
+            category_filters = filters & Q(product__category_id=category_id)
+            top_products = (
+                OrderItem.objects.filter(category_filters)
+                .values('product__name')
+                .annotate(
+                    qty=Sum('qty'),
+                    total_usd=Sum(
+                        F('qty') * F('price_usd'),
+                        output_field=DecimalField(max_digits=18, decimal_places=2)
+                    )
+                )
+                .order_by('-total_usd')[:5]
+            )
+            
+            products_list = [
+                {
+                    'name': p['product__name'],
+                    'qty': float(p['qty'] or 0),
+                    'total_usd': float(p['total_usd'] or 0),
+                }
+                for p in top_products
+            ]
+            
+            result.append({
+                'category': category_name,
+                'category_id': category_id,
+                'total_qty': float(cat_stat['total_qty'] or 0),
+                'total_usd': float(cat_stat['total_usd'] or 0),
+                'products': products_list,
+            })
+        
+        return Response({'topCategories': result})
+
+
 class RegionProductAnalyticsView(APIView):
     """Returns region -> product sales mapping.
     

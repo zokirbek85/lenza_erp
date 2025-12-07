@@ -893,6 +893,12 @@
       "custom": "Custom"
     },
     "noData": "No data available",
+    "topCategories": "Top Categories",
+    "totalQty": "Total Quantity",
+    "totalAmount": "Total Amount",
+    "qty": "Qty",
+    "noCategoryData": "No category data available",
+    "noProducts": "No products",
     "sales": "Sales",
     "salesUsd": "Sales (USD)",
     "messages": {

@@ -931,6 +931,12 @@
       "custom": "Другое"
     },
     "noData": "Данные отсутствуют",
+    "topCategories": "Топ категории",
+    "totalQty": "Общее количество",
+    "totalAmount": "Общая сумма",
+    "qty": "Кол-во",
+    "noCategoryData": "Данные по категориям отсутствуют",
+    "noProducts": "Нет товаров",
     "sales": "Продажи",
     "salesUsd": "Продажи (USD)",
     "messages": {

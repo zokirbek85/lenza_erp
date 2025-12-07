@@ -30,6 +30,20 @@ ChartJS.register(
   Legend
 );
 
+interface TopCategoryProduct {
+  name: string;
+  qty: number;
+  total_usd: number;
+}
+
+interface TopCategory {
+  category: string;
+  category_id: number;
+  total_qty: number;
+  total_usd: number;
+  products: TopCategoryProduct[];
+}
+
 interface KPIData {
   manager_id: number;
   manager_name: string;
@@ -61,7 +75,9 @@ export default function KPIPage() {
   const userId = useAuthStore((state) => state.userId);
   const role = useAuthStore((state) => state.role);
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
+  const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [selectedManagerId, setSelectedManagerId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState({
@@ -88,6 +104,24 @@ export default function KPIPage() {
     }
   };
 
+  const fetchTopCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await http.get('/analytics/top-categories/', {
+        params: {
+          start_date: dateRange.from_date,
+          end_date: dateRange.to_date,
+        },
+      });
+      setTopCategories(response.data.topCategories || []);
+    } catch (error) {
+      console.error('Top categories fetch error:', error);
+      setTopCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
   // Fetch managers list for admin
   useEffect(() => {
     const fetchManagers = async () => {
@@ -111,8 +145,12 @@ export default function KPIPage() {
     if (role === 'admin' && !selectedManagerId) return;
     if (role !== 'admin' && !userId) return;
     fetchKPIData();
+    fetchTopCategories();
     // Poll for updates every 30 seconds
-    const interval = setInterval(fetchKPIData, 30000);
+    const interval = setInterval(() => {
+      fetchKPIData();
+      fetchTopCategories();
+    }, 30000);
     return () => clearInterval(interval);
   }, [dateRange, selectedManagerId]);
 
@@ -312,29 +350,102 @@ export default function KPIPage() {
           )}
         </div>
 
-        {/* Top Products */}
+        {/* Top Categories with Products */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('topProducts')}</h2>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {kpiData.top_products.map((product, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-gray-800 dark:text-white">{product.product_name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{product.product_sku}</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">{t('topCategories')}</h2>
+          {categoriesLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-800 dark:text-white">{product.quantity} {t('units')}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">${product.total_amount.toLocaleString()}</p>
+              ))}
+            </div>
+          ) : topCategories.length > 0 ? (
+            <div className="space-y-4 max-h-[600px] overflow-y-auto">
+              {topCategories.map((category) => (
+                <div
+                  key={category.category_id}
+                  className="bg-gradient-to-br from-slate-50 to-white dark:from-gray-700 dark:to-gray-800 rounded-xl border border-slate-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  {/* Category Header */}
+                  <div className="p-4 border-b border-slate-200 dark:border-gray-600 bg-white/50 dark:bg-gray-800/50 rounded-t-xl">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                          📦 {category.category}
+                        </h3>
+                      </div>
+                      <div className="flex gap-4 text-sm">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{t('totalQty')}</p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            {category.total_qty.toLocaleString()} {t('units')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{t('totalAmount')}</p>
+                          <p className="font-bold text-emerald-600 dark:text-emerald-400">
+                            ${category.total_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Top Products List */}
+                  <div className="p-4 space-y-2">
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                      {t('topProducts')}
+                    </p>
+                    {category.products && category.products.length > 0 ? (
+                      <div className="space-y-2">
+                        {category.products.map((product, idx) => (
+                          <div
+                            key={`${product.name}-${idx}`}
+                            className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-slate-100 dark:border-gray-600 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                                  {idx + 1}
+                                </span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-gray-900 dark:text-white truncate">
+                                  {product.name}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-4 text-sm flex-shrink-0">
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t('qty')}</p>
+                                <p className="font-semibold text-gray-900 dark:text-white">
+                                  {product.qty.toLocaleString()}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">USD</p>
+                                <p className="font-bold text-emerald-600 dark:text-emerald-400">
+                                  ${product.total_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                        {t('noProducts')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-            {kpiData.top_products.length === 0 && (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t('noProductData')}</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">{t('noCategoryData')}</p>
+          )}
         </div>
       </div>
     </div>
