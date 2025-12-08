@@ -8,6 +8,10 @@ import type {
   PaginatedResponse,
   CurrencyTransferRequest,
   CurrencyTransferResponse,
+  ExpenseCategory,
+  ExpenseCategoryCreate,
+  ExpenseCategoryUpdate,
+  ExpenseCategoryStatistics,
 } from '../types/finance';
 
 // Accounts
@@ -55,3 +59,22 @@ export const getCashSummary = () =>
 // Currency Transfer
 export const transferCurrency = (data: CurrencyTransferRequest) => 
   http.post<CurrencyTransferResponse>('/finance/transfer-currency/', data);
+
+// Expense Categories
+export const getExpenseCategories = (params?: { is_active?: boolean }) => 
+  http.get<ExpenseCategory[]>('/finance/expense-categories/', { params });
+
+export const getExpenseCategory = (id: number) => 
+  http.get<ExpenseCategory>(`/finance/expense-categories/${id}/`);
+
+export const createExpenseCategory = (data: ExpenseCategoryCreate) => 
+  http.post<ExpenseCategory>('/finance/expense-categories/', data);
+
+export const updateExpenseCategory = (id: number, data: ExpenseCategoryUpdate) => 
+  http.patch<ExpenseCategory>(`/finance/expense-categories/${id}/`, data);
+
+export const deleteExpenseCategory = (id: number) => 
+  http.delete(`/finance/expense-categories/${id}/`);
+
+export const getExpenseCategoryStatistics = () => 
+  http.get<ExpenseCategoryStatistics[]>('/finance/expense-categories/statistics/');

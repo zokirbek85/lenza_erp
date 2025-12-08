@@ -34,6 +34,7 @@ import VerifyOrderPage from '../pages/verify/VerifyOrderPage';
 import VerifyReconciliationPage from '../pages/verify/VerifyReconciliationPage';
 import FinanceDashboard from '../pages/FinanceDashboard';
 import FinanceTransactions from '../pages/FinanceTransactions';
+import ExpenseCategoryManagement from '../pages/ExpenseCategoryManagement';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -243,6 +244,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'accountant']}>
             <FinanceTransactions />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'finance/categories',
+        element: (
+          <ProtectedRoute roles={['admin', 'accountant', 'owner']}>
+            <ExpenseCategoryManagement />
           </ProtectedRoute>
         ),
       },

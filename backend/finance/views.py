@@ -13,11 +13,12 @@ from rest_framework.views import APIView
 from core.permissions import IsAdmin, IsOwner, IsAccountant
 from django_filters import rest_framework as filters
 
-from .models import ExchangeRate, FinanceAccount, FinanceTransaction
+from .models import ExchangeRate, ExpenseCategory, FinanceAccount, FinanceTransaction
 from .serializers import (
     CashSummaryResponseSerializer,
     CurrencyTransferSerializer,
     ExchangeRateSerializer,
+    ExpenseCategorySerializer,
     FinanceAccountSerializer,
     FinanceTransactionSerializer,
 )
@@ -415,3 +416,78 @@ class CurrencyTransferView(APIView):
                 'new_balance': float(to_account.balance)
             }
         }, status=status.HTTP_201_CREATED)
+
+
+class ExpenseCategoryViewSet(viewsets.ModelViewSet):
+    """
+    ExpenseCategory CRUD - Chiqim kategoriyalari boshqaruvi
+    Har bir foydalanuvchi o'z kategoriyalarini boshqaradi
+    """
+    serializer_class = ExpenseCategorySerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['is_active']
+    ordering = ['name']
+    
+    def get_queryset(self):
+        """Return only current user's categories"""
+        return ExpenseCategory.objects.filter(user=self.request.user)
+    
+    def perform_destroy(self, instance):
+        """
+        Soft delete - check if category is used in transactions
+        If used, warn and prevent deletion
+        """
+        # Count transactions using this category
+        usage_count = FinanceTransaction.objects.filter(
+            category=instance.name,
+            account__in=FinanceAccount.objects.all()
+        ).count()
+        
+        if usage_count > 0:
+            raise ValidationError({
+                'detail': _(f'Cannot delete category "{instance.name}". It is used in {usage_count} transaction(s). Please set is_active=False instead.')
+            })
+        
+        # If not used, allow deletion
+        instance.delete()
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """
+        Get statistics for all categories
+        Returns: category name, total expenses, transaction count
+        """
+        user = request.user
+        categories = self.get_queryset()
+        
+        stats = []
+        for category in categories:
+            # Get all expense transactions with this category
+            transactions = FinanceTransaction.objects.filter(
+                type=FinanceTransaction.TransactionType.EXPENSE,
+                category=category.name,
+                status=FinanceTransaction.TransactionStatus.APPROVED
+            )
+            
+            total_uzs = transactions.filter(currency='UZS').aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0')
+            
+            total_usd = transactions.filter(currency='USD').aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0')
+            
+            stats.append({
+                'id': category.id,
+                'name': category.name,
+                'icon': category.icon,
+                'color': category.color,
+                'transaction_count': transactions.count(),
+                'total_uzs': float(total_uzs),
+                'total_usd': float(total_usd),
+            })
+        
+        # Sort by total expenses (UZS equivalent)
+        stats.sort(key=lambda x: x['total_uzs'] + (x['total_usd'] * 12500), reverse=True)
+        
+        return Response(stats)

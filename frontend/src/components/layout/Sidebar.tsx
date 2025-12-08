@@ -23,6 +23,7 @@ import {
   BookOutlined,
   AppstoreOutlined,
   DollarOutlined,
+  FolderOutlined,
 } from '@ant-design/icons';
 
 export interface MenuItem {
@@ -103,6 +104,12 @@ const BASE_MENU: MenuItem[] = [
       path: '/finance',
       label: 'nav.finance',
       icon: <DollarOutlined />,
+      roles: ['admin', 'accountant', 'owner'],
+    },
+    {
+      path: '/finance/categories',
+      label: 'nav.expenseCategories',
+      icon: <FolderOutlined />,
       roles: ['admin', 'accountant', 'owner'],
     },
     {

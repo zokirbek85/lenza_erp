@@ -131,3 +131,39 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+// Expense Category
+export interface ExpenseCategory {
+  id: number;
+  name: string;
+  color: string;
+  icon: string;
+  is_active: boolean;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpenseCategoryCreate {
+  name: string;
+  color?: string;
+  icon?: string;
+  is_active?: boolean;
+}
+
+export interface ExpenseCategoryUpdate {
+  name?: string;
+  color?: string;
+  icon?: string;
+  is_active?: boolean;
+}
+
+export interface ExpenseCategoryStatistics {
+  id: number;
+  name: string;
+  icon: string;
+  color: string;
+  transaction_count: number;
+  total_uzs: number;
+  total_usd: number;
+}

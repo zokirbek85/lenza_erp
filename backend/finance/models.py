@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -402,3 +404,94 @@ class FinanceTransaction(models.Model):
         
         self.status = self.TransactionStatus.CANCELLED
         self.save(update_fields=['status', 'updated_at'])
+
+
+class ExpenseCategory(models.Model):
+    """
+    Chiqim kategoriyalari - foydalanuvchi tomonidan boshqariladigan
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='expense_categories',
+        help_text=_('Category owner')
+    )
+    name = models.CharField(
+        max_length=100,
+        help_text=_('Category name')
+    )
+    color = models.CharField(
+        max_length=7,
+        default='#6B7280',
+        help_text=_('Hex color code, e.g. #FF5733')
+    )
+    icon = models.CharField(
+        max_length=50,
+        default='📁',
+        help_text=_('Icon emoji or name')
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text=_('Active status')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ('name',)
+        verbose_name = _('Expense Category')
+        verbose_name_plural = _('Expense Categories')
+        unique_together = [('user', 'name')]
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+    
+    def clean(self):
+        """Validate category"""
+        errors = {}
+        
+        # Name length validation
+        if self.name and len(self.name) < 3:
+            errors['name'] = _('Category name must be at least 3 characters')
+        
+        # Color format validation
+        if self.color:
+            import re
+            if not re.match(r'^#[0-9A-Fa-f]{6}$', self.color):
+                errors['color'] = _('Invalid color format. Use hex format like #FF5733')
+        
+        if errors:
+            raise ValidationError(errors)
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+# Default categories to create for new users
+DEFAULT_EXPENSE_CATEGORIES = [
+    {'name': 'Tanlang', 'icon': '📁', 'color': '#6B7280'},
+    {'name': 'Maosh', 'icon': '💰', 'color': '#3B82F6'},
+    {'name': 'Ijara', 'icon': '🏠', 'color': '#8B5CF6'},
+    {'name': 'Kommunal xizmatlar', 'icon': '💡', 'color': '#F59E0B'},
+    {'name': 'Materiallar', 'icon': '📦', 'color': '#10B981'},
+    {'name': 'Transport', 'icon': '🚗', 'color': '#EF4444'},
+    {'name': 'Marketing', 'icon': '📢', 'color': '#EC4899'},
+    {'name': 'Uskunalar', 'icon': '🔧', 'color': '#6366F1'},
+    {'name': "Ta'mirlash", 'icon': '🛠️', 'color': '#F97316'},
+    {'name': 'Boshqa', 'icon': '📝', 'color': '#6B7280'},
+]
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_default_expense_categories(sender, instance, created, **kwargs):
+    """Create default expense categories for new users"""
+    if created:
+        for category_data in DEFAULT_EXPENSE_CATEGORIES:
+            ExpenseCategory.objects.create(
+                user=instance,
+                **category_data
+            )

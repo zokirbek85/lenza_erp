@@ -6,7 +6,7 @@ from rest_framework import serializers
 from dealers.models import Dealer
 from dealers.serializers import DealerSerializer
 
-from .models import ExchangeRate, FinanceAccount, FinanceTransaction
+from .models import ExchangeRate, ExpenseCategory, FinanceAccount, FinanceTransaction
 
 
 class ExchangeRateSerializer(serializers.ModelSerializer):
@@ -278,3 +278,63 @@ class CurrencyTransferSerializer(serializers.Serializer):
         data['to_account'] = to_account
         
         return data
+
+
+class ExpenseCategorySerializer(serializers.ModelSerializer):
+    """Chiqim kategoriyalari serializer"""
+    usage_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ExpenseCategory
+        fields = (
+            'id',
+            'name',
+            'color',
+            'icon',
+            'is_active',
+            'usage_count',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at', 'usage_count')
+    
+    def get_usage_count(self, obj):
+        """Count how many transactions use this category"""
+        return FinanceTransaction.objects.filter(
+            category=obj.name,
+            account__in=FinanceAccount.objects.all()
+        ).count()
+    
+    def validate_name(self, value):
+        """Validate category name"""
+        if len(value) < 3:
+            raise serializers.ValidationError(_('Category name must be at least 3 characters'))
+        
+        # Check for duplicate name for this user
+        user = self.context['request'].user
+        instance_id = self.instance.id if self.instance else None
+        
+        if ExpenseCategory.objects.filter(
+            user=user, 
+            name=value
+        ).exclude(id=instance_id).exists():
+            raise serializers.ValidationError(_('You already have a category with this name'))
+        
+        return value
+    
+    def validate_color(self, value):
+        """Validate hex color format"""
+        import re
+        if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
+            raise serializers.ValidationError(_('Invalid color format. Use hex format like #FF5733'))
+        return value
+    
+    def create(self, validated_data):
+        """Create category for current user"""
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Prevent changing user"""
+        validated_data.pop('user', None)  # Don't allow changing user
+        return super().update(instance, validated_data)

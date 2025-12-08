@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { message } from 'antd';
-import { createFinanceTransaction } from '../../api/finance';
-import type { FinanceAccount, Currency } from '../../types/finance';
+import { message, Modal, Form, Input, ColorPicker } from 'antd';
+
+import { createFinanceTransaction, getExpenseCategories, createExpenseCategory } from '../../api/finance';
+import type { FinanceAccount, Currency, ExpenseCategory } from '../../types/finance';
 import { fetchAllPages } from '../../utils/pagination';
 
 interface AddExpenseModalProps {
@@ -15,7 +16,11 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryForm] = Form.useForm();
   
   const [formData, setFormData] = useState({
     account: 0,
@@ -29,6 +34,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   useEffect(() => {
     if (visible) {
       loadAccounts();
+      loadCategories();
     }
   }, [visible]);
 
@@ -44,6 +50,53 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
       message.error(error.response?.data?.detail || t('common.messages.error', 'Xatolik yuz berdi'));
     } finally {
       setLoadingAccounts(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const response = await getExpenseCategories({ is_active: true });
+      setCategories(response.data);
+    } catch (error: any) {
+      console.error('Failed to load categories:', error);
+      message.error(t('common.loadError', 'Failed to load categories'));
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    try {
+      const values = await categoryForm.validateFields();
+      
+      // Convert Color object to hex string
+      const colorValue = values.color;
+      const hexColor = typeof colorValue === 'object' && colorValue?.toHexString 
+        ? colorValue.toHexString() 
+        : colorValue || '#6B7280';
+
+      const newCategory = await createExpenseCategory({
+        name: values.name,
+        color: hexColor,
+        icon: values.icon || '📁',
+        is_active: true,
+      });
+
+      message.success(t('expenseCategory.createSuccess', 'Category created successfully'));
+      setCategories([...categories, newCategory.data]);
+      setFormData({ ...formData, category: newCategory.data.name });
+      setShowCategoryModal(false);
+      categoryForm.resetFields();
+    } catch (error: any) {
+      if (error.response?.data) {
+        const errors = error.response.data;
+        Object.keys(errors).forEach(key => {
+          message.error(`${key}: ${errors[key]}`);
+        });
+      } else {
+        message.error(t('common.saveError', 'Failed to save'));
+      }
     }
   };
 
@@ -107,20 +160,63 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
   // Filter accounts by selected currency
   const filteredAccounts = accounts.filter(a => a.currency === formData.currency);
 
-  // Common expense categories
-  const expenseCategories = [
-    { value: 'salary', label: t('finance.expense.salary', 'Maosh') },
-    { value: 'rent', label: t('finance.expense.rent', 'Ijara') },
-    { value: 'utilities', label: t('finance.expense.utilities', 'Kommunal xizmatlar') },
-    { value: 'supplies', label: t('finance.expense.supplies', 'Materiallar') },
-    { value: 'transport', label: t('finance.expense.transport', 'Transport') },
-    { value: 'marketing', label: t('finance.expense.marketing', 'Marketing') },
-    { value: 'equipment', label: t('finance.expense.equipment', 'Uskunalar') },
-    { value: 'maintenance', label: t('finance.expense.maintenance', 'Ta\'mirlash') },
-    { value: 'other', label: t('finance.expense.other', 'Boshqa') },
-  ];
-
   return (
+    <>
+      {/* Category Creation Modal */}
+      <Modal
+        title={t('expenseCategory.create', 'Yangi kategoriya')}
+        open={showCategoryModal}
+        onOk={handleCreateCategory}
+        onCancel={() => {
+          setShowCategoryModal(false);
+          categoryForm.resetFields();
+        }}
+        okText={t('common.save', 'Save')}
+        cancelText={t('common.cancel', 'Cancel')}
+      >
+        <Form form={categoryForm} layout="vertical" style={{ marginTop: 24 }}>
+          <Form.Item
+            label={t('expenseCategory.name', 'Nomi')}
+            name="name"
+            rules={[
+              { required: true, message: t('expenseCategory.nameRequired', 'Name is required') },
+              { min: 3, message: t('expenseCategory.nameMinLength', 'Name must be at least 3 characters') },
+            ]}
+          >
+            <Input placeholder={t('expenseCategory.namePlaceholder', 'Masalan: Maosh')} />
+          </Form.Item>
+
+          <Form.Item
+            label={t('expenseCategory.icon', 'Belgi (Emoji)')}
+            name="icon"
+            initialValue="📁"
+          >
+            <Input placeholder="📁" maxLength={10} style={{ fontSize: '1.5rem' }} />
+          </Form.Item>
+
+          <Form.Item
+            label={t('expenseCategory.color', 'Rang')}
+            name="color"
+            initialValue="#6B7280"
+          >
+            <ColorPicker 
+              showText
+              format="hex"
+              presets={[
+                {
+                  label: 'Recommended',
+                  colors: [
+                    '#6B7280', '#3B82F6', '#8B5CF6', '#F59E0B', '#10B981',
+                    '#EF4444', '#EC4899', '#6366F1', '#F97316', '#14B8A6',
+                  ],
+                },
+              ]}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Main Expense Modal */}
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -135,27 +231,33 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('finance.transaction.category', 'Kategoriya')} <span className="text-red-500">*</span>
             </label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="">{t('common.select', 'Tanlang')}</option>
-              {expenseCategories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
+            <div className="flex gap-2">
+              <select
+                value={formData.category}
+                onChange={(e) => {
+                  if (e.target.value === '__add_new__') {
+                    setShowCategoryModal(true);
+                  } else {
+                    setFormData({ ...formData, category: e.target.value });
+                  }
+                }}
+                required
+                disabled={loadingCategories}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+              >
+                <option value="">
+                  {loadingCategories ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
                 </option>
-              ))}
-            </select>
-            {formData.category === 'other' && (
-              <input
-                type="text"
-                placeholder={t('finance.expense.customCategory', 'Boshqa kategoriya nomini kiriting')}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="mt-2 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            )}
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.icon} {cat.name}
+                  </option>
+                ))}
+                <option value="__add_new__" style={{ color: '#10B981', fontWeight: 'bold' }}>
+                  ➕ {t('expenseCategory.createNew', 'Yangi kategoriya qo\'shish')}
+                </option>
+              </select>
+            </div>
           </div>
 
           {/* Date */}
@@ -291,5 +393,6 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
         </form>
       </div>
     </div>
+    </>
   );
 }
