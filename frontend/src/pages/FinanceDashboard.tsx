@@ -32,8 +32,9 @@ export default function FinanceDashboard() {
       const response = await getCashSummary();
       // Ensure accounts is always an array
       const data = response.data;
-      if (data && !Array.isArray(data.accounts)) {
-        data.accounts = [];
+      if (data) {
+        // Handle both array and ensure it exists
+        data.accounts = Array.isArray(data.accounts) ? data.accounts : [];
       }
       setSummary(data);
     } catch (err: any) {

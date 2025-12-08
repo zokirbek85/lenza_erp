@@ -67,7 +67,9 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
 
   // Ensure details is always an array
   const safeDetails = Array.isArray(details) ? details : [];
-  const filteredDetails = safeDetails.filter(d => d.currency === currency && getAmount(d) !== 0);
+  const filteredDetails = Array.isArray(safeDetails) 
+    ? safeDetails.filter(d => d && d.currency === currency && getAmount(d) !== 0)
+    : [];
   const hasDetails = filteredDetails.length > 0;
 
   return (
