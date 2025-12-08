@@ -1,5 +1,6 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
 <head>
 <meta charset="utf-8"/>
 <style>
@@ -30,14 +31,14 @@ tfoot td { font-weight: bold; background: #fafafa; }
 <table>
   <thead>
     <tr>
-      <th>Sana</th>
-      <th>Hisob</th>
-      <th>Turi</th>
-      <th>Ref</th>
-      <th>Valyuta</th>
-      <th>Miqdor</th>
-      <th>USD</th>
-      <th>Izoh</th>
+      <th>{% trans "Date" %}</th>
+      <th>{% trans "Account" %}</th>
+      <th>{% trans "Type" %}</th>
+      <th>{% trans "Ref" %}</th>
+      <th>{% trans "Currency" %}</th>
+      <th>{% trans "Amount" %}</th>
+      <th>{% trans "USD" %}</th>
+      <th>{% trans "Comment" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -56,8 +57,8 @@ tfoot td { font-weight: bold; background: #fafafa; }
   </tbody>
 </table>
 <div class="footer">
-  <p>Imzolangan: <strong>{{ company_name }}</strong> tizimi orqali</p>
-  <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+  <p>{% trans "Signed via" %} <strong>{{ company_name }}</strong> {% trans "system" %}</p>
+  <p>{% trans "Scan QR to verify authenticity" %}:</p>
   <img src="{{ qr_code }}" class="qr" alt="QR"/><br/>
   <a href="{{ verify_url }}">{{ verify_url }}</a>
 </div>

@@ -1,8 +1,9 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
 <head>
     <meta charset="UTF-8">
-    <title>Kassa operatsiyalari</title>
+    <title>{% trans "Cash Operations" %}</title>
     <style>
         @page {
             size: A4;
@@ -92,9 +93,9 @@
         {% if company %}
         <div class="company-name">{{ company.firm_name }}</div>
         {% endif %}
-        <div class="report-title">KASSA OPERATSIYALARI</div>
+        <div class="report-title">{% trans "CASH OPERATIONS" %}</div>
         <div class="period">
-            Davr: {% if date_from %}{{ date_from }}{% else %}Boshidan{% endif %} - {% if date_to %}{{ date_to }}{% else %}Hozirgacha{% endif %}
+            {% trans "Period" %}: {% if date_from %}{{ date_from }}{% else %}{% trans "From beginning" %}{% endif %} - {% if date_to %}{{ date_to }}{% else %}{% trans "Until now" %}{% endif %}
         </div>
     </div>
 
@@ -102,12 +103,12 @@
         <thead>
             <tr>
                 <th style="width: 5%">№</th>
-                <th style="width: 12%">Sana</th>
-                <th style="width: 12%">Turi</th>
-                <th style="width: 15%">Manba</th>
-                <th style="width: 12%" class="text-right">Summa</th>
-                <th style="width: 12%" class="text-right">Balans</th>
-                <th style="width: 32%">Tavsif</th>
+                <th style="width: 12%">{% trans "Date" %}</th>
+                <th style="width: 12%">{% trans "Type" %}</th>
+                <th style="width: 15%">{% trans "Source" %}</th>
+                <th style="width: 12%" class="text-right">{% trans "Amount" %}</th>
+                <th style="width: 12%" class="text-right">{% trans "Balance" %}</th>
+                <th style="width: 32%">{% trans "Description" %}</th>
             </tr>
         </thead>
         <tbody>
@@ -138,29 +139,29 @@
 
     <table class="summary-table">
         <tr class="summary-row income">
-            <td>JAMI KIRIMLAR:</td>
+            <td>{% trans "TOTAL INCOME" %}:</td>
             <td class="text-right">{{ total_income|floatformat:2 }} {{ currency }}</td>
         </tr>
         <tr class="summary-row expense">
-            <td>JAMI CHIQIMLAR:</td>
+            <td>{% trans "TOTAL EXPENSES" %}:</td>
             <td class="text-right">{{ total_expense|floatformat:2 }} {{ currency }}</td>
         </tr>
         <tr class="summary-row balance">
-            <td>BALANS:</td>
+            <td>{% trans "BALANCE" %}:</td>
             <td class="text-right">{{ balance|floatformat:2 }} {{ currency }}</td>
         </tr>
         {% if currency == 'UZS' %}
         <tr class="summary-row balance">
-            <td>USD kursi bo'yicha:</td>
+            <td>{% trans "In USD rate" %}:</td>
             <td class="text-right">{{ balance_usd|floatformat:2 }} USD</td>
         </tr>
         {% endif %}
     </table>
 
     <div class="footer">
-        Yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}
+        {% trans "Generated" %}: {{ generated_at|date:"d.m.Y H:i" }}
         {% if company %}| {{ company.firm_name }}{% endif %}
-        {% if currency == 'UZS' %}| Kurs: 1 USD = {{ usd_rate }} UZS{% endif %}
+        {% if currency == 'UZS' %}| {% trans "Rate" %}: 1 USD = {{ usd_rate }} UZS{% endif %}
     </div>
 </body>
 </html>
