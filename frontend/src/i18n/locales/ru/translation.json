@@ -352,6 +352,10 @@
     },
     "filters": {
       "search": "Поиск...",
+      "searchLabel": "Поиск (Название, SKU, Артикул)",
+      "searchPlaceholder": "Название товара, SKU или артикул...",
+      "searchLabelShort": "Поиск",
+      "searchPlaceholderShort": "Название, SKU, Артикул...",
       "brand": "По бренду",
       "category": "По категории",
       "lowStock": "Низкий запас"

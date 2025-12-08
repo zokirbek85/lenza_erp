@@ -736,6 +736,10 @@
     },
     "filters": {
       "search": "Qidirish...",
+      "searchLabel": "Qidirish (Nom, SKU, Artikul)",
+      "searchPlaceholder": "Mahsulot nomi, SKU yoki artikul...",
+      "searchLabelShort": "Qidirish",
+      "searchPlaceholderShort": "Nom, SKU, Artikul...",
       "brand": "Brend bo'yicha",
       "category": "Kategoriya bo'yicha",
       "lowStock": "Kam zaxira"

@@ -409,10 +409,10 @@ const ProductsPage = () => {
   const filtersContent = (
     <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Qidirish (Nom, SKU, Artikul)</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.searchLabel')}</label>
         <input
           type="text"
-          placeholder="Mahsulot nomi, SKU yoki artikul..."
+          placeholder={t('products.filters.searchPlaceholder')}
           value={filters.searchQuery ?? ''}
           onChange={(event) => handleFilterChange('searchQuery', event.target.value)}
           className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
@@ -829,10 +829,10 @@ const ProductsPage = () => {
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Qidirish</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.searchLabelShort')}</label>
           <input
             type="text"
-            placeholder="Nom, SKU, Artikul..."
+            placeholder={t('products.filters.searchPlaceholderShort')}
             value={filters.searchQuery ?? ''}
             onChange={(event) => handleFilterChange('searchQuery', event.target.value)}
             className="mt-1 w-64 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"

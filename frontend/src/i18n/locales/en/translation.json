@@ -355,6 +355,10 @@
     },
     "filters": {
       "search": "Search...",
+      "searchLabel": "Search (Name, SKU, Article)",
+      "searchPlaceholder": "Product name, SKU or article...",
+      "searchLabelShort": "Search",
+      "searchPlaceholderShort": "Name, SKU, Article...",
       "brand": "By brand",
       "category": "By category",
       "lowStock": "Low stock"
