@@ -1822,5 +1822,33 @@
       "rate": "Kurs (UZS)"
     },
     "noRates": "Valyuta kurslari mavjud emas"
+  },
+  "verify": {
+    "loading": "Hujjat tekshirilmoqda...",
+    "notFound": "Hujjat topilmadi",
+    "notFoundDescription": "Bu hujjat tizimda mavjud emas yoki o'chirilgan",
+    "authentic": "Hujjat haqiqiy!",
+    "verified": "✓ Hujjat haqiqiylik tekshiruvidan o'tdi",
+    "verifiedBy": "Lenza ERP tizimi orqali tekshirildi",
+    "reconciliation": {
+      "title": "Akt sverka (Reconciliation Statement)",
+      "notFoundDescription": "Bu akt sverka hujjati tizimda mavjud emas",
+      "dealer": "Diler",
+      "dealerCode": "Diler kodi",
+      "region": "Hudud",
+      "phone": "Telefon",
+      "openingBalance": "Boshlang'ich balans",
+      "note": "Eslatma"
+    },
+    "order": {
+      "title": "Buyurtma to'lovnomasi (Invoice)",
+      "notFoundDescription": "Bu buyurtma hujjati tizimda mavjud emas yoki o'chirilgan",
+      "documentType": "Hujjat turi",
+      "orderNumber": "Buyurtma raqami",
+      "dealer": "Diler",
+      "date": "Sana",
+      "totalAmount": "Jami summa",
+      "status": "Holat"
+    }
   }
 }

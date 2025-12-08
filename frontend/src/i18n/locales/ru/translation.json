@@ -1454,5 +1454,33 @@
       "rate": "Курс (UZS)"
     },
     "noRates": "Курсы валют отсутствуют"
+  },
+  "verify": {
+    "loading": "Проверка документа...",
+    "notFound": "Документ не найден",
+    "notFoundDescription": "Этот документ не существует в системе или был удалён",
+    "authentic": "Документ подлинный!",
+    "verified": "✓ Документ прошёл проверку подлинности",
+    "verifiedBy": "Проверено через систему Lenza ERP",
+    "reconciliation": {
+      "title": "Акт сверки (Reconciliation Statement)",
+      "notFoundDescription": "Этот акт сверки не существует в системе",
+      "dealer": "Дилер",
+      "dealerCode": "Код дилера",
+      "region": "Регион",
+      "phone": "Телефон",
+      "openingBalance": "Начальный баланс",
+      "note": "Примечание"
+    },
+    "order": {
+      "title": "Счёт-фактура (Invoice)",
+      "notFoundDescription": "Этот заказ не существует в системе или был удалён",
+      "documentType": "Тип документа",
+      "orderNumber": "Номер заказа",
+      "dealer": "Дилер",
+      "date": "Дата",
+      "totalAmount": "Общая сумма",
+      "status": "Статус"
+    }
   }
 }

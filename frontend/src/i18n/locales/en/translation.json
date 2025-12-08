@@ -1497,5 +1497,33 @@
       "rate": "Rate (UZS)"
     },
     "noRates": "No currency rates available"
+  },
+  "verify": {
+    "loading": "Verifying document...",
+    "notFound": "Document not found",
+    "notFoundDescription": "This document does not exist in the system or has been deleted",
+    "authentic": "Document is authentic!",
+    "verified": "✓ Document passed authenticity verification",
+    "verifiedBy": "Verified via Lenza ERP system",
+    "reconciliation": {
+      "title": "Reconciliation Statement",
+      "notFoundDescription": "This reconciliation statement does not exist in the system",
+      "dealer": "Dealer",
+      "dealerCode": "Dealer code",
+      "region": "Region",
+      "phone": "Phone",
+      "openingBalance": "Opening balance",
+      "note": "Note"
+    },
+    "order": {
+      "title": "Invoice",
+      "notFoundDescription": "This order does not exist in the system or has been deleted",
+      "documentType": "Document type",
+      "orderNumber": "Order number",
+      "dealer": "Dealer",
+      "date": "Date",
+      "totalAmount": "Total amount",
+      "status": "Status"
+    }
   }
 }
