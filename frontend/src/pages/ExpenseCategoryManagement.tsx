@@ -43,7 +43,8 @@ export default function ExpenseCategoryManagement() {
       setLoading(true);
       const response = await getExpenseCategories();
       // Handle both array and paginated response
-      const data = Array.isArray(response.data) ? response.data : (response.data?.results || []);
+      const responseData: any = response.data;
+      const data = Array.isArray(responseData) ? responseData : (responseData?.results || []);
       setCategories(data);
     } catch (error: any) {
       message.error(t('common.loadError', 'Failed to load data'));
@@ -57,7 +58,8 @@ export default function ExpenseCategoryManagement() {
       setLoading(true);
       const response = await getExpenseCategoryStatistics();
       // Handle both array and paginated response
-      const data = Array.isArray(response.data) ? response.data : (response.data?.results || []);
+      const responseData: any = response.data;
+      const data = Array.isArray(responseData) ? responseData : (responseData?.results || []);
       setStatistics(data);
       setStatsModalVisible(true);
     } catch (error: any) {
