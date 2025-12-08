@@ -57,7 +57,10 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
     setLoadingCategories(true);
     try {
       const response = await getExpenseCategories({ is_active: true });
-      setCategories(response.data);
+      // Handle both array and paginated response
+      const responseData: any = response.data;
+      const data = Array.isArray(responseData) ? responseData : (responseData?.results || []);
+      setCategories(data);
     } catch (error: any) {
       console.error('Failed to load categories:', error);
       message.error(t('common.loadError', 'Failed to load categories'));
