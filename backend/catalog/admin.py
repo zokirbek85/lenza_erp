@@ -159,7 +159,7 @@ class ProductVariantAdmin(admin.ModelAdmin):
             'fields': ('product_model',)
         }),
         ('Variant Details', {
-            'fields': ('color', 'door_type', 'image')
+            'fields': ('color', 'door_type', 'sku', 'image', 'configurations')
         }),
         ('Status', {
             'fields': ('is_active',)

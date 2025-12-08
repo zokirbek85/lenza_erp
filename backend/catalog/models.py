@@ -114,7 +114,7 @@ class ProductVariant(models.Model):
     product_model = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name='variants')
     color = models.CharField(max_length=150, help_text="Цвет/ранг (белый, кремовый, тач-серый, дуб грей)")
     door_type = models.CharField(max_length=10, choices=DoorType.choices)
-    sku = models.CharField(max_length=100, unique=True, help_text="SKU/Артикул варианта")
+    sku = models.CharField(max_length=100, unique=True, null=True, blank=True, help_text="SKU/Артикул варианта")
     image = models.ImageField(upload_to='catalog/variants/', null=True, blank=True, help_text="Основное изображение варианта")
     configurations = models.JSONField(default=list, blank=True, help_text="Комплектация: [{'name': '...', 'value': '...'}]")
     is_active = models.BooleanField(default=True)
