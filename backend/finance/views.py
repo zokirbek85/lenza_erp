@@ -257,6 +257,8 @@ class CashSummaryView(APIView):
         accounts = FinanceAccount.objects.filter(is_active=True)
         
         summary_data = []
+        total_balance_uzs = Decimal('0')
+        total_balance_usd = Decimal('0')
         total_income_uzs = Decimal('0')
         total_income_usd = Decimal('0')
         total_expense_uzs = Decimal('0')
@@ -268,16 +270,25 @@ class CashSummaryView(APIView):
                 status=FinanceTransaction.TransactionStatus.APPROVED
             )
             
-            # Income va expense yig'indilari
+            # Income yig'indisi (opening_balance ham kiritilgan)
             income_total = approved_transactions.filter(
-                type=FinanceTransaction.TransactionType.INCOME
+                type__in=[
+                    FinanceTransaction.TransactionType.OPENING_BALANCE,
+                    FinanceTransaction.TransactionType.INCOME,
+                    FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_IN,
+                ]
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
+            # Expense yig'indisi
             expense_total = approved_transactions.filter(
-                type=FinanceTransaction.TransactionType.EXPENSE
+                type__in=[
+                    FinanceTransaction.TransactionType.EXPENSE,
+                    FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT,
+                ]
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            balance = income_total - expense_total
+            # Use model's balance property for consistency
+            balance = account.balance
             
             summary_data.append({
                 'account_id': account.id,
@@ -293,16 +304,18 @@ class CashSummaryView(APIView):
             
             # Umumiy yig'indilar
             if account.currency == 'UZS':
+                total_balance_uzs += balance
                 total_income_uzs += income_total
                 total_expense_uzs += expense_total
             else:
+                total_balance_usd += balance
                 total_income_usd += income_total
                 total_expense_usd += expense_total
         
         response_data = {
             'accounts': summary_data,
-            'total_balance_uzs': total_income_uzs - total_expense_uzs,
-            'total_balance_usd': total_income_usd - total_expense_usd,
+            'total_balance_uzs': total_balance_uzs,
+            'total_balance_usd': total_balance_usd,
             'total_income_uzs': total_income_uzs,
             'total_income_usd': total_income_usd,
             'total_expense_uzs': total_expense_uzs,

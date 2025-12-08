@@ -149,17 +149,15 @@ class FinanceAccount(models.Model):
         """Calculate account balance including opening balance and approved transactions"""
         from django.db.models import Sum
         
-        # Start with opening balance
-        balance = self.opening_balance_amount or Decimal('0')
-        
-        # Add approved transactions (excluding opening_balance type)
+        # Get all approved transactions (including opening_balance)
         approved_transactions = self.transactions.filter(
             status=FinanceTransaction.TransactionStatus.APPROVED
-        ).exclude(type='opening_balance')
+        )
         
-        # Income: regular income + currency exchange in
+        # Income: opening balance + regular income + currency exchange in
         income = approved_transactions.filter(
             type__in=[
+                FinanceTransaction.TransactionType.OPENING_BALANCE,
                 FinanceTransaction.TransactionType.INCOME,
                 FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_IN
             ]
@@ -173,7 +171,7 @@ class FinanceAccount(models.Model):
             ]
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        return balance + income - expense
+        return income - expense
 
 
 class FinanceTransaction(models.Model):
