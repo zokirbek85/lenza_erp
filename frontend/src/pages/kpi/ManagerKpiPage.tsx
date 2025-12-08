@@ -15,6 +15,7 @@ interface ManagerKpi {
   my_dealers_count: number;
   my_regions: { region: string; total_usd: number }[];
   my_top_dealers: { dealer: string; total_usd: number }[];
+  top_categories?: { category: string; amount: number }[];
 }
 
 const ManagerKpiPage = () => {
@@ -53,6 +54,11 @@ const ManagerKpiPage = () => {
   const pieData = useMemo(
     () => (data?.my_top_dealers ?? []).map((dealer) => ({ name: dealer.dealer, value: dealer.total_usd })),
     [data?.my_top_dealers]
+  );
+
+  const categoryPieData = useMemo(
+    () => (data?.top_categories ?? []).map((cat) => ({ name: cat.category, value: cat.amount })),
+    [data?.top_categories]
   );
 
   const renderSkeleton = () => (
@@ -122,6 +128,14 @@ const ManagerKpiPage = () => {
           <ChartPie data={pieData} nameKey="name" valueKey="value" />
         </KpiSection>
       </div>
+
+      <KpiSection title={t('kpi.manager.topCategories')} description={t('kpi.manager.categoriesBySales')}>
+        {(data?.top_categories ?? []).length > 0 ? (
+          <ChartPie data={categoryPieData} nameKey="name" valueKey="value" />
+        ) : (
+          <p className="text-center text-sm text-slate-500 dark:text-slate-400">{t('kpi.noData')}</p>
+        )}
+      </KpiSection>
     </div>
   );
 };

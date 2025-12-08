@@ -851,7 +851,9 @@
       "pendingOrders": "Pending",
       "myRevenue": "My sales",
       "topProducts": "Top products",
-      "recentActivity": "Recent activity"
+      "recentActivity": "Recent activity",
+      "topCategories": "Top categories",
+      "categoriesBySales": "Categories by sales"
     },
     "warehouse": {
       "title": "Warehouse dashboard",

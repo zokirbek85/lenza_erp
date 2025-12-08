@@ -118,6 +118,20 @@ class SalesManagerKPIView(APIView):
             .annotate(total_qty=Sum('qty'))
             .order_by('-total_qty')[:5]
         )
+        
+        # Top categories by total sales amount
+        top_categories = (
+            OrderItem.objects.filter(order__created_by=user, order__status__in=Order.Status.active_statuses())
+            .exclude(product__category__isnull=True)
+            .values('product__category__name')
+            .annotate(
+                total_amount=Sum(
+                    F('qty') * F('price_usd'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            .order_by('-total_amount')[:5]
+        )
 
         data = {
             'today_sales_usd': float(today_total),
@@ -126,6 +140,13 @@ class SalesManagerKPIView(APIView):
             'average_order_value_usd': float(avg_order),
             'top_products': [
                 {'name': item['product__name'], 'quantity': float(item['total_qty'] or 0)} for item in top_products
+            ],
+            'top_categories': [
+                {
+                    'category': item['product__category__name'],
+                    'amount': float(item['total_amount'] or 0)
+                }
+                for item in top_categories
             ],
         }
         return Response(data)

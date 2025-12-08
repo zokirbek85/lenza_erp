@@ -1273,7 +1273,9 @@
       "pendingOrders": "Kutilayotgan",
       "myRevenue": "Mening savdolarim",
       "topProducts": "Top mahsulotlar",
-      "recentActivity": "So'nggi harakatlar"
+      "recentActivity": "So'nggi harakatlar",
+      "topCategories": "Top kategoriyalar",
+      "categoriesBySales": "Savdo bo'yicha kategoriyalar"
     },
     "warehouse": {
       "title": "Omborchi paneli",

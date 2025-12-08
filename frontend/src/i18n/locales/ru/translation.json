@@ -889,7 +889,9 @@
       "pendingOrders": "В ожидании",
       "myRevenue": "Мои продажи",
       "topProducts": "Топ товары",
-      "recentActivity": "Последняя активность"
+      "recentActivity": "Последняя активность",
+      "topCategories": "Топ категории",
+      "categoriesBySales": "Категории по продажам"
     },
     "warehouse": {
       "title": "Панель кладовщика",
