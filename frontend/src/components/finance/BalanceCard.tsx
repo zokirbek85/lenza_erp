@@ -74,9 +74,10 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
 
   return (
     <div
-      className="group relative rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-lg dark:bg-slate-900 cursor-pointer"
+      className="group relative rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-lg dark:bg-slate-900 cursor-pointer overflow-visible"
       onMouseEnter={() => setShowDetails(true)}
       onMouseLeave={() => setShowDetails(false)}
+      style={{ zIndex: showDetails ? 100 : 'auto' }}
     >
       <div className="mb-2 flex items-center gap-3">
         <span className="text-2xl" role="img" aria-label={icon}>
@@ -106,7 +107,7 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
 
       {/* Details Popover */}
       {showDetails && hasDetails && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-lg shadow-2xl z-50 max-h-96 overflow-y-auto animate-slideDown">
+        <div className="absolute bottom-full left-0 right-0 mb-2 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-lg shadow-2xl z-[100] max-h-96 overflow-y-auto animate-slideUp">
           <div className="p-4">
             <div className="border-b border-slate-700 pb-2 mb-3">
               <h4 className="text-sm font-semibold text-white">
@@ -208,18 +209,18 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
 
       {/* Animation styles */}
       <style>{`
-        @keyframes slideDown {
+        @keyframes slideUp {
           from {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(10px);
           }
           to {
             opacity: 1;
             transform: translateY(0);
           }
         }
-        .animate-slideDown {
-          animation: slideDown 0.2s ease-out;
+        .animate-slideUp {
+          animation: slideUp 0.2s ease-out;
         }
       `}</style>
     </div>
