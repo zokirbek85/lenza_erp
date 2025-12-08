@@ -69,7 +69,7 @@ const Catalog = () => {
 
       const response = await http.get(`/catalog/export/pdf/?${params.toString()}`, {
         responseType: 'blob',
-        timeout: 60000, // 60 seconds for PDF generation
+        timeout: 180000, // 3 minutes for large PDF generation
       });
 
       const blob = new Blob([response.data], { type: 'application/pdf' });
