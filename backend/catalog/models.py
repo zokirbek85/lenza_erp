@@ -6,21 +6,38 @@ from core.utils.barcodes import generate_barcode
 
 
 class Brand(models.Model):
-    name = models.CharField(max_length=120, unique=True)
+    name = models.CharField(
+        max_length=120,
+        unique=True,
+        verbose_name="Brand name",
+        help_text="Unique name of the brand"
+    )
 
     class Meta:
         ordering = ('name',)
+        verbose_name = "Brand"
+        verbose_name_plural = "Brands"
 
     def __str__(self) -> str:
         return self.name
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=120, unique=True)
-    description = models.TextField(blank=True)
+    name = models.CharField(
+        max_length=120,
+        unique=True,
+        verbose_name="Category name",
+        help_text="Unique name of the product category"
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name="Description",
+        help_text="Optional description of the category"
+    )
 
     class Meta:
-        verbose_name_plural = 'Categories'
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
         ordering = ('name',)
 
     def __str__(self) -> str:
@@ -28,37 +45,145 @@ class Category(models.Model):
 
 
 class Style(models.Model):
-    name = models.CharField(max_length=150, unique=True)
-    description = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
+    name = models.CharField(
+        max_length=150,
+        unique=True,
+        verbose_name="Style name",
+        help_text="Unique name of the product style"
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Description",
+        help_text="Optional description of the style"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Active status",
+        help_text="Whether this style is currently active"
+    )
 
     class Meta:
         ordering = ('name',)
+        verbose_name = "Style"
+        verbose_name_plural = "Styles"
 
     def __str__(self) -> str:
         return self.name
 
 
 class Product(models.Model):
-    sku = models.CharField(max_length=64, unique=True)
-    name = models.CharField(max_length=255)
-    brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, related_name='products')
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
-    style = models.ForeignKey('catalog.Style', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
-    size = models.CharField(max_length=64, blank=True)
-    unit = models.CharField(max_length=32, default='pcs')
-    cost_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    sell_price_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    stock_ok = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
-    stock_defect = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
-    barcode = models.CharField(max_length=32, unique=True, editable=False, blank=True)
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    sku = models.CharField(
+        max_length=64,
+        unique=True,
+        verbose_name="SKU",
+        help_text="Stock Keeping Unit - unique product identifier"
+    )
+    name = models.CharField(
+        max_length=255,
+        verbose_name="Product name",
+        help_text="Full name of the product"
+    )
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='products',
+        verbose_name="Brand",
+        help_text="Brand of the product"
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='products',
+        verbose_name="Category",
+        help_text="Product category"
+    )
+    style = models.ForeignKey(
+        'catalog.Style',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        verbose_name="Style",
+        help_text="Product style (optional)"
+    )
+    size = models.CharField(
+        max_length=64,
+        blank=True,
+        verbose_name="Size",
+        help_text="Product size or dimensions"
+    )
+    unit = models.CharField(
+        max_length=32,
+        default='pcs',
+        verbose_name="Unit of measure",
+        help_text="Unit of measure (pcs, kg, m, etc.)"
+    )
+    cost_usd = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Cost (USD)",
+        help_text="Purchase cost in USD"
+    )
+    sell_price_usd = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Selling price (USD)",
+        help_text="Selling price in USD"
+    )
+    stock_ok = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Stock (OK)",
+        help_text="Quantity of good stock available"
+    )
+    stock_defect = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Stock (Defect)",
+        help_text="Quantity of defective stock"
+    )
+    barcode = models.CharField(
+        max_length=32,
+        unique=True,
+        editable=False,
+        blank=True,
+        verbose_name="Barcode",
+        help_text="Auto-generated unique barcode"
+    )
+    image = models.ImageField(
+        upload_to='products/',
+        null=True,
+        blank=True,
+        verbose_name="Product image",
+        help_text="Product photo or image"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Active status",
+        help_text="Whether this product is active in the system"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created at",
+        help_text="Timestamp when product was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Updated at",
+        help_text="Timestamp of last update"
+    )
 
     class Meta:
         ordering = ('name',)
+        verbose_name = "Product"
+        verbose_name_plural = "Products"
 
     def __str__(self) -> str:
         return f"{self.sku} - {self.name}"

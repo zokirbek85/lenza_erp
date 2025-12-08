@@ -8,17 +8,26 @@ from django.utils import timezone
 
 
 class Region(models.Model):
-    name = models.CharField(max_length=120, unique=True)
+    name = models.CharField(
+        max_length=120,
+        unique=True,
+        verbose_name="Region name",
+        help_text="Unique name of the region"
+    )
     manager_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name='managed_regions',
         null=True,
         blank=True,
+        verbose_name="Region manager",
+        help_text="Sales manager assigned to this region"
     )
 
     class Meta:
         ordering = ('name',)
+        verbose_name = "Region"
+        verbose_name_plural = "Regions"
 
     def __str__(self) -> str:
         return self.name
@@ -41,50 +50,119 @@ class DealerQuerySet(models.QuerySet):
 
 
 class Dealer(models.Model):
-    name = models.CharField(max_length=255)
-    code = models.CharField(max_length=32, unique=True)
-    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, related_name='dealers')
-    contact = models.CharField(max_length=255, blank=True)
-    phone = models.CharField(max_length=50, blank=True, default='')
-    address = models.TextField(blank=True, default='')
+    name = models.CharField(
+        max_length=255,
+        verbose_name="Dealer name",
+        help_text="Full name of the dealer/customer"
+    )
+    code = models.CharField(
+        max_length=32,
+        unique=True,
+        verbose_name="Dealer code",
+        help_text="Unique identifier code for the dealer"
+    )
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='dealers',
+        verbose_name="Region",
+        help_text="Geographic region where dealer is located"
+    )
+    contact = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Contact person",
+        help_text="Name of contact person at dealer"
+    )
+    phone = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name="Phone number",
+        help_text="Contact phone number"
+    )
+    address = models.TextField(
+        blank=True,
+        default='',
+        verbose_name="Address",
+        help_text="Physical address of the dealer"
+    )
     manager_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name='managed_dealers',
         null=True,
         blank=True,
+        verbose_name="Sales manager",
+        help_text="Sales manager assigned to this dealer"
     )
     # New unified opening balance fields
     opening_balance = models.DecimalField(
         max_digits=18,
         decimal_places=2,
         default=0,
-        help_text='Opening balance amount in opening_balance_currency'
+        verbose_name="Opening balance",
+        help_text="Opening balance amount in opening_balance_currency"
     )
     opening_balance_currency = models.CharField(
         max_length=3,
         choices=[('USD', 'USD'), ('UZS', 'UZS')],
         default='USD',
-        help_text='Currency of opening balance'
+        verbose_name="Opening balance currency",
+        help_text="Currency of opening balance (USD or UZS)"
     )
     opening_balance_date = models.DateField(
         default=timezone.localdate,
-        help_text='Date when opening balance was set'
+        verbose_name="Opening balance date",
+        help_text="Date when opening balance was set"
     )
     
     # Legacy fields - kept for backward compatibility, will be deprecated
-    opening_balance_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    opening_balance_uzs = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    opening_balance_usd = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name="Opening balance (USD) - Legacy",
+        help_text="Legacy field: Opening balance in USD"
+    )
+    opening_balance_uzs = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name="Opening balance (UZS) - Legacy",
+        help_text="Legacy field: Opening balance in UZS"
+    )
     
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    debt_usd = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0.00'))
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Active status",
+        help_text="Whether this dealer is currently active"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created at",
+        help_text="Timestamp when dealer was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Updated at",
+        help_text="Timestamp of last update"
+    )
+    debt_usd = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name="Debt (USD) - Deprecated",
+        help_text="Legacy field: Dealer debt in USD (deprecated, use balance service)"
+    )
 
     objects = DealerQuerySet.as_manager()
 
     class Meta:
         ordering = ('name',)
+        verbose_name = "Dealer"
+        verbose_name_plural = "Dealers"
 
     def __str__(self) -> str:
         return f"{self.code} - {self.name}"

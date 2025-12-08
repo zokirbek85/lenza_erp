@@ -32,39 +32,100 @@ class Order(models.Model):
         def active_statuses(cls) -> tuple[str, ...]:
             return (cls.CONFIRMED, cls.PACKED, cls.SHIPPED, cls.DELIVERED)
 
-    display_no = models.CharField(max_length=32, unique=True, editable=False, blank=True)
-    dealer = models.ForeignKey('dealers.Dealer', on_delete=models.CASCADE, related_name='orders')
+    display_no = models.CharField(
+        max_length=32,
+        unique=True,
+        editable=False,
+        blank=True,
+        verbose_name="Order number",
+        help_text="Auto-generated unique order display number"
+    )
+    dealer = models.ForeignKey(
+        'dealers.Dealer',
+        on_delete=models.CASCADE,
+        related_name='orders',
+        verbose_name="Dealer",
+        help_text="Customer/dealer who placed this order"
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='created_orders',
+        verbose_name="Created by",
+        help_text="User who created this order"
     )
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CREATED)
-    note = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    value_date = models.DateField(default=timezone.localdate)
-    total_usd = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    total_uzs = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.CREATED,
+        verbose_name="Order status",
+        help_text="Current status of the order"
+    )
+    note = models.TextField(
+        blank=True,
+        verbose_name="Notes",
+        help_text="Additional notes or comments about the order"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created at",
+        help_text="Timestamp when order was created"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Updated at",
+        help_text="Timestamp of last update"
+    )
+    value_date = models.DateField(
+        default=timezone.localdate,
+        verbose_name="Value date",
+        help_text="Date for financial accounting"
+    )
+    total_usd = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name="Total (USD)",
+        help_text="Total order amount in USD"
+    )
+    total_uzs = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name="Total (UZS)",
+        help_text="Total order amount in UZS"
+    )
     exchange_rate = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text='Exchange rate used for this order (1 USD = X UZS)'
+        verbose_name="Exchange rate",
+        help_text="Exchange rate used for this order (1 USD = X UZS)"
     )
     exchange_rate_date = models.DateField(
         null=True,
         blank=True,
-        help_text='Date when exchange rate was applied'
+        verbose_name="Exchange rate date",
+        help_text="Date when exchange rate was applied"
     )
-    is_reserve = models.BooleanField(default=False)
-    is_imported = models.BooleanField(default=False)
+    is_reserve = models.BooleanField(
+        default=False,
+        verbose_name="Reserve order",
+        help_text="Whether this is a reserve order"
+    )
+    is_imported = models.BooleanField(
+        default=False,
+        verbose_name="Imported",
+        help_text="Whether this order was imported from external source"
+    )
 
     class Meta:
         ordering = ('-created_at',)
+        verbose_name = "Order"
+        verbose_name_plural = "Orders"
 
     def __str__(self) -> str:
         return self.display_no
@@ -198,18 +259,46 @@ class OrderItem(models.Model):
         RETURNED = 'returned', 'Returned'
         CANCELLED = 'cancelled', 'Cancelled'
 
-    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey('catalog.Product', on_delete=models.PROTECT, related_name='order_items')
+    order = models.ForeignKey(
+        Order,
+        related_name='items',
+        on_delete=models.CASCADE,
+        verbose_name="Order",
+        help_text="Order this item belongs to"
+    )
+    product = models.ForeignKey(
+        'catalog.Product',
+        on_delete=models.PROTECT,
+        related_name='order_items',
+        verbose_name="Product",
+        help_text="Product ordered"
+    )
     qty = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal('0.01'))],
+        verbose_name="Quantity",
+        help_text="Quantity ordered (must be greater than 0)"
     )
-    price_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    status = models.CharField(max_length=20, choices=ItemStatus.choices, default=ItemStatus.RESERVED)
+    price_usd = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Price (USD)",
+        help_text="Unit price in USD"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=ItemStatus.choices,
+        default=ItemStatus.RESERVED,
+        verbose_name="Item status",
+        help_text="Current status of this order item"
+    )
 
     class Meta:
         ordering = ('id',)
+        verbose_name = "Order Item"
+        verbose_name_plural = "Order Items"
 
     def __str__(self) -> str:
         return f"{self.product} x{self.qty:.2f}"
@@ -221,11 +310,44 @@ class OrderItem(models.Model):
 
 
 class OrderStatusLog(models.Model):
-    order = models.ForeignKey(Order, related_name='status_logs', on_delete=models.CASCADE)
-    old_status = models.CharField(max_length=20, choices=Order.Status.choices, null=True, blank=True)
-    new_status = models.CharField(max_length=20, choices=Order.Status.choices)
-    by_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
-    at = models.DateTimeField(auto_now_add=True)
+    order = models.ForeignKey(
+        Order,
+        related_name='status_logs',
+        on_delete=models.CASCADE,
+        verbose_name="Order",
+        help_text="Order being tracked"
+    )
+    old_status = models.CharField(
+        max_length=20,
+        choices=Order.Status.choices,
+        null=True,
+        blank=True,
+        verbose_name="Old status",
+        help_text="Previous status before change"
+    )
+    new_status = models.CharField(
+        max_length=20,
+        choices=Order.Status.choices,
+        verbose_name="New status",
+        help_text="New status after change"
+    )
+    by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Changed by",
+        help_text="User who changed the status"
+    )
+    at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Changed at",
+        help_text="Timestamp of status change"
+    )
+
+    class Meta:
+        verbose_name = "Order Status Log"
+        verbose_name_plural = "Order Status Logs"
 
     class Meta:
         ordering = ('-at',)
