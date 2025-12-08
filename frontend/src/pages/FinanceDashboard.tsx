@@ -100,7 +100,10 @@ export default function FinanceDashboard() {
     );
   }
 
-  if (!summary) return null;
+  if (!summary || !summary.accounts) return null;
+
+  // Ensure summary.accounts is always an array
+  const safeAccounts = Array.isArray(summary.accounts) ? summary.accounts : [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -151,7 +154,7 @@ export default function FinanceDashboard() {
           title={t('finance.dashboard.totalBalanceUSD', 'Jami Balance USD')}
           value={summary.total_balance_usd}
           currency="USD"
-          details={summary.accounts}
+          details={safeAccounts}
           type="balance"
         />
 
@@ -160,7 +163,7 @@ export default function FinanceDashboard() {
           title={t('finance.dashboard.totalBalanceUZS', 'Jami Balance UZS')}
           value={summary.total_balance_uzs}
           currency="UZS"
-          details={summary.accounts}
+          details={safeAccounts}
           type="balance"
         />
 
@@ -169,7 +172,7 @@ export default function FinanceDashboard() {
           title={t('finance.dashboard.totalIncome', 'Jami Kirim')}
           value={summary.total_income_usd}
           currency="USD"
-          details={summary.accounts}
+          details={safeAccounts}
           type="income"
         />
 
@@ -178,7 +181,7 @@ export default function FinanceDashboard() {
           title={t('finance.dashboard.totalExpense', 'Jami Chiqim')}
           value={summary.total_expense_usd}
           currency="USD"
-          details={summary.accounts}
+          details={safeAccounts}
           type="expense"
         />
       </div>
@@ -190,7 +193,7 @@ export default function FinanceDashboard() {
           title={t('finance.dashboard.totalIncomeUZS', 'Jami Kirim UZS')}
           value={summary.total_income_uzs}
           currency="UZS"
-          details={summary.accounts}
+          details={safeAccounts}
           type="income"
         />
 
@@ -199,7 +202,7 @@ export default function FinanceDashboard() {
           title={t('finance.dashboard.totalExpenseUZS', 'Jami Chiqim UZS')}
           value={summary.total_expense_uzs}
           currency="UZS"
-          details={summary.accounts}
+          details={safeAccounts}
           type="expense"
         />
 
