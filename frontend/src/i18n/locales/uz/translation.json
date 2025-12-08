@@ -1310,7 +1310,19 @@
       "topProducts": "Top mahsulotlar",
       "orderStatus": "Buyurtma statuslari",
       "paymentMethods": "To'lov usullari",
-      "expensesByCategory": "Chiqimlar bo'yicha"
+      "expensesByCategory": "Chiqimlar bo'yicha",
+      "debtByDealer": {
+        "title": "Dilerlar bo'yicha qarzdorlik",
+        "label": "Qarzdorlik (USD)"
+      },
+      "debtByRegion": {
+        "title": "Hududlar bo'yicha qarzdorlik",
+        "label": "Qarzdorlik"
+      },
+      "debtTrend": {
+        "title": "Oylik qarzdorlik trendlari",
+        "label": "Umumiy qarzdorlik"
+      }
     },
     "filters": {
       "today": "Bugun",

@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { formatCurrency } from '../utils/formatters';
 import { useAutoscale } from '../hooks/useAutoscale';
@@ -26,6 +27,7 @@ interface DebtTrendChartProps {
 }
 
 const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const colors = useChartColors();
   const { mode } = useTheme();
@@ -38,7 +40,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
     labels: data.map((item) => item.month),
     datasets: [
       {
-        label: 'Umumiy qarzdorlik',
+        label: t('kpis.charts.debtTrend.label'),
         data: data.map((item) => item.debt),
         borderColor: colors.primary[0],
         fill: true,
@@ -119,7 +121,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
     <div ref={containerRef} style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card
         variant="borderless"
-        title="Oylik qarzdorlik trendlari"
+        title={t('kpis.charts.debtTrend.title')}
         loading={loading}
         style={{
           borderRadius: '16px',
@@ -144,7 +146,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
             <Line data={chartData} options={options} />
           ) : (
             <p style={{ color: token.colorTextTertiary, textAlign: 'center' }}>
-              Maʼlumot topilmadi
+              {t('kpis.noData')}
             </p>
           )}
         </div>

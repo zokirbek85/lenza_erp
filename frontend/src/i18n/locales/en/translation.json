@@ -956,7 +956,19 @@
       "stockValue": "Stock Value (USD)",
       "used": "Used",
       "expenses": "Expenses",
-      "budget": "Budget"
+      "budget": "Budget",
+      "debtByDealer": {
+        "title": "Debt by Dealers",
+        "label": "Debt (USD)"
+      },
+      "debtByRegion": {
+        "title": "Debt by Regions",
+        "label": "Debt"
+      },
+      "debtTrend": {
+        "title": "Monthly Debt Trends",
+        "label": "Total Debt"
+      }
     },
     "filters": {
       "title": "Filters",

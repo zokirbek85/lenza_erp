@@ -9,6 +9,7 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { formatCurrency } from '../utils/formatters';
 import { useAutoscale } from '../hooks/useAutoscale';
@@ -22,6 +23,7 @@ interface DebtByRegionPieProps {
 }
 
 const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const colors = useChartColors();
   
@@ -36,7 +38,7 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
     labels: data.map((item) => item.region),
     datasets: [
       {
-        label: 'Qarzdorlik',
+        label: t('kpis.charts.debtByRegion.label'),
         data: data.map((item) => item.debt),
         backgroundColor: data.map((_, index) => {
           return colors.primary[Math.min(index, colors.primary.length - 1)];
@@ -87,7 +89,7 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
     <div ref={containerRef} style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card
         variant="borderless"
-        title="Hududlar boʼyicha qarzdorlik"
+        title={t('kpis.charts.debtByRegion.title')}
         loading={loading}
         style={{
           borderRadius: '16px',
@@ -113,7 +115,7 @@ const DebtByRegionPie = ({ data, loading }: DebtByRegionPieProps) => {
             <Doughnut data={chartData} options={options} />
           ) : (
             <p style={{ color: token.colorTextTertiary, textAlign: 'center' }}>
-              Maʼlumot topilmadi
+              {t('kpis.noData')}
             </p>
           )}
         </div>

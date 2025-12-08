@@ -11,6 +11,7 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { formatCurrency } from '../utils/formatters';
 import { useAutoscale } from '../hooks/useAutoscale';
@@ -24,6 +25,7 @@ interface DebtByDealerChartProps {
 }
 
 const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
+  const { t } = useTranslation();
   const { token } = theme.useToken();
   const colors = useChartColors();
   
@@ -35,7 +37,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
     labels: data.map((item) => item.dealer),
     datasets: [
       {
-        label: 'Qarzdorlik (USD)',
+        label: t('kpis.charts.debtByDealer.label'),
         data: data.map((item) => item.debt),
         backgroundColor: colors.primary[0],
         borderRadius: 4,
@@ -99,7 +101,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
     <div ref={containerRef} style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Card
         variant="borderless"
-        title="Dilerlar boʼyicha qarzdorlik"
+        title={t('kpis.charts.debtByDealer.title')}
         loading={loading}
         style={{
           borderRadius: '16px',
@@ -124,7 +126,7 @@ const DebtByDealerChart = ({ data, loading }: DebtByDealerChartProps) => {
             <Bar data={chartData} options={options} />
           ) : (
             <p style={{ color: token.colorTextTertiary, textAlign: 'center' }}>
-              Maʼlumot topilmadi
+              {t('kpis.noData')}
             </p>
           )}
         </div>
