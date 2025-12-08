@@ -250,8 +250,8 @@ class CashSummaryView(APIView):
         user = request.user
         role = getattr(user, 'role', None)
         
-        # Faqat admin, accountant, owner, sales_manager ko'ra oladi
-        if not (user.is_superuser or role in ['admin', 'accountant', 'owner', 'sales_manager']):
+        # Faqat admin, accountant, owner ko'ra oladi (sales emas - maxfiy ma'lumot)
+        if not (user.is_superuser or role in ['admin', 'accountant', 'owner']):
             raise PermissionDenied(_('Sizda kassa ko\'rish huquqi yo\'q'))
         
         # Barcha active accountlar
@@ -367,8 +367,6 @@ class CurrencyTransferView(APIView):
                 date=trans_date,
                 currency=from_account.currency,
                 amount=usd_amount,
-                amount_usd=usd_amount,
-                amount_uzs=Decimal('0'),  # Not applicable for USD out
                 exchange_rate=rate,
                 category='Currency Exchange',
                 comment=comment or f'Currency exchange to {to_account.name}',
@@ -386,8 +384,6 @@ class CurrencyTransferView(APIView):
                 date=trans_date,
                 currency=to_account.currency,
                 amount=uzs_amount,
-                amount_usd=Decimal('0'),  # Not applicable for UZS in
-                amount_uzs=uzs_amount,
                 exchange_rate=rate,
                 category='Currency Exchange',
                 comment=comment or f'Currency exchange from {from_account.name}',
