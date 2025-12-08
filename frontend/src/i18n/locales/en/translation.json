@@ -1351,6 +1351,8 @@
       "panelTitle": "Create new order"
     },
     "filters": {
+      "title": "Filters",
+      "activeLabel": "Active",
       "dealers": "Dealers",
       "type": "Order type",
       "status": "Status",

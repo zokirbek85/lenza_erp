@@ -1673,6 +1673,8 @@
       "panelTitle": "Yangi buyurtma yaratish"
     },
     "filters": {
+      "title": "Filtrlash",
+      "activeLabel": "Faol",
       "dealers": "Dilerlar",
       "type": "Buyurtma turi",
       "status": "Status",

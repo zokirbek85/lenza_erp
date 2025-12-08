@@ -889,10 +889,10 @@ const OrdersPage = () => {
           className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
         >
           <div className="flex items-center gap-3">
-            <span className="text-lg font-semibold text-slate-900 dark:text-white">Filtrlash</span>
+            <span className="text-lg font-semibold text-slate-900 dark:text-white">{t('orders.filters.title')}</span>
             {(statusFilter || managerFilter || dateFrom || dateTo || brandId || categoryId) && (
               <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                Faol
+                {t('orders.filters.activeLabel')}
               </span>
             )}
           </div>
@@ -1069,11 +1069,11 @@ const OrdersPage = () => {
                           })}
                         </select>
                         {!filteredProducts.length && !productsLoading && (
-                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Mos mahsulot topilmadi.</p>
+                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t('orders.product.noMatches')}</p>
                         )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Miqdor</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('orders.form.quantity')}</label>
                         <input
                           type="number"
                           min={0.01}
