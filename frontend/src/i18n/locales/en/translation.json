@@ -462,10 +462,17 @@
       "region": "Region",
       "manager": "Manager",
       "contact": "Contact information",
+      "phone": "Phone number",
+      "address": "Address",
+      "addressPlaceholder": "E.g.: Tashkent, Yunusabad district",
       "openingBalance": "Opening balance (USD)",
+      "openingBalanceUsd": "Opening balance (USD)",
+      "openingBalanceUzs": "Opening balance (UZS)",
       "selectRegion": "Select region",
       "unassigned": "Unassigned",
-      "excelFile": "Excel file"
+      "excelFile": "Excel file",
+      "phonePlaceholder": "+998 90 123-45-67",
+      "balancePlaceholder": "0.00"
     },
     "importSummary": {
       "created": "Created",

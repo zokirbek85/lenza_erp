@@ -807,7 +807,7 @@ const DealersPage = () => {
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                placeholder="+998 90 123-45-67"
+                placeholder={t('dealers.form.phonePlaceholder')}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -875,7 +875,7 @@ const DealersPage = () => {
                 name="opening_balance_usd"
                 value={form.opening_balance_usd}
                 onChange={handleChange}
-                placeholder="0.00"
+                placeholder={t('dealers.form.balancePlaceholder')}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -887,7 +887,7 @@ const DealersPage = () => {
                 name="opening_balance_uzs"
                 value={form.opening_balance_uzs}
                 onChange={handleChange}
-                placeholder="0.00"
+                placeholder={t('dealers.form.balancePlaceholder')}
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>

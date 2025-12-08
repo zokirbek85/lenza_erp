@@ -888,7 +888,9 @@
       "openingBalanceUzs": "Boshlang'ich balans (UZS)",
       "selectRegion": "Hudud tanlang",
       "unassigned": "Tayinlanmagan",
-      "excelFile": "Excel fayli"
+      "excelFile": "Excel fayli",
+      "phonePlaceholder": "+998 90 123-45-67",
+      "balancePlaceholder": "0.00"
     },
     "importSummary": {
       "created": "Yaratildi",
