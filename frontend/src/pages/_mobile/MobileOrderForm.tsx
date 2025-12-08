@@ -121,10 +121,11 @@ const MobileOrderForm = ({
     0
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit();
-  };
+  // ❌ Bu funksiya endi kerak emas - MobileDrawerForm ichida handle qilinadi
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   onSubmit();
+  // };
 
   const footer = (
     <div className="space-y-2">
@@ -148,7 +149,7 @@ const MobileOrderForm = ({
           {t('orders.form.clearDraft')}
         </button>
         <button
-          type="submit"
+          type="submit"  // ✅ MobileDrawerForm formni handle qiladi
           disabled={selectedItems.length === 0}
           className="mobile-btn flex-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500"
         >
@@ -164,8 +165,9 @@ const MobileOrderForm = ({
       onClose={onClose}
       title={t('orders.header.panelTitle')}
       footer={footer}
+      onSubmit={onSubmit}  // ✅ YANGI PROP
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
         {/* Order Info Section */}
         <div className="space-y-4 rounded-lg bg-white p-4 shadow-sm dark:bg-slate-900">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -412,7 +414,7 @@ const MobileOrderForm = ({
 
         {/* Bottom spacing for fixed footer */}
         <div style={{ height: '120px' }} />
-      </form>
+      </div>
 
       {/* Full-screen Product Selector */}
       <MobileProductSelector
