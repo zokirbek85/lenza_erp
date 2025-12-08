@@ -7,6 +7,7 @@ import AddIncomeModal from '../components/finance/AddIncomeModal';
 import AddExpenseModal from '../components/finance/AddExpenseModal';
 import AccountModal from '../components/finance/AccountModal';
 import ConvertCurrencyModal from '../components/finance/ConvertCurrencyModal';
+import BalanceCard from '../components/finance/BalanceCard';
 
 export default function FinanceDashboard() {
   const { t } = useTranslation();
@@ -137,81 +138,81 @@ export default function FinanceDashboard() {
         </div>
       </div>
 
-      {/* Total Balance Cards */}
+      {/* Total Balance Cards with Detailed Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <BalanceCard
+          icon="money"
+          title={t('finance.dashboard.totalBalanceUSD', 'Jami Balance USD')}
+          value={summary.total_balance_usd}
+          currency="USD"
+          details={summary.accounts}
+          type="balance"
+        />
+
+        <BalanceCard
+          icon="credit-card"
+          title={t('finance.dashboard.totalBalanceUZS', 'Jami Balance UZS')}
+          value={summary.total_balance_uzs}
+          currency="UZS"
+          details={summary.accounts}
+          type="balance"
+        />
+
+        <BalanceCard
+          icon="arrow-up"
+          title={t('finance.dashboard.totalIncome', 'Jami Kirim')}
+          value={summary.total_income_usd}
+          currency="USD"
+          details={summary.accounts}
+          type="income"
+        />
+
+        <BalanceCard
+          icon="arrow-down"
+          title={t('finance.dashboard.totalExpense', 'Jami Chiqim')}
+          value={summary.total_expense_usd}
+          currency="USD"
+          details={summary.accounts}
+          type="expense"
+        />
+      </div>
+
+      {/* UZS Cards - Second Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <BalanceCard
+          icon="arrow-up"
+          title={t('finance.dashboard.totalIncomeUZS', 'Jami Kirim UZS')}
+          value={summary.total_income_uzs}
+          currency="UZS"
+          details={summary.accounts}
+          type="income"
+        />
+
+        <BalanceCard
+          icon="arrow-down"
+          title={t('finance.dashboard.totalExpenseUZS', 'Jami Chiqim UZS')}
+          value={summary.total_expense_uzs}
+          currency="UZS"
+          details={summary.accounts}
+          type="expense"
+        />
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {t('finance.dashboard.totalBalanceUSD', 'Jami Balance USD')}
+                {t('finance.dashboard.netProfit', 'Sof Foyda')}
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${formatNumber(summary.total_balance_usd)}
+              <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                ${formatNumber(summary.total_income_usd - summary.total_expense_usd)}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {formatNumber(summary.total_income_uzs - summary.total_expense_uzs)} UZS
               </p>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
               <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {t('finance.dashboard.totalBalanceUZS', 'Jami Balance UZS')}
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {formatNumber(summary.total_balance_uzs)}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {t('finance.dashboard.totalIncome', 'Jami Kirim')}
-              </p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                ${formatNumber(summary.total_income_usd)}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {formatNumber(summary.total_income_uzs)} UZS
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                {t('finance.dashboard.totalExpense', 'Jami Chiqim')}
-              </p>
-              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                ${formatNumber(summary.total_expense_usd)}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {formatNumber(summary.total_expense_uzs)} UZS
-              </p>
-            </div>
-            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-              <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
