@@ -30,7 +30,12 @@ export default function FinanceDashboard() {
       setLoading(true);
       setError(null);
       const response = await getCashSummary();
-      setSummary(response.data);
+      // Ensure accounts is always an array
+      const data = response.data;
+      if (data && !Array.isArray(data.accounts)) {
+        data.accounts = [];
+      }
+      setSummary(data);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load cash summary');
     } finally {
