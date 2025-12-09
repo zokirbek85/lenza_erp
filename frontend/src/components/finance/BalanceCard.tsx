@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -50,6 +51,9 @@ const iconMap = {
 const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balance', trend }: BalanceCardProps) => {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [openDirection, setOpenDirection] = useState<'up' | 'down'>('up');
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -57,6 +61,27 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
       maximumFractionDigits: 2,
     }).format(num);
   };
+
+  // Calculate dropdown position when showing
+  useEffect(() => {
+    if (showDetails && cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceAbove = rect.top;
+      const spaceBelow = viewportHeight - rect.bottom;
+      
+      // Determine if dropdown should open up or down
+      // Open down if there's more space below or not enough space above
+      const shouldOpenDown = spaceBelow > spaceAbove || spaceAbove < 300;
+      
+      setOpenDirection(shouldOpenDown ? 'down' : 'up');
+      setDropdownPosition({
+        top: shouldOpenDown ? rect.bottom + window.scrollY + 8 : rect.top + window.scrollY - 8,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [showDetails]);
 
   const getAmount = (detail: AccountDetail) => {
     if (type === 'balance') return detail.balance || 0;
@@ -74,10 +99,10 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
 
   return (
     <div
-      className="group relative rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-lg dark:bg-slate-900 cursor-pointer overflow-visible"
+      ref={cardRef}
+      className="group relative rounded-xl bg-white p-4 shadow-sm transition-all duration-200 hover:scale-[1.01] hover:shadow-lg dark:bg-slate-900 cursor-pointer"
       onMouseEnter={() => setShowDetails(true)}
       onMouseLeave={() => setShowDetails(false)}
-      style={{ zIndex: showDetails ? 100 : 'auto' }}
     >
       <div className="mb-2 flex items-center gap-3">
         <span className="text-2xl" role="img" aria-label={icon}>
@@ -105,9 +130,22 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
         )}
       </div>
 
-      {/* Details Popover */}
-      {showDetails && hasDetails && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-lg shadow-2xl z-[100] max-h-96 overflow-y-auto animate-slideUp">
+      {/* Details Popover - Rendered via Portal */}
+      {showDetails && hasDetails && createPortal(
+        <div
+          className={`fixed bg-slate-900 dark:bg-slate-950 border border-slate-700 rounded-lg shadow-2xl max-h-96 overflow-y-auto ${
+            openDirection === 'up' ? 'animate-slideUp origin-bottom' : 'animate-slideDown origin-top'
+          }`}
+          style={{
+            top: openDirection === 'down' ? dropdownPosition.top : 'auto',
+            bottom: openDirection === 'up' ? `calc(100vh - ${dropdownPosition.top}px)` : 'auto',
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            zIndex: 9999,
+          }}
+          onMouseEnter={() => setShowDetails(true)}
+          onMouseLeave={() => setShowDetails(false)}
+        >
           <div className="p-4">
             <div className="border-b border-slate-700 pb-2 mb-3">
               <h4 className="text-sm font-semibold text-white">
@@ -126,8 +164,8 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
                     className="border-b border-slate-800 pb-2 last:border-0 hover:bg-slate-800/50 rounded px-2 py-1 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2 flex-1">
-                        <span className="inline-block px-2 py-0.5 bg-slate-700 text-slate-300 rounded text-xs font-medium">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="inline-block px-2 py-0.5 bg-slate-700 text-slate-300 rounded text-xs font-medium flex-shrink-0">
                           {detail.account_type_display || detail.account_type}
                         </span>
                         <span className="text-sm text-slate-300 truncate">
@@ -135,7 +173,7 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
                         </span>
                       </div>
                       <span
-                        className={`text-sm font-semibold ${
+                        className={`text-sm font-semibold flex-shrink-0 ml-2 ${
                           type === 'expense'
                             ? 'text-red-400'
                             : type === 'income'
@@ -161,7 +199,7 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
-                      <span className="text-xs text-slate-500 w-12 text-right">
+                      <span className="text-xs text-slate-500 w-12 text-right flex-shrink-0">
                         {percentage.toFixed(1)}%
                       </span>
                     </div>
@@ -185,7 +223,8 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Hover Indicator */}
@@ -219,8 +258,21 @@ const BalanceCard = ({ icon, title, value, currency, details = [], type = 'balan
             transform: translateY(0);
           }
         }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         .animate-slideUp {
           animation: slideUp 0.2s ease-out;
+        }
+        .animate-slideDown {
+          animation: slideDown 0.2s ease-out;
         }
       `}</style>
     </div>
