@@ -176,11 +176,80 @@ class FinanceAccount(models.Model):
         return income - expense
 
 
+class FinanceTransactionHistory(models.Model):
+    """
+    Transactionlar o'zgarishlar tarixi (Audit Trail)
+    Har bir transaction o'zgarishi log qilinadi
+    """
+
+    class ActionType(models.TextChoices):
+        CREATED = 'created', _('Created')
+        UPDATED = 'updated', _('Updated')
+        DELETED = 'deleted', _('Deleted')
+        APPROVED = 'approved', _('Approved')
+        CANCELLED = 'cancelled', _('Cancelled')
+
+    transaction = models.ForeignKey(
+        'FinanceTransaction',
+        on_delete=models.CASCADE,
+        related_name='history',
+        help_text=_('Transaction that was changed')
+    )
+    action = models.CharField(
+        max_length=20,
+        choices=ActionType.choices,
+        help_text=_('Type of action performed')
+    )
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='finance_transaction_changes',
+        help_text=_('User who made the change')
+    )
+    changed_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text=_('When the change was made')
+    )
+    old_values = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_('Previous values before change (JSON)')
+    )
+    new_values = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_('New values after change (JSON)')
+    )
+    reason = models.TextField(
+        blank=True,
+        help_text=_('Reason for change (optional)')
+    )
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text=_('IP address of the user')
+    )
+
+    class Meta:
+        ordering = ['-changed_at']
+        verbose_name = _('Finance Transaction History')
+        verbose_name_plural = _('Finance Transaction Histories')
+        indexes = [
+            models.Index(fields=['transaction', '-changed_at']),
+            models.Index(fields=['changed_by', '-changed_at']),
+            models.Index(fields=['action', '-changed_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_action_display()} by {self.changed_by} at {self.changed_at}"
+
+
 class FinanceTransaction(models.Model):
     """
     Moliya operatsiyalari - kirim va chiqimlar
     """
-    
+
     class TransactionType(models.TextChoices):
         INCOME = 'income', _('Income')
         EXPENSE = 'expense', _('Expense')

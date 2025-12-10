@@ -409,7 +409,10 @@
     "confirmDelete": "O'chirishni tasdiqlaysizmi?",
     "confirmAction": "Amalni tasdiqlaysizmi?",
     "unsavedChanges": "Saqlanmagan o'zgarishlar bor",
-    "leaveWithoutSaving": "Saqlamasdan chiqishni xohlaysizmi?"
+    "leaveWithoutSaving": "Saqlamasdan chiqishni xohlaysizmi?",
+    "clearFilters": "Tozalash",
+    "retry": "Qayta urinish",
+    "results": "natija"
   },
   "payments": {
     "title": "To'lovlar",
@@ -539,17 +542,32 @@
       "empty": "Operatsiyalar topilmadi"
     },
     "transaction": {
+      "create": "Yangi transaction",
+      "createTitle": "Yangi transaction yaratish",
+      "edit": "Transactionni tahrirlash",
+      "editTitle": "Transactionni tahrirlash",
+      "created": "Transaction muvaffaqiyatli yaratildi",
+      "updated": "Transaction muvaffaqiyatli yangilandi",
+      "cannotEditApproved": "Faqat draft transactionlarni tahrirlash mumkin",
       "date": "Sana",
       "type": "Turi",
       "dealer": "Diler",
+      "dealerRequired": "Kirim uchun diler tanlash majburiy",
       "account": "Hisob",
+      "accountRequired": "Account tanlash majburiy",
       "currency": "Valyuta",
       "amount": "Summa",
+      "amountRequired": "Summa kiritish majburiy",
       "category": "Kategoriya",
+      "categoryRequired": "Chiqim uchun kategoriya tanlash majburiy",
       "comment": "Izoh",
+      "commentPlaceholder": "Izoh kiriting...",
       "status": "Status",
       "income": "Kirim",
       "expense": "Chiqim",
+      "openingBalance": "Boshlang'ich balans",
+      "currencyExchangeOut": "Valyuta konvertatsiyasi (chiqim)",
+      "currencyExchangeIn": "Valyuta konvertatsiyasi (kirim)",
       "draft": "Draft",
       "approved": "Tasdiqlangan",
       "cancelled": "Bekor qilingan",
@@ -557,7 +575,11 @@
       "cancel": "Bekor qilish",
       "confirmApprove": "Operatsiyani tasdiqlaysizmi?",
       "confirmCancel": "Operatsiyani bekor qilasizmi?",
-      "confirmDelete": "Operatsiyani o'chirasizmi?"
+      "confirmDelete": "Operatsiyani o'chirasizmi?",
+      "confirmEditApproved": "⚠️ OGOHLANTIRISH!\n\nTasdiqlangan transactionni tahrirlash:\n• Balanslarni qayta hisoblab beradi\n• O'zgarishlar tarixi saqlanadi\n• Kim, qachon o'zgartirganligini ko'rish mumkin\n\nDavom etishni xohlaysizmi?",
+      "confirmEditCancelled": "⚠️ OGOHLANTIRISH!\n\nBekor qilingan transactionni tahrirlayapsiz.\nO'zgarishlar tarixi saqlanadi.\n\nDavom etishni xohlaysizmi?",
+      "confirmDeleteApproved": "⚠️ XAVFLI AMAL!\n\nTasdiqlangan transactionni o'chirish:\n• Balanslar avtomatik qayta hisoblanadi\n• O'chirish tarixi saqlanadi\n• Hisobotlarga ta'sir qiladi\n\nHaqiqatan ham o'chirmoqchimisiz?",
+      "confirmDeleteCancelled": "⚠️ OGOHLANTIRISH!\n\nBekor qilingan transactionni o'chirmoqchisiz.\nO'chirish tarixi saqlanadi.\n\nDavom etasizmi?"
     },
     "income": {
       "add": "Kirim qo'shish",

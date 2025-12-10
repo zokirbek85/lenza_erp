@@ -180,26 +180,127 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
     
     def update(self, request, *args, **kwargs):
         self.check_modification_permission()
-        
-        # Approved transactionni tahrirlash mumkin emas
+
         instance = self.get_object()
-        if instance.status == FinanceTransaction.TransactionStatus.APPROVED:
-            raise ValidationError({
-                'detail': _('Tasdiqlangan transactionni tahrirlash mumkin emas')
-            })
-        
-        return super().update(request, *args, **kwargs)
+        old_status = instance.status
+
+        # ✅ Log old values before update
+        old_values = {
+            'type': instance.type,
+            'dealer_id': instance.dealer_id,
+            'account_id': instance.account_id,
+            'date': str(instance.date),
+            'currency': instance.currency,
+            'amount': str(instance.amount),
+            'category': instance.category,
+            'comment': instance.comment,
+            'status': instance.status,
+        }
+
+        # ✅ If editing approved transaction, need to revert and reapply balance
+        needs_balance_update = old_status == FinanceTransaction.TransactionStatus.APPROVED
+
+        if needs_balance_update:
+            # Revert old balance impact
+            self._revert_balance_impact(instance)
+
+        # Perform update
+        response = super().update(request, *args, **kwargs)
+
+        # Refresh to get new values
+        instance.refresh_from_db()
+
+        # ✅ Log new values after update
+        new_values = {
+            'type': instance.type,
+            'dealer_id': instance.dealer_id,
+            'account_id': instance.account_id,
+            'date': str(instance.date),
+            'currency': instance.currency,
+            'amount': str(instance.amount),
+            'category': instance.category,
+            'comment': instance.comment,
+            'status': instance.status,
+        }
+
+        # ✅ Create audit trail entry
+        from .models import FinanceTransactionHistory
+        FinanceTransactionHistory.objects.create(
+            transaction=instance,
+            action=FinanceTransactionHistory.ActionType.UPDATED,
+            changed_by=request.user,
+            old_values=old_values,
+            new_values=new_values,
+            reason=request.data.get('change_reason', ''),
+            ip_address=self._get_client_ip(request),
+        )
+
+        # ✅ If still approved after update, reapply balance
+        if needs_balance_update and instance.status == FinanceTransaction.TransactionStatus.APPROVED:
+            self._apply_balance_impact(instance)
+
+        return response
+
+    def _get_client_ip(self, request):
+        """Get client IP address from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+    def _revert_balance_impact(self, transaction):
+        """Revert balance impact of an approved transaction"""
+        if transaction.type in [
+            FinanceTransaction.TransactionType.INCOME,
+            FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_IN,
+            FinanceTransaction.TransactionType.OPENING_BALANCE
+        ]:
+            # Income was added, so subtract it
+            pass  # Balance is calculated dynamically, no need to modify
+        elif transaction.type in [
+            FinanceTransaction.TransactionType.EXPENSE,
+            FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT
+        ]:
+            # Expense was subtracted, so add it back
+            pass  # Balance is calculated dynamically
+
+    def _apply_balance_impact(self, transaction):
+        """Apply balance impact of an approved transaction"""
+        # Since balance is calculated dynamically from approved transactions,
+        # no manual balance adjustment needed
+        pass
     
     def destroy(self, request, *args, **kwargs):
         self.check_modification_permission()
-        
-        # Faqat draft transactionni o'chirish mumkin
+
         instance = self.get_object()
-        if instance.status != FinanceTransaction.TransactionStatus.DRAFT:
-            raise ValidationError({
-                'detail': _('Faqat draft transactionni o\'chirish mumkin')
-            })
-        
+
+        # ✅ Log deletion before it happens
+        from .models import FinanceTransactionHistory
+        FinanceTransactionHistory.objects.create(
+            transaction=instance,
+            action=FinanceTransactionHistory.ActionType.DELETED,
+            changed_by=request.user,
+            old_values={
+                'type': instance.type,
+                'dealer_id': instance.dealer_id,
+                'account_id': instance.account_id,
+                'date': str(instance.date),
+                'currency': instance.currency,
+                'amount': str(instance.amount),
+                'category': instance.category,
+                'comment': instance.comment,
+                'status': instance.status,
+            },
+            new_values=None,
+            reason=request.data.get('delete_reason', '') if hasattr(request, 'data') else '',
+            ip_address=self._get_client_ip(request),
+        )
+
+        # ✅ Allow deletion of all statuses (with audit trail)
+        # Note: Balance is calculated dynamically, so deletion automatically updates balance
         return super().destroy(request, *args, **kwargs)
     
     @action(detail=True, methods=['post'])
@@ -207,15 +308,29 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         """Approve transaction"""
         user = request.user
         role = getattr(user, 'role', None)
-        
+
         # Faqat admin/accountant approve qila oladi
         if not (user.is_superuser or role in ['admin', 'accountant']):
             raise PermissionDenied(_('Sizda transaction tasdiqlash huquqi yo\'q'))
-        
+
         transaction = self.get_object()
-        
+        old_status = transaction.status
+
         try:
             transaction.approve(user)
+
+            # ✅ Log approval action
+            from .models import FinanceTransactionHistory
+            FinanceTransactionHistory.objects.create(
+                transaction=transaction,
+                action=FinanceTransactionHistory.ActionType.APPROVED,
+                changed_by=user,
+                old_values={'status': old_status},
+                new_values={'status': transaction.status},
+                reason=request.data.get('approval_reason', ''),
+                ip_address=self._get_client_ip(request),
+            )
+
             serializer = self.get_serializer(transaction)
             return Response(serializer.data)
         except ValidationError as e:
@@ -226,15 +341,29 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         """Cancel transaction"""
         user = request.user
         role = getattr(user, 'role', None)
-        
+
         # Faqat admin/accountant cancel qila oladi
         if not (user.is_superuser or role in ['admin', 'accountant']):
             raise PermissionDenied(_('Sizda transaction bekor qilish huquqi yo\'q'))
-        
+
         transaction = self.get_object()
-        
+        old_status = transaction.status
+
         try:
             transaction.cancel()
+
+            # ✅ Log cancellation action
+            from .models import FinanceTransactionHistory
+            FinanceTransactionHistory.objects.create(
+                transaction=transaction,
+                action=FinanceTransactionHistory.ActionType.CANCELLED,
+                changed_by=user,
+                old_values={'status': old_status},
+                new_values={'status': transaction.status},
+                reason=request.data.get('cancel_reason', ''),
+                ip_address=self._get_client_ip(request),
+            )
+
             serializer = self.get_serializer(transaction)
             return Response(serializer.data)
         except ValidationError as e:

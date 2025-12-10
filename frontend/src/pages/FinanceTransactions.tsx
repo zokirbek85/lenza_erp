@@ -154,11 +154,36 @@ export default function FinanceTransactions() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm(t('finance.transaction.confirmDelete', 'Operatsiyani o\'chirasizmi?'))) {
+    const transaction = transactions.find(t => t.id === id);
+
+    // ✅ Different confirmation messages based on status
+    let confirmMessage = t('finance.transaction.confirmDelete', 'Operatsiyani o\'chirasizmi?');
+
+    if (transaction?.status === 'approved') {
+      confirmMessage = t('finance.transaction.confirmDeleteApproved',
+        '⚠️ XAVFLI AMAL!\n\n' +
+        'Tasdiqlangan transactionni o\'chirish:\n' +
+        '• Balanslar avtomatik qayta hisoblanadi\n' +
+        '• O\'chirish tarixi saqlanadi\n' +
+        '• Hisobotlarga ta\'sir qiladi\n\n' +
+        'Haqiqatan ham o\'chirmoqchimisiz?'
+      );
+    } else if (transaction?.status === 'cancelled') {
+      confirmMessage = t('finance.transaction.confirmDeleteCancelled',
+        '⚠️ OGOHLANTIRISH!\n\n' +
+        'Bekor qilingan transactionni o\'chirmoqchisiz.\n' +
+        'O\'chirish tarixi saqlanadi.\n\n' +
+        'Davom etasizmi?'
+      );
+    }
+
+    if (!window.confirm(confirmMessage)) {
       return;
     }
+
     try {
       await deleteFinanceTransaction(id);
+      message.success(t('common.deleted', 'O\'chirildi'));
       await loadTransactions();
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || 'Failed to delete transaction';
@@ -183,10 +208,31 @@ export default function FinanceTransactions() {
   };
 
   const handleEdit = (transaction: FinanceTransaction) => {
-    if (transaction.status !== 'draft') {
-      alert(t('finance.transaction.cannotEditApproved', 'Faqat draft transactionlarni tahrirlash mumkin'));
-      return;
+    // ✅ Show warning for approved/cancelled transactions
+    if (transaction.status === 'approved') {
+      const confirmed = window.confirm(
+        t('finance.transaction.confirmEditApproved',
+          '⚠️ OGOHLANTIRISH!\n\n' +
+          'Tasdiqlangan transactionni tahrirlash:\n' +
+          '• Balanslarni qayta hisoblab beradi\n' +
+          '• O\'zgarishlar tarixi saqlanadi\n' +
+          '• Kim, qachon o\'zgartirganligini ko\'rish mumkin\n\n' +
+          'Davom etishni xohlaysizmi?'
+        )
+      );
+      if (!confirmed) return;
+    } else if (transaction.status === 'cancelled') {
+      const confirmed = window.confirm(
+        t('finance.transaction.confirmEditCancelled',
+          '⚠️ OGOHLANTIRISH!\n\n' +
+          'Bekor qilingan transactionni tahrirlayapsiz.\n' +
+          'O\'zgarishlar tarixi saqlanadi.\n\n' +
+          'Davom etishni xohlaysizmi?'
+        )
+      );
+      if (!confirmed) return;
     }
+
     setEditingTransaction(transaction);
     setFormData({
       type: transaction.type as any,
@@ -648,37 +694,41 @@ export default function FinanceTransactions() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     <div className="flex items-center justify-center gap-2">
+                      {/* ✅ Edit button - available for all statuses */}
+                      <button
+                        onClick={() => handleEdit(transaction)}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        title={t('common.edit', 'Tahrirlash')}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7-7l7 7" />
+                        </svg>
+                      </button>
+
+                      {/* ✅ Delete button - available for all statuses */}
+                      <button
+                        onClick={() => handleDelete(transaction.id)}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        title={t('common.delete', 'O\'chirish')}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+
+                      {/* Status-specific actions */}
                       {transaction.status === 'draft' && (
-                        <>
-                          <button
-                            onClick={() => handleEdit(transaction)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                            title={t('common.edit', 'Tahrirlash')}
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7-7l7 7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleApprove(transaction.id)}
-                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                            title={t('finance.transaction.approve', 'Tasdiqlash')}
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(transaction.id)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                            title={t('common.delete', 'O\'chirish')}
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </>
+                        <button
+                          onClick={() => handleApprove(transaction.id)}
+                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                          title={t('finance.transaction.approve', 'Tasdiqlash')}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
                       )}
+
                       {transaction.status === 'approved' && (
                         <button
                           onClick={() => handleCancel(transaction.id)}
