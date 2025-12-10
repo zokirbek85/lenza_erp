@@ -112,17 +112,17 @@ const ManagerKpiPage = () => {
   }, [dateRange, t]);
 
   const barData = useMemo(
-    () => (data?.my_regions ?? []).map((region) => ({ name: region.region, total: region.total_usd })),
+    () => (data?.my_regions ?? []).map((region) => ({ name: region.region, total: Number(region.total_usd) || 0 })),
     [data?.my_regions]
   );
 
   const pieData = useMemo(
-    () => (data?.my_top_dealers ?? []).map((dealer) => ({ name: dealer.dealer, value: dealer.total_usd })),
+    () => (data?.my_top_dealers ?? []).map((dealer) => ({ name: dealer.dealer, value: Number(dealer.total_usd) || 0 })),
     [data?.my_top_dealers]
   );
 
   const categoryPieData = useMemo(
-    () => (data?.top_categories ?? []).map((cat) => ({ name: cat.category, value: cat.amount })),
+    () => (data?.top_categories ?? []).map((cat) => ({ name: cat.category, value: Number(cat.amount) || 0 })),
     [data?.top_categories]
   );
 
