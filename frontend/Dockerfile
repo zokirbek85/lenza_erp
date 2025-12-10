@@ -16,11 +16,28 @@ RUN apk add --no-cache git
 COPY package.json ./
 COPY package-lock.json* ./
 
+# Debug: Check if package-lock.json exists and is valid
+RUN echo "=== Checking for package-lock.json ===" && \
+    ls -lah package* && \
+    if [ -f package-lock.json ]; then \
+      echo "package-lock.json found, checking content..." && \
+      head -5 package-lock.json && \
+      if [ -s package-lock.json ] && grep -q "lockfileVersion" package-lock.json; then \
+        echo "Valid package-lock.json detected, using npm ci"; \
+      else \
+        echo "Invalid or empty package-lock.json, will use npm install"; \
+      fi; \
+    else \
+      echo "package-lock.json not found, will use npm install"; \
+    fi
+
 # Install dependencies with production optimizations
-# Use npm ci if lock file exists, otherwise use npm install
-RUN if [ -f package-lock.json ]; then \
+# Use npm ci if lock file exists and is valid, otherwise use npm install
+RUN if [ -f package-lock.json ] && [ -s package-lock.json ] && grep -q "lockfileVersion" package-lock.json; then \
+      echo "Running npm ci..." && \
       npm ci --prefer-offline --no-audit --production=false; \
     else \
+      echo "Running npm install..." && \
       npm install --prefer-offline --no-audit --production=false; \
     fi
 
