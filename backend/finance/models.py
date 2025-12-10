@@ -408,13 +408,22 @@ class FinanceTransaction(models.Model):
 
 class ExpenseCategory(models.Model):
     """
-    Chiqim kategoriyalari - foydalanuvchi tomonidan boshqariladigan
+    Chiqim kategoriyalari
+    - Global: barcha userlar ko'radi, faqat admin/accountant boshqaradi
+    - User-specific: faqat category egasi ko'radi va boshqaradi
     """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='expense_categories',
-        help_text=_('Category owner')
+        null=True,
+        blank=True,
+        help_text=_('Category owner (null for global categories)')
+    )
+    is_global = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text=_('Global categories are visible to all users')
     )
     name = models.CharField(
         max_length=100,
@@ -441,17 +450,38 @@ class ExpenseCategory(models.Model):
         ordering = ('name',)
         verbose_name = _('Expense Category')
         verbose_name_plural = _('Expense Categories')
-        unique_together = [('user', 'name')]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name'],
+                condition=models.Q(is_global=True),
+                name='unique_global_category_name'
+            ),
+            models.UniqueConstraint(
+                fields=['user', 'name'],
+                condition=models.Q(is_global=False),
+                name='unique_user_category_name'
+            ),
+        ]
         indexes = [
             models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['is_global', 'is_active']),
         ]
     
     def __str__(self):
-        return f"{self.icon} {self.name}"
+        prefix = '🌍 ' if self.is_global else ''
+        return f"{prefix}{self.icon} {self.name}"
     
     def clean(self):
         """Validate category"""
         errors = {}
+        
+        # Global category must not have user
+        if self.is_global and self.user is not None:
+            errors['user'] = _('Global category must not have a user')
+        
+        # User category must have user
+        if not self.is_global and self.user is None:
+            errors['user'] = _('User category must have a user')
         
         # Name length validation
         if self.name and len(self.name) < 3:
@@ -471,9 +501,8 @@ class ExpenseCategory(models.Model):
         super().save(*args, **kwargs)
 
 
-# Default categories to create for new users
-DEFAULT_EXPENSE_CATEGORIES = [
-    {'name': 'Tanlang', 'icon': '📁', 'color': '#6B7280'},
+# Default global categories (created by migration)
+DEFAULT_GLOBAL_CATEGORIES = [
     {'name': 'Maosh', 'icon': '💰', 'color': '#3B82F6'},
     {'name': 'Ijara', 'icon': '🏠', 'color': '#8B5CF6'},
     {'name': 'Kommunal xizmatlar', 'icon': '💡', 'color': '#F59E0B'},
@@ -486,12 +515,19 @@ DEFAULT_EXPENSE_CATEGORIES = [
 ]
 
 
+# Default user-specific categories (for new users)
+DEFAULT_USER_CATEGORIES = [
+    {'name': 'Shaxsiy', 'icon': '👤', 'color': '#6366F1'},
+]
+
+
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_default_expense_categories(sender, instance, created, **kwargs):
-    """Create default expense categories for new users"""
+    """Create default user-specific categories for new users"""
     if created:
-        for category_data in DEFAULT_EXPENSE_CATEGORIES:
+        for category_data in DEFAULT_USER_CATEGORIES:
             ExpenseCategory.objects.create(
                 user=instance,
+                is_global=False,
                 **category_data
             )

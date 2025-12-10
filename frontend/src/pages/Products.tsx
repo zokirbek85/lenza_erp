@@ -1,6 +1,7 @@
 ﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd';
 import toast from 'react-hot-toast';
 
 import { useAuthStore } from '../auth/useAuthStore';
@@ -420,48 +421,39 @@ const ProductsPage = () => {
       </div>
       <div>
         <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.brand')}</label>
-        <select
+        <Select
           value={filters.brandId ?? ''}
-          onChange={(event) => handleFilterChange('brandId', event.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-        >
-          <option value="">{t('common.all')}</option>
-          {brands.map((brand) => (
-            <option key={brand.id} value={brand.id}>
-              {brand.name}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleFilterChange('brandId', String(val))}
+          className="mt-1 w-full"
+          options={[{ label: t('common.all'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
+          allowClear
+          showSearch
+          placeholder={t('common.all')}
+        />
       </div>
       <div>
         <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.category')}</label>
-        <select
+        <Select
           value={filters.categoryId ?? ''}
-          onChange={(event) => handleFilterChange('categoryId', event.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-        >
-          <option value="">{t('common.all')}</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleFilterChange('categoryId', String(val))}
+          className="mt-1 w-full"
+          options={[{ label: t('common.all'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
+          allowClear
+          showSearch
+          placeholder={t('common.all')}
+        />
       </div>
       <div>
         <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filter.style')}</label>
-        <select
+        <Select
           value={filters.styleId ?? ''}
-          onChange={(event) => handleFilterChange('styleId', event.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-        >
-          <option value="">{t('common.all')}</option>
-          {styles.map((style) => (
-            <option key={style.id} value={style.id}>
-              {style.name}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleFilterChange('styleId', String(val))}
+          className="mt-1 w-full"
+          options={[{ label: t('common.all'), value: '' }, ...styles.map(s => ({ label: s.name, value: String(s.id) }))]}
+          allowClear
+          showSearch
+          placeholder={t('common.all')}
+        />
       </div>
     </div>
   );
@@ -840,48 +832,42 @@ const ProductsPage = () => {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.brand')}</label>
-          <select
+          <Select
             value={filters.brandId ?? ''}
-            onChange={(event) => handleFilterChange('brandId', event.target.value)}
-            className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">{t('common.all')}</option>
-            {brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => handleFilterChange('brandId', String(val))}
+            className="mt-1"
+            style={{ width: 192 }}
+            options={[{ label: t('common.all'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
+            allowClear
+            showSearch
+            placeholder={t('common.all')}
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filters.category')}</label>
-          <select
+          <Select
             value={filters.categoryId ?? ''}
-            onChange={(event) => handleFilterChange('categoryId', event.target.value)}
-            className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">{t('common.all')}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => handleFilterChange('categoryId', String(val))}
+            className="mt-1"
+            style={{ width: 192 }}
+            options={[{ label: t('common.all'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
+            allowClear
+            showSearch
+            placeholder={t('common.all')}
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.filter.style')}</label>
-          <select
+          <Select
             value={filters.styleId ?? ''}
-            onChange={(event) => handleFilterChange('styleId', event.target.value)}
-            className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">{t('common.all')}</option>
-            {styles.map((style) => (
-              <option key={style.id} value={style.id}>
-                {style.name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => handleFilterChange('styleId', String(val))}
+            className="mt-1"
+            style={{ width: 192 }}
+            options={[{ label: t('common.all'), value: '' }, ...styles.map(s => ({ label: s.name, value: String(s.id) }))]}
+            allowClear
+            showSearch
+            placeholder={t('common.all')}
+          />
         </div>
         <button
           type="button"

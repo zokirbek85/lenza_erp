@@ -1,7 +1,7 @@
 ﻿import type { FormEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { MinusOutlined, PlusOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Button, Collapse } from 'antd';
+import { Button, Collapse, Select } from 'antd';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -482,18 +482,15 @@ const OrdersPage = () => {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Menejer</label>
-          <select
-            value={managerFilter}
-            onChange={(e) => setManagerFilter(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">Barcha menejerlar</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.full_name || user.username}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={managerFilter ?? ''}
+            onChange={(val) => setManagerFilter(String(val))}
+            className="mt-1 w-full"
+            options={[{ label: 'Barcha menejerlar', value: '' }, ...users.map(u => ({ label: u.full_name || u.username, value: String(u.id) }))]}
+            allowClear
+            showSearch
+            placeholder="Barcha menejerlar"
+          />
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
@@ -520,35 +517,29 @@ const OrdersPage = () => {
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('orders.filters.brand')}
         </label>
-        <select
+        <Select
           value={brandId ?? ''}
-          onChange={(event) => handleFilterChange('brandId', event.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-        >
-          <option value="">{t('orders.filters.allBrands')}</option>
-          {brands.map((brand) => (
-            <option key={brand.id} value={brand.id}>
-              {brand.name}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleFilterChange('brandId', String(val))}
+          className="mt-1 w-full"
+          options={[{ label: t('orders.filters.allBrands'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
+          allowClear
+          showSearch
+          placeholder={t('orders.filters.allBrands')}
+        />
       </div>
       <div>
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {t('orders.filters.category')}
         </label>
-        <select
+        <Select
           value={categoryId ?? ''}
-          onChange={(event) => handleFilterChange('categoryId', event.target.value)}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-        >
-          <option value="">{t('orders.filters.allCategories')}</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleFilterChange('categoryId', String(val))}
+          className="mt-1 w-full"
+          options={[{ label: t('orders.filters.allCategories'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
+          allowClear
+          showSearch
+          placeholder={t('orders.filters.allCategories')}
+        />
       </div>
       <div>
         <button

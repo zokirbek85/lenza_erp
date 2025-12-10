@@ -4,6 +4,8 @@ import { message, Modal, Form, Input, ColorPicker } from 'antd';
 
 import { createFinanceTransaction, getExpenseCategories, createExpenseCategory } from '../../api/finance';
 import type { FinanceAccount, Currency, ExpenseCategory } from '../../types/finance';
+import { useAuthStore } from '../../auth/useAuthStore';
+import { Select } from 'antd';
 import { fetchAllPages } from '../../utils/pagination';
 
 interface AddExpenseModalProps {
@@ -37,6 +39,8 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
       loadCategories();
     }
   }, [visible]);
+
+  const role = useAuthStore((s) => s.role);
 
   const loadAccounts = async () => {
     setLoadingAccounts(true);
@@ -84,6 +88,7 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
         color: hexColor,
         icon: values.icon || '📁',
         is_active: true,
+        ...(role && ['admin', 'accountant', 'owner'].includes(role) ? { is_global: values.is_global === true } : {}),
       });
 
       message.success(t('expenseCategory.createSuccess', 'Category created successfully'));
@@ -216,6 +221,11 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
               ]}
             />
           </Form.Item>
+          {role && ['admin', 'accountant', 'owner'].includes(role) && (
+            <Form.Item label={t('expenseCategory.globalLabel', 'Global category')} name="is_global" valuePropName="checked">
+              <input type="checkbox" /> {t('expenseCategory.makeGlobal', 'Visible to all users (admin only)')}
+            </Form.Item>
+          )}
         </Form>
       </Modal>
 
@@ -234,33 +244,35 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('finance.transaction.category', 'Kategoriya')} <span className="text-red-500">*</span>
             </label>
-            <div className="flex gap-2">
-              <select
-                value={formData.category}
-                onChange={(e) => {
-                  if (e.target.value === '__add_new__') {
-                    setShowCategoryModal(true);
-                  } else {
-                    setFormData({ ...formData, category: e.target.value });
+              <div>
+                <Select
+                  value={formData.category}
+                  onChange={(val) => {
+                    if (val === '__add_new__') {
+                      setShowCategoryModal(true);
+                    } else {
+                      setFormData({ ...formData, category: val as string });
+                    }
+                  }}
+                  loading={loadingCategories}
+                  placeholder={loadingCategories ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+                  style={{ width: '100%' }}
+                  optionLabelProp="label"
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
                   }
-                }}
-                required
-                disabled={loadingCategories}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-              >
-                <option value="">
-                  {loadingCategories ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
-                </option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.icon} {cat.name}
-                  </option>
-                ))}
-                <option value="__add_new__" style={{ color: '#10B981', fontWeight: 'bold' }}>
-                  ➕ {t('expenseCategory.createNew', 'Yangi kategoriya qo\'shish')}
-                </option>
-              </select>
-            </div>
+                >
+                  {categories.map((cat) => (
+                    <Select.Option key={cat.id} value={cat.name} label={`${cat.icon} ${cat.name}`}>
+                      <span>{cat.is_global ? '🌍 ' : ''}{cat.icon} {cat.name}{cat.is_global ? ` (${t('expenseCategory.global', 'Global')})` : ''}</span>
+                    </Select.Option>
+                  ))}
+                  <Select.Option key="__add_new__" value="__add_new__" label={`➕ ${t('expenseCategory.createNew', "Yangi kategoriya qo' shish")}`}>
+                    <span style={{ color: '#10B981', fontWeight: 700 }}>➕ {t('expenseCategory.createNew', "Yangi kategoriya qo' shish")}</span>
+                  </Select.Option>
+                </Select>
+              </div>
           </div>
 
           {/* Date */}

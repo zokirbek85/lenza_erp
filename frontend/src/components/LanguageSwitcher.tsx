@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd';
 
 import { LANGUAGE_OPTIONS, LANGUAGE_STORAGE_KEY } from '../i18n/languages';
 
@@ -17,8 +18,7 @@ export const LanguageSwitcher = () => {
     }
   }, [i18n]);
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const lang = event.target.value;
+  const handleChange = (lang: string) => {
     i18n.changeLanguage(lang);
     try {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
@@ -28,18 +28,14 @@ export const LanguageSwitcher = () => {
   };
 
   return (
-    <select
+    <Select
       value={i18n.language}
       onChange={handleChange}
       aria-label={t('app.language')}
-      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-100"
-    >
-      {LANGUAGE_OPTIONS.map((lang) => (
-        <option key={lang.code} value={lang.code}>
-          {lang.label}
-        </option>
-      ))}
-    </select>
+      size="small"
+      style={{ minWidth: 90 }}
+      options={LANGUAGE_OPTIONS.map((lang) => ({ label: lang.label, value: lang.code }))}
+    />
   );
 };
 

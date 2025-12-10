@@ -41,7 +41,7 @@ type MobileFinanceTransactionFormProps = {
   form: FinanceTransactionFormData;
   dealers: Array<{ id: number; name: string }>;
   accounts: Array<{ id: number; name: string; currency: string; type: string }>; // FinanceAccounts (replaces cashboxes)
-  expenseCategories?: Array<{ id: string; label: string }>; // For expense type
+  expenseCategories?: Array<{ id: string; label: string; is_global?: boolean }>; // For expense type
   onFormChange: (field: keyof FinanceTransactionFormData, value: string | File | null) => void;
   onSubmit: () => void;
   submitting: boolean;
@@ -188,7 +188,7 @@ const MobileFinanceTransactionForm = ({
               <option value="">{t('finance.form.selectCategory')}</option>
               {expenseCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.label}
+                  {cat.is_global ? '🌍 ' : ''}{cat.label}
                 </option>
               ))}
             </select>

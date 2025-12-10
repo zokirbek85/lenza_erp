@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
+import { Select } from 'antd';
 
 interface PaginationProps {
   page: number;
@@ -39,20 +40,16 @@ export const PaginationControls = ({ page, pageSize, total, setPage, setPageSize
     >
       <div className="flex flex-wrap items-center gap-2">
         <span>{t('pagination.show')}</span>
-        <select
+        <Select
           value={pageSize}
-          onChange={(event) => {
-            setPageSize(Number(event.target.value));
+          onChange={(value: number) => {
+            setPageSize(Number(value));
             setPage(1);
           }}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-        >
-          {PAGE_SIZE_OPTIONS.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
+          options={PAGE_SIZE_OPTIONS.map((s) => ({ label: String(s), value: s }))}
+          size="small"
+          style={{ width: 96 }}
+        />
         <span>{t('pagination.itemsPerPage')}</span>
         <span className="text-xs text-slate-400 dark:text-slate-500">{rangeLabel}</span>
       </div>

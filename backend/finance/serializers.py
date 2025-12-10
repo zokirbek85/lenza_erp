@@ -283,6 +283,9 @@ class CurrencyTransferSerializer(serializers.Serializer):
 class ExpenseCategorySerializer(serializers.ModelSerializer):
     """Chiqim kategoriyalari serializer"""
     usage_count = serializers.SerializerMethodField()
+    is_global = serializers.BooleanField(read_only=True)
+    can_edit = serializers.SerializerMethodField()
+    can_delete = serializers.SerializerMethodField()
     
     class Meta:
         model = ExpenseCategory
@@ -292,49 +295,86 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
             'color',
             'icon',
             'is_active',
+            'is_global',
             'usage_count',
+            'can_edit',
+            'can_delete',
             'created_at',
             'updated_at',
         )
-        read_only_fields = ('created_at', 'updated_at', 'usage_count')
-    
+        read_only_fields = ('created_at', 'updated_at', 'usage_count', 'is_global', 'can_edit', 'can_delete')
+
     def get_usage_count(self, obj):
         """Count how many transactions use this category"""
         return FinanceTransaction.objects.filter(
             category=obj.name,
             account__in=FinanceAccount.objects.all()
         ).count()
-    
+
+    def get_can_edit(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        user = request.user
+        if obj.is_global:
+            return user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant', 'owner']
+        return obj.user_id == user.id
+
+    def get_can_delete(self, obj):
+        return self.get_can_edit(obj)
+
     def validate_name(self, value):
-        """Validate category name"""
+        """Validate category name and uniqueness depending on global flag"""
         if len(value) < 3:
             raise serializers.ValidationError(_('Category name must be at least 3 characters'))
-        
-        # Check for duplicate name for this user
-        user = self.context['request'].user
+
+        request = self.context.get('request')
+        user = request.user if request else None
+        is_global = self.initial_data.get('is_global', False)
         instance_id = self.instance.id if self.instance else None
-        
-        if ExpenseCategory.objects.filter(
-            user=user, 
-            name=value
-        ).exclude(id=instance_id).exists():
-            raise serializers.ValidationError(_('You already have a category with this name'))
-        
+
+        if is_global:
+            if ExpenseCategory.objects.filter(name=value, is_global=True).exclude(id=instance_id).exists():
+                raise serializers.ValidationError(_('A global category with this name already exists'))
+        else:
+            if ExpenseCategory.objects.filter(user=user, name=value, is_global=False).exclude(id=instance_id).exists():
+                raise serializers.ValidationError(_('You already have a category with this name'))
+
         return value
-    
+
     def validate_color(self, value):
-        """Validate hex color format"""
         import re
         if value and not re.match(r'^#[0-9A-Fa-f]{6}$', value):
             raise serializers.ValidationError(_('Invalid color format. Use hex format like #FF5733'))
         return value
-    
+
+    def validate(self, data):
+        request = self.context.get('request')
+        user = request.user if request else None
+        is_global = data.get('is_global', False)
+        if is_global:
+            if not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant', 'owner']):
+                raise serializers.ValidationError({'is_global': _('Only admin/accountant can create global categories')})
+        return data
+
     def create(self, validated_data):
-        """Create category for current user"""
-        validated_data['user'] = self.context['request'].user
+        is_global = validated_data.get('is_global', False)
+        if is_global:
+            validated_data['user'] = None
+        else:
+            validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
-    
+
     def update(self, instance, validated_data):
-        """Prevent changing user"""
-        validated_data.pop('user', None)  # Don't allow changing user
+        request = self.context.get('request')
+        user = request.user if request else None
+        if instance.is_global:
+            if not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant', 'owner']):
+                raise serializers.ValidationError(_('You do not have permission to edit global categories'))
+        else:
+            if instance.user_id != user.id:
+                raise serializers.ValidationError(_('You can only edit your own categories'))
+
+        validated_data.pop('user', None)
+        validated_data.pop('is_global', None)
         return super().update(instance, validated_data)

@@ -421,31 +421,54 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ExpenseCategorySerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['is_active']
-    ordering = ['name']
-    
+    filterset_fields = ['is_active', 'is_global']
+    ordering = ['-is_global', 'name']
+
     def get_queryset(self):
-        """Return only current user's categories"""
-        return ExpenseCategory.objects.filter(user=self.request.user)
+        """Return categories visible to the current user: global + own"""
+        user = self.request.user
+        return ExpenseCategory.objects.filter(Q(is_global=True) | Q(user=user))
     
     def perform_destroy(self, instance):
         """
         Soft delete - check if category is used in transactions
         If used, warn and prevent deletion
         """
+        user = self.request.user
+
+        # Only admin/accountant/owner/superuser can delete global categories
+        if instance.is_global and not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant', 'owner']):
+            raise PermissionDenied(_('You do not have permission to delete global categories'))
+
         # Count transactions using this category
         usage_count = FinanceTransaction.objects.filter(
             category=instance.name,
             account__in=FinanceAccount.objects.all()
         ).count()
-        
+
         if usage_count > 0:
             raise ValidationError({
                 'detail': _(f'Cannot delete category "{instance.name}". It is used in {usage_count} transaction(s). Please set is_active=False instead.')
             })
-        
+
         # If not used, allow deletion
         instance.delete()
+
+    def create(self, request, *args, **kwargs):
+        # Prevent non-privileged users from creating global categories (extra safety)
+        is_global = request.data.get('is_global', False)
+        user = request.user
+        if is_global and not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant', 'owner']):
+            raise PermissionDenied(_('Only admin/accountant can create global categories'))
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        # Extra safety: disallow changing is_global/user via update
+        data = request.data.copy()
+        data.pop('is_global', None)
+        data.pop('user', None)
+        request._full_data = data
+        return super().update(request, *args, **kwargs)
     
     @action(detail=False, methods=['get'])
     def statistics(self, request):

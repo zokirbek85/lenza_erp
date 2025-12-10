@@ -138,6 +138,9 @@ export interface ExpenseCategory {
   name: string;
   color: string;
   icon: string;
+  is_global: boolean;
+  can_edit?: boolean;
+  can_delete?: boolean;
   is_active: boolean;
   usage_count: number;
   created_at: string;
@@ -149,6 +152,7 @@ export interface ExpenseCategoryCreate {
   color?: string;
   icon?: string;
   is_active?: boolean;
+  is_global?: boolean;
 }
 
 export interface ExpenseCategoryUpdate {
@@ -156,6 +160,7 @@ export interface ExpenseCategoryUpdate {
   color?: string;
   icon?: string;
   is_active?: boolean;
+  is_global?: boolean;
 }
 
 export interface ExpenseCategoryStatistics {
