@@ -220,7 +220,7 @@ export const exportTransactionsToPDF = (
       transaction.type === 'income'
         ? transaction.dealer_name || ''
         : transaction.category || '',
-      (transaction.amount || 0).toFixed(2),
+      (Number(transaction.amount) || 0).toFixed(2),
       transaction.currency || '',
       transaction.status.toUpperCase(),
       transaction.comment || '',
@@ -243,12 +243,13 @@ export const exportTransactionsToPDF = (
   const totals = transactions.reduce(
     (acc, t) => {
       if (t.status === 'approved') {
+        const amount = Number(t.amount) || 0;
         if (t.type === 'income') {
-          if (t.currency === 'USD') acc.incomeUSD += t.amount;
-          else acc.incomeUZS += t.amount;
+          if (t.currency === 'USD') acc.incomeUSD += amount;
+          else acc.incomeUZS += amount;
         } else if (t.type === 'expense') {
-          if (t.currency === 'USD') acc.expenseUSD += t.amount;
-          else acc.expenseUZS += t.amount;
+          if (t.currency === 'USD') acc.expenseUSD += amount;
+          else acc.expenseUZS += amount;
         }
       }
       return acc;
@@ -304,12 +305,13 @@ export const exportTransactionsToXLSX = (
   const totals = transactions.reduce(
     (acc, t) => {
       if (t.status === 'approved') {
+        const amount = Number(t.amount) || 0;
         if (t.type === 'income') {
-          if (t.currency === 'USD') acc.incomeUSD += t.amount;
-          else acc.incomeUZS += t.amount;
+          if (t.currency === 'USD') acc.incomeUSD += amount;
+          else acc.incomeUZS += amount;
         } else if (t.type === 'expense') {
-          if (t.currency === 'USD') acc.expenseUSD += t.amount;
-          else acc.expenseUZS += t.amount;
+          if (t.currency === 'USD') acc.expenseUSD += amount;
+          else acc.expenseUZS += amount;
         }
       }
       return acc;
@@ -337,7 +339,7 @@ export const exportTransactionsToXLSX = (
       transaction.type === 'income'
         ? transaction.dealer_name || ''
         : transaction.category || '',
-      transaction.amount || 0,
+      Number(transaction.amount) || 0,
       transaction.currency || '',
       transaction.status.toUpperCase(),
       transaction.comment || '',
