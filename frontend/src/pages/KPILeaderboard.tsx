@@ -23,10 +23,18 @@ export default function KPILeaderboard() {
   const { t } = useTranslation('kpi');
   const [leaderboard, setLeaderboard] = useState<LeaderboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({
-    from_date: new Date().getFullYear() + '-01-01',
-    to_date: new Date().toISOString().split('T')[0],
-  });
+  
+  // Helper to get current month's first day
+  const getCurrentMonthRange = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    return {
+      from_date: firstDay.toISOString().split('T')[0],
+      to_date: today.toISOString().split('T')[0],
+    };
+  };
+  
+  const [dateRange, setDateRange] = useState(getCurrentMonthRange());
 
   const fetchLeaderboard = async () => {
     try {
