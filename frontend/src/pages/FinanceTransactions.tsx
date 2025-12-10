@@ -241,7 +241,8 @@ export default function FinanceTransactions() {
       date: transaction.date || new Date().toISOString().split('T')[0],
       currency: transaction.currency || 'USD',
       amount: transaction.amount?.toString() || '',
-      category: transaction.category || '',
+      // ✅ FIX: Convert category to number for Select component
+      category: transaction.category ? String(transaction.category) : '',
       comment: transaction.comment || '',
     });
     setShowModal(true);
@@ -450,7 +451,7 @@ export default function FinanceTransactions() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.category', 'Kategoriya')}</label>
                   <Select
-                    value={formData.category}
+                    value={formData.category ? Number(formData.category) : undefined}
                     onChange={(val: any) => setFormData({ ...formData, category: String(val) })}
                     options={categories.map(c => ({
                       value: c.id,
@@ -458,6 +459,9 @@ export default function FinanceTransactions() {
                     }))}
                     showSearch
                     optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
                     style={{ width: '100%' }}
                     popupMatchSelectWidth={false}
                     listHeight={300}
