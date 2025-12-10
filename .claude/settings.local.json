@@ -9,7 +9,10 @@
       "Bash(xargs:*)",
       "Bash(git -C /d/Project/new/lenza_erp log --oneline --graph --all -20)",
       "Bash(python manage.py migrate:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
