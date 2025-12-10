@@ -3,6 +3,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { CashSummary, FinanceTransaction } from '../types/finance';
 
+// 🆕 UTF-8 uchun Roboto font qo'shamiz
+import 'jspdf-customfonts';
+import { Roboto } from 'jspdf-customfonts/fonts/Roboto';
+
 /**
  * Format currency with proper symbol and thousands separator
  */
@@ -28,10 +32,27 @@ export const formatDate = (date: string | Date): string => {
 };
 
 /**
+ * Initialize PDF with UTF-8 support
+ * Bu funksiya PDF yaratishda kirill va maxsus belgilarni to'g'ri ko'rsatish uchun Roboto fontini qo'shadi
+ */
+const initPDFWithUTF8 = (orientation: 'portrait' | 'landscape' = 'portrait'): jsPDF => {
+  const doc = new jsPDF(orientation);
+  
+  // Add Roboto font for UTF-8 support
+  doc.addFileToVFS('Roboto-Regular.ttf', Roboto.Regular);
+  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+  doc.setFont('Roboto');
+  
+  return doc;
+};
+
+/**
  * Export Finance Dashboard to PDF
+ * 🔧 UTF-8 encoding fix: Roboto font ishlatiladi
  */
 export const exportFinanceDashboardToPDF = (data: CashSummary) => {
-  const doc = new jsPDF();
+  // 🔧 UTF-8 font bilan ishga tushiramiz
+  const doc = initPDFWithUTF8();
 
   // Add title
   doc.setFontSize(18);
@@ -57,7 +78,13 @@ export const exportFinanceDashboardToPDF = (data: CashSummary) => {
     head: [balanceData[0]],
     body: balanceData.slice(1),
     theme: 'grid',
-    headStyles: { fillColor: [22, 119, 255] },
+    headStyles: { 
+      fillColor: [22, 119, 255],
+      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
+    },
+    bodyStyles: {
+      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
+    },
   });
 
   // Accounts Section
@@ -84,7 +111,13 @@ export const exportFinanceDashboardToPDF = (data: CashSummary) => {
     head: [accountsData[0]],
     body: accountsData.slice(1),
     theme: 'grid',
-    headStyles: { fillColor: [22, 119, 255] },
+    headStyles: { 
+      fillColor: [22, 119, 255],
+      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
+    },
+    bodyStyles: {
+      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
+    },
     styles: { fontSize: 8 },
   });
 
@@ -94,6 +127,7 @@ export const exportFinanceDashboardToPDF = (data: CashSummary) => {
 
 /**
  * Export Finance Dashboard to XLSX
+ * XLSX da encoding muammosi yo'q, shuning uchun o'zgartirilmagan
  */
 export const exportFinanceDashboardToXLSX = (data: CashSummary) => {
   // Create workbook
@@ -159,6 +193,7 @@ export const exportFinanceDashboardToXLSX = (data: CashSummary) => {
 
 /**
  * Export Finance Transactions to PDF
+ * 🔧 UTF-8 encoding fix: Roboto font ishlatiladi
  */
 export const exportTransactionsToPDF = (
   transactions: FinanceTransaction[],
@@ -170,7 +205,8 @@ export const exportTransactionsToPDF = (
     endDate?: string;
   }
 ) => {
-  const doc = new jsPDF('landscape');
+  // 🔧 UTF-8 font bilan ishga tushiramiz
+  const doc = initPDFWithUTF8('landscape');
 
   // Add title
   doc.setFontSize(18);
@@ -232,7 +268,13 @@ export const exportTransactionsToPDF = (
     head: [transactionsData[0]],
     body: transactionsData.slice(1),
     theme: 'grid',
-    headStyles: { fillColor: [22, 119, 255] },
+    headStyles: { 
+      fillColor: [22, 119, 255],
+      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
+    },
+    bodyStyles: {
+      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
+    },
     styles: { fontSize: 8 },
   });
 
@@ -270,6 +312,7 @@ export const exportTransactionsToPDF = (
 
 /**
  * Export Finance Transactions to XLSX
+ * XLSX da encoding muammosi yo'q, shuning uchun o'zgartirilmagan
  */
 export const exportTransactionsToXLSX = (
   transactions: FinanceTransaction[],

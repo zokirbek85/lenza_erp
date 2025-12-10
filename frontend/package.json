@@ -22,6 +22,7 @@
     "i18next-browser-languagedetector": "^8.2.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
+    "jspdf-customfonts": "^1.0.0",
     "react": "^19.1.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.1.1",
