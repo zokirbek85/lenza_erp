@@ -1725,7 +1725,10 @@
       "noMatches": "Mos mahsulot topilmadi.",
       "stockOut": "Zaxira tugagan",
       "stockValue": "Zaxira: {{count}}",
-      "unknownProduct": "Mahsulot #{{id}}"
+      "unknownProduct": "Mahsulot #{{id}}",
+      "outOfStock": "Omborda mavjud emas",
+      "inStock": "OK",
+      "doorPanelKeyword": "дверное полотно"
     },
     "toast": {
       "itemAdded": "Mahsulot qo'shildi",
@@ -1771,7 +1774,7 @@
       "loading": "Yuklanmoqda...",
       "empty": "Buyurtmalar topilmadi"
     },
-    "type": {
+    "types": {
       "regular": "Oddiy",
       "reserve": "Bron"
     },

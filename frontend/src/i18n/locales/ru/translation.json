@@ -1357,7 +1357,10 @@
       "noMatches": "Подходящие товары не найдены.",
       "stockOut": "Нет в наличии",
       "stockValue": "Запас: {{count}}",
-      "unknownProduct": "Товар №{{id}}"
+      "unknownProduct": "Товар №{{id}}",
+      "outOfStock": "Нет на складе",
+      "inStock": "В наличии",
+      "doorPanelKeyword": "дверное полотно"
     },
     "toast": {
       "itemAdded": "Товар добавлен",
@@ -1403,7 +1406,7 @@
       "loading": "Загрузка...",
       "empty": "Заказы не найдены"
     },
-    "type": {
+    "types": {
       "regular": "Обычный",
       "reserve": "Бронь"
     },

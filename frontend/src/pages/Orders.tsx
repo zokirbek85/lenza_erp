@@ -1168,12 +1168,15 @@ const OrdersPage = () => {
                             const isOutOfStock = stock <= 0;
                             const brandLabel = product.brand?.name ?? '-';
                             const categoryLabel = product.category?.name ?? '-';
-                            const stockLabel = isOutOfStock ? '(⚠️ Omborda mavjud emas)' : `(OK: ${stock})`;
+                            const stockLabel = isOutOfStock 
+                              ? `(⚠️ ${t('orders.product.outOfStock')})`
+                              : `(${t('orders.product.inStock')}: ${stock})`;
                             
-                            // Show size if category is NOT "Дверное полотно" and size exists
+                            // Show size if category is NOT door panel and size exists
                             const categoryName = product.category?.name?.toLowerCase() || '';
+                            const doorPanelKeyword = t('orders.product.doorPanelKeyword', 'дверное полотно').toLowerCase();
                             const showSize = 
-                              !categoryName.includes('дверное полотно') &&
+                              !categoryName.includes(doorPanelKeyword) &&
                               product.size &&
                               product.size.trim().length > 0;
                             
@@ -1325,7 +1328,7 @@ const OrdersPage = () => {
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-200'
                         }`}
                       >
-                        {order.is_reserve ? t('Bron') : t('Oddiy')}
+                        {order.is_reserve ? t('orders.types.reserve') : t('orders.types.regular')}
                       </span>
                     </td>
                     <td className="px-4 py-3">

@@ -1407,7 +1407,10 @@
       "noMatches": "No matching products found.",
       "stockOut": "Out of stock",
       "stockValue": "Stock: {{count}}",
-      "unknownProduct": "Product #{{id}}"
+      "unknownProduct": "Product #{{id}}",
+      "outOfStock": "Out of stock",
+      "inStock": "In stock",
+      "doorPanelKeyword": "door panel"
     },
     "toast": {
       "itemAdded": "Product added",
@@ -1435,7 +1438,7 @@
       "loading": "Loading...",
       "empty": "No orders found"
     },
-    "type": {
+    "types": {
       "regular": "Standard",
       "reserve": "Reserve"
     },
