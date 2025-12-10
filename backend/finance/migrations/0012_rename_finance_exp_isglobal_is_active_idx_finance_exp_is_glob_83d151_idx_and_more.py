@@ -3,6 +3,49 @@
 from django.db import migrations
 
 
+def rename_index_if_exists(apps, schema_editor):
+    """
+    Rename the index only if it exists.
+    The index 'finance_exp_isglobal_is_active_idx' might not exist if it was defined
+    in AlterModelOptions in migration 0009 but never actually created in the database.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        # Check if the old index exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1
+                FROM pg_indexes
+                WHERE schemaname = 'public'
+                AND indexname = 'finance_exp_isglobal_is_active_idx'
+            );
+        """)
+        old_index_exists = cursor.fetchone()[0]
+
+        # Check if the new index already exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1
+                FROM pg_indexes
+                WHERE schemaname = 'public'
+                AND indexname = 'finance_exp_is_glob_83d151_idx'
+            );
+        """)
+        new_index_exists = cursor.fetchone()[0]
+
+        # Rename only if old exists and new doesn't
+        if old_index_exists and not new_index_exists:
+            cursor.execute("""
+                ALTER INDEX finance_exp_isglobal_is_active_idx
+                RENAME TO finance_exp_is_glob_83d151_idx;
+            """)
+        elif not old_index_exists and not new_index_exists:
+            # Neither exists, create the index with the new name
+            cursor.execute("""
+                CREATE INDEX finance_exp_is_glob_83d151_idx
+                ON finance_expensecategory (is_global, is_active);
+            """)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,11 +53,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='expensecategory',
-            new_name='finance_exp_is_glob_83d151_idx',
-            old_name='finance_exp_isglobal_is_active_idx',
-        ),
+        migrations.RunPython(rename_index_if_exists, migrations.RunPython.noop),
         migrations.AlterUniqueTogether(
             name='expensecategory',
             unique_together=set(),
