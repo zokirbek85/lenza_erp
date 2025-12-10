@@ -20,26 +20,19 @@ COPY package-lock.json* ./
 RUN echo "=== Checking for package-lock.json ===" && \
     ls -lah package* && \
     if [ -f package-lock.json ]; then \
-      echo "package-lock.json found, checking content..." && \
-      head -5 package-lock.json && \
-      if [ -s package-lock.json ] && grep -q "lockfileVersion" package-lock.json; then \
-        echo "Valid package-lock.json detected, using npm ci"; \
-      else \
-        echo "Invalid or empty package-lock.json, will use npm install"; \
-      fi; \
+      echo "package-lock.json found, size: $(wc -c < package-lock.json) bytes" && \
+      echo "First 10 lines:" && \
+      head -10 package-lock.json && \
+      echo "Checking lockfileVersion with npm..." && \
+      node -e "try { const pkg = require('./package-lock.json'); console.log('lockfileVersion:', pkg.lockfileVersion); } catch(e) { console.log('Error reading lock file:', e.message); }" \
     else \
-      echo "package-lock.json not found, will use npm install"; \
+      echo "package-lock.json not found"; \
     fi
 
 # Install dependencies with production optimizations
-# Use npm ci if lock file exists and is valid, otherwise use npm install
-RUN if [ -f package-lock.json ] && [ -s package-lock.json ] && grep -q "lockfileVersion" package-lock.json; then \
-      echo "Running npm ci..." && \
-      npm ci --prefer-offline --no-audit --production=false; \
-    else \
-      echo "Running npm install..." && \
-      npm install --prefer-offline --no-audit --production=false; \
-    fi
+# Always use npm install to avoid npm ci issues
+RUN echo "Installing dependencies with npm install..." && \
+    npm install --prefer-offline --no-audit --production=false
 
 # Copy source code (including .env.production for Vite)
 COPY . .
