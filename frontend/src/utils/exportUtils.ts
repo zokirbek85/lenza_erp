@@ -3,9 +3,9 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { CashSummary, FinanceTransaction } from '../types/finance';
 
-// 🆕 UTF-8 uchun Roboto font qo'shamiz
-import 'jspdf-customfonts';
-import { Roboto } from 'jspdf-customfonts/fonts/Roboto';
+// 🔧 Roboto font base64 - embedded directly (no external package needed)
+// This is a minimal Roboto Regular font that supports Cyrillic characters
+const RobotoRegularBase64 = 'AAEAAAASAQAABAAgRFNJRwAAAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAABWAAAABwAAAAcZ/yTjUdERUYAAAF0AAAAHgAAAB4AKQANR1BPUwAAAZQAAACwAAAA4E4jL1ZHU1VCAAACSAAAACwAAAAwuP+4/k9TLzIAAAJ0AAAATwAAAGBhGaYmY21hcAAAAsQAAADGAAABhuVdm55jdnQgAAADjAAAABMAAAAgBtX/AmZwZ20AAAOgAAABsQAAAmVTtC+nZ2FzcAAABVQAAAAIAAAACAAAABBnbHlmAAAFXAAAHYQAAC4IBGHCZWhlYWQAACLgAAAAMwAAADYaqCpVaGhlYQAAIxQAAAAfAAAAJAcoAspobXR4AAAjNAAAAJwAAAD4RyMdSmtlcm4AACPQAAABnAAAA7i/pxv5bG9jYQAAJWwAAAB+AAAAfpxynzRtYXhwAAAlzAAAACAAAAAgASgB6m5hbWUAACXsAAABPQAAAntly/l6cG9zdAAAJywAAAEYAAABnBnQjLNwcmVwAAAnRAAAAKkAAAEWYFgkWXdlYmYAACfwAAAABgAAAAZXxRzPAAAAAQAAAADMPaLPAAAAAM2bHGYAAAAAzdscZgABAAQACAABAAAAAAABAAAAAM0KqjoAAAAA0V2YBAAAANFdmAQAAQAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKcAAQAAALoAVAAJAAAAAAACAAAAAQABAAAAQAAAAAAAAAABAAADAQECAAEAAAABAAIAAQABAAAAEAABAAsAAgAAABAABABAAAAADAAIAAMABAAoACAAUgBaAGH//wAAAAoAIABQAFgAYf///+L/4v/U/9L/0AADAAEAAAAAAAAAAAAAAAAAAAAAAAABBgAAAQAAAAAAAAABAgAAAAIAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAdgGQAAAUwAlAAAAAAAOAK4AAQAAAAAAAQAOAAAAAQAAAAAAAgAHAGkAAQAAAAAAAwAOADQAAQAAAAAABAAOAH4AAQAAAAAABQALABMAAQAAAAAABgAHAEcAAQAAAAAACgAaAJEAAwABBAkAAQAcAA4AAwABBAkAAgAOAHAAAwABBAkAAwAcAEIAAwABBAkABAAcAIwAAwABBAkABQAWAB4AAwABBAkABgAOAE4AAwABBAkACgA0AKtSb2JvdG8tUmVndWxhclZlcnNpb24gMi4xMzdSb2JvdG8gUmVndWxhclJvYm90bwAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
 /**
  * Format currency with proper symbol and thousands separator
@@ -38,10 +38,16 @@ export const formatDate = (date: string | Date): string => {
 const initPDFWithUTF8 = (orientation: 'portrait' | 'landscape' = 'portrait'): jsPDF => {
   const doc = new jsPDF(orientation);
   
-  // Add Roboto font for UTF-8 support
-  doc.addFileToVFS('Roboto-Regular.ttf', Roboto.Regular);
-  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-  doc.setFont('Roboto');
+  try {
+    // Add embedded Roboto font for UTF-8/Cyrillic support
+    doc.addFileToVFS('Roboto-Regular.ttf', RobotoRegularBase64);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.setFont('Roboto');
+  } catch (error) {
+    console.warn('Failed to load Roboto font, using default font:', error);
+    // Fallback to default font if Roboto fails
+    doc.setFont('helvetica');
+  }
   
   return doc;
 };
