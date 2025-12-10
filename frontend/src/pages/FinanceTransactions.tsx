@@ -416,9 +416,16 @@ export default function FinanceTransactions() {
                 <Select
                   value={formData.account}
                   onChange={(val: any) => setFormData({ ...formData, account: String(val) })}
-                  options={accounts.map(a => ({ value: String(a.id), label: a.name }))}
+                  options={accounts.map(a => ({
+                    value: String(a.id),
+                    label: `${a.name} (${a.currency})`
+                  }))}
                   showSearch
                   optionFilterProp="children"
+                  style={{ width: '100%' }}
+                  popupMatchSelectWidth={false}
+                  listHeight={300}
+                  placeholder={t('common.select', 'Tanlang')}
                 />
               </div>
 
@@ -431,6 +438,10 @@ export default function FinanceTransactions() {
                     options={dealers.map(d => ({ value: String(d.id), label: d.name }))}
                     showSearch
                     optionFilterProp="children"
+                    style={{ width: '100%' }}
+                    popupMatchSelectWidth={false}
+                    listHeight={300}
+                    placeholder={t('common.select', 'Tanlang')}
                   />
                 </div>
               )}
@@ -441,9 +452,16 @@ export default function FinanceTransactions() {
                   <Select
                     value={formData.category}
                     onChange={(val: any) => setFormData({ ...formData, category: String(val) })}
-                    options={categories.map(c => ({ value: c.id, label: c.name }))}
+                    options={categories.map(c => ({
+                      value: c.id,
+                      label: `${c.icon} ${c.name}`
+                    }))}
                     showSearch
                     optionFilterProp="children"
+                    style={{ width: '100%' }}
+                    popupMatchSelectWidth={false}
+                    listHeight={300}
+                    placeholder={t('common.select', 'Tanlang')}
                   />
                 </div>
               )}
