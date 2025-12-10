@@ -13,10 +13,16 @@ WORKDIR /app
 RUN apk add --no-cache git
 
 # Copy package files first (for layer caching)
-COPY package.json package-lock.json ./
+COPY package.json ./
+COPY package-lock.json* ./
 
 # Install dependencies with production optimizations
-RUN npm ci --prefer-offline --no-audit --production=false
+# Use npm ci if lock file exists, otherwise use npm install
+RUN if [ -f package-lock.json ]; then \
+      npm ci --prefer-offline --no-audit --production=false; \
+    else \
+      npm install --prefer-offline --no-audit --production=false; \
+    fi
 
 # Copy source code (including .env.production for Vite)
 COPY . .
