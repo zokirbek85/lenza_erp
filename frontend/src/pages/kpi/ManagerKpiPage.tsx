@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import http from '../../app/http';
 import KpiCard from '../../components/kpi/KpiCard';
@@ -18,19 +19,83 @@ interface ManagerKpi {
   top_categories?: { category: string; amount: number }[];
 }
 
+// Helper function to get default date range
+const getDefaultDateRange = () => {
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  return {
+    startDate: firstDayOfMonth,
+    endDate: today,
+  };
+};
+
+// Format date to YYYY-MM-DD
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Parse date string to Date object
+const parseDate = (dateStr: string | null): Date | null => {
+  if (!dateStr) return null;
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return null;
+    return date;
+  } catch {
+    return null;
+  }
+};
+
 const ManagerKpiPage = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize date range from URL params or use defaults
+  const getInitialDateRange = () => {
+    const startParam = searchParams.get('start');
+    const endParam = searchParams.get('end');
+    
+    const parsedStart = parseDate(startParam);
+    const parsedEnd = parseDate(endParam);
+    
+    if (parsedStart && parsedEnd) {
+      return { startDate: parsedStart, endDate: parsedEnd };
+    }
+    
+    return getDefaultDateRange();
+  };
+
+  const [dateRange, setDateRange] = useState<{ startDate: Date; endDate: Date }>(getInitialDateRange);
   const [data, setData] = useState<ManagerKpi | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Update URL params when date range changes
+  useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('start', formatDate(dateRange.startDate));
+    newParams.set('end', formatDate(dateRange.endDate));
+    setSearchParams(newParams, { replace: true });
+  }, [dateRange, searchParams, setSearchParams]);
+
+  // Fetch data when date range changes
   useEffect(() => {
     const controller = new AbortController();
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await http.get<ManagerKpi>('/kpis/sales-manager/', { signal: controller.signal });
+        const params = {
+          from_date: formatDate(dateRange.startDate),
+          to_date: formatDate(dateRange.endDate),
+        };
+        const response = await http.get<ManagerKpi>('/kpis/sales-manager/', { 
+          params,
+          signal: controller.signal 
+        });
         setData(response.data);
       } catch (err) {
         if (axios.isCancel(err)) return;
@@ -44,7 +109,7 @@ const ManagerKpiPage = () => {
     };
     load();
     return () => controller.abort();
-  }, []);
+  }, [dateRange, t]);
 
   const barData = useMemo(
     () => (data?.my_regions ?? []).map((region) => ({ name: region.region, total: region.total_usd })),
@@ -90,8 +155,63 @@ const ManagerKpiPage = () => {
     return <p className="text-sm text-rose-500 dark:text-rose-400">{error}</p>;
   }
 
+  const handleDateChange = (start: Date, end: Date) => {
+    setDateRange({ startDate: start, endDate: end });
+  };
+
+  const handleResetDates = () => {
+    setDateRange(getDefaultDateRange());
+  };
+
   return (
     <div className="space-y-6">
+      {/* Date Range Picker */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                {t('common.startDate', 'Boshlanish sanasi')}
+              </label>
+              <input
+                type="date"
+                value={formatDate(dateRange.startDate)}
+                onChange={(e) => {
+                  const newStart = parseDate(e.target.value);
+                  if (newStart && newStart <= dateRange.endDate) {
+                    handleDateChange(newStart, dateRange.endDate);
+                  }
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                {t('common.endDate', 'Tugash sanasi')}
+              </label>
+              <input
+                type="date"
+                value={formatDate(dateRange.endDate)}
+                onChange={(e) => {
+                  const newEnd = parseDate(e.target.value);
+                  if (newEnd && newEnd >= dateRange.startDate) {
+                    handleDateChange(dateRange.startDate, newEnd);
+                  }
+                }}
+                max={formatDate(new Date())}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleResetDates}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          >
+            {t('common.reset', 'Qayta tiklash')}
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <KpiCard title={t('kpi.manager.mySales')} value={formatCurrency(data?.my_sales_usd ?? 0)} />
         <KpiCard title={t('kpi.manager.myPayments')} value={formatCurrency(data?.my_payments_usd ?? 0)} />

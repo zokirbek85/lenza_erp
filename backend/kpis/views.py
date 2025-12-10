@@ -91,37 +91,96 @@ class WarehouseKPIView(APIView):
 
 
 class SalesManagerKPIView(APIView):
+    """
+    Sales Manager KPI View with date range filtering.
+    
+    Query params:
+    - from_date: Start date (YYYY-MM-DD). Defaults to first day of current month.
+    - to_date: End date (YYYY-MM-DD). Defaults to today.
+    
+    Returns sales, payments, dealers count, regional breakdown, top dealers, and top categories.
+    """
     permission_classes = [IsAdmin | IsSales | IsOwner]
 
     def get(self, request):
+        from datetime import datetime
+        
         user = request.user
         today = timezone.now().date()
-        current_month_start = today.replace(day=1)
-        previous_month_end = current_month_start - timedelta(days=1)
-        previous_month_start = previous_month_end.replace(day=1)
-
-        user_orders = Order.objects.filter(created_by=user, status__in=Order.Status.active_statuses(), is_imported=False)
-        today_total = user_orders.filter(value_date=today).aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
-        current_month_total = (
-            user_orders.filter(value_date__gte=current_month_start).aggregate(total=Sum('total_usd'))['total']
-            or Decimal('0')
-        )
-        previous_month_total = (
-            user_orders.filter(value_date__range=(previous_month_start, previous_month_end))
-            .aggregate(total=Sum('total_usd'))['total']
-            or Decimal('0')
-        )
-        avg_order = user_orders.aggregate(avg=Avg('total_usd'))['avg'] or Decimal('0')
-        top_products = (
-            OrderItem.objects.filter(order__created_by=user)
-            .values('product__name')
-            .annotate(total_qty=Sum('qty'))
-            .order_by('-total_qty')[:5]
-        )
+        
+        # Parse date parameters with fallback to current month
+        from_date_str = request.query_params.get('from_date')
+        to_date_str = request.query_params.get('to_date')
+        
+        # Set default: first day of current month to today
+        if from_date_str:
+            try:
+                from_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                from_date = today.replace(day=1)
+        else:
+            from_date = today.replace(day=1)
+        
+        if to_date_str:
+            try:
+                to_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                to_date = today
+        else:
+            to_date = today
+        
+        # Ensure from_date is not after to_date
+        if from_date > to_date:
+            from_date, to_date = to_date, from_date
+        
+        # Get manager's dealers
+        manager_dealers = Dealer.objects.filter(manager_user=user)
+        dealer_ids = list(manager_dealers.values_list('id', flat=True))
+        
+        # Filter orders by date range and manager's dealers
+        confirmed_statuses = [
+            Order.Status.CONFIRMED,
+            Order.Status.PACKED,
+            Order.Status.SHIPPED,
+            Order.Status.DELIVERED,
+        ]
+        
+        user_orders = Order.objects.filter(
+            dealer_id__in=dealer_ids,
+            status__in=confirmed_statuses,
+            is_imported=False,
+            value_date__gte=from_date,
+            value_date__lte=to_date
+        ).select_related('dealer__region')
+        
+        # Calculate sales metrics
+        sales_total = user_orders.aggregate(total=Sum('total_usd'))['total'] or Decimal('0')
+        
+        # Get payments in date range
+        payments_total = FinanceTransaction.objects.filter(
+            dealer_id__in=dealer_ids,
+            type=FinanceTransaction.TransactionType.INCOME,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            created_at__date__gte=from_date,
+            created_at__date__lte=to_date
+        ).aggregate(total=Sum('amount_usd'))['total'] or Decimal('0')
+        
+        # Regional breakdown
+        regional_sales = user_orders.values('dealer__region__name').annotate(
+            total_usd=Sum('total_usd')
+        ).order_by('-total_usd')
+        
+        # Top dealers
+        top_dealers = user_orders.values('dealer__name').annotate(
+            total_usd=Sum('total_usd')
+        ).order_by('-total_usd')[:10]
         
         # Top categories by total sales amount
         top_categories = (
-            OrderItem.objects.filter(order__created_by=user, order__status__in=Order.Status.active_statuses())
+            OrderItem.objects.filter(
+                order__in=user_orders,
+                order__status__in=confirmed_statuses
+            )
             .exclude(product__category__isnull=True)
             .values('product__category__name')
             .annotate(
@@ -134,12 +193,22 @@ class SalesManagerKPIView(APIView):
         )
 
         data = {
-            'today_sales_usd': float(today_total),
-            'current_month_sales_usd': float(current_month_total),
-            'previous_month_sales_usd': float(previous_month_total),
-            'average_order_value_usd': float(avg_order),
-            'top_products': [
-                {'name': item['product__name'], 'quantity': float(item['total_qty'] or 0)} for item in top_products
+            'my_sales_usd': float(sales_total),
+            'my_payments_usd': float(payments_total),
+            'my_dealers_count': manager_dealers.count(),
+            'my_regions': [
+                {
+                    'region': item['dealer__region__name'] or 'Unknown',
+                    'total_usd': float(item['total_usd'] or 0)
+                }
+                for item in regional_sales
+            ],
+            'my_top_dealers': [
+                {
+                    'dealer': item['dealer__name'],
+                    'total_usd': float(item['total_usd'] or 0)
+                }
+                for item in top_dealers
             ],
             'top_categories': [
                 {
