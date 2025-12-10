@@ -1738,7 +1738,22 @@
       "itemsRequired": "Kamida bitta mahsulot qo'shing",
       "created": "Buyurtma yaratildi",
       "createError": "Buyurtmani yaratishda xatolik yuz berdi",
-      "pdfError": "PDF yuklab olinmadi"
+      "pdfError": "PDF yuklab olinmadi",
+      "invalidDiscountPercentage": "Chegirma foizi 0 dan 100 gacha bo'lishi kerak",
+      "invalidDiscountAmount": "Chegirma summasi manfiy bo'lishi mumkin emas"
+    },
+    "discount": {
+      "apply": "Chegirma qo'llash",
+      "type": "Chegirma turi",
+      "none": "Yo'q",
+      "percentage": "Foiz (%)",
+      "fixedAmount": "Qat'iy summa (USD)",
+      "percentageValue": "Chegirma foizi (%)",
+      "amountValue": "Chegirma summasi (USD)",
+      "label": "Chegirma",
+      "subtotal": "Oraliq jami",
+      "finalTotal": "Yakuniy jami",
+      "off": "chegirma"
     },
     "errors": {
       "productOutOfStock": "Bu mahsulot omborda mavjud emas!"

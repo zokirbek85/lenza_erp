@@ -1370,7 +1370,22 @@
       "itemsRequired": "Добавьте хотя бы один товар",
       "created": "Заказ создан",
       "createError": "Не удалось создать заказ",
-      "pdfError": "Не удалось скачать PDF"
+      "pdfError": "Не удалось скачать PDF",
+      "invalidDiscountPercentage": "Процент скидки должен быть от 0 до 100",
+      "invalidDiscountAmount": "Сумма скидки не может быть отрицательной"
+    },
+    "discount": {
+      "apply": "Применить скидку",
+      "type": "Тип скидки",
+      "none": "Нет",
+      "percentage": "Процент (%)",
+      "fixedAmount": "Фиксированная сумма (USD)",
+      "percentageValue": "Процент скидки (%)",
+      "amountValue": "Сумма скидки (USD)",
+      "label": "Скидка",
+      "subtotal": "Промежуточный итог",
+      "finalTotal": "Итого",
+      "off": "скидка"
     },
     "errors": {
       "productOutOfStock": "Товар отсутствует на складе!"

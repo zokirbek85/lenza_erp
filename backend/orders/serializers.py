@@ -107,6 +107,14 @@ class OrderSerializer(serializers.ModelSerializer):
     can_change_status = serializers.SerializerMethodField()
     allowed_next_statuses = serializers.SerializerMethodField()
     currency_rate = serializers.SerializerMethodField()
+    
+    discount_value = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        default=0,
+        coerce_to_string=False,
+    )
 
     def get_currency_rate(self, obj):
         """Get USD to UZS exchange rate on order creation date."""
@@ -157,6 +165,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'exchange_rate_date',
             'is_reserve',
             'is_imported',
+            'discount_type',
+            'discount_value',
+            'discount_amount_usd',
+            'discount_amount_uzs',
             'can_edit',
             'can_change_status',
             'allowed_next_statuses',
@@ -165,7 +177,24 @@ class OrderSerializer(serializers.ModelSerializer):
             'status_logs',
             'returns',
         )
-        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'exchange_rate', 'exchange_rate_date', 'can_edit', 'can_change_status', 'allowed_next_statuses')
+        read_only_fields = ('display_no', 'created_by', 'created_at', 'updated_at', 'total_usd', 'total_uzs', 'discount_amount_usd', 'discount_amount_uzs', 'exchange_rate', 'exchange_rate_date', 'can_edit', 'can_change_status', 'allowed_next_statuses')
+
+    def validate_discount_value(self, value):
+        """Validate discount value based on discount type"""
+        discount_type = self.initial_data.get('discount_type', 'none')
+        
+        if discount_type == 'percentage':
+            if value < 0 or value > 100:
+                raise serializers.ValidationError(
+                    _('Foiz 0 dan 100 gacha bo\'lishi kerak.')
+                )
+        elif discount_type == 'amount':
+            if value < 0:
+                raise serializers.ValidationError(
+                    _('Chegirma summasi manfiy bo\'lishi mumkin emas.')
+                )
+        
+        return value
 
     def to_internal_value(self, data):
         if hasattr(data, 'copy'):

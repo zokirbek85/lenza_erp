@@ -121,6 +121,40 @@ class Order(models.Model):
         verbose_name="Imported",
         help_text="Whether this order was imported from external source"
     )
+    
+    # Discount fields
+    discount_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('none', 'None'),
+            ('percentage', 'Percentage'),
+            ('amount', 'Fixed Amount')
+        ],
+        default='none',
+        verbose_name="Discount Type",
+        help_text="Type of discount applied to this order"
+    )
+    discount_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Discount Value",
+        help_text="Discount value: percentage (0-100) or fixed amount in USD"
+    )
+    discount_amount_usd = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name="Discount Amount (USD)",
+        help_text="Calculated discount amount in USD"
+    )
+    discount_amount_uzs = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name="Discount Amount (UZS)",
+        help_text="Calculated discount amount in UZS"
+    )
 
     class Meta:
         ordering = ('-created_at',)
@@ -228,18 +262,34 @@ class Order(models.Model):
 
     def recalculate_totals(self):
         """
-        Recalculate order totals in USD and UZS.
+        Recalculate order totals in USD and UZS with discount.
         Uses exchange rate from value_date if not already set.
         """
         from core.utils.currency import get_exchange_rate
         
-        total = (
+        # Calculate subtotal (items sum without discount)
+        subtotal = (
             self.items.aggregate(
                 total=Sum(F('qty') * F('price_usd'), output_field=DecimalField(max_digits=14, decimal_places=2))
             )['total']
             or Decimal('0')
         )
-        self.total_usd = total
+        
+        # Calculate discount
+        discount_usd = Decimal('0')
+        if self.discount_type == 'percentage':
+            # Percentage discount: value is between 0-100
+            percentage = min(max(self.discount_value, Decimal('0')), Decimal('100'))
+            discount_usd = (subtotal * percentage / Decimal('100')).quantize(Decimal('0.01'))
+        elif self.discount_type == 'amount':
+            # Fixed amount discount in USD
+            discount_usd = min(self.discount_value, subtotal)  # Can't be more than subtotal
+            discount_usd = discount_usd.quantize(Decimal('0.01'))
+        
+        self.discount_amount_usd = discount_usd
+        
+        # Final total = subtotal - discount
+        self.total_usd = subtotal - discount_usd
         
         # Get or use existing exchange rate
         if not self.exchange_rate:
@@ -247,9 +297,16 @@ class Order(models.Model):
             self.exchange_rate = rate
             self.exchange_rate_date = rate_date
         
-        # Calculate UZS total using stored exchange rate
-        self.total_uzs = (total * self.exchange_rate).quantize(Decimal('0.01'))
-        super().save(update_fields=('total_usd', 'total_uzs', 'exchange_rate', 'exchange_rate_date', 'updated_at'))
+        # Calculate UZS amounts using stored exchange rate
+        self.discount_amount_uzs = (discount_usd * self.exchange_rate).quantize(Decimal('0.01'))
+        self.total_uzs = (self.total_usd * self.exchange_rate).quantize(Decimal('0.01'))
+        
+        super().save(update_fields=(
+            'total_usd', 'total_uzs', 
+            'discount_amount_usd', 'discount_amount_uzs',
+            'exchange_rate', 'exchange_rate_date', 
+            'updated_at'
+        ))
 
 
 class OrderItem(models.Model):

@@ -81,6 +81,10 @@ interface Order {
   exchange_rate_date?: string;
   value_date: string;
   is_reserve: boolean;
+  discount_type?: 'none' | 'percentage' | 'amount';
+  discount_value?: number;
+  discount_amount_usd?: number;
+  discount_amount_uzs?: number;
   can_edit?: boolean;
   can_change_status?: boolean;
   allowed_next_statuses?: string[];
@@ -143,6 +147,9 @@ const OrdersPage = () => {
   const [managerFilter, setManagerFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [discountType, setDiscountType] = useState<'none' | 'percentage' | 'amount'>('none');
+  const [discountValue, setDiscountValue] = useState('0');
+  const [showDiscountFields, setShowDiscountFields] = useState(false);
   const { t } = useTranslation();
   const { isMobile } = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -561,6 +568,27 @@ const OrdersPage = () => {
     </div>
   );
 
+  // Calculate discount and totals
+  const calculateOrderTotals = () => {
+    const subtotal = selectedItems.reduce((sum, item) => sum + item.qty * item.price_usd, 0);
+    
+    let discountAmount = 0;
+    if (discountType === 'percentage') {
+      const percentage = Math.min(Math.max(parseFloat(discountValue) || 0, 0), 100);
+      discountAmount = (subtotal * percentage) / 100;
+    } else if (discountType === 'amount') {
+      discountAmount = Math.min(parseFloat(discountValue) || 0, subtotal);
+    }
+    
+    const total = subtotal - discountAmount;
+    
+    return {
+      subtotal: subtotal.toFixed(2),
+      discountAmount: discountAmount.toFixed(2),
+      total: total.toFixed(2)
+    };
+  };
+
   const handleSubmit = async (event?: FormEvent) => {
     event?.preventDefault();
     if (!dealerId) {
@@ -570,6 +598,19 @@ const OrdersPage = () => {
     if (!selectedItems.length) {
       toast.error(t('orders.toast.itemsRequired'));
       return;
+    }
+
+    // Validate discount
+    if (discountType !== 'none') {
+      const discValue = parseFloat(discountValue) || 0;
+      if (discountType === 'percentage' && (discValue < 0 || discValue > 100)) {
+        toast.error(t('orders.toast.invalidDiscountPercentage'));
+        return;
+      }
+      if (discountType === 'amount' && discValue < 0) {
+        toast.error(t('orders.toast.invalidDiscountAmount'));
+        return;
+      }
     }
 
     const payloadItems = selectedItems.map((item) => ({
@@ -584,11 +625,16 @@ const OrdersPage = () => {
         status: 'created',
         is_reserve: orderType === 'reserve',
         note,
+        discount_type: discountType,
+        discount_value: discountType !== 'none' ? parseFloat(discountValue) : 0,
         items: payloadItems,
       });
       setDealerId('');
       setOrderType('regular');
       setNote('');
+      setDiscountType('none');
+      setDiscountValue('0');
+      setShowDiscountFields(false);
       clearOrder();
       resetProductInputs();
       toast.success(t('orders.toast.created'));
@@ -976,6 +1022,86 @@ const OrdersPage = () => {
                     </div>
                   </div>
 
+                  {/* Discount Section */}
+                  <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                      <input
+                        type="checkbox"
+                        checked={showDiscountFields}
+                        onChange={(e) => {
+                          setShowDiscountFields(e.target.checked);
+                          if (!e.target.checked) {
+                            setDiscountType('none');
+                            setDiscountValue('0');
+                          }
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-slate-600"
+                      />
+                      <span>{t('orders.discount.apply', 'Chegirma qo\'llash')}</span>
+                    </label>
+
+                    {showDiscountFields && (
+                      <div className="mt-4 space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                            {t('orders.discount.type', 'Chegirma turi')}
+                          </label>
+                          <select
+                            value={discountType}
+                            onChange={(e) => {
+                              setDiscountType(e.target.value as 'none' | 'percentage' | 'amount');
+                              setDiscountValue('0');
+                            }}
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          >
+                            <option value="none">{t('orders.discount.none', 'Yo\'q')}</option>
+                            <option value="percentage">{t('orders.discount.percentage', 'Foiz (%)')}</option>
+                            <option value="amount">{t('orders.discount.fixedAmount', 'Qat\'iy summa (USD)')}</option>
+                          </select>
+                        </div>
+
+                        {discountType !== 'none' && (
+                          <div>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                              {discountType === 'percentage' 
+                                ? t('orders.discount.percentageValue', 'Chegirma foizi (%)')
+                                : t('orders.discount.amountValue', 'Chegirma summasi (USD)')
+                              }
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max={discountType === 'percentage' ? '100' : undefined}
+                              value={discountValue}
+                              onChange={(e) => setDiscountValue(e.target.value)}
+                              placeholder={discountType === 'percentage' ? '0-100' : '0.00'}
+                              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            />
+                          </div>
+                        )}
+
+                        {/* Discount Preview */}
+                        {discountType !== 'none' && selectedItems.length > 0 && (
+                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
+                            <div className="mb-2 flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                              <span>{t('orders.discount.subtotal', 'Oraliq jami')}:</span>
+                              <span>${calculateOrderTotals().subtotal}</span>
+                            </div>
+                            <div className="mb-2 flex justify-between text-sm text-red-600 dark:text-red-400">
+                              <span>{t('orders.discount.label', 'Chegirma')}:</span>
+                              <span>-${calculateOrderTotals().discountAmount}</span>
+                            </div>
+                            <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold dark:border-slate-700">
+                              <span>{t('orders.discount.finalTotal', 'Yakuniy jami')}:</span>
+                              <span>${calculateOrderTotals().total}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -1216,6 +1342,14 @@ const OrdersPage = () => {
                     </td>
                     {!isWarehouse && (
                       <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                        {order.discount_type && order.discount_type !== 'none' && (
+                          <div className="mb-1 text-xs text-red-600 dark:text-red-400">
+                            {order.discount_type === 'percentage' 
+                              ? `${order.discount_value}% ${t('orders.discount.off', 'chegirma')}`
+                              : `$${order.discount_amount_usd?.toFixed(2)} ${t('orders.discount.off', 'chegirma')}`
+                            }
+                          </div>
+                        )}
                         <Money value={order.total_usd} currency="USD" />
                       </td>
                     )}
