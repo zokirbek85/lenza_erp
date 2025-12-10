@@ -13,7 +13,7 @@ WORKDIR /app
 RUN apk add --no-cache git
 
 # Copy package files first (for layer caching)
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
 # Install dependencies with production optimizations
 RUN npm ci --prefer-offline --no-audit --production=false
