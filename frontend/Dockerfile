@@ -10,6 +10,8 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+RUN apk add --no-cache git
+
 # Copy package files first (for layer caching)
 COPY package.json package-lock.json* ./
 
