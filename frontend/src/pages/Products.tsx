@@ -458,8 +458,8 @@ const ProductsPage = () => {
     </div>
   );
 
-  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setPageSize(Number(event.target.value));
+  const handlePageSizeChange = (value: string | number) => {
+    setPageSize(Number(value));
     setPage(1);
   };
 
@@ -678,17 +678,12 @@ const ProductsPage = () => {
           <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-slate-500 dark:text-slate-300">
             <div className="flex items-center gap-2">
               <span>{t('pagination.showing')}:</span>
-              <select
-                value={pageSize}
-                onChange={handlePageSizeChange}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              >
-                {[10, 25, 50, 100].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value={String(pageSize)}
+                onChange={(val) => handlePageSizeChange(val)}
+                className="w-20"
+                options={[10, 25, 50, 100].map((size) => ({ label: String(size), value: String(size) }))}
+              />
               <span>{t('table.items')} / {t('pagination.page')}</span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 {rangeStart} - {rangeEnd} / {total}
@@ -980,52 +975,36 @@ const ProductsPage = () => {
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.brand')}</label>
-          <select
-            name="brand_id"
-            value={formState.brand_id}
-            onChange={handleChange}
-            required
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">{t('common.select')}</option>
-            {brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={formState.brand_id === '' ? '' : String(formState.brand_id)}
+            onChange={(val) => setFormState((prev) => ({ ...prev, brand_id: val ? Number(val) : '' }))}
+            className="mt-1 w-full"
+            options={[{ label: t('common.select'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
+            placeholder={t('common.select')}
+            allowClear
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.category')}</label>
-          <select
-            name="category_id"
-            value={formState.category_id}
-            onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">{t('common.select')}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={formState.category_id === '' ? '' : String(formState.category_id)}
+            onChange={(val) => setFormState((prev) => ({ ...prev, category_id: val ? Number(val) : '' }))}
+            className="mt-1 w-full"
+            options={[{ label: t('common.select'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
+            placeholder={t('common.select')}
+            allowClear
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('products.form.style')}</label>
-          <select
-            name="style_id"
-            value={formState.style_id}
-            onChange={handleChange}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">{t('common.select')}</option>
-            {styles.map((style) => (
-              <option key={style.id} value={style.id}>
-                {style.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={formState.style_id === '' ? '' : String(formState.style_id)}
+            onChange={(val) => setFormState((prev) => ({ ...prev, style_id: val ? Number(val) : '' }))}
+            className="mt-1 w-full"
+            options={[{ label: t('common.select'), value: '' }, ...styles.map(s => ({ label: s.name, value: String(s.id) }))]}
+            placeholder={t('common.select')}
+            allowClear
+          />
         </div>
         {!isWarehouse && (
           <div>
@@ -1175,17 +1154,12 @@ const ProductsPage = () => {
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
           <span>{t('pagination.showing')}:</span>
-          <select
-            value={pageSize}
-            onChange={handlePageSizeChange}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            {[10, 25, 50, 100].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+          <Select
+            value={String(pageSize)}
+            onChange={(val) => handlePageSizeChange(val)}
+            className="w-20"
+            options={[10, 25, 50, 100].map((size) => ({ label: String(size), value: String(size) }))}
+          />
           <span>{t('table.items')} / {t('pagination.page')}</span>
           <span className="text-xs text-slate-400 dark:text-slate-500">
             {rangeStart} - {rangeEnd} / {total}

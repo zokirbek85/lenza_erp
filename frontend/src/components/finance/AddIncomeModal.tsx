@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { message } from 'antd';
+import { message, Select } from 'antd';
 import { createFinanceTransaction } from '../../api/finance';
 import type { FinanceAccount, Currency } from '../../types/finance';
 import type { Dealer } from '../../types/dealer';
@@ -149,22 +149,19 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('finance.transaction.dealer', 'Diler')} <span className="text-red-500">*</span>
             </label>
-            <select
-              value={formData.dealer || ''}
-              onChange={(e) => handleDealerChange(e.target.value)}
-              required
-              disabled={loadingDealers}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-            >
-              <option value="">
-                {loadingDealers ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
-              </option>
-              {dealers.map((dealer) => (
-                <option key={dealer.id} value={dealer.id}>
-                  {dealer.name}
-                </option>
-              ))}
-            </select>
+              <Select
+                value={formData.dealer ? String(formData.dealer) : ''}
+                onChange={(val) => handleDealerChange(String(val))}
+                disabled={loadingDealers}
+                className="w-full"
+                options={
+                  dealers.length
+                    ? dealers.map((d) => ({ label: d.name, value: String(d.id) }))
+                    : [{ label: loadingDealers ? String(t('common.loading', 'Yuklanmoqda...')) : String(t('common.select', 'Tanlang')), value: '' }]
+                }
+                placeholder={loadingDealers ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+                allowClear
+              />
             {!loadingDealers && dealers.length === 0 && (
               <p className="mt-1 text-sm text-red-500">
                 {t('finance.income.noDealers', 'Dilerlar topilmadi')}
@@ -234,22 +231,19 @@ export default function AddIncomeModal({ visible, onClose, onSuccess }: AddIncom
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('finance.transaction.account', 'Hisob')} <span className="text-red-500">*</span>
             </label>
-            <select
-              value={formData.account || ''}
-              onChange={(e) => setFormData({ ...formData, account: parseInt(e.target.value) || 0 })}
-              required
+            <Select
+              value={formData.account ? String(formData.account) : ''}
+              onChange={(val) => setFormData({ ...formData, account: Number(val) || 0 })}
               disabled={loadingAccounts}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-            >
-              <option value="">
-                {loadingAccounts ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
-              </option>
-              {filteredAccounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name} ({account.type_display || account.type})
-                </option>
-              ))}
-            </select>
+              className="w-full"
+              options={
+                filteredAccounts.length
+                  ? filteredAccounts.map((account) => ({ label: `${account.name} (${account.type_display || account.type})`, value: String(account.id) }))
+                  : [{ label: loadingAccounts ? String(t('common.loading', 'Yuklanmoqda...')) : String(t('common.select', 'Tanlang')), value: '' }]
+              }
+              placeholder={loadingAccounts ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+              allowClear
+            />
             {!loadingAccounts && filteredAccounts.length === 0 && (
               <p className="mt-1 text-sm text-red-500">
                 {t('finance.income.noAccounts', `${formData.currency} hisobi topilmadi`)}

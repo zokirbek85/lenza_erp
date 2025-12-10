@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 
 import Modal from '../Modal';
+import { Select } from 'antd';
 import {
   createProductVariant,
   updateProductVariant,
@@ -238,22 +239,16 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
               onChange={(e) => setModelSearch(e.target.value)}
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm mb-2"
             />
-            <select
+            <Select
               id="product_model"
-              value={formData.product_model}
-              onChange={(e) => handleInputChange('product_model', Number(e.target.value))}
-              className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                errors.product_model ? 'border-red-300' : 'border-gray-300'
-              }`}
+              value={String(formData.product_model ?? 0)}
+              onChange={(val) => handleInputChange('product_model', Number(val))}
+              className={`block w-full ${errors.product_model ? 'border-red-300' : ''}`}
               disabled={loadingModels}
-            >
-              <option value={0}>{t('variants.selectModel')}</option>
-              {productModels.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.brand_name} - {model.collection} - {model.model_name}
-                </option>
-              ))}
-            </select>
+              options={[{ label: t('variants.selectModel'), value: '0' }, ...productModels.map(m => ({ label: `${m.brand_name} - ${m.collection} - ${m.model_name}`, value: String(m.id) }))]}
+              showSearch
+              placeholder={t('variants.selectModel')}
+            />
             {errors.product_model && (
               <p className="mt-1 text-sm text-red-600">{errors.product_model}</p>
             )}
@@ -283,20 +278,13 @@ export default function VariantFormModal({ variant, onClose, onSuccess }: Varian
           <label htmlFor="door_type" className="block text-sm font-medium text-gray-700">
             {t('variants.doorType')} <span className="text-red-500">*</span>
           </label>
-          <select
+          <Select
             id="door_type"
             value={formData.door_type}
-            onChange={(e) => handleInputChange('door_type', e.target.value)}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-              errors.door_type ? 'border-red-300' : 'border-gray-300'
-            }`}
-          >
-            {DOOR_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => handleInputChange('door_type', String(val))}
+            className={`mt-1 block w-full ${errors.door_type ? 'border-red-300' : ''}`}
+            options={DOOR_TYPES.map((type) => ({ label: type.label, value: type.value }))}
+          />
           {errors.door_type && <p className="mt-1 text-sm text-red-600">{errors.door_type}</p>}
         </div>
 

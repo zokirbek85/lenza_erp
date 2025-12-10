@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd';
 import toast from 'react-hot-toast';
 
 import { useAuthStore } from '../auth/useAuthStore';
@@ -148,18 +149,14 @@ export default function ProductVariants() {
             <label htmlFor="doorType" className="sr-only">
               Door Type
             </label>
-            <select
+            <Select
               id="doorType"
               value={doorTypeFilter}
-              onChange={(e) => setDoorTypeFilter(e.target.value)}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            >
-              {DOOR_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setDoorTypeFilter(String(val))}
+              className="block w-full"
+              options={DOOR_TYPES.map((type) => ({ label: type.label, value: type.value }))}
+              placeholder="All Door Types"
+            />
           </div>
 
           <button

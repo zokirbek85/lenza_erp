@@ -466,19 +466,22 @@ const OrdersPage = () => {
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Holat</label>
-          <select
+          <Select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-          >
-            <option value="">Barcha holatlar</option>
-            <option value="created">Yaratilgan</option>
-            <option value="confirmed">Tasdiqlangan</option>
-            <option value="packed">Qadoqlangan</option>
-            <option value="shipped">Yuborilgan</option>
-            <option value="delivered">Yetkazilgan</option>
-            <option value="cancelled">Bekor qilingan</option>
-          </select>
+            onChange={(val) => setStatusFilter(String(val))}
+            className="mt-1 w-full"
+            options={[
+              { label: 'Barcha holatlar', value: '' },
+              { label: 'Yaratilgan', value: 'created' },
+              { label: 'Tasdiqlangan', value: 'confirmed' },
+              { label: 'Qadoqlangan', value: 'packed' },
+              { label: 'Yuborilgan', value: 'shipped' },
+              { label: 'Yetkazilgan', value: 'delivered' },
+              { label: 'Bekor qilingan', value: 'cancelled' },
+            ]}
+            placeholder="Barcha holatlar"
+            allowClear
+          />
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Menejer</label>
@@ -973,32 +976,26 @@ const OrdersPage = () => {
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t('orders.form.dealer')}
                       </label>
-                      <select
-                        required
+                      <Select
                         value={dealerId}
-                        onChange={(event) => setDealerId(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      >
-                        <option value="">{t('orders.form.dealerPlaceholder')}</option>
-                        {(dealers || []).map((dealer) => (
-                          <option key={dealer.id} value={dealer.id}>
-                            {dealer.name}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => setDealerId(String(val))}
+                        className="mt-1 w-full"
+                        options={[{ label: t('orders.form.dealerPlaceholder'), value: '' }, ...(dealers || []).map(d => ({ label: d.name, value: String(d.id) }))]}
+                        placeholder={t('orders.form.dealerPlaceholder')}
+                        showSearch
+                        allowClear
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t('orders.form.orderType')}
                       </label>
-                      <select
+                      <Select
                         value={orderType}
-                        onChange={(event) => setOrderType(event.target.value as 'regular' | 'reserve')}
-                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      >
-                        <option value="regular">{t('orders.types.regular')}</option>
-                        <option value="reserve">{t('orders.types.reserve')}</option>
-                      </select>
+                        onChange={(val) => setOrderType(String(val) as 'regular' | 'reserve')}
+                        className="mt-1 w-full"
+                        options={[{ label: t('orders.types.regular'), value: 'regular' }, { label: t('orders.types.reserve'), value: 'reserve' }]}
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -1037,18 +1034,19 @@ const OrdersPage = () => {
                           <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                             {t('orders.discount.type', 'Chegirma turi')}
                           </label>
-                          <select
+                          <Select
                             value={discountType}
-                            onChange={(e) => {
-                              setDiscountType(e.target.value as 'none' | 'percentage' | 'amount');
+                            onChange={(val) => {
+                              setDiscountType(String(val) as 'none' | 'percentage' | 'amount');
                               setDiscountValue('0');
                             }}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                          >
-                            <option value="none">{t('orders.discount.none', 'Yo\'q')}</option>
-                            <option value="percentage">{t('orders.discount.percentage', 'Foiz (%)')}</option>
-                            <option value="amount">{t('orders.discount.fixedAmount', 'Qat\'iy summa (USD)')}</option>
-                          </select>
+                            className="mt-1 w-full"
+                            options={[
+                              { label: t('orders.discount.none', 'Yo\'q'), value: 'none' },
+                              { label: t('orders.discount.percentage', 'Foiz (%)'), value: 'percentage' },
+                              { label: t('orders.discount.fixedAmount', "Qat'iy summa (USD)"), value: 'amount' },
+                            ]}
+                          />
                         </div>
 
                         {discountType !== 'none' && (
@@ -1098,35 +1096,29 @@ const OrdersPage = () => {
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t('orders.filters.brand')}
                       </label>
-                      <select
+                      <Select
                         value={brandId ?? ''}
-                        onChange={(event) => handleFilterChange('brandId', event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      >
-                        <option value="">{t('orders.filters.allBrands')}</option>
-                        {brands.map((brand) => (
-                          <option key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => handleFilterChange('brandId', String(val))}
+                        className="mt-1 w-full"
+                        options={[{ label: t('orders.filters.allBrands'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
+                        showSearch
+                        allowClear
+                        placeholder={t('orders.filters.allBrands')}
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t('orders.filters.category')}
                       </label>
-                      <select
+                      <Select
                         value={categoryId ?? ''}
-                        onChange={(event) => handleFilterChange('categoryId', event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      >
-                        <option value="">{t('orders.filters.allCategories')}</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => handleFilterChange('categoryId', String(val))}
+                        className="mt-1 w-full"
+                        options={[{ label: t('orders.filters.allCategories'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
+                        showSearch
+                        allowClear
+                        placeholder={t('orders.filters.allCategories')}
+                      />
                     </div>
                   </div>
 
@@ -1147,47 +1139,32 @@ const OrdersPage = () => {
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
                           {t('orders.form.productSelect')}
                         </label>
-                        <select
-                          value={selectedProduct?.id ?? ''}
-                          onChange={(event) => handleSelectProduct(event.target.value)}
-                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                        >
-                          <option value="">{t('orders.form.productSelectPlaceholder')}</option>
-                          {filteredProducts.map((product) => {
-                            // Only show good stock (stock_ok) - defect stock is not used in orders
+                        <Select
+                          value={selectedProduct?.id ? String(selectedProduct.id) : ''}
+                          onChange={(val) => handleSelectProduct(String(val))}
+                          className="mt-1 w-full"
+                          showSearch
+                          options={filteredProducts.map((product) => {
                             const stock = product.stock_ok ?? 0;
                             const isOutOfStock = stock <= 0;
                             const brandLabel = product.brand?.name ?? '-';
                             const categoryLabel = product.category?.name ?? '-';
-                            const stockLabel = isOutOfStock 
+                            const stockLabel = isOutOfStock
                               ? `(⚠️ ${t('orders.product.outOfStock')})`
                               : `(${t('orders.product.inStock')}: ${stock})`;
-                            
-                            // Show size if category is NOT door panel and size exists
                             const categoryName = product.category?.name?.toLowerCase() || '';
                             const doorPanelKeyword = t('orders.product.doorPanelKeyword', 'дверное полотно').toLowerCase();
-                            const showSize = 
-                              !categoryName.includes(doorPanelKeyword) &&
-                              product.size &&
-                              product.size.trim().length > 0;
-                            
-                            const displayName = showSize
-                              ? `${cleanName(product.name)} — ${product.size}`
-                              : cleanName(product.name);
-                            
-                            return (
-                              <option
-                                key={product.id}
-                                value={product.id}
-                                disabled={isOutOfStock}
-                                style={isOutOfStock ? { color: '#999', fontStyle: 'italic' } : undefined}
-                              >
-                                {displayName} - {brandLabel} - {categoryLabel}{' '}
-                                {stockLabel}
-                              </option>
-                            );
+                            const showSize = !categoryName.includes(doorPanelKeyword) && product.size && product.size.trim().length > 0;
+                            const displayName = showSize ? `${cleanName(product.name)} — ${product.size}` : cleanName(product.name);
+                            return {
+                              label: `${displayName} - ${brandLabel} - ${categoryLabel} ${stockLabel}`,
+                              value: String(product.id),
+                              disabled: isOutOfStock,
+                            };
                           })}
-                        </select>
+                          placeholder={t('orders.form.productSelectPlaceholder')}
+                          allowClear
+                        />
                         {!filteredProducts.length && !productsLoading && (
                           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t('orders.product.noMatches')}</p>
                         )}

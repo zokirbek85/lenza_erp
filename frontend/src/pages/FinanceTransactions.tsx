@@ -1,12 +1,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Select, message } from 'antd';
 import {
   getFinanceTransactions,
+  createFinanceTransaction,
+  updateFinanceTransaction,
   approveFinanceTransaction,
   cancelFinanceTransaction,
   deleteFinanceTransaction,
+  getFinanceAccounts,
+  getExpenseCategories,
 } from '../api/finance';
-import type { FinanceTransaction, FinanceTransactionFilters } from '../types/finance';
+import { getDealers } from '../api/dealers';
+import type { FinanceTransaction, FinanceTransactionFilters, FinanceAccount, ExpenseCategory } from '../types/finance';
+import type { Dealer } from '../types/dealers';
 
 export default function FinanceTransactions() {
   const { t } = useTranslation();
@@ -17,10 +24,54 @@ export default function FinanceTransactions() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
+  // New UI state for modal/create/edit
+  const [showModal, setShowModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<FinanceTransaction | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  // Reference data for modal
+  const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+
+  // Form data for modal
+  const [formData, setFormData] = useState({
+    type: 'income' as 'income' | 'expense',
+    dealer: '',
+    account: '',
+    date: new Date().toISOString().split('T')[0],
+    currency: 'USD' as 'USD' | 'UZS',
+    amount: '',
+    category: '',
+    comment: '',
+  });
 
   useEffect(() => {
     loadTransactions();
   }, [filters, page, pageSize]);
+
+  // Load reference data for modal (accounts, dealers, categories)
+  useEffect(() => {
+    loadReferenceData();
+  }, []);
+
+  const loadReferenceData = async () => {
+    try {
+      const accountsRes = await getFinanceAccounts({ is_active: true });
+      const accountsData = Array.isArray(accountsRes.data) ? accountsRes.data : accountsRes.data?.results || [];
+      setAccounts(accountsData);
+
+      const dealersRes = await getDealers({ page: 1, page_size: 1000 });
+      const dealersData = Array.isArray(dealersRes.data) ? dealersRes.data : dealersRes.data?.results || [];
+      setDealers(dealersData);
+
+      const categoriesRes = await getExpenseCategories({ is_active: true });
+      const categoriesData = Array.isArray(categoriesRes.data) ? categoriesRes.data : categoriesRes.data?.results || [];
+      setCategories(categoriesData);
+    } catch (err) {
+      console.error('Error loading reference data:', err);
+    }
+  };
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -110,6 +161,109 @@ export default function FinanceTransactions() {
     }
   };
 
+  // --- Modal / CRUD handlers ---
+  const handleCreate = () => {
+    setEditingTransaction(null);
+    setFormData({
+      type: 'income',
+      dealer: '',
+      account: '',
+      date: new Date().toISOString().split('T')[0],
+      currency: 'USD',
+      amount: '',
+      category: '',
+      comment: '',
+    });
+    setShowModal(true);
+  };
+
+  const handleEdit = (transaction: FinanceTransaction) => {
+    if (transaction.status !== 'draft') {
+      alert(t('finance.transaction.cannotEditApproved', 'Faqat draft transactionlarni tahrirlash mumkin'));
+      return;
+    }
+    setEditingTransaction(transaction);
+    setFormData({
+      type: transaction.type as any,
+      dealer: transaction.dealer?.toString() || '',
+      account: transaction.account?.toString() || '',
+      date: transaction.date || new Date().toISOString().split('T')[0],
+      currency: transaction.currency || 'USD',
+      amount: transaction.amount?.toString() || '',
+      category: transaction.category || '',
+      comment: transaction.comment || '',
+    });
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingTransaction(null);
+    setFormData({
+      type: 'income',
+      dealer: '',
+      account: '',
+      date: new Date().toISOString().split('T')[0],
+      currency: 'USD',
+      amount: '',
+      category: '',
+      comment: '',
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // validation
+    if (!formData.account) {
+      alert(t('finance.transaction.accountRequired', 'Account tanlash majburiy'));
+      return;
+    }
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      alert(t('finance.transaction.amountRequired', 'Summa kiritish majburiy'));
+      return;
+    }
+    if (formData.type === 'income' && !formData.dealer) {
+      alert(t('finance.transaction.dealerRequired', 'Kirim uchun diler tanlash majburiy'));
+      return;
+    }
+    if (formData.type === 'expense' && !formData.category) {
+      alert(t('finance.transaction.categoryRequired', 'Chiqim uchun kategoriya tanlash majburiy'));
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+      const payload: any = {
+        type: formData.type,
+        account: parseInt(formData.account),
+        date: formData.date,
+        currency: formData.currency,
+        amount: parseFloat(formData.amount),
+        comment: formData.comment,
+        status: 'draft',
+      };
+      if (formData.type === 'income' && formData.dealer) payload.dealer = parseInt(formData.dealer);
+      if (formData.type === 'expense' && formData.category) payload.category = formData.category;
+
+      if (editingTransaction) {
+        await updateFinanceTransaction(editingTransaction.id, payload);
+        message.success(t('finance.transaction.updated', 'Transaction yangilandi'));
+      } else {
+        await createFinanceTransaction(payload);
+        message.success(t('finance.transaction.created', 'Transaction yaratildi'));
+      }
+
+      handleCloseModal();
+      await loadTransactions();
+    } catch (err: any) {
+      console.error('Error saving transaction:', err);
+      const errorMsg = err.response?.data?.detail || Object.values(err.response?.data || {}).join(', ') || 'Failed to save transaction';
+      alert(errorMsg);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
@@ -185,6 +339,103 @@ export default function FinanceTransactions() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  // Modal component rendered when creating/editing a transaction
+  const TransactionModal = () => {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            {editingTransaction
+              ? t('finance.transaction.edit', 'Transactionni tahrirlash')
+              : t('finance.transaction.create', 'Yangi transaction')}
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.type', 'Turi')}</label>
+                <Select
+                  value={formData.type}
+                  onChange={(val: any) => setFormData({ ...formData, type: val })}
+                  options={[{ value: 'income', label: t('finance.transaction.income', 'Kirim') }, { value: 'expense', label: t('finance.transaction.expense', 'Chiqim') }]}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.account', 'Account')}</label>
+                <Select
+                  value={formData.account}
+                  onChange={(val: any) => setFormData({ ...formData, account: String(val) })}
+                  options={accounts.map(a => ({ value: String(a.id), label: a.name }))}
+                  showSearch
+                  optionFilterProp="children"
+                />
+              </div>
+
+              {formData.type === 'income' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.dealer', 'Diler')}</label>
+                  <Select
+                    value={formData.dealer}
+                    onChange={(val: any) => setFormData({ ...formData, dealer: String(val) })}
+                    options={dealers.map(d => ({ value: String(d.id), label: d.name }))}
+                    showSearch
+                    optionFilterProp="children"
+                  />
+                </div>
+              )}
+
+              {formData.type === 'expense' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.category', 'Kategoriya')}</label>
+                  <Select
+                    value={formData.category}
+                    onChange={(val: any) => setFormData({ ...formData, category: String(val) })}
+                    options={categories.map(c => ({ value: c.id, label: c.name }))}
+                    showSearch
+                    optionFilterProp="children"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.amount', 'Summa')}</label>
+                <input
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  className="w-full rounded border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.date', 'Sana')}</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className="w-full rounded border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.comment', 'Izoh')}</label>
+                <textarea
+                  value={formData.comment}
+                  onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                  className="w-full rounded border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={handleCloseModal} className="px-4 py-2 rounded border">{t('common.cancel', 'Cancel')}</button>
+              <button type="submit" disabled={modalLoading} className="px-4 py-2 rounded bg-blue-600 text-white">{modalLoading ? t('common.saving', 'Saving...') : t('common.save', 'Save')}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -214,6 +465,9 @@ export default function FinanceTransactions() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Render modal */}
+      {showModal && <TransactionModal />}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           {t('finance.transactions.title', 'Moliya Operatsiyalari')}
@@ -221,6 +475,17 @@ export default function FinanceTransactions() {
         <p className="text-gray-600 dark:text-gray-400">
           {t('finance.transactions.subtitle', 'Kirim va chiqim operatsiyalari')}
         </p>
+        <div className="mt-4">
+          <button
+            onClick={handleCreate}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            {t('finance.transaction.create', 'Yangi transaction')}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -380,6 +645,15 @@ export default function FinanceTransactions() {
                     <div className="flex items-center justify-center gap-2">
                       {transaction.status === 'draft' && (
                         <>
+                          <button
+                            onClick={() => handleEdit(transaction)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title={t('common.edit', 'Tahrirlash')}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7-7l7 7" />
+                            </svg>
+                          </button>
                           <button
                             onClick={() => handleApprove(transaction.id)}
                             className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"

@@ -1,6 +1,7 @@
 ﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd';
 import toast from 'react-hot-toast';
 
 import { useAuthStore } from '../auth/useAuthStore';
@@ -105,8 +106,8 @@ const UsersPage = () => {
     }
   }, [total, pageSize, page]);
 
-  const handleFilterChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setFilters({ role: event.target.value });
+  const handleFilterChange = (value: string) => {
+    setFilters({ role: value });
     setPage(1);
   };
 
@@ -201,18 +202,14 @@ const UsersPage = () => {
       <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
         {t('users.filters.role')}
       </label>
-      <select
+      <Select
         value={filters.role}
-        onChange={handleFilterChange}
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
-      >
-        <option value="">{t('users.filters.allRoles')}</option>
-        {ROLE_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        onChange={(val) => handleFilterChange(String(val))}
+        className="w-full"
+        options={[{ label: t('users.filters.allRoles'), value: '' }, ...ROLE_OPTIONS]}
+        placeholder={t('users.filters.allRoles')}
+        allowClear
+      />
     </div>
   );
 
@@ -277,18 +274,14 @@ const UsersPage = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('users.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <select
+          <Select
             value={filters.role}
-            onChange={handleFilterChange}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-          >
-            <option value="">{t('users.filters.allRoles')}</option>
-            {ROLE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => handleFilterChange(String(val))}
+            className="w-auto"
+            options={[{ label: t('users.filters.allRoles'), value: '' }, ...ROLE_OPTIONS]}
+            placeholder={t('users.filters.allRoles')}
+            allowClear
+          />
           {canManage && (
             <button
               onClick={() => openModal()}
@@ -422,18 +415,13 @@ const UsersPage = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.role')}</label>
-              <select
-                name="role"
+              <Select
                 value={form.role}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              >
-                {ROLE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setForm((prev) => ({ ...prev, role: String(val) }))}
+                className="mt-1 w-full"
+                options={ROLE_OPTIONS}
+                placeholder={t('users.form.role')}
+              />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
