@@ -8,7 +8,8 @@
       "Bash(find:*)",
       "Bash(xargs:*)",
       "Bash(git -C /d/Project/new/lenza_erp log --oneline --graph --all -20)",
-      "Bash(python manage.py migrate:*)"
+      "Bash(python manage.py migrate:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []

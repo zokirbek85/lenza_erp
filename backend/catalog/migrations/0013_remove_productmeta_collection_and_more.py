@@ -5,6 +5,61 @@ from decimal import Decimal
 from django.db import migrations, models
 
 
+def check_and_cleanup_old_tables(apps, schema_editor):
+    """
+    Check if old tables exist and clean them up if necessary.
+    These tables were already dropped in migration 0009, but Django generated
+    this migration before realizing they were gone.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        # Check if tables exist and drop them if they do
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_productmeta'
+            );
+        """)
+        productmeta_exists = cursor.fetchone()[0]
+
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_doormodel'
+            );
+        """)
+        doormodel_exists = cursor.fetchone()[0]
+
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_doorcolor'
+            );
+        """)
+        doorcolor_exists = cursor.fetchone()[0]
+
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_collection'
+            );
+        """)
+        collection_exists = cursor.fetchone()[0]
+
+        # Drop tables if they exist (shouldn't exist after migration 0009)
+        if productmeta_exists:
+            cursor.execute("DROP TABLE IF EXISTS catalog_productmeta CASCADE;")
+        if doormodel_exists:
+            cursor.execute("DROP TABLE IF EXISTS catalog_doormodel CASCADE;")
+        if doorcolor_exists:
+            cursor.execute("DROP TABLE IF EXISTS catalog_doorcolor CASCADE;")
+        if collection_exists:
+            cursor.execute("DROP TABLE IF EXISTS catalog_collection CASCADE;")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,30 +67,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='collection',
-        ),
-        migrations.RemoveField(
-            model_name='doormodel',
-            name='collection',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='color',
-        ),
-        migrations.AlterUniqueTogether(
-            name='doormodel',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='model',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='product',
-        ),
+        # First, check and clean up any remaining old tables
+        migrations.RunPython(check_and_cleanup_old_tables, migrations.RunPython.noop),
         migrations.AlterModelOptions(
             name='brand',
             options={'ordering': ('name',), 'verbose_name': 'Brand', 'verbose_name_plural': 'Brands'},
@@ -208,16 +241,5 @@ class Migration(migrations.Migration):
             name='name',
             field=models.CharField(help_text='Unique name of the product style', max_length=150, unique=True, verbose_name='Style name'),
         ),
-        migrations.DeleteModel(
-            name='Collection',
-        ),
-        migrations.DeleteModel(
-            name='DoorColor',
-        ),
-        migrations.DeleteModel(
-            name='DoorModel',
-        ),
-        migrations.DeleteModel(
-            name='ProductMeta',
-        ),
+        # Note: Collection, DoorColor, DoorModel, and ProductMeta were already deleted in migration 0009
     ]
