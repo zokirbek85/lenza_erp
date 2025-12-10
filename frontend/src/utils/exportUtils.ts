@@ -6,9 +6,10 @@ import type { CashSummary, FinanceTransaction } from '../types/finance';
 /**
  * Format currency with proper symbol and thousands separator
  */
-export const formatCurrency = (amount: number, currency: 'USD' | 'UZS'): string => {
+export const formatCurrency = (amount: number | undefined | null, currency: 'USD' | 'UZS'): string => {
   const symbol = currency === 'USD' ? '$' : 'UZS';
-  const formatted = amount.toLocaleString('en-US', {
+  const safeAmount = amount || 0;
+  const formatted = safeAmount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -219,8 +220,8 @@ export const exportTransactionsToPDF = (
       transaction.type === 'income'
         ? transaction.dealer_name || ''
         : transaction.category || '',
-      transaction.amount.toFixed(2),
-      transaction.currency,
+      (transaction.amount || 0).toFixed(2),
+      transaction.currency || '',
       transaction.status.toUpperCase(),
       transaction.comment || '',
     ]),
@@ -336,8 +337,8 @@ export const exportTransactionsToXLSX = (
       transaction.type === 'income'
         ? transaction.dealer_name || ''
         : transaction.category || '',
-      transaction.amount,
-      transaction.currency,
+      transaction.amount || 0,
+      transaction.currency || '',
       transaction.status.toUpperCase(),
       transaction.comment || '',
       transaction.created_by_name || '',
