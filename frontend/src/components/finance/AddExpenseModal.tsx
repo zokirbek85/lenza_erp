@@ -325,22 +325,19 @@ export default function AddExpenseModal({ visible, onClose, onSuccess }: AddExpe
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('finance.transaction.account', 'Hisob')} <span className="text-red-500">*</span>
             </label>
-            <select
-              value={formData.account || ''}
-              onChange={(e) => setFormData({ ...formData, account: parseInt(e.target.value) || 0 })}
-              required
+            <Select
+              value={formData.account || undefined}
+              onChange={(val: any) => setFormData({ ...formData, account: Number(val) || 0 })}
               disabled={loadingAccounts}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
-            >
-              <option value="">
-                {loadingAccounts ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
-              </option>
-              {filteredAccounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name} ({account.type_display || account.type})
-                </option>
-              ))}
-            </select>
+              placeholder={loadingAccounts ? t('common.loading', 'Yuklanmoqda...') : t('common.select', 'Tanlang')}
+              style={{ width: '100%' }}
+              showSearch
+              optionFilterProp="children"
+              options={filteredAccounts.map((account) => ({
+                label: `${account.name} (${account.type_display || account.type})`,
+                value: account.id,
+              }))}
+            />
             {!loadingAccounts && filteredAccounts.length === 0 && (
               <p className="mt-1 text-sm text-red-500">
                 {t('finance.expense.noAccounts', `${formData.currency} hisobi topilmadi`)}

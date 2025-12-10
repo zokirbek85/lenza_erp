@@ -13,7 +13,7 @@ import {
 } from '../api/finance';
 import { getDealers } from '../api/dealers';
 import type { FinanceTransaction, FinanceTransactionFilters, FinanceAccount, ExpenseCategory } from '../types/finance';
-import type { Dealer } from '../types/dealers';
+import type { Dealer } from '../types/dealer';
 
 export default function FinanceTransactions() {
   const { t } = useTranslation();
@@ -61,12 +61,17 @@ export default function FinanceTransactions() {
       const accountsData = Array.isArray(accountsRes.data) ? accountsRes.data : accountsRes.data?.results || [];
       setAccounts(accountsData);
 
-      const dealersRes = await getDealers({ page: 1, page_size: 1000 });
-      const dealersData = Array.isArray(dealersRes.data) ? dealersRes.data : dealersRes.data?.results || [];
-      setDealers(dealersData);
+      const dealersRes = await getDealers({ page_size: 1000 });
+      const dealersData = Array.isArray(dealersRes.data) ? dealersRes.data : [];
+      // Normalize dealer shape to match frontend types (ensure updated_at exists)
+      const normalizedDealers = dealersData.map((d: any) => ({
+        ...d,
+        updated_at: d.updated_at || d.created_at || new Date().toISOString(),
+      }));
+      setDealers(normalizedDealers);
 
       const categoriesRes = await getExpenseCategories({ is_active: true });
-      const categoriesData = Array.isArray(categoriesRes.data) ? categoriesRes.data : categoriesRes.data?.results || [];
+      const categoriesData = Array.isArray(categoriesRes.data) ? categoriesRes.data : [];
       setCategories(categoriesData);
     } catch (err) {
       console.error('Error loading reference data:', err);
