@@ -23,18 +23,30 @@ export default function ConvertCurrencyModal({
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [usdAccounts, setUsdAccounts] = useState<FinanceAccount[]>([]);
   const [uzsAccounts, setUzsAccounts] = useState<FinanceAccount[]>([]);
+  const [allAccounts, setAllAccounts] = useState<FinanceAccount[]>([]);
   
   const [formData, setFormData] = useState({
     from_account_id: 0,
     to_account_id: 0,
-    usd_amount: '',
+    amount: '',
     rate: '',
     date: new Date().toISOString().split('T')[0],
     comment: '',
   });
 
-  const uzsAmount = formData.usd_amount && formData.rate 
-    ? parseFloat(formData.usd_amount) * parseFloat(formData.rate)
+  // Determine conversion direction
+  const fromAccount = allAccounts.find(a => a.id === formData.from_account_id);
+  const toAccount = allAccounts.find(a => a.id === formData.to_account_id);
+  const isUsdToUzs = fromAccount?.currency === 'USD' && toAccount?.currency === 'UZS';
+  const isUzsToUsd = fromAccount?.currency === 'UZS' && toAccount?.currency === 'USD';
+  
+  // Calculate target amount
+  const targetAmount = formData.amount && formData.rate 
+    ? isUsdToUzs 
+      ? parseFloat(formData.amount) * parseFloat(formData.rate)
+      : isUzsToUsd
+      ? parseFloat(formData.amount) / parseFloat(formData.rate)
+      : 0
     : 0;
 
   useEffect(() => {
@@ -50,6 +62,7 @@ export default function ConvertCurrencyModal({
     setLoadingAccounts(true);
     try {
       const accounts = await fetchAllPages<FinanceAccount>('/finance/accounts/', { is_active: true });
+      setAllAccounts(accounts);
       setUsdAccounts(accounts.filter(a => a.currency === 'USD'));
       setUzsAccounts(accounts.filter(a => a.currency === 'UZS'));
     } catch (error: any) {
@@ -63,7 +76,7 @@ export default function ConvertCurrencyModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.from_account_id || !formData.to_account_id || !formData.usd_amount || !formData.rate) {
+    if (!formData.from_account_id || !formData.to_account_id || !formData.amount || !formData.rate) {
       message.error(t('finance.currencyTransfer.fillRequired', 'Barcha majburiy maydonlarni to\'ldiring'));
       return;
     }
@@ -73,27 +86,25 @@ export default function ConvertCurrencyModal({
       return;
     }
 
-    const parsedAmount = Number(formData.usd_amount);
+    if (!fromAccount || !toAccount) {
+      message.error(t('common.messages.error', 'Xatolik yuz berdi'));
+      return;
+    }
+
+    if (fromAccount.currency === toAccount.currency) {
+      message.error(t('finance.currencyTransfer.differentCurrencies', 'Kassalar turli valyutada bo\'lishi kerak'));
+      return;
+    }
+
+    const parsedAmount = Number(formData.amount);
     const parsedRate = Number(formData.rate);
 
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      message.error(t('finance.currencyTransfer.amountInvalid', 'USD miqdori noto\'g\'ri')); 
+      message.error(t('finance.currencyTransfer.amountInvalid', 'Miqdor noto\'g\'ri')); 
       return;
     }
     if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
       message.error(t('finance.currencyTransfer.rateInvalid', 'Kurs noto\'g\'ri')); 
-      return;
-    }
-
-    const fromAcc = usdAccounts.find((a) => a.id === formData.from_account_id);
-    const toAcc = uzsAccounts.find((a) => a.id === formData.to_account_id);
-
-    if (!fromAcc || fromAcc.currency !== 'USD') {
-      message.error(t('finance.currencyTransfer.fromMustBeUsd', 'USD kassani tanlang'));
-      return;
-    }
-    if (!toAcc || toAcc.currency !== 'UZS') {
-      message.error(t('finance.currencyTransfer.toMustBeUzs', 'UZS kassani tanlang'));
       return;
     }
 
@@ -102,7 +113,7 @@ export default function ConvertCurrencyModal({
       await transferCurrency({
         from_account_id: formData.from_account_id,
         to_account_id: formData.to_account_id,
-        usd_amount: parsedAmount,
+        amount: parsedAmount,
         rate: parsedRate,
         date: formData.date,
         comment: formData.comment,
@@ -114,7 +125,7 @@ export default function ConvertCurrencyModal({
       resetForm();
     } catch (error: any) {
       const errorMsg = error.response?.data?.detail || 
-                      error.response?.data?.usd_amount?.[0] ||
+                      error.response?.data?.amount?.[0] ||
                       error.response?.data?.message ||
                       JSON.stringify(error.response?.data) ||
                       'Failed to transfer currency';
@@ -128,7 +139,7 @@ export default function ConvertCurrencyModal({
     setFormData({
       from_account_id: 0,
       to_account_id: 0,
-      usd_amount: '',
+      amount: '',
       rate: '',
       date: new Date().toISOString().split('T')[0],
       comment: '',
@@ -137,14 +148,60 @@ export default function ConvertCurrencyModal({
 
   if (!visible) return null;
 
-  const selectedUsdAccount = usdAccounts.find(a => a.id === formData.from_account_id);
+  // Get available accounts based on selection
+  const getAvailableToAccounts = () => {
+    if (!fromAccount) return allAccounts;
+    // Return accounts with different currency
+    return allAccounts.filter(a => a.currency !== fromAccount.currency && a.id !== fromAccount.id);
+  };
+
+  const getAvailableFromAccounts = () => {
+    if (!toAccount) return allAccounts;
+    // Return accounts with different currency
+    return allAccounts.filter(a => a.currency !== toAccount.currency && a.id !== toAccount.id);
+  };
+
+  // Determine labels based on direction
+  const getSourceLabel = () => {
+    if (!fromAccount) return t('finance.currencyTransfer.fromAccount', 'Kassadan');
+    return fromAccount.currency === 'USD' 
+      ? t('finance.currencyTransfer.fromAccountUsd', 'USD kassadan')
+      : t('finance.currencyTransfer.fromAccountUzs', 'UZS kassadan');
+  };
+
+  const getTargetLabel = () => {
+    if (!toAccount) return t('finance.currencyTransfer.toAccount', 'Kassaga');
+    return toAccount.currency === 'UZS' 
+      ? t('finance.currencyTransfer.toAccountUzs', 'UZS kassaga')
+      : t('finance.currencyTransfer.toAccountUsd', 'USD kassaga');
+  };
+
+  const getAmountLabel = () => {
+    if (!fromAccount) return t('finance.currencyTransfer.amount', 'Miqdor');
+    return fromAccount.currency === 'USD'
+      ? t('finance.currencyTransfer.usdAmount', 'USD miqdori')
+      : t('finance.currencyTransfer.uzsAmount', 'UZS miqdori');
+  };
+
+  const getTargetAmountLabel = () => {
+    if (!toAccount) return '';
+    return toAccount.currency === 'UZS'
+      ? t('finance.currencyTransfer.uzsAmount', 'UZS miqdori')
+      : t('finance.currencyTransfer.usdAmount', 'USD miqdori');
+  };
+
+  const getModalTitle = () => {
+    if (isUsdToUzs) return 'USD → UZS Konvertatsiya';
+    if (isUzsToUsd) return 'UZS → USD Konvertatsiya';
+    return t('finance.currencyTransfer.title', 'Valyuta Konvertatsiyasi');
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('finance.currencyTransfer.title', 'USD → UZS Konvertatsiya')}
+            {getModalTitle()}
           </h2>
         </div>
 
@@ -152,19 +209,27 @@ export default function ConvertCurrencyModal({
           {/* From Account */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('finance.currencyTransfer.fromAccount', 'USD kassadan')} <span className="text-red-500">*</span>
+              {getSourceLabel()} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.from_account_id}
-              onChange={(e) => setFormData({ ...formData, from_account_id: parseInt(e.target.value) })}
+              onChange={(e) => {
+                const newFromId = parseInt(e.target.value);
+                setFormData({ 
+                  ...formData, 
+                  from_account_id: newFromId,
+                  // Reset to_account if currencies are now the same
+                  to_account_id: formData.to_account_id === newFromId ? 0 : formData.to_account_id
+                });
+              }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               required
               disabled={loadingAccounts}
             >
               <option value={0}>{t('common.select', 'Tanlang')}</option>
-              {usdAccounts.map(account => (
+              {getAvailableFromAccounts().map(account => (
                 <option key={account.id} value={account.id}>
-                  {account.name} (${account.balance.toFixed(2)})
+                  {account.name} ({account.currency === 'USD' ? `$${account.balance.toFixed(2)}` : `${account.balance.toLocaleString()} UZS`})
                 </option>
               ))}
             </select>
@@ -173,7 +238,7 @@ export default function ConvertCurrencyModal({
           {/* To Account */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('finance.currencyTransfer.toAccount', 'UZS kassaga')} <span className="text-red-500">*</span>
+              {getTargetLabel()} <span className="text-red-500">*</span>
             </label>
             <select
               value={formData.to_account_id}
@@ -183,32 +248,32 @@ export default function ConvertCurrencyModal({
               disabled={loadingAccounts}
             >
               <option value={0}>{t('common.select', 'Tanlang')}</option>
-              {uzsAccounts.map(account => (
+              {getAvailableToAccounts().map(account => (
                 <option key={account.id} value={account.id}>
-                  {account.name} ({account.balance.toLocaleString()} UZS)
+                  {account.name} ({account.currency === 'USD' ? `$${account.balance.toFixed(2)}` : `${account.balance.toLocaleString()} UZS`})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* USD Amount */}
+          {/* Amount */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('finance.currencyTransfer.usdAmount', 'USD miqdori')} <span className="text-red-500">*</span>
+              {getAmountLabel()} <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
               step="0.01"
               min="0.01"
-              value={formData.usd_amount}
-              onChange={(e) => setFormData({ ...formData, usd_amount: e.target.value })}
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               placeholder="0.00"
               required
             />
-            {selectedUsdAccount && (
+            {fromAccount && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {t('finance.currencyTransfer.available', 'Mavjud')}: ${selectedUsdAccount.balance.toFixed(2)}
+                {t('finance.currencyTransfer.available', 'Mavjud')}: {fromAccount.currency === 'USD' ? `$${fromAccount.balance.toFixed(2)}` : `${fromAccount.balance.toLocaleString()} UZS`}
               </p>
             )}
           </div>
@@ -230,15 +295,18 @@ export default function ConvertCurrencyModal({
             />
           </div>
 
-          {/* Calculated UZS Amount */}
-          {uzsAmount > 0 && (
+          {/* Calculated Target Amount */}
+          {targetAmount > 0 && toAccount && (
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t('finance.currencyTransfer.uzsAmount', 'UZS miqdori')}:
+                  {getTargetAmountLabel()}:
                 </span>
                 <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                  {uzsAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS
+                  {toAccount.currency === 'USD' 
+                    ? `$${targetAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : `${targetAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} UZS`
+                  }
                 </span>
               </div>
             </div>

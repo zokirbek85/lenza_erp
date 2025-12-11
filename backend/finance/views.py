@@ -458,13 +458,13 @@ class CashSummaryView(APIView):
 
 class CurrencyTransferView(APIView):
     """
-    Currency transfer/exchange from USD to UZS
+    Bidirectional currency transfer/exchange (USD ↔ UZS)
     POST /api/finance/transfer-currency/
     """
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        """Transfer currency from USD account to UZS account"""
+        """Transfer currency between USD and UZS accounts (bidirectional)"""
         # Check permissions
         user = request.user
         if not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant']):
@@ -476,27 +476,39 @@ class CurrencyTransferView(APIView):
         # Extract validated data
         from_account = serializer.validated_data['from_account']
         to_account = serializer.validated_data['to_account']
-        usd_amount = serializer.validated_data['usd_amount']
+        source_amount = serializer.validated_data['amount']
         rate = serializer.validated_data['rate']
         trans_date = serializer.validated_data['date']
         comment = serializer.validated_data.get('comment', '')
         
-        # Calculate UZS amount and round to 2 decimal places
+        # Determine direction and calculate target amount
         from decimal import Decimal, ROUND_HALF_UP
-        uzs_amount = (usd_amount * rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        if from_account.currency == 'USD' and to_account.currency == 'UZS':
+            # USD -> UZS
+            usd_amount = source_amount
+            uzs_amount = (source_amount * rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        elif from_account.currency == 'UZS' and to_account.currency == 'USD':
+            # UZS -> USD
+            uzs_amount = source_amount
+            usd_amount = (source_amount / rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        else:
+            return Response({
+                'error': 'Invalid currency pair'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Create two transactions atomically
         from django.db import transaction as db_transaction
         
         with db_transaction.atomic():
-            # 1. USD account - currency exchange out (expense)
-            usd_transaction = FinanceTransaction.objects.create(
+            # 1. Source account - currency exchange out (expense)
+            source_transaction = FinanceTransaction.objects.create(
                 type=FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT,
                 account=from_account,
                 related_account=to_account,
                 date=trans_date,
                 currency=from_account.currency,
-                amount=usd_amount,
+                amount=source_amount,
                 exchange_rate=rate,
                 category='Currency Exchange',
                 comment=comment or f'Currency exchange to {to_account.name}',
@@ -506,14 +518,15 @@ class CurrencyTransferView(APIView):
                 approved_at=timezone.now()
             )
             
-            # 2. UZS account - currency exchange in (income)
-            uzs_transaction = FinanceTransaction.objects.create(
+            # 2. Target account - currency exchange in (income)
+            target_amount = uzs_amount if to_account.currency == 'UZS' else usd_amount
+            target_transaction = FinanceTransaction.objects.create(
                 type=FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_IN,
                 account=to_account,
                 related_account=from_account,
                 date=trans_date,
                 currency=to_account.currency,
-                amount=uzs_amount,
+                amount=target_amount,
                 exchange_rate=rate,
                 category='Currency Exchange',
                 comment=comment or f'Currency exchange from {from_account.name}',
@@ -526,8 +539,8 @@ class CurrencyTransferView(APIView):
         return Response({
             'success': True,
             'message': _('Currency transfer completed successfully'),
-            'usd_transaction_id': usd_transaction.id,
-            'uzs_transaction_id': uzs_transaction.id,
+            'source_transaction_id': source_transaction.id,
+            'target_transaction_id': target_transaction.id,
             'usd_amount': float(usd_amount),
             'uzs_amount': float(uzs_amount),
             'rate': float(rate),

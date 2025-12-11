@@ -221,10 +221,10 @@ class CashSummaryResponseSerializer(serializers.Serializer):
 
 
 class CurrencyTransferSerializer(serializers.Serializer):
-    """Currency exchange/transfer from USD to UZS"""
+    """Currency exchange/transfer bidirectional (USD ↔ UZS)"""
     from_account_id = serializers.IntegerField()
     to_account_id = serializers.IntegerField()
-    usd_amount = serializers.DecimalField(max_digits=18, decimal_places=2, min_value=Decimal('0.01'))
+    amount = serializers.DecimalField(max_digits=18, decimal_places=2, min_value=Decimal('0.01'))
     rate = serializers.DecimalField(max_digits=18, decimal_places=4, min_value=Decimal('0.0001'))
     date = serializers.DateField()
     comment = serializers.CharField(required=False, allow_blank=True, max_length=500)
@@ -233,7 +233,7 @@ class CurrencyTransferSerializer(serializers.Serializer):
         """Validate currency transfer"""
         from_account_id = data.get('from_account_id')
         to_account_id = data.get('to_account_id')
-        usd_amount = data.get('usd_amount')
+        amount = data.get('amount')
         
         # Accounts must be different
         if from_account_id == to_account_id:
@@ -256,21 +256,23 @@ class CurrencyTransferSerializer(serializers.Serializer):
                 'to_account_id': _('Destination account not found')
             })
         
-        # Validate currencies
-        if from_account.currency != 'USD':
+        # Validate currencies - must be different
+        if from_account.currency == to_account.currency:
             raise serializers.ValidationError({
-                'from_account_id': _('Source account must be USD')
+                'to_account_id': _('Accounts must have different currencies')
             })
         
-        if to_account.currency != 'UZS':
+        # Validate that currencies are USD and UZS
+        valid_currencies = {'USD', 'UZS'}
+        if from_account.currency not in valid_currencies or to_account.currency not in valid_currencies:
             raise serializers.ValidationError({
-                'to_account_id': _('Destination account must be UZS')
+                'from_account_id': _('Only USD and UZS currencies are supported')
             })
         
-        # Check sufficient balance in USD account
-        if from_account.balance < usd_amount:
+        # Check sufficient balance in source account
+        if from_account.balance < amount:
             raise serializers.ValidationError({
-                'usd_amount': _(f'Insufficient balance in USD account. Available: {from_account.balance} USD')
+                'amount': _(f'Insufficient balance. Available: {from_account.balance} {from_account.currency}')
             })
         
         # Store accounts in validated data for later use

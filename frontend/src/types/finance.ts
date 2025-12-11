@@ -97,7 +97,7 @@ export interface FinanceAccountFilters {
 export interface CurrencyTransferRequest {
   from_account_id: number;
   to_account_id: number;
-  usd_amount: number;
+  amount: number;
   rate: number;
   date: string;
   comment?: string;
@@ -107,8 +107,8 @@ export interface CurrencyTransferRequest {
 export interface CurrencyTransferResponse {
   success: boolean;
   message: string;
-  usd_transaction_id: number;
-  uzs_transaction_id: number;
+  source_transaction_id: number;
+  target_transaction_id: number;
   usd_amount: number;
   uzs_amount: number;
   rate: number;

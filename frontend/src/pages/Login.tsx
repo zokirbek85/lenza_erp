@@ -20,7 +20,6 @@ const Login = () => {
     setFormError(null);
     try {
       await login({ username, password });
-      // Redirect warehouse/sales users to /orders after successful login
       const currentRole = useAuthStore.getState().role;
       if (currentRole === 'warehouse' || currentRole === 'sales') {
         navigate('/orders', { replace: true });
@@ -55,7 +54,7 @@ const Login = () => {
     const lower = error.toLowerCase();
     if (lower.includes('otp code is required')) return 'auth.otpRequired';
     if (lower.includes('invalid otp')) return 'auth.invalidOtp';
-  if (lower.includes('2fa setup')) return 'auth.setup2faRequired';
+    if (lower.includes('2fa setup')) return 'auth.setup2faRequired';
     if (lower.includes('invalid username') || lower.includes('parol')) {
       return 'auth.invalidCredentials';
     }
@@ -69,55 +68,66 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-16">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 text-white shadow-2xl backdrop-blur">
+      <div className="glass-card w-full max-w-md p-8 text-white animate-scaleIn">
         <div className="mb-8 space-y-2 text-center">
           <p className="text-sm uppercase tracking-[0.5em] text-slate-300">{t('app.title')}</p>
-          <h1 className="text-3xl font-semibold">{t('auth.signIn')}</h1>
+          <h1 className="text-3xl font-semibold gradient-text">{t('auth.signIn')}</h1>
           <p className="text-sm text-slate-200">{t('auth.continue')}</p>
         </div>
+        
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-slate-200" htmlFor="username">
+            <label className="text-label text-slate-200" htmlFor="username">
               {t('auth.username')}
             </label>
             <input
               id="username"
               type="text"
-              className="mt-2 w-full rounded-lg border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder:text-slate-300 focus:border-amber-400 focus:outline-none"
+              className="input-field mt-2 w-full border-white/20 bg-white/10 text-white placeholder:text-slate-300 focus:border-amber-400"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               required
               autoComplete="username"
             />
           </div>
+          
           <div>
-            <label className="text-sm font-medium text-slate-200" htmlFor="password">
+            <label className="text-label text-slate-200" htmlFor="password">
               {t('auth.password')}
             </label>
             <input
               id="password"
               type="password"
-              className="mt-2 w-full rounded-lg border border-white/20 bg-white/10 px-4 py-2.5 text-white placeholder:text-slate-300 focus:border-amber-400 focus:outline-none"
+              className="input-field mt-2 w-full border-white/20 bg-white/10 text-white placeholder:text-slate-300 focus:border-amber-400"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
               autoComplete="current-password"
             />
           </div>
+          
           {activeErrorKey && (
             <div
               role="alert"
-              className="rounded-lg border border-rose-400/60 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-100"
+              className="card border-rose-400/60 bg-rose-500/10 text-sm font-medium text-rose-100 animate-fadeInUp"
             >
               {t(activeErrorKey)}
             </div>
           )}
+          
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn btn-primary w-full bg-amber-400 text-slate-900 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? '...' : t('auth.signIn')}
+            {loading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="spinner" />
+                <span>{t('common.loading')}</span>
+              </div>
+            ) : (
+              t('auth.signIn')
+            )}
           </button>
         </form>
       </div>
