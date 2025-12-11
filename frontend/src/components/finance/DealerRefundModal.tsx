@@ -41,7 +41,7 @@ export default function DealerRefundModal({
     setLoadingData(true);
     try {
       const [dealersData, accountsData] = await Promise.all([
-        fetchAllPages<Dealer>('/dealers/dealers/'),
+        fetchAllPages<Dealer>('/dealers/'),
         fetchAllPages<FinanceAccount>('/finance/accounts/', { is_active: true })
       ]);
       setDealers(dealersData);
