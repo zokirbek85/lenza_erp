@@ -3,29 +3,33 @@ import { useTranslation } from 'react-i18next';
 
 interface StatusBadgeProps {
   status: string;
+  className?: string;
 }
 
-const COLORS: Record<string, string> = {
-  created: 'bg-slate-100 text-slate-700',
-  draft: 'bg-slate-100 text-slate-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  packed: 'bg-indigo-100 text-indigo-700',
-  shipped: 'bg-amber-100 text-amber-700',
-  delivered: 'bg-emerald-100 text-emerald-700',
-  completed: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-rose-100 text-rose-700',
-  returned: 'bg-orange-100 text-orange-700',
+// Modern badge classes using new design system
+const BADGE_CLASSES: Record<string, string> = {
+  created: 'badge badge-info',
+  draft: 'badge badge-info',
+  confirmed: 'badge badge-blue',
+  packed: 'badge badge-blue',
+  shipped: 'badge badge-blue',
+  delivered: 'badge badge-success',
+  completed: 'badge badge-success',
+  cancelled: 'badge badge-error',
+  returned: 'badge badge-warning',
 };
 
-export const StatusBadge = ({ status }: StatusBadgeProps) => {
+export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
   const { t } = useTranslation();
-  const color = COLORS[status] ?? 'bg-slate-100 text-slate-700';
+  
+  // Get badge class from map, fallback to info
+  const badgeClass = BADGE_CLASSES[status] ?? 'badge badge-info';
   
   // Try to translate, fallback to raw status if no translation exists
   const label = t(`order.status.${status}`, { defaultValue: status });
   
   return (
-    <span className={clsx('rounded-full px-3 py-1 text-xs font-semibold capitalize', color)}>
+    <span className={clsx(badgeClass, className)}>
       {label}
     </span>
   );

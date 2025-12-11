@@ -9,7 +9,7 @@ interface OrderStatusProps {
   orderId: number;
   onStatusUpdated?: (orderId: number, newStatus: string) => void;
   canEdit?: boolean;
-  allowedStatuses?: string[]; // Backend returns this based on role and workflow
+  allowedStatuses?: string[];
 }
 
 const STATUS_OPTIONS = [
@@ -22,13 +22,18 @@ const STATUS_OPTIONS = [
   { value: 'returned', color: 'magenta' },
 ] as const;
 
-export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, allowedStatuses = [] }: OrderStatusProps) => {
+export const OrderStatus = ({ 
+  value, 
+  orderId, 
+  onStatusUpdated, 
+  canEdit = true, 
+  allowedStatuses = [] 
+}: OrderStatusProps) => {
   const { t } = useTranslation();
   const [selectedStatus, setSelectedStatus] = useState(value);
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  // can_edit=false bo'lsa, hech narsa qilmaslik
   const isEditable = canEdit && allowedStatuses.length > 0;
 
   const handleChange = (newStatus: string) => {
@@ -38,7 +43,6 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
       return;
     }
 
-    // Ruxsat etilmagan status tanlansa
     if (!allowedStatuses.includes(newStatus)) {
       message.warning(t('orders.status.notAllowed'));
       setSelectedStatus(value);
@@ -56,7 +60,6 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
       return;
     }
 
-    // Oxirgi tekshiruv - ruxsat bormi?
     if (!allowedStatuses.includes(selectedStatus)) {
       message.warning(t('orders.status.notAllowed'));
       setSelectedStatus(value);
@@ -82,7 +85,6 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
 
       message.success(t('orders.status.updated'));
       
-      // Parent komponentga xabar berish
       if (onStatusUpdated) {
         onStatusUpdated(orderId, response?.status || selectedStatus);
       }
@@ -97,8 +99,6 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
       });
       
       message.error(t('orders.status.updateFailed'));
-      
-      // Xatolik bo'lsa, eski statusga qaytarish
       setSelectedStatus(value);
       setIsDirty(false);
     } finally {
@@ -107,7 +107,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
   };
 
   return (
-    <Space>
+    <Space className="flex items-center gap-2">
       <Select
         style={{ width: 160 }}
         value={selectedStatus}
@@ -115,6 +115,7 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
         disabled={!isEditable}
         popupMatchSelectWidth={false}
         onClick={(e) => e.stopPropagation()}
+        className="transition-all duration-200"
         options={STATUS_OPTIONS.map((s) => ({
           label: (
             <Tag
@@ -132,15 +133,24 @@ export const OrderStatus = ({ value, orderId, onStatusUpdated, canEdit = true, a
         }))}
       />
       {isDirty && allowedStatuses.includes(selectedStatus) && (
-        <Button
-          type="primary"
-          size="small"
-          icon={loading ? <SyncOutlined spin /> : <CheckOutlined />}
-          loading={loading}
+        <button
           onClick={handleConfirm}
+          disabled={loading}
+          className="btn btn-success btn-sm animate-scaleIn"
+          type="button"
         >
-          {t('common.confirm')}
-        </Button>
+          {loading ? (
+            <>
+              <SyncOutlined spin />
+              <span className="ml-1">{t('common.saving', 'Saqlanmoqda...')}</span>
+            </>
+          ) : (
+            <>
+              <CheckOutlined />
+              <span className="ml-1">{t('common.confirm')}</span>
+            </>
+          )}
+        </button>
       )}
     </Space>
   );
