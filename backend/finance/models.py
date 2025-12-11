@@ -256,6 +256,7 @@ class FinanceTransaction(models.Model):
         OPENING_BALANCE = 'opening_balance', _('Opening Balance')
         CURRENCY_EXCHANGE_OUT = 'currency_exchange_out', _('Currency Exchange Out')
         CURRENCY_EXCHANGE_IN = 'currency_exchange_in', _('Currency Exchange In')
+        DEALER_REFUND = 'dealer_refund', _('Dealer Refund')
     
     class TransactionStatus(models.TextChoices):
         DRAFT = 'draft', _('Draft')

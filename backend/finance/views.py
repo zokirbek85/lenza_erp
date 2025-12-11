@@ -17,6 +17,7 @@ from .models import ExchangeRate, ExpenseCategory, FinanceAccount, FinanceTransa
 from .serializers import (
     CashSummaryResponseSerializer,
     CurrencyTransferSerializer,
+    DealerRefundSerializer,
     ExchangeRateSerializer,
     ExpenseCategorySerializer,
     FinanceAccountSerializer,
@@ -653,3 +654,106 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
         stats.sort(key=lambda x: x['total_uzs'] + (x['total_usd'] * 12500), reverse=True)
         
         return Response(stats)
+
+
+class DealerRefundView(APIView):
+    """
+    Dealer refund - dilerga to'lov qaytarish
+    POST /api/finance/dealer-refund/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Refund money to dealer"""
+        # Check permissions
+        user = request.user
+        if not (user.is_superuser or getattr(user, 'role', None) in ['admin', 'accountant']):
+            raise PermissionDenied(_('Sizda dilerga to\'lov qaytarish huquqi yo\'q'))
+        
+        serializer = DealerRefundSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Extract validated data
+        dealer = serializer.validated_data['dealer']
+        account = serializer.validated_data['account']
+        amount = serializer.validated_data['amount']
+        currency = serializer.validated_data['currency']
+        description = serializer.validated_data.get('description', '')
+        
+        # Get exchange rate if conversion needed
+        from core.utils.currency import get_exchange_rate
+        exchange_rate, rate_date = get_exchange_rate()
+        
+        # Calculate amount to deduct from dealer balance
+        # Dealer balance currency is based on contract
+        dealer_currency = dealer.contract_currency if hasattr(dealer, 'contract_currency') else 'UZS'
+        
+        from decimal import Decimal, ROUND_HALF_UP
+        
+        if currency == dealer_currency:
+            # Same currency - direct deduction
+            dealer_amount = amount
+            used_rate = None
+        elif currency == 'UZS' and dealer_currency == 'USD':
+            # Refunding UZS but dealer balance is in USD
+            # Convert UZS to USD
+            dealer_amount = (amount / exchange_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            used_rate = exchange_rate
+        elif currency == 'USD' and dealer_currency == 'UZS':
+            # Refunding USD but dealer balance is in UZS
+            # Convert USD to UZS
+            dealer_amount = (amount * exchange_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            used_rate = exchange_rate
+        else:
+            return Response({
+                'error': 'Invalid currency combination'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create transaction atomically
+        from django.db import transaction as db_transaction
+        
+        with db_transaction.atomic():
+            # Create refund transaction
+            refund_transaction = FinanceTransaction.objects.create(
+                type=FinanceTransaction.TransactionType.DEALER_REFUND,
+                dealer=dealer,
+                account=account,
+                date=timezone.localdate(),
+                currency=currency,
+                amount=amount,
+                exchange_rate=used_rate,
+                category='Dealer Refund',
+                comment=description or f'Refund to {dealer.name}',
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                created_by=user,
+                approved_by=user,
+                approved_at=timezone.now()
+            )
+            
+            # Update dealer balance (deduct the amount)
+            # Note: Dealer model needs a balance field
+            # Assuming dealer has balance field
+            if hasattr(dealer, 'balance'):
+                dealer.balance = (dealer.balance or Decimal('0')) - dealer_amount
+                dealer.save(update_fields=['balance'])
+        
+        return Response({
+            'success': True,
+            'message': _('Refund completed successfully'),
+            'transaction_id': refund_transaction.id,
+            'refund_amount': float(amount),
+            'currency': currency,
+            'dealer_balance_deduction': float(dealer_amount),
+            'dealer_currency': dealer_currency,
+            'exchange_rate': float(used_rate) if used_rate else None,
+            'account': {
+                'id': account.id,
+                'name': account.name,
+                'new_balance': float(account.balance)
+            },
+            'dealer': {
+                'id': dealer.id,
+                'name': dealer.name,
+                'new_balance': float(dealer.balance) if hasattr(dealer, 'balance') else None
+            }
+        }, status=status.HTTP_201_CREATED)

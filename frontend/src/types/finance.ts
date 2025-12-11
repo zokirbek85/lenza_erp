@@ -172,3 +172,33 @@ export interface ExpenseCategoryStatistics {
   total_uzs: number;
   total_usd: number;
 }
+
+// Dealer Refund
+export interface DealerRefundRequest {
+  dealer_id: number;
+  amount: number;
+  currency: 'USD' | 'UZS';
+  account_id: number;
+  description?: string;
+}
+
+export interface DealerRefundResponse {
+  success: boolean;
+  message: string;
+  transaction_id: number;
+  refund_amount: number;
+  currency: string;
+  dealer_balance_deduction: number;
+  dealer_currency: string;
+  exchange_rate: number | null;
+  account: {
+    id: number;
+    name: string;
+    new_balance: number;
+  };
+  dealer: {
+    id: number;
+    name: string;
+    new_balance: number | null;
+  };
+}

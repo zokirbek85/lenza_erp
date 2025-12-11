@@ -7,6 +7,7 @@ import AddIncomeModal from '../components/finance/AddIncomeModal';
 import AddExpenseModal from '../components/finance/AddExpenseModal';
 import AccountModal from '../components/finance/AccountModal';
 import ConvertCurrencyModal from '../components/finance/ConvertCurrencyModal';
+import DealerRefundModal from '../components/finance/DealerRefundModal';
 import BalanceCard from '../components/finance/BalanceCard';
 import { exportFinanceDashboardToPDF, exportFinanceDashboardToXLSX } from '../utils/exportUtils';
 
@@ -19,6 +20,7 @@ export default function FinanceDashboard() {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedUsdAccount, setSelectedUsdAccount] = useState<FinanceAccount | null>(null);
   const [selectedAccountForEdit, setSelectedAccountForEdit] = useState<FinanceAccount | null>(null);
 
@@ -167,6 +169,15 @@ export default function FinanceDashboard() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             {t('finance.income.add', 'Kirim qo\'shish')}
+          </button>
+          <button
+            onClick={() => setShowRefundModal(true)}
+            className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            {t('finance.dealerRefund.button', 'Dilerga Qaytarish')}
           </button>
           <button
             onClick={() => setShowExpenseModal(true)}
@@ -448,6 +459,11 @@ export default function FinanceDashboard() {
         }}
         onSuccess={handleTransactionSuccess}
         defaultFromAccount={selectedUsdAccount}
+      />
+      <DealerRefundModal
+        visible={showRefundModal}
+        onClose={() => setShowRefundModal(false)}
+        onSuccess={handleTransactionSuccess}
       />
     </div>
   );

@@ -8,6 +8,8 @@ import type {
   PaginatedResponse,
   CurrencyTransferRequest,
   CurrencyTransferResponse,
+  DealerRefundRequest,
+  DealerRefundResponse,
   ExpenseCategory,
   ExpenseCategoryCreate,
   ExpenseCategoryUpdate,
@@ -59,6 +61,10 @@ export const getCashSummary = () =>
 // Currency Transfer
 export const transferCurrency = (data: CurrencyTransferRequest) => 
   http.post<CurrencyTransferResponse>('/finance/transfer-currency/', data);
+
+// Dealer Refund
+export const dealerRefund = (data: DealerRefundRequest) =>
+  http.post<DealerRefundResponse>('/finance/dealer-refund/', data);
 
 // Expense Categories
 export const getExpenseCategories = (params?: { is_active?: boolean }) => 

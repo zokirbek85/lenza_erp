@@ -380,3 +380,55 @@ class ExpenseCategorySerializer(serializers.ModelSerializer):
         validated_data.pop('user', None)
         validated_data.pop('is_global', None)
         return super().update(instance, validated_data)
+
+
+class DealerRefundSerializer(serializers.Serializer):
+    """Dealer refund (dilerga to'lov qaytarish) serializer"""
+    dealer_id = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=18, decimal_places=2, min_value=Decimal('0.01'))
+    currency = serializers.ChoiceField(choices=['USD', 'UZS'])
+    account_id = serializers.IntegerField()
+    description = serializers.CharField(required=False, allow_blank=True, max_length=500)
+    
+    def validate(self, data):
+        """Validate dealer refund"""
+        from dealers.models import Dealer
+        
+        dealer_id = data.get('dealer_id')
+        account_id = data.get('account_id')
+        amount = data.get('amount')
+        currency = data.get('currency')
+        
+        # Validate dealer exists
+        try:
+            dealer = Dealer.objects.get(id=dealer_id)
+        except Dealer.DoesNotExist:
+            raise serializers.ValidationError({
+                'dealer_id': _('Dealer not found')
+            })
+        
+        # Validate account exists
+        try:
+            account = FinanceAccount.objects.get(id=account_id)
+        except FinanceAccount.DoesNotExist:
+            raise serializers.ValidationError({
+                'account_id': _('Account not found')
+            })
+        
+        # Validate account currency matches refund currency
+        if account.currency != currency:
+            raise serializers.ValidationError({
+                'currency': _(f'Account currency is {account.currency}, but refund currency is {currency}')
+            })
+        
+        # Check sufficient balance in account
+        if account.balance < amount:
+            raise serializers.ValidationError({
+                'amount': _(f'Insufficient balance in account. Available: {account.balance} {account.currency}')
+            })
+        
+        # Store objects in validated data
+        data['dealer'] = dealer
+        data['account'] = account
+        
+        return data

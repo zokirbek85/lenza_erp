@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CashSummaryView,
     CurrencyTransferView,
+    DealerRefundView,
     ExchangeRateViewSet,
     ExpenseCategoryViewSet,
     FinanceAccountViewSet,
@@ -20,4 +21,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('summary/', CashSummaryView.as_view(), name='cash-summary'),
     path('transfer-currency/', CurrencyTransferView.as_view(), name='transfer-currency'),
+    path('dealer-refund/', DealerRefundView.as_view(), name='dealer-refund'),
 ]
