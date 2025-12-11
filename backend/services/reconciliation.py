@@ -73,6 +73,17 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
         ).aggregate(total=Sum('amount_usd'))['total']
         or Decimal('0')
     )
+    # Get approved refunds to dealer (subtract from payments)
+    refunds_total = (
+        FinanceTransaction.objects.filter(
+            dealer=dealer,
+            type=FinanceTransaction.TransactionType.DEALER_REFUND,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            date__gte=start,
+            date__lte=end,
+        ).aggregate(total=Sum('amount_usd'))['total']
+        or Decimal('0')
+    )
     returns_total = (
         OrderReturn.objects.filter(
             order__dealer=dealer,
@@ -89,7 +100,9 @@ def _aggregate_totals(dealer: Dealer, start: date, end: date) -> StatementTotals
         ).aggregate(total=Sum('total_sum'))['total']
         or Decimal('0')
     )
-    return StatementTotals(orders=orders_total, payments=payments_total, returns=returns_total + new_returns_total)
+    # Refunds increase dealer balance, payments decrease it
+    net_payments = payments_total - refunds_total
+    return StatementTotals(orders=orders_total, payments=net_payments, returns=returns_total + new_returns_total)
 
 
 def get_reconciliation_data(
@@ -135,20 +148,23 @@ def get_reconciliation_data(
     )
     logger.info(f"Found {len(orders)} orders")
 
-    # Get approved income transactions (payments from dealer)
+    # Get approved income transactions (payments from dealer) and refunds to dealer
     payments = list(
         FinanceTransaction.objects.filter(
             dealer=dealer,
-            type=FinanceTransaction.TransactionType.INCOME,
+            type__in=[
+                FinanceTransaction.TransactionType.INCOME,
+                FinanceTransaction.TransactionType.DEALER_REFUND,
+            ],
             status=FinanceTransaction.TransactionStatus.APPROVED,
             date__gte=start,
             date__lte=end,
         )
         .select_related('account')
         .order_by('date')
-        .values('date', 'amount_usd', 'currency', 'exchange_rate', 'exchange_rate_date', 'account__name', 'account__type', 'comment')
+        .values('date', 'amount_usd', 'currency', 'exchange_rate', 'exchange_rate_date', 'account__name', 'account__type', 'comment', 'type')
     )
-    logger.info(f"Found {len(payments)} payments")
+    logger.info(f"Found {len(payments)} payments and refunds")
 
     returns = list(
         OrderReturn.objects.filter(
@@ -212,14 +228,20 @@ def get_reconciliation_data(
             account_type = row.get('account__type') or ''
             currency = row.get('currency') or ''
             comment = row.get('comment') or ''
+            transaction_type = row.get('type')
+            
+            # Check if this is a refund
+            is_refund = transaction_type == 'dealer_refund'
             
             # Build label: "Account Name (Type) - Comment" or just "Account Name"
             label_parts = [account_name]
             if account_type:
                 account_type_display = account_type.capitalize()
                 label_parts.append(f"({account_type_display})")
+            if is_refund:
+                label_parts.append("- Qaytarildi")
             if comment:
-                label_parts.append(f"- {comment}")
+                label_parts.append(f"- {comment}" if is_refund else f"- {comment}")
             
             label = ' '.join(label_parts)
             
@@ -230,6 +252,7 @@ def get_reconciliation_data(
                 'currency': currency,
                 'exchange_rate': float(row['exchange_rate']) if row.get('exchange_rate') else None,
                 'exchange_rate_date': row.get('exchange_rate_date'),
+                'is_refund': is_refund,
             }
 
     def _format_returns():
@@ -274,13 +297,15 @@ def get_reconciliation_data(
             }
         )
     for payment in formatted_payments:
+        # Refunds increase dealer balance (debit), payments decrease it (credit)
+        is_refund = payment.get('is_refund', False)
         movements.append(
             {
                 'date': payment['date'],
                 'label': payment['method'],
                 'amount_usd': payment['amount_usd'],
-                'direction': 'credit',
-                'type': 'payment',
+                'direction': 'debit' if is_refund else 'credit',
+                'type': 'refund' if is_refund else 'payment',
             }
         )
 
