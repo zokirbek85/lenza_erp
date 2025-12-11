@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import { dealerRefund } from '../../api/finance';
-import { getDealers } from '../../api/dealers';
 import type { FinanceAccount } from '../../types/finance';
 import type { Dealer } from '../../types/dealer';
 import { fetchAllPages } from '../../utils/pagination';
@@ -96,7 +95,7 @@ export default function DealerRefundModal({
         description: formData.description,
       });
       
-      message.success(response.message || t('finance.dealerRefund.success', 'To\'lov qaytarish muvaffaqiyatli'));
+      message.success(response.data.message || t('finance.dealerRefund.success', 'To\'lov qaytarish muvaffaqiyatli'));
       onSuccess();
       onClose();
       resetForm();
@@ -124,7 +123,6 @@ export default function DealerRefundModal({
 
   if (!visible) return null;
 
-  const selectedDealer = dealers.find(d => d.id === formData.dealer_id);
   const selectedAccount = accounts.find(a => a.id === formData.account_id);
   const availableAccounts = accounts.filter(a => a.currency === formData.currency);
 
@@ -171,7 +169,7 @@ export default function DealerRefundModal({
                   name="currency"
                   value="UZS"
                   checked={formData.currency === 'UZS'}
-                  onChange={(e) => setFormData({ ...formData, currency: 'UZS', account_id: 0 })}
+                  onChange={() => setFormData({ ...formData, currency: 'UZS', account_id: 0 })}
                   className="mr-2"
                 />
                 <span className="text-gray-700 dark:text-gray-300">UZS</span>
@@ -182,7 +180,7 @@ export default function DealerRefundModal({
                   name="currency"
                   value="USD"
                   checked={formData.currency === 'USD'}
-                  onChange={(e) => setFormData({ ...formData, currency: 'USD', account_id: 0 })}
+                  onChange={() => setFormData({ ...formData, currency: 'USD', account_id: 0 })}
                   className="mr-2"
                 />
                 <span className="text-gray-700 dark:text-gray-300">USD</span>

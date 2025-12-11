@@ -21,8 +21,6 @@ export default function ConvertCurrencyModal({
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [usdAccounts, setUsdAccounts] = useState<FinanceAccount[]>([]);
-  const [uzsAccounts, setUzsAccounts] = useState<FinanceAccount[]>([]);
   const [allAccounts, setAllAccounts] = useState<FinanceAccount[]>([]);
   
   const [formData, setFormData] = useState({
@@ -63,8 +61,6 @@ export default function ConvertCurrencyModal({
     try {
       const accounts = await fetchAllPages<FinanceAccount>('/finance/accounts/', { is_active: true });
       setAllAccounts(accounts);
-      setUsdAccounts(accounts.filter(a => a.currency === 'USD'));
-      setUzsAccounts(accounts.filter(a => a.currency === 'UZS'));
     } catch (error: any) {
       console.error('Failed to load accounts:', error);
       message.error(t('common.messages.error', 'Xatolik yuz berdi'));
