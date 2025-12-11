@@ -45,7 +45,6 @@ interface ProductOption {
   name: string;
   sell_price_usd: number;
   stock_ok?: number;
-  // stock_defect removed from order creation - only good stock (stock_ok) is used
   total_stock?: number;
   brand?: { id: number; name: string } | null;
   category?: { id: number; name: string } | null;
@@ -190,17 +189,13 @@ const OrdersPage = () => {
     const collected: T[] = [];
     let nextUrl: string | null = endpoint;
     while (nextUrl) {
-      // Normalize URL: if it's a full URL, extract just the path and query
-      // This ensures we use the http client's baseURL (which has HTTPS)
       let url = nextUrl;
       if (url.startsWith('http://') || url.startsWith('https://')) {
         try {
           const urlObj = new URL(url);
-          // Use pathname + search to get relative URL (e.g., /api/dealers/?page=2)
           url = urlObj.pathname + urlObj.search;
-          // Remove /api prefix if present since http client baseURL already includes it
           if (url.startsWith('/api/')) {
-            url = url.substring(4); // Remove '/api' prefix
+            url = url.substring(4);
           }
         } catch (e) {
           console.warn('Failed to parse pagination URL:', url);
@@ -259,7 +254,6 @@ const OrdersPage = () => {
     try {
       console.log('Loading dealers, users, brands, categories...');
       
-      // Load dealers using unpaginated list-all endpoint with is_active filter
       const dealersResponse = await http.get('/dealers/list-all/', { 
         params: { is_active: true } 
       });
@@ -333,7 +327,7 @@ const OrdersPage = () => {
     } finally {
       setProductsLoading(false);
     }
-  }, [fetchProducts]);
+  }, [fetchProducts, t]);
 
   useEffect(() => {
     loadProducts(productSearch).catch(() => null);
@@ -398,8 +392,6 @@ const OrdersPage = () => {
       return;
     }
     
-    // Check if product has sufficient good stock (stock_ok only)
-    // stock_defect is NOT used in order creation
     const stockOk = selectedProduct.stock_ok ?? 0;
     if (stockOk <= 0) {
       toast.error(t('orders.errors.productOutOfStock'));
@@ -465,7 +457,7 @@ const OrdersPage = () => {
     <div className="grid gap-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Holat</label>
+          <label className="text-label">Holat</label>
           <Select
             value={statusFilter}
             onChange={(val) => setStatusFilter(String(val))}
@@ -484,7 +476,7 @@ const OrdersPage = () => {
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Menejer</label>
+          <label className="text-label">Menejer</label>
           <Select
             value={managerFilter ?? ''}
             onChange={(val) => setManagerFilter(String(val))}
@@ -498,28 +490,26 @@ const OrdersPage = () => {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Sana (dan)</label>
+          <label className="text-label">Sana (dan)</label>
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="input-field mt-1 w-full"
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Sana (gacha)</label>
+          <label className="text-label">Sana (gacha)</label>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            className="input-field mt-1 w-full"
           />
         </div>
       </div>
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {t('orders.filters.brand')}
-        </label>
+        <label className="text-label">{t('orders.filters.brand')}</label>
         <Select
           value={brandId ?? ''}
           onChange={(val) => handleFilterChange('brandId', String(val))}
@@ -531,9 +521,7 @@ const OrdersPage = () => {
         />
       </div>
       <div>
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {t('orders.filters.category')}
-        </label>
+        <label className="text-label">{t('orders.filters.category')}</label>
         <Select
           value={categoryId ?? ''}
           onChange={(val) => handleFilterChange('categoryId', String(val))}
@@ -554,7 +542,7 @@ const OrdersPage = () => {
             setDateTo('');
             setFilters({ brandId: undefined, categoryId: undefined });
           }}
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="btn btn-secondary w-full"
         >
           Filtrlarni tozalash
         </button>
@@ -562,7 +550,6 @@ const OrdersPage = () => {
     </div>
   );
 
-  // Calculate discount and totals
   const calculateOrderTotals = () => {
     const subtotal = selectedItems.reduce((sum, item) => sum + item.qty * item.price_usd, 0);
     
@@ -594,7 +581,6 @@ const OrdersPage = () => {
       return;
     }
 
-    // Validate discount
     if (discountType !== 'none') {
       const discValue = parseFloat(discountValue) || 0;
       if (discountType === 'percentage' && (discValue < 0 || discValue > 100)) {
@@ -641,7 +627,6 @@ const OrdersPage = () => {
   };
 
   const handleStatusUpdated = (orderId: number, newStatus: string) => {
-    // OrderStatus komponenti muvaffaqiyatli yangilanganda chaqiriladi
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order
@@ -719,7 +704,6 @@ const OrdersPage = () => {
         );
       }
 
-      // Refresh orders list
       loadOrders().catch(() => null);
     } catch (error) {
       console.error(error);
@@ -727,7 +711,6 @@ const OrdersPage = () => {
       toast.error(t('orders.import.errorMessage'));
     }
 
-    // Reset input
     event.target.value = '';
   };
 
@@ -749,7 +732,6 @@ const OrdersPage = () => {
     onStatusUpdated: handleStatusUpdatedFromCards,
   };
 
-  // Always run useMemo before conditional rendering to maintain hooks order
   const orderRows = useMemo(
     () =>
       orders.map((order) => ({
@@ -770,7 +752,6 @@ const OrdersPage = () => {
           </div>
         </header>
 
-        {/* Mobile Create Form */}
         {!isWarehouse && (
           <MobileOrderForm
             open={showCreateForm}
@@ -831,7 +812,6 @@ const OrdersPage = () => {
           <OrdersMobileCards data={orders} handlers={mobileHandlers} />
         )}
 
-        {/* Floating Action Button (FAB) for creating new order */}
         {!isWarehouse && (
           <button
             onClick={handleToggleCreateForm}
@@ -858,94 +838,101 @@ const OrdersPage = () => {
   // Desktop view
   return (
     <section className="page-wrapper space-y-6">
-      <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
-        </div>
-        {!isWarehouse && (
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleDownloadTemplate}
-              title={t('orders.import.templateTooltip')}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-            >
-              📥 {t('orders.import.downloadTemplate')}
-            </button>
-            <label
-              title={t('orders.import.importTooltip')}
-              className="cursor-pointer rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-            >
-              📤 {t('orders.import.uploadFile')}
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleImportOrders}
-                className="hidden"
-              />
-            </label>
-            <button
-              onClick={() => handlePdf()}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-            >
-              {t('actions.exportPdf')}
-            </button>
-            <button
-              onClick={handleExcel}
-              className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-            >
-              {t('actions.exportExcel')}
-            </button>
+      {/* Header with gradient and modern styling */}
+      <header className="card animate-fadeInUp">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('nav.orders')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.header.subtitle')}</p>
           </div>
-        )}
+          {!isWarehouse && (
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleDownloadTemplate}
+                title={t('orders.import.templateTooltip')}
+                className="btn btn-ghost btn-sm"
+              >
+                📥 {t('orders.import.downloadTemplate')}
+              </button>
+              <label
+                title={t('orders.import.importTooltip')}
+                className="btn btn-secondary btn-sm cursor-pointer"
+              >
+                📤 {t('orders.import.uploadFile')}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportOrders}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={() => handlePdf()}
+                className="btn btn-ghost btn-sm"
+              >
+                {t('actions.exportPdf')}
+              </button>
+              <button
+                onClick={handleExcel}
+                className="btn btn-primary btn-sm"
+              >
+                {t('actions.exportExcel')}
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
+      {/* Create Order Button */}
       {!isWarehouse && (
-        <div className="mb-4 flex justify-end">
-          <Button
-            type={showCreateForm ? 'default' : 'primary'}
-            icon={showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
+        <div className="flex justify-end animate-scaleIn">
+          <button
             onClick={handleToggleCreateForm}
+            className={showCreateForm ? "btn btn-secondary" : "btn btn-primary"}
           >
-            {t(showCreateForm ? 'orders.header.hideForm' : 'orders.header.showForm')}
-          </Button>
+            {showCreateForm ? <MinusOutlined /> : <PlusOutlined />}
+            <span className="ml-2">
+              {t(showCreateForm ? 'orders.header.hideForm' : 'orders.header.showForm')}
+            </span>
+          </button>
         </div>
       )}
 
       {/* Order Status Statistics Cards */}
-      <OrderStatusCards
-        onStatusClick={(status) => {
-          setStatusFilter(status === statusFilter ? '' : status);
-          setPage(1);
-        }}
-        currentFilter={statusFilter}
-      />
+      <div className="animate-fadeInUp">
+        <OrderStatusCards
+          onStatusClick={(status) => {
+            setStatusFilter(status === statusFilter ? '' : status);
+            setPage(1);
+          }}
+          currentFilter={statusFilter}
+        />
+      </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-        {/* Collapsible Filter Header */}
+      {/* Filters Section */}
+      <div className="card animate-fadeInUp">
         <button
           type="button"
           onClick={() => setFiltersExpanded(!filtersExpanded)}
-          className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg"
         >
           <div className="flex items-center gap-3">
             <span className="text-lg font-semibold text-slate-900 dark:text-white">{t('orders.filters.title')}</span>
             {(statusFilter || managerFilter || dateFrom || dateTo || brandId || categoryId) && (
-              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              <span className="badge badge-success">
                 {t('orders.filters.activeLabel')}
               </span>
             )}
           </div>
           {filtersExpanded ? (
-            <UpOutlined className="text-slate-500 transition-transform dark:text-slate-400" />
+            <UpOutlined className="text-slate-500 dark:text-slate-400" />
           ) : (
-            <DownOutlined className="text-slate-500 transition-transform dark:text-slate-400" />
+            <DownOutlined className="text-slate-500 dark:text-slate-400" />
           )}
         </button>
 
-        {/* Collapsible Filter Content */}
         <div
-          className="overflow-hidden transition-all duration-300 ease-in-out"
+          className="overflow-hidden transition-all duration-300"
           style={{
             maxHeight: filtersExpanded ? '1000px' : '0',
             opacity: filtersExpanded ? 1 : 0,
@@ -957,8 +944,9 @@ const OrdersPage = () => {
         </div>
       </div>
 
+      {/* Create Order Form */}
       {!isWarehouse && (
-        <div className={styles.orderCollapsePanel}>
+        <div className={`${styles.orderCollapsePanel} animate-scaleIn`}>
           <Collapse
             activeKey={showCreateForm ? [CREATE_FORM_PANEL_KEY] : []}
             onChange={(key) => handleCollapseChange(key as string[] | string)}
@@ -967,312 +955,289 @@ const OrdersPage = () => {
                 key: CREATE_FORM_PANEL_KEY,
                 label: t('orders.header.panelTitle'),
                 children: showCreateForm ? (
-                <form
-                  onSubmit={handleSubmit}
-                  className="space-y-4"
-                >
-                  <div className="grid gap-4 md:grid-cols-4">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {t('orders.form.dealer')}
-                      </label>
-                      <Select
-                        value={dealerId}
-                        onChange={(val) => setDealerId(String(val))}
-                        className="mt-1 w-full"
-                        options={[{ label: t('orders.form.dealerPlaceholder'), value: '' }, ...(dealers || []).map(d => ({ label: d.name, value: String(d.id) }))]}
-                        placeholder={t('orders.form.dealerPlaceholder')}
-                        showSearch
-                        allowClear
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {t('orders.form.orderType')}
-                      </label>
-                      <Select
-                        value={orderType}
-                        onChange={(val) => setOrderType(String(val) as 'regular' | 'reserve')}
-                        className="mt-1 w-full"
-                        options={[{ label: t('orders.types.regular'), value: 'regular' }, { label: t('orders.types.reserve'), value: 'reserve' }]}
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {t('orders.form.note')}
-                      </label>
-                      <input
-                        value={note}
-                        onChange={(event) => setNote(event.target.value)}
-                        placeholder={t('orders.form.notePlaceholder')}
-                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Discount Section */}
-                  <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                      <input
-                        type="checkbox"
-                        checked={showDiscountFields}
-                        onChange={(e) => {
-                          setShowDiscountFields(e.target.checked);
-                          if (!e.target.checked) {
-                            setDiscountType('none');
-                            setDiscountValue('0');
-                          }
-                        }}
-                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-slate-600"
-                      />
-                      <span>{t('orders.discount.apply', 'Chegirma qo\'llash')}</span>
-                    </label>
-
-                    {showDiscountFields && (
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                            {t('orders.discount.type', 'Chegirma turi')}
-                          </label>
-                          <Select
-                            value={discountType}
-                            onChange={(val) => {
-                              setDiscountType(String(val) as 'none' | 'percentage' | 'amount');
-                              setDiscountValue('0');
-                            }}
-                            className="mt-1 w-full"
-                            options={[
-                              { label: t('orders.discount.none', 'Yo\'q'), value: 'none' },
-                              { label: t('orders.discount.percentage', 'Foiz (%)'), value: 'percentage' },
-                              { label: t('orders.discount.fixedAmount', "Qat'iy summa (USD)"), value: 'amount' },
-                            ]}
-                          />
-                        </div>
-
-                        {discountType !== 'none' && (
-                          <div>
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                              {discountType === 'percentage' 
-                                ? t('orders.discount.percentageValue', 'Chegirma foizi (%)')
-                                : t('orders.discount.amountValue', 'Chegirma summasi (USD)')
-                              }
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max={discountType === 'percentage' ? '100' : undefined}
-                              value={discountValue}
-                              onChange={(e) => setDiscountValue(e.target.value)}
-                              placeholder={discountType === 'percentage' ? '0-100' : '0.00'}
-                              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                            />
-                          </div>
-                        )}
-
-                        {/* Discount Preview */}
-                        {discountType !== 'none' && selectedItems.length > 0 && (
-                          <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
-                            <div className="mb-2 flex justify-between text-sm text-slate-600 dark:text-slate-400">
-                              <span>{t('orders.discount.subtotal', 'Oraliq jami')}:</span>
-                              <span>${calculateOrderTotals().subtotal}</span>
-                            </div>
-                            <div className="mb-2 flex justify-between text-sm text-red-600 dark:text-red-400">
-                              <span>{t('orders.discount.label', 'Chegirma')}:</span>
-                              <span>-${calculateOrderTotals().discountAmount}</span>
-                            </div>
-                            <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold dark:border-slate-700">
-                              <span>{t('orders.discount.finalTotal', 'Yakuniy jami')}:</span>
-                              <span>${calculateOrderTotals().total}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {t('orders.filters.brand')}
-                      </label>
-                      <Select
-                        value={brandId ?? ''}
-                        onChange={(val) => handleFilterChange('brandId', String(val))}
-                        className="mt-1 w-full"
-                        options={[{ label: t('orders.filters.allBrands'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
-                        showSearch
-                        allowClear
-                        placeholder={t('orders.filters.allBrands')}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {t('orders.filters.category')}
-                      </label>
-                      <Select
-                        value={categoryId ?? ''}
-                        onChange={(val) => handleFilterChange('categoryId', String(val))}
-                        className="mt-1 w-full"
-                        options={[{ label: t('orders.filters.allCategories'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
-                        showSearch
-                        allowClear
-                        placeholder={t('orders.filters.allCategories')}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 rounded-lg border border-slate-200/50 bg-slate-50/50 p-4 dark:border-slate-700/50 dark:bg-slate-800/30">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                        {t('orders.form.productSearch')}
-                      </label>
-                      <input
-                        value={productSearch}
-                        onChange={(event) => setProductSearch(event.target.value)}
-                        placeholder={t('orders.form.productSearchPlaceholder')}
-                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-[2fr,1fr,1fr,auto]">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Dealer and Order Type */}
+                    <div className="grid gap-4 md:grid-cols-4">
                       <div>
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                          {t('orders.form.productSelect')}
-                        </label>
+                        <label className="text-label">{t('orders.form.dealer')}</label>
                         <Select
-                          value={selectedProduct?.id ? String(selectedProduct.id) : ''}
-                          onChange={(val) => handleSelectProduct(String(val))}
+                          value={dealerId}
+                          onChange={(val) => setDealerId(String(val))}
                           className="mt-1 w-full"
+                          options={[{ label: t('orders.form.dealerPlaceholder'), value: '' }, ...(dealers || []).map(d => ({ label: d.name, value: String(d.id) }))]}
+                          placeholder={t('orders.form.dealerPlaceholder')}
                           showSearch
-                          options={filteredProducts.map((product) => {
-                            const stock = product.stock_ok ?? 0;
-                            const isOutOfStock = stock <= 0;
-                            const brandLabel = product.brand?.name ?? '-';
-                            const categoryLabel = product.category?.name ?? '-';
-                            const stockLabel = isOutOfStock
-                              ? `(⚠️ ${t('orders.product.outOfStock')})`
-                              : `(${t('orders.product.inStock')}: ${stock})`;
-                            const categoryName = product.category?.name?.toLowerCase() || '';
-                            const doorPanelKeyword = t('orders.product.doorPanelKeyword', 'дверное полотно').toLowerCase();
-                            const showSize = !categoryName.includes(doorPanelKeyword) && product.size && product.size.trim().length > 0;
-                            const displayName = showSize ? `${cleanName(product.name)} — ${product.size}` : cleanName(product.name);
-                            return {
-                              label: `${displayName} - ${brandLabel} - ${categoryLabel} ${stockLabel}`,
-                              value: String(product.id),
-                              disabled: isOutOfStock,
-                            };
-                          })}
-                          placeholder={t('orders.form.productSelectPlaceholder')}
                           allowClear
                         />
-                        {!filteredProducts.length && !productsLoading && (
-                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t('orders.product.noMatches')}</p>
-                        )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('orders.form.quantity')}</label>
-                        <input
-                          type="number"
-                          min={0.01}
-                          step="0.01"
-                          inputMode="decimal"
-                          placeholder="0.00"
-                          value={quantityInput}
-                          onChange={(event) => setQuantityInput(event.target.value)}
-                          onBlur={() => setQuantityInput(formatQuantityInputValue(quantityInput || DEFAULT_QTY))}
-                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        <label className="text-label">{t('orders.form.orderType')}</label>
+                        <Select
+                          value={orderType}
+                          onChange={(val) => setOrderType(String(val) as 'regular' | 'reserve')}
+                          className="mt-1 w-full"
+                          options={[{ label: t('orders.types.regular'), value: 'regular' }, { label: t('orders.types.reserve'), value: 'reserve' }]}
                         />
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('orders.form.price')}</label>
+                      <div className="md:col-span-2">
+                        <label className="text-label">{t('orders.form.note')}</label>
                         <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          value={priceInput}
-                          onChange={(event) => setPriceInput(event.target.value)}
-                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          value={note}
+                          onChange={(event) => setNote(event.target.value)}
+                          placeholder={t('orders.form.notePlaceholder')}
+                          className="input-field mt-1 w-full"
                         />
-                      </div>
-                      <div className="flex items-end">
-                        <button
-                          type="button"
-                          onClick={handleAddSelectedProduct}
-                          className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-                        >
-                          ➕ {t('common:actions.add')}
-                        </button>
                       </div>
                     </div>
-                    {productsLoading && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{t('orders.form.productsLoading')}</p>
-                    )}
-                  </div>
 
-                  <OrderItemTable
-                    items={selectedItems}
-                    onQtyChange={handleItemQtyChange}
-                    onPriceChange={handleItemPriceChange}
-                    onRemove={removeItem}
-                  />
+                    {/* Discount Section */}
+                    <div className="card">
+                      <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <input
+                          type="checkbox"
+                          checked={showDiscountFields}
+                          onChange={(e) => {
+                            setShowDiscountFields(e.target.checked);
+                            if (!e.target.checked) {
+                              setDiscountType('none');
+                              setDiscountValue('0');
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span>{t('orders.discount.apply', 'Chegirma qo\'llash')}</span>
+                      </label>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={handleClearDraft}
-                      className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-900/30"
-                    >
-                      {t('orders.form.clearDraft')}
-                    </button>
-                    <button
-                      className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-                      type="submit"
-                    >
-                      {t('actions.create')}
-                    </button>
-                  </div>
-                </form>
-            ) : null,
-          },
-        ]}
+                      {showDiscountFields && (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <label className="text-label">{t('orders.discount.type', 'Chegirma turi')}</label>
+                            <Select
+                              value={discountType}
+                              onChange={(val) => {
+                                setDiscountType(String(val) as 'none' | 'percentage' | 'amount');
+                                setDiscountValue('0');
+                              }}
+                              className="mt-1 w-full"
+                              options={[
+                                { label: t('orders.discount.none', 'Yo\'q'), value: 'none' },
+                                { label: t('orders.discount.percentage', 'Foiz (%)'), value: 'percentage' },
+                                { label: t('orders.discount.fixedAmount', "Qat'iy summa (USD)"), value: 'amount' },
+                              ]}
+                            />
+                          </div>
+
+                          {discountType !== 'none' && (
+                            <div>
+                              <label className="text-label">
+                                {discountType === 'percentage' 
+                                  ? t('orders.discount.percentageValue', 'Chegirma foizi (%)')
+                                  : t('orders.discount.amountValue', 'Chegirma summasi (USD)')
+                                }
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max={discountType === 'percentage' ? '100' : undefined}
+                                value={discountValue}
+                                onChange={(e) => setDiscountValue(e.target.value)}
+                                placeholder={discountType === 'percentage' ? '0-100' : '0.00'}
+                                className="input-field mt-1 w-full"
+                              />
+                            </div>
+                          )}
+
+                          {/* Discount Preview */}
+                          {discountType !== 'none' && selectedItems.length > 0 && (
+                            <div className="card bg-slate-50 dark:bg-slate-900">
+                              <div className="mb-2 flex justify-between text-sm text-slate-600 dark:text-slate-400">
+                                <span>{t('orders.discount.subtotal', 'Oraliq jami')}:</span>
+                                <span className="text-number">${calculateOrderTotals().subtotal}</span>
+                              </div>
+                              <div className="mb-2 flex justify-between text-sm text-red-600 dark:text-red-400">
+                                <span>{t('orders.discount.label', 'Chegirma')}:</span>
+                                <span className="text-number">-${calculateOrderTotals().discountAmount}</span>
+                              </div>
+                              <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-bold dark:border-slate-700">
+                                <span>{t('orders.discount.finalTotal', 'Yakuniy jami')}:</span>
+                                <span className="text-number gradient-text">${calculateOrderTotals().total}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Brand and Category Filters */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="text-label">{t('orders.filters.brand')}</label>
+                        <Select
+                          value={brandId ?? ''}
+                          onChange={(val) => handleFilterChange('brandId', String(val))}
+                          className="mt-1 w-full"
+                          options={[{ label: t('orders.filters.allBrands'), value: '' }, ...brands.map(b => ({ label: b.name, value: String(b.id) }))]}
+                          showSearch
+                          allowClear
+                          placeholder={t('orders.filters.allBrands')}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-label">{t('orders.filters.category')}</label>
+                        <Select
+                          value={categoryId ?? ''}
+                          onChange={(val) => handleFilterChange('categoryId', String(val))}
+                          className="mt-1 w-full"
+                          options={[{ label: t('orders.filters.allCategories'), value: '' }, ...categories.map(c => ({ label: c.name, value: String(c.id) }))]}
+                          showSearch
+                          allowClear
+                          placeholder={t('orders.filters.allCategories')}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Product Selection */}
+                    <div className="card bg-slate-50/50 dark:bg-slate-800/30">
+                      <div>
+                        <label className="text-label">{t('orders.form.productSearch')}</label>
+                        <input
+                          value={productSearch}
+                          onChange={(event) => setProductSearch(event.target.value)}
+                          placeholder={t('orders.form.productSearchPlaceholder')}
+                          className="input-field mt-1 w-full"
+                        />
+                      </div>
+                      <div className="mt-4 grid gap-4 md:grid-cols-[2fr,1fr,1fr,auto]">
+                        <div>
+                          <label className="text-label">{t('orders.form.productSelect')}</label>
+                          <Select
+                            value={selectedProduct?.id ? String(selectedProduct.id) : ''}
+                            onChange={(val) => handleSelectProduct(String(val))}
+                            className="mt-1 w-full"
+                            showSearch
+                            options={filteredProducts.map((product) => {
+                              const stock = product.stock_ok ?? 0;
+                              const isOutOfStock = stock <= 0;
+                              const brandLabel = product.brand?.name ?? '-';
+                              const categoryLabel = product.category?.name ?? '-';
+                              const stockLabel = isOutOfStock
+                                ? `(⚠️ ${t('orders.product.outOfStock')})`
+                                : `(${t('orders.product.inStock')}: ${stock})`;
+                              const categoryName = product.category?.name?.toLowerCase() || '';
+                              const doorPanelKeyword = t('orders.product.doorPanelKeyword', 'дверное полотно').toLowerCase();
+                              const showSize = !categoryName.includes(doorPanelKeyword) && product.size && product.size.trim().length > 0;
+                              const displayName = showSize ? `${cleanName(product.name)} — ${product.size}` : cleanName(product.name);
+                              return {
+                                label: `${displayName} - ${brandLabel} - ${categoryLabel} ${stockLabel}`,
+                                value: String(product.id),
+                                disabled: isOutOfStock,
+                              };
+                            })}
+                            placeholder={t('orders.form.productSelectPlaceholder')}
+                            allowClear
+                          />
+                          {!filteredProducts.length && !productsLoading && (
+                            <p className="mt-2 text-xs text-slate-500">{t('orders.product.noMatches')}</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-label">{t('orders.form.quantity')}</label>
+                          <input
+                            type="number"
+                            min={0.01}
+                            step="0.01"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                            value={quantityInput}
+                            onChange={(event) => setQuantityInput(event.target.value)}
+                            onBlur={() => setQuantityInput(formatQuantityInputValue(quantityInput || DEFAULT_QTY))}
+                            className="input-field mt-1 w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-label">{t('orders.form.price')}</label>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={priceInput}
+                            onChange={(event) => setPriceInput(event.target.value)}
+                            className="input-field mt-1 w-full"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <button
+                            type="button"
+                            onClick={handleAddSelectedProduct}
+                            className="btn btn-success w-full"
+                          >
+                            ➕ {t('common:actions.add')}
+                          </button>
+                        </div>
+                      </div>
+                      {productsLoading && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="spinner" />
+                          <span className="text-sm text-slate-500">{t('orders.form.productsLoading')}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Order Items Table */}
+                    <OrderItemTable
+                      items={selectedItems}
+                      onQtyChange={handleItemQtyChange}
+                      onPriceChange={handleItemPriceChange}
+                      onRemove={removeItem}
+                    />
+
+                    {/* Form Actions */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={handleClearDraft}
+                        className="btn btn-danger"
+                      >
+                        {t('orders.form.clearDraft')}
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        type="submit"
+                      >
+                        {t('actions.create')}
+                      </button>
+                    </div>
+                  </form>
+                ) : null,
+              },
+            ]}
           />
         </div>
       )}
 
-      <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-          <thead className="bg-slate-50 dark:bg-slate-800">
+      {/* Orders Table */}
+      <div className="card overflow-x-auto animate-fadeInUp">
+        <table className="modern-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.id')}
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.dealer')}
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.type')}
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.status')}
-              </th>
-              {!isWarehouse && (
-                <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                  {t('orders.list.columns.amount')}
-                </th>
-              )}
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.date')}
-              </th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">
-                {t('orders.list.columns.pdf')}
-              </th>
+              <th>{t('orders.list.columns.id')}</th>
+              <th>{t('orders.list.columns.dealer')}</th>
+              <th>{t('orders.list.columns.type')}</th>
+              <th>{t('orders.list.columns.status')}</th>
+              {!isWarehouse && <th>{t('orders.list.columns.amount')}</th>}
+              <th>{t('orders.list.columns.date')}</th>
+              <th className="text-right">{t('orders.list.columns.pdf')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                  {t('common:messages.loading')}
+                <td colSpan={7} className="text-center py-8">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="spinner" />
+                    <span>{t('common:messages.loading')}</span>
+                  </div>
                 </td>
               </tr>
             )}
@@ -1281,25 +1246,17 @@ const OrdersPage = () => {
               return (
                 <Fragment key={order.id}>
                   <tr
-                    className={`cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                      isExpanded ? 'bg-slate-50/70 dark:bg-slate-800/60' : ''
-                    }`}
+                    className={`cursor-pointer ${isExpanded ? 'bg-slate-50 dark:bg-slate-800' : ''}`}
                     onClick={() => toggleOrderDetails(order.id)}
                   >
-                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{order.display_no}</td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{order.dealer?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                          order.is_reserve
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/20 dark:text-amber-200'
-                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-200'
-                        }`}
-                      >
+                    <td className="font-semibold text-number">{order.display_no}</td>
+                    <td>{order.dealer?.name ?? '—'}</td>
+                    <td>
+                      <span className={order.is_reserve ? "badge badge-warning" : "badge badge-success"}>
                         {order.is_reserve ? t('orders.types.reserve') : t('orders.types.regular')}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <StatusBadge status={order.status} />
                       <div className="mt-2">
                         <OrderStatus
@@ -1312,7 +1269,7 @@ const OrdersPage = () => {
                       </div>
                     </td>
                     {!isWarehouse && (
-                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                      <td className="font-semibold">
                         {order.discount_type && order.discount_type !== 'none' && (
                           <div className="mb-1 text-xs text-red-600 dark:text-red-400">
                             {order.discount_type === 'percentage' 
@@ -1324,10 +1281,10 @@ const OrdersPage = () => {
                         <Money value={order.total_usd} currency="USD" />
                       </td>
                     )}
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(order.value_date)}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td>{formatDate(order.value_date)}</td>
+                    <td className="text-right">
                       <button
-                        className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                        className="btn btn-ghost btn-sm"
                         onClick={(event) => {
                           event.stopPropagation();
                           handlePdf(order.id, order.display_no);
@@ -1339,66 +1296,66 @@ const OrdersPage = () => {
                   </tr>
                   {isExpanded && (
                     <tr>
-                      <td colSpan={7} className="bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/60 dark:text-slate-100">
-                        {order.items?.length ? (
-                          <div className="space-y-2">
-                            <div className="font-semibold text-slate-700 dark:text-white">{t('orders.details.items')}</div>
-                            <ul className="space-y-1">
-                              {order.items.map((item) => {
-                                const price = Number(item.price_usd);
-                                const lineTotal = item.qty * price;
-                                return (
-                                  <li
-                                    key={item.id}
-                                    className="flex flex-wrap justify-between rounded-lg bg-white px-3 py-2 shadow-sm dark:bg-slate-900"
-                                  >
-                                    <span className="font-medium text-slate-800 dark:text-slate-100">
-                                      {item.product_detail?.name ?? `${t('orders.details.product')} #${item.product ?? '—'}`}
-                                    </span>
-                                    {!isWarehouse && (
-                                      <span className="text-slate-600 dark:text-slate-300">
-                                        {formatQuantity(item.qty)} × {formatCurrency(price)} = {formatCurrency(lineTotal)}
+                      <td colSpan={7} className="bg-slate-50 dark:bg-slate-800/60">
+                        <div className="p-4">
+                          {order.items?.length ? (
+                            <div className="space-y-2">
+                              <div className="font-semibold">{t('orders.details.items')}</div>
+                              <ul className="space-y-1">
+                                {order.items.map((item) => {
+                                  const price = Number(item.price_usd);
+                                  const lineTotal = item.qty * price;
+                                  return (
+                                    <li
+                                      key={item.id}
+                                      className="card flex flex-wrap justify-between"
+                                    >
+                                      <span className="font-medium">
+                                        {item.product_detail?.name ?? `${t('orders.details.product')} #${item.product ?? '—'}`}
                                       </span>
-                                    )}
-                                    {isWarehouse && (
-                                      <span className="text-slate-600 dark:text-slate-300">
-                                        {formatQuantity(item.qty)} {t('common.units.pcs')}
-                                      </span>
-                                    )}
-                                  </li>
-                                );
-                              })}
-                            </ul>
+                                      {!isWarehouse && (
+                                        <span className="text-number">
+                                          {formatQuantity(item.qty)} × {formatCurrency(price)} = {formatCurrency(lineTotal)}
+                                        </span>
+                                      )}
+                                      {isWarehouse && (
+                                        <span className="text-number">
+                                          {formatQuantity(item.qty)} {t('common.units.pcs')}
+                                        </span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ) : (
+                            <div className="text-center text-slate-500">{t('orders.details.noItems')}</div>
+                          )}
+                          
+                          {order.exchange_rate && !isWarehouse && (
+                            <div className="mt-3 card bg-blue-50 dark:bg-blue-900/20">
+                              <div className="flex items-center gap-4 text-sm flex-wrap">
+                                <span>{t('orders.details.exchangeRate', 'Valyuta kursi')}:</span>
+                                <span className="font-semibold text-number">
+                                  1 USD = {formatCurrency(order.exchange_rate)} UZS
+                                </span>
+                                {order.exchange_rate_date && (
+                                  <span className="text-slate-600 dark:text-slate-400">
+                                    ({formatDate(order.exchange_rate_date)})
+                                  </span>
+                                )}
+                                {order.total_uzs && (
+                                  <span className="ml-auto font-medium text-number">
+                                    ≈ {formatCurrency(order.total_uzs)} UZS
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+                            <OrderHistory orderId={order.id} />
                           </div>
-                        ) : (
-                          <div className="text-center text-slate-500 dark:text-slate-300">{t('orders.details.noItems')}</div>
-                        )}
-                        
-                        {/* Exchange rate info */}
-                        {order.exchange_rate && !isWarehouse && (
-                          <div className="mt-3 flex items-center gap-4 rounded-lg bg-blue-50 px-3 py-2 text-sm dark:bg-blue-900/20">
-                            <span className="text-slate-700 dark:text-slate-300">
-                              {t('orders.details.exchangeRate', 'Valyuta kursi')}:
-                            </span>
-                            <span className="font-semibold text-slate-900 dark:text-white">
-                              1 USD = {formatCurrency(order.exchange_rate)} UZS
-                            </span>
-                            {order.exchange_rate_date && (
-                              <span className="text-slate-600 dark:text-slate-400">
-                                ({formatDate(order.exchange_rate_date)})
-                              </span>
-                            )}
-                            {order.total_uzs && (
-                              <span className="ml-auto font-medium text-slate-700 dark:text-slate-300">
-                                ≈ {formatCurrency(order.total_uzs)} UZS
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Status o'zgarishlari tarixi */}
-                        <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
-                          <OrderHistory orderId={order.id} />
                         </div>
                       </td>
                     </tr>
@@ -1408,7 +1365,7 @@ const OrdersPage = () => {
             })}
             {!loading && orderRows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                <td colSpan={7} className="text-center py-8 text-slate-500">
                   {t('orders.list.empty')}
                 </td>
               </tr>
@@ -1417,7 +1374,8 @@ const OrdersPage = () => {
         </table>
       </div>
 
-      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+      {/* Pagination */}
+      <div className="sticky bottom-0 card bg-white/90 dark:bg-slate-900/90 backdrop-blur">
         <PaginationControls
           page={page}
           pageSize={pageSize}
@@ -1431,4 +1389,3 @@ const OrdersPage = () => {
 };
 
 export default OrdersPage;
-

@@ -6,6 +6,7 @@
 @import './styles/tokens.brand.css';
 @import './styles/tokens.light.css';
 @import './styles/tokens.dark.css';
+@import './styles/components.modern.css';  /* 👈 YANGI QATOR */
 
 @tailwind base;
 @tailwind components;
