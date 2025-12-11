@@ -180,6 +180,7 @@ export interface DealerRefundRequest {
   currency: 'USD' | 'UZS';
   account_id: number;
   description?: string;
+  date?: string; // YYYY-MM-DD format
 }
 
 export interface DealerRefundResponse {

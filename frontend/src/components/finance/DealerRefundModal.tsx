@@ -29,6 +29,7 @@ export default function DealerRefundModal({
     currency: 'UZS' as 'USD' | 'UZS',
     account_id: 0,
     description: '',
+    date: new Date().toISOString().split('T')[0], // Today in YYYY-MM-DD
   });
 
   useEffect(() => {
@@ -93,6 +94,7 @@ export default function DealerRefundModal({
         currency: formData.currency,
         account_id: formData.account_id,
         description: formData.description,
+        date: formData.date,
       });
       
       message.success(response.data.message || t('finance.dealerRefund.success', 'To\'lov qaytarish muvaffaqiyatli'));
@@ -118,6 +120,7 @@ export default function DealerRefundModal({
       currency: 'UZS',
       account_id: 0,
       description: '',
+      date: new Date().toISOString().split('T')[0],
     });
   };
 
@@ -207,6 +210,20 @@ export default function DealerRefundModal({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('finance.dealerRefund.date', 'Sana')} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              required
+            />
           </div>
 
           {/* Amount */}

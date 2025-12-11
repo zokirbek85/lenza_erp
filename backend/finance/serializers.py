@@ -389,6 +389,7 @@ class DealerRefundSerializer(serializers.Serializer):
     currency = serializers.ChoiceField(choices=['USD', 'UZS'])
     account_id = serializers.IntegerField()
     description = serializers.CharField(required=False, allow_blank=True, max_length=500)
+    date = serializers.DateField(required=False)
     
     def validate(self, data):
         """Validate dealer refund"""

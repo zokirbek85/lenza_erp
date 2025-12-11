@@ -709,6 +709,9 @@ class DealerRefundView(APIView):
                 'error': 'Invalid currency combination'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        # Get transaction date from request or use today
+        transaction_date = serializer.validated_data.get('date') or timezone.localdate()
+        
         # Create transaction atomically
         from django.db import transaction as db_transaction
         
@@ -719,7 +722,7 @@ class DealerRefundView(APIView):
                 type=FinanceTransaction.TransactionType.DEALER_REFUND,
                 dealer=dealer,
                 account=account,
-                date=timezone.localdate(),
+                date=transaction_date,
                 currency=currency,
                 amount=amount,
                 exchange_rate=used_rate,
