@@ -12,20 +12,131 @@ def _prepare_workbook(title: str, headers: list[str]):
 
 
 def export_orders_to_excel(orders):
-    workbook, worksheet = _prepare_workbook(
-        'Orders',
-        ['Display #', 'Dealer', 'Status', 'Value USD', 'Value Date'],
-    )
+    """
+    Export orders with detailed information including order items.
+    Creates a comprehensive report with multiple sheets.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    
+    workbook = Workbook()
+    
+    # Summary sheet
+    ws_summary = workbook.active
+    ws_summary.title = 'Buyurtmalar'
+    
+    # Style definitions
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    
+    # Headers for summary sheet
+    summary_headers = [
+        'Buyurtma №',
+        'Diller',
+        'Status',
+        'Mahsulotlar soni',
+        'Jami summa (USD)',
+        'Sana',
+        'Yaratgan',
+        'Yaratilgan vaqti'
+    ]
+    
+    ws_summary.append(summary_headers)
+    
+    # Style header row
+    for cell in ws_summary[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Add summary data
     for order in orders:
-        worksheet.append(
-            [
-                getattr(order, 'display_no', ''),
-                getattr(order.dealer, 'name', ''),
-                order.status,
-                float(order.total_usd),
-                order.value_date.isoformat() if order.value_date else '',
-            ]
-        )
+        items_count = order.items.count() if hasattr(order, 'items') else 0
+        ws_summary.append([
+            getattr(order, 'display_no', ''),
+            getattr(order.dealer, 'name', '') if order.dealer else '',
+            order.get_status_display() if hasattr(order, 'get_status_display') else order.status,
+            items_count,
+            float(order.total_usd),
+            order.value_date.strftime('%Y-%m-%d') if order.value_date else '',
+            getattr(order.created_by, 'username', '') if order.created_by else '',
+            order.created_at.strftime('%Y-%m-%d %H:%M') if order.created_at else '',
+        ])
+    
+    # Auto-adjust column widths
+    for column in ws_summary.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws_summary.column_dimensions[column_letter].width = adjusted_width
+    
+    # Detailed items sheet
+    ws_details = workbook.create_sheet('Mahsulotlar detali')
+    
+    detail_headers = [
+        'Buyurtma №',
+        'Diller',
+        'Mahsulot',
+        'SKU',
+        'Miqdor',
+        'Narx (USD)',
+        'Chegirma (%)',
+        'Jami (USD)',
+        'Sana'
+    ]
+    
+    ws_details.append(detail_headers)
+    
+    # Style header row
+    for cell in ws_details[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Add detailed items data
+    for order in orders:
+        if hasattr(order, 'items'):
+            for item in order.items.all():
+                product_name = getattr(item.product, 'name', '') if item.product else ''
+                product_sku = getattr(item.product, 'sku', '') if item.product else ''
+                
+                # Calculate item total with discount
+                item_total = float(item.price_usd * item.qty)
+                if hasattr(item, 'discount_percent') and item.discount_percent:
+                    discount_amount = item_total * (float(item.discount_percent) / 100)
+                    item_total -= discount_amount
+                
+                ws_details.append([
+                    getattr(order, 'display_no', ''),
+                    getattr(order.dealer, 'name', '') if order.dealer else '',
+                    product_name,
+                    product_sku,
+                    float(item.qty),
+                    float(item.price_usd),
+                    float(getattr(item, 'discount_percent', 0)),
+                    item_total,
+                    order.value_date.strftime('%Y-%m-%d') if order.value_date else '',
+                ])
+    
+    # Auto-adjust column widths for details sheet
+    for column in ws_details.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws_details.column_dimensions[column_letter].width = adjusted_width
+    
     return _workbook_to_file(workbook, 'orders')
 
 

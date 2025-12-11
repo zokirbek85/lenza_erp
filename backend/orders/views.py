@@ -216,7 +216,29 @@ class OrderExportExcelView(APIView):
     permission_classes = [IsAdmin | IsOwner | IsSales]
 
     def get(self, request):
-        orders = Order.objects.select_related('dealer').all()
+        # Apply same filters as main order list
+        orders = Order.objects.select_related(
+            'dealer', 
+            'created_by'
+        ).prefetch_related(
+            'items__product'
+        ).all()
+        
+        # Apply query parameters for filtering if provided
+        status = request.query_params.get('status')
+        dealer_id = request.query_params.get('dealer')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        if status:
+            orders = orders.filter(status=status)
+        if dealer_id:
+            orders = orders.filter(dealer_id=dealer_id)
+        if start_date:
+            orders = orders.filter(value_date__gte=start_date)
+        if end_date:
+            orders = orders.filter(value_date__lte=end_date)
+        
         file_path = export_orders_to_excel(orders)
         return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_path.name)
 
