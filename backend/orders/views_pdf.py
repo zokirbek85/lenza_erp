@@ -29,7 +29,9 @@ class OrderInvoiceView(APIView):
             language=request.headers.get('Accept-Language', 'uz')[:2],
         )
         
-        filename = f'invoice_{order.display_no}.pdf'
+        # Include dealer name in filename
+        dealer_name = order.dealer.name.replace(' ', '_') if order.dealer else 'unknown'
+        filename = f'invoice_{order.display_no}_{dealer_name}.pdf'
         return invoice.get_response(filename=filename, inline=True)
 
 

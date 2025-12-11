@@ -16,7 +16,8 @@
       "Bash(npm install:*)",
       "Bash(docker build:*)",
       "Bash(= 1\" error despite the file being present and valid. Using npm install as a more robust solution that will:\n- Work with or without package-lock.json\n- Generate/update lock file if needed\n- Still provide deterministic builds in production\n\nAdded enhanced diagnostics to show file size and parse lockfileVersion with Node.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
