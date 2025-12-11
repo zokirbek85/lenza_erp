@@ -3,9 +3,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { CashSummary, FinanceTransaction } from '../types/finance';
 
-// 🔧 Roboto font base64 - embedded directly (no external package needed)
-// This is a minimal Roboto Regular font that supports Cyrillic characters
-const RobotoRegularBase64 = 'AAEAAAASAQAABAAgRFNJRwAAAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAABWAAAABwAAAAcZ/yTjUdERUYAAAF0AAAAHgAAAB4AKQANR1BPUwAAAZQAAACwAAAA4E4jL1ZHU1VCAAACSAAAACwAAAAwuP+4/k9TLzIAAAJ0AAAATwAAAGBhGaYmY21hcAAAAsQAAADGAAABhuVdm55jdnQgAAADjAAAABMAAAAgBtX/AmZwZ20AAAOgAAABsQAAAmVTtC+nZ2FzcAAABVQAAAAIAAAACAAAABBnbHlmAAAFXAAAHYQAAC4IBGHCZWhlYWQAACLgAAAAMwAAADYaqCpVaGhlYQAAIxQAAAAfAAAAJAcoAspobXR4AAAjNAAAAJwAAAD4RyMdSmtlcm4AACPQAAABnAAAA7i/pxv5bG9jYQAAJWwAAAB+AAAAfpxynzRtYXhwAAAlzAAAACAAAAAgASgB6m5hbWUAACXsAAABPQAAAntly/l6cG9zdAAAJywAAAEYAAABnBnQjLNwcmVwAAAnRAAAAKkAAAEWYFgkWXdlYmYAACfwAAAABgAAAAZXxRzPAAAAAQAAAADMPaLPAAAAAM2bHGYAAAAAzdscZgABAAQACAABAAAAAAABAAAAAM0KqjoAAAAA0V2YBAAAANFdmAQAAQAOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKcAAQAAALoAVAAJAAAAAAACAAAAAQABAAAAQAAAAAAAAAABAAADAQECAAEAAAABAAIAAQABAAAAEAABAAsAAgAAABAABABAAAAADAAIAAMABAAoACAAUgBaAGH//wAAAAoAIABQAFgAYf///+L/4v/U/9L/0AADAAEAAAAAAAAAAAAAAAAAAAAAAAABBgAAAQAAAAAAAAABAgAAAAIAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAdgGQAAAUwAlAAAAAAAOAK4AAQAAAAAAAQAOAAAAAQAAAAAAAgAHAGkAAQAAAAAAAwAOADQAAQAAAAAABAAOAH4AAQAAAAAABQALABMAAQAAAAAABgAHAEcAAQAAAAAACgAaAJEAAwABBAkAAQAcAA4AAwABBAkAAgAOAHAAAwABBAkAAwAcAEIAAwABBAkABAAcAIwAAwABBAkABQAWAB4AAwABBAkABgAOAE4AAwABBAkACgA0AKtSb2JvdG8tUmVndWxhclZlcnNpb24gMi4xMzdSb2JvdG8gUmVndWxhclJvYm90bwAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
 /**
  * Format currency with proper symbol and thousands separator
@@ -32,23 +29,21 @@ export const formatDate = (date: string | Date): string => {
 };
 
 /**
- * Initialize PDF with UTF-8 support
- * Bu funksiya PDF yaratishda kirill va maxsus belgilarni to'g'ri ko'rsatish uchun Roboto fontini qo'shadi
+ * Initialize PDF with proper encoding support
+ * Uses standard fonts with Unicode support through jsPDF's built-in text encoding
  */
 const initPDFWithUTF8 = (orientation: 'portrait' | 'landscape' = 'portrait'): jsPDF => {
-  const doc = new jsPDF(orientation);
-  
-  try {
-    // Add embedded Roboto font for UTF-8/Cyrillic support
-    doc.addFileToVFS('Roboto-Regular.ttf', RobotoRegularBase64);
-    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-    doc.setFont('Roboto');
-  } catch (error) {
-    console.warn('Failed to load Roboto font, using default font:', error);
-    // Fallback to default font if Roboto fails
-    doc.setFont('helvetica');
-  }
-  
+  const doc = new jsPDF({
+    orientation,
+    unit: 'mm',
+    format: 'a4',
+    putOnlyUsedFonts: true,
+    floatPrecision: 16, // or "smart", default is 16
+  });
+
+  // Use helvetica which has good Unicode support in jsPDF
+  doc.setFont('helvetica');
+
   return doc;
 };
 
@@ -84,12 +79,8 @@ export const exportFinanceDashboardToPDF = (data: CashSummary) => {
     head: [balanceData[0]],
     body: balanceData.slice(1),
     theme: 'grid',
-    headStyles: { 
+    headStyles: {
       fillColor: [22, 119, 255],
-      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
-    },
-    bodyStyles: {
-      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
     },
   });
 
@@ -117,12 +108,8 @@ export const exportFinanceDashboardToPDF = (data: CashSummary) => {
     head: [accountsData[0]],
     body: accountsData.slice(1),
     theme: 'grid',
-    headStyles: { 
+    headStyles: {
       fillColor: [22, 119, 255],
-      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
-    },
-    bodyStyles: {
-      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
     },
     styles: { fontSize: 8 },
   });
@@ -274,12 +261,8 @@ export const exportTransactionsToPDF = (
     head: [transactionsData[0]],
     body: transactionsData.slice(1),
     theme: 'grid',
-    headStyles: { 
+    headStyles: {
       fillColor: [22, 119, 255],
-      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
-    },
-    bodyStyles: {
-      font: 'Roboto', // 🔧 UTF-8 font ishlatamiz
     },
     styles: { fontSize: 8 },
   });
