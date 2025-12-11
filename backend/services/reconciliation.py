@@ -282,7 +282,12 @@ def get_reconciliation_data(
 
     # Convert generators to lists to allow multiple iterations
     formatted_orders = list(_format_orders())
-    formatted_payments = list(_format_payments())
+    all_transactions = list(_format_payments())
+    
+    # Separate payments and refunds
+    formatted_payments = [t for t in all_transactions if not t.get('is_refund', False)]
+    formatted_refunds = [t for t in all_transactions if t.get('is_refund', False)]
+    
     combined_returns = [*list(_format_returns()), *list(_format_new_returns())]
 
     movements = []
@@ -297,15 +302,24 @@ def get_reconciliation_data(
             }
         )
     for payment in formatted_payments:
-        # Refunds increase dealer balance (debit), payments decrease it (credit)
-        is_refund = payment.get('is_refund', False)
         movements.append(
             {
                 'date': payment['date'],
                 'label': payment['method'],
                 'amount_usd': payment['amount_usd'],
-                'direction': 'debit' if is_refund else 'credit',
-                'type': 'refund' if is_refund else 'payment',
+                'direction': 'credit',
+                'type': 'payment',
+            }
+        )
+    
+    for refund in formatted_refunds:
+        movements.append(
+            {
+                'date': refund['date'],
+                'label': refund['method'],
+                'amount_usd': refund['amount_usd'],
+                'direction': 'debit',
+                'type': 'refund',
             }
         )
 
@@ -324,6 +338,9 @@ def get_reconciliation_data(
 
     period_label = f"{start.strftime('%d.%m.%Y')} – {end.strftime('%d.%m.%Y')}"
 
+    # Calculate refund totals
+    total_refunds_usd = sum(r['amount_usd'] for r in formatted_refunds)
+    
     payload = {
         'dealer': dealer.name,
         'dealer_code': dealer.code,
@@ -334,6 +351,7 @@ def get_reconciliation_data(
         'closing_balance': float(closing_balance),
         'orders': formatted_orders,
         'payments': formatted_payments,
+        'refunds': formatted_refunds,
         'returns': combined_returns,
         'returns_items': product_return_items,
         'movements': movements,
@@ -341,6 +359,7 @@ def get_reconciliation_data(
         'totals': {
             'orders': float(totals.orders),
             'payments': float(totals.payments),
+            'refunds': float(total_refunds_usd),
             'returns': float(totals.returns),
         },
     }

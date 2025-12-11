@@ -30,11 +30,18 @@ interface ReconciliationResponse {
   orders: Array<{ date: string; order_no: string; amount_usd: number }>;
   // payments: Backend returns finance transactions mapped as payments
   payments: Array<{ date: string; method: string; amount_usd: number }>;
+  refunds: Array<{ date: string; method: string; amount_usd: number }>;
   returns: Array<{ date: string; order_no: string; amount_usd: number }>;
   movements: MovementEntry[];
   generated_at: string;
   from_date: string;
   to_date: string;
+  totals: {
+    orders: number;
+    payments: number;
+    refunds: number;
+    returns: number;
+  };
   detailed?: boolean;
   orders_detailed?: Array<{
     id: number;
@@ -398,6 +405,33 @@ const ReconciliationPage = () => {
                   ))}
                 </div>
               </>
+            )}
+            
+            {/* Totals Summary */}
+            {report.totals && (
+              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                  {t('reconciliation.summary', 'Jami')}
+                </h3>
+                <div className="grid gap-3 md:grid-cols-4">
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('reconciliation.totalOrders', 'Buyurtmalar')}</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">{formatCurrency(report.totals.orders)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('reconciliation.totalPayments', 'To\'lovlar')}</p>
+                    <p className="text-lg font-semibold text-green-600 dark:text-green-400">{formatCurrency(report.totals.payments)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('reconciliation.totalRefunds', 'Qaytarish')}</p>
+                    <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">{formatCurrency(report.totals.refunds)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('reconciliation.totalReturns', 'Vozvrat')}</p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">{formatCurrency(report.totals.returns)}</p>
+                  </div>
+                </div>
+              </div>
             )}
 
             <div className="mt-6 flex flex-col gap-3 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center md:justify-between">
