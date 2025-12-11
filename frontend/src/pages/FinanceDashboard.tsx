@@ -7,7 +7,6 @@ import AddIncomeModal from '../components/finance/AddIncomeModal';
 import AddExpenseModal from '../components/finance/AddExpenseModal';
 import AccountModal from '../components/finance/AccountModal';
 import ConvertCurrencyModal from '../components/finance/ConvertCurrencyModal';
-import BalanceCard from '../components/finance/BalanceCard';
 import { exportFinanceDashboardToPDF, exportFinanceDashboardToXLSX } from '../utils/exportUtils';
 
 export default function FinanceDashboard() {
