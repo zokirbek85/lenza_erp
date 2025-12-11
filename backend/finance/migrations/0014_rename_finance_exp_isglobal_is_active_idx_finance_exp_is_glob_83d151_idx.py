@@ -10,9 +10,31 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='expensecategory',
-            new_name='finance_exp_is_glob_83d151_idx',
-            old_name='finance_exp_isglobal_is_active_idx',
+        migrations.RunSQL(
+            # Check if old index exists before renaming
+            sql="""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_indexes 
+                        WHERE indexname = 'finance_exp_isglobal_is_active_idx'
+                    ) THEN
+                        ALTER INDEX finance_exp_isglobal_is_active_idx 
+                        RENAME TO finance_exp_is_glob_83d151_idx;
+                    END IF;
+                END $$;
+            """,
+            reverse_sql="""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_indexes 
+                        WHERE indexname = 'finance_exp_is_glob_83d151_idx'
+                    ) THEN
+                        ALTER INDEX finance_exp_is_glob_83d151_idx 
+                        RENAME TO finance_exp_isglobal_is_active_idx;
+                    END IF;
+                END $$;
+            """,
         ),
     ]
