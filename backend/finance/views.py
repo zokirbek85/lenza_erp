@@ -685,8 +685,8 @@ class DealerRefundView(APIView):
         exchange_rate, rate_date = get_exchange_rate()
         
         # Calculate amount to deduct from dealer balance
-        # Dealer balance currency is based on contract
-        dealer_currency = dealer.contract_currency if hasattr(dealer, 'contract_currency') else 'UZS'
+        # Dealer balance currency is based on opening_balance_currency
+        dealer_currency = dealer.opening_balance_currency
         
         from decimal import Decimal, ROUND_HALF_UP
         
@@ -714,6 +714,7 @@ class DealerRefundView(APIView):
         
         with db_transaction.atomic():
             # Create refund transaction
+            # Note: Transaction will affect dealer balance calculations in balance service
             refund_transaction = FinanceTransaction.objects.create(
                 type=FinanceTransaction.TransactionType.DEALER_REFUND,
                 dealer=dealer,
@@ -729,13 +730,14 @@ class DealerRefundView(APIView):
                 approved_by=user,
                 approved_at=timezone.now()
             )
-            
-            # Update dealer balance (deduct the amount)
-            # Note: Dealer model needs a balance field
-            # Assuming dealer has balance field
-            if hasattr(dealer, 'balance'):
-                dealer.balance = (dealer.balance or Decimal('0')) - dealer_amount
-                dealer.save(update_fields=['balance'])
+        
+        # Get updated dealer balance using balance service
+        from dealers.services.balance import get_dealer_balance
+        try:
+            balance_info = get_dealer_balance(dealer.id)
+            new_dealer_balance = balance_info.get('balance', None)
+        except Exception:
+            new_dealer_balance = None
         
         return Response({
             'success': True,
@@ -754,6 +756,6 @@ class DealerRefundView(APIView):
             'dealer': {
                 'id': dealer.id,
                 'name': dealer.name,
-                'new_balance': float(dealer.balance) if hasattr(dealer, 'balance') else None
+                'new_balance': new_dealer_balance
             }
         }, status=status.HTTP_201_CREATED)
