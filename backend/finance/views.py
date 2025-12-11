@@ -481,8 +481,9 @@ class CurrencyTransferView(APIView):
         trans_date = serializer.validated_data['date']
         comment = serializer.validated_data.get('comment', '')
         
-        # Calculate UZS amount
-        uzs_amount = usd_amount * rate
+        # Calculate UZS amount and round to 2 decimal places
+        from decimal import Decimal, ROUND_HALF_UP
+        uzs_amount = (usd_amount * rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         
         # Create two transactions atomically
         from django.db import transaction as db_transaction
