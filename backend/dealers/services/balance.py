@@ -105,7 +105,8 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     total_returns_usd = total_order_returns_usd + total_return_items_usd
     total_returns_uzs = total_order_returns_uzs + total_return_items_uzs
     
-    # 4. Calculate payments (INCOME only, APPROVED only)
+    # 4. Calculate payments and refunds
+    # Payments (INCOME) decrease dealer balance (credit)
     payment_filter = Q(
         dealer=dealer,
         type=FinanceTransaction.TransactionType.INCOME,
@@ -121,9 +122,29 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     total_payments_usd = payments['usd'] or Decimal('0')
     total_payments_uzs = payments['uzs'] or Decimal('0')
     
+    # Refunds (DEALER_REFUND) increase dealer balance (debit)
+    refund_filter = Q(
+        dealer=dealer,
+        type=FinanceTransaction.TransactionType.DEALER_REFUND,
+        status=FinanceTransaction.TransactionStatus.APPROVED
+    )
+    if as_of_date:
+        refund_filter &= Q(date__lte=as_of_date)
+    
+    refunds = FinanceTransaction.objects.filter(refund_filter).aggregate(
+        usd=Coalesce(Sum('amount_usd'), Value(0, output_field=DecimalField())),
+        uzs=Coalesce(Sum('amount_uzs'), Value(0, output_field=DecimalField()))
+    )
+    total_refunds_usd = refunds['usd'] or Decimal('0')
+    total_refunds_uzs = refunds['uzs'] or Decimal('0')
+    
+    # Net payments = payments - refunds
+    net_payments_usd = total_payments_usd - total_refunds_usd
+    net_payments_uzs = total_payments_uzs - total_refunds_uzs
+    
     # 5. Calculate final balance using historical opening balance
-    balance_usd = opening_usd + total_orders_usd - total_returns_usd - total_payments_usd
-    balance_uzs = opening_uzs + total_orders_uzs - total_returns_uzs - total_payments_uzs
+    balance_usd = opening_usd + total_orders_usd - total_returns_usd - net_payments_usd
+    balance_uzs = opening_uzs + total_orders_uzs - total_returns_uzs - net_payments_uzs
     
     return {
         'balance_usd': balance_usd,
@@ -150,6 +171,10 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
             'return_items_uzs': total_return_items_uzs,
             'total_payments_usd': total_payments_usd,
             'total_payments_uzs': total_payments_uzs,
+            'total_refunds_usd': total_refunds_usd,
+            'total_refunds_uzs': total_refunds_uzs,
+            'net_payments_usd': net_payments_usd,
+            'net_payments_uzs': net_payments_uzs,
         }
     }
 
@@ -232,8 +257,31 @@ def annotate_dealers_with_balances(queryset: QuerySet) -> QuerySet:
             Value(0, output_field=DecimalField())
         ),
         
+        # Refunds total (approved dealer refunds)
+        total_refunds_usd=Coalesce(
+            Sum(
+                'finance_transactions__amount_usd',
+                filter=Q(
+                    finance_transactions__type=FinanceTransaction.TransactionType.DEALER_REFUND,
+                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
+                )
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        total_refunds_uzs=Coalesce(
+            Sum(
+                'finance_transactions__amount_uzs',
+                filter=Q(
+                    finance_transactions__type=FinanceTransaction.TransactionType.DEALER_REFUND,
+                    finance_transactions__status=FinanceTransaction.TransactionStatus.APPROVED
+                )
+            ),
+            Value(0, output_field=DecimalField())
+        ),
+        
         # Calculated balance (without ReturnItem - for performance)
         # For exact balance including ReturnItem, use calculate_dealer_balance()
-        calculated_balance_usd=F('opening_balance_usd') + F('total_orders_usd') - F('total_order_returns_usd') - F('total_payments_usd'),
-        calculated_balance_uzs=F('opening_balance_uzs') + F('total_orders_uzs') - F('total_order_returns_uzs') - F('total_payments_uzs'),
+        # Balance = opening + orders - returns - (payments - refunds)
+        calculated_balance_usd=F('opening_balance_usd') + F('total_orders_usd') - F('total_order_returns_usd') - F('total_payments_usd') + F('total_refunds_usd'),
+        calculated_balance_uzs=F('opening_balance_uzs') + F('total_orders_uzs') - F('total_order_returns_uzs') - F('total_payments_uzs') + F('total_refunds_uzs'),
     )
