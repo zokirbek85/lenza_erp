@@ -33,29 +33,24 @@ interface Manager {
   full_name?: string;
 }
 
-/**
- * Dealer interface matching backend DealerSerializer
- * Backend: dealers/serializers.py -> DealerSerializer
- */
 interface Dealer {
   id: number;
   code: string;
   name: string;
-  region: string; // Region name or '—' from SerializerMethodField
+  region: string;
   region_id?: number | null;
-  manager: string; // Manager name with role or '—' from SerializerMethodField
+  manager: string;
   manager_user_id?: number | null;
   opening_balance_usd: number;
   opening_balance_uzs: number;
   current_balance_usd: number;
   current_balance_uzs: number;
-  converted_balance_uzs: number; // USD balance × current exchange rate
+  converted_balance_uzs: number;
   is_active: boolean;
   phone: string;
   address: string;
-  contact: string; // Legacy field
+  contact: string;
   created_at: string;
-  // Legacy fields for backward compatibility
   balance?: number;
   current_debt_usd?: number;
   current_debt_uzs?: number;
@@ -77,10 +72,6 @@ interface PaymentSummary {
   method: string;
 }
 
-/**
- * FinanceTransaction interface matching backend serializer
- * Backend: finance/serializers.py -> FinanceTransactionSerializer
- */
 interface FinanceTransaction {
   id: number;
   type: 'income' | 'expense';
@@ -109,9 +100,6 @@ interface FinanceTransaction {
   updated_at: string;
 }
 
-/**
- * Paginated API response structure
- */
 interface PaginatedResponse<T> {
   count: number;
   next: string | null;
@@ -184,7 +172,7 @@ const DealersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filter, page, pageSize]);
+  }, [filter, page, pageSize, t]);
 
   const canLoadRegions = role === 'admin' || role === 'owner';
   const canLoadSalesManagers = role === 'admin' || role === 'owner' || role === 'accountant' || role === 'warehouse';
@@ -318,7 +306,6 @@ const DealersPage = () => {
     setDetailLoading(true);
     
     try {
-      // Fetch orders and finance transactions in parallel
       const [ordersRes, financeRes] = await Promise.allSettled([
         http.get('/orders/', { 
           params: { 
@@ -337,7 +324,6 @@ const DealersPage = () => {
         })
       ]);
       
-      // Handle orders result
       if (ordersRes.status === 'fulfilled') {
         setOrders(toArray<OrderSummary>(ordersRes.value.data));
       } else {
@@ -345,16 +331,11 @@ const DealersPage = () => {
         setOrders([]);
       }
       
-      // Handle finance transactions result with proper typing
       if (financeRes.status === 'fulfilled') {
         const responseData = financeRes.value.data as PaginatedResponse<FinanceTransaction> | FinanceTransaction[];
-        
-        // Handle paginated response (results array) or direct array
         const transactions: FinanceTransaction[] = Array.isArray(responseData)
           ? responseData
           : responseData?.results ?? [];
-        
-        // Map finance transactions to payment format using utility function
         const mappedPayments: PaymentSummary[] = transactions.map(mapTransactionToPayment);
         setPayments(mappedPayments);
       } else {
@@ -371,20 +352,12 @@ const DealersPage = () => {
     }
   };
 
-  /**
-   * Map FinanceTransaction to PaymentSummary for compatibility with existing UI
-   * @param transaction - Finance transaction from API
-   * @returns PaymentSummary object
-   */
   const mapTransactionToPayment = (transaction: FinanceTransaction): PaymentSummary => {
     return {
       id: transaction.id,
-      // Use date field, fallback to created_at
       pay_date: transaction.date || transaction.created_at,
-      // Prefer amount_usd for consistency, fallback to amount
       amount: transaction.amount_usd ?? transaction.amount ?? 0,
       currency: transaction.currency || 'USD',
-      // Use type_display for better UX (e.g., "Income", "Expense")
       method: transaction.type_display || (transaction.type === 'income' ? 'Income' : 'Expense'),
     };
   };
@@ -438,7 +411,6 @@ const DealersPage = () => {
     setImportSummary(null);
   };
 
-  // Mobile handlers
   const mobileHandlers: DealersMobileHandlers = {
     onView: (dealerId) => {
       const dealer = dealers.find((d) => d.id === dealerId);
@@ -459,17 +431,16 @@ const DealersPage = () => {
     canDelete: true,
   };
 
-  // Filter content
   const filtersContent = (
     <div className="space-y-4">
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="text-label">
           {t('dealers.filters.region')}
         </label>
         <Select
           value={filter.region_id}
           onChange={(val) => handleFilterChange(String(val))}
-          className="w-full"
+          className="mt-1 w-full"
           options={[{ label: t('dealers.filters.allRegions'), value: '' }, ...regions.map(r => ({ label: r.name, value: String(r.id) }))]}
           placeholder={t('dealers.filters.allRegions')}
           allowClear
@@ -499,8 +470,9 @@ const DealersPage = () => {
         </FilterDrawer>
 
         {loading ? (
-          <div className="py-12 text-center text-sm text-slate-500">
-            {t('dealers.messages.loading')}
+          <div className="flex items-center justify-center gap-3 py-12">
+            <div className="spinner" />
+            <span className="text-sm text-slate-500">{t('dealers.messages.loading')}</span>
           </div>
         ) : (
           <DealersMobileCards
@@ -510,7 +482,6 @@ const DealersPage = () => {
           />
         )}
 
-        {/* Floating Action Button (FAB) for creating new dealer */}
         <button
           onClick={() => openModal()}
           className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all dark:bg-emerald-500"
@@ -533,75 +504,81 @@ const DealersPage = () => {
   // Desktop view
   return (
     <section className="page-wrapper space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('dealers.title')}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('dealers.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select
-            value={filter.region_id}
-            onChange={(val) => handleFilterChange(String(val))}
-            className="w-auto"
-            options={[{ label: t('dealers.filters.allRegions'), value: '' }, ...regions.map(r => ({ label: r.name, value: String(r.id) }))]}
-            placeholder={t('dealers.filters.allRegions')}
-            allowClear
-          />
-          <button
-            onClick={handleTemplateDownload}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {t('dealers.importTemplate')}
-          </button>
-          <button
-            onClick={handleExport}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {t('dealers.exportExcel')}
-          </button>
-          <button
-            onClick={() => setImportModalOpen(true)}
-            className="rounded-lg border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-200 dark:hover:bg-emerald-900/30"
-          >
-            {t('dealers.importExcel')}
-          </button>
-          <button
-            onClick={() => openModal()}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 dark:bg-emerald-500 dark:text-slate-900"
-          >
-            {t('dealers.new')}
-          </button>
+      {/* Header */}
+      <header className="card animate-fadeInUp">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{t('dealers.title')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('dealers.subtitle')}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Select
+              value={filter.region_id}
+              onChange={(val) => handleFilterChange(String(val))}
+              style={{ width: 200 }}
+              options={[{ label: t('dealers.filters.allRegions'), value: '' }, ...regions.map(r => ({ label: r.name, value: String(r.id) }))]}
+              placeholder={t('dealers.filters.allRegions')}
+              allowClear
+            />
+            <button
+              onClick={handleTemplateDownload}
+              className="btn btn-ghost btn-sm"
+            >
+              {t('dealers.importTemplate')}
+            </button>
+            <button
+              onClick={handleExport}
+              className="btn btn-ghost btn-sm"
+            >
+              {t('dealers.exportExcel')}
+            </button>
+            <button
+              onClick={() => setImportModalOpen(true)}
+              className="btn btn-secondary btn-sm"
+            >
+              {t('dealers.importExcel')}
+            </button>
+            <button
+              onClick={() => openModal()}
+              className="btn btn-primary"
+            >
+              <PlusOutlined />
+              <span className="ml-2">{t('dealers.new')}</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/40">
+      {/* Table */}
+      <div className="card overflow-x-auto animate-fadeInUp">
+        <table className="modern-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.dealer')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.region')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.manager')}</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.balanceUsd')}</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.balanceUzs')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.phone')}</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.address')}</th>
-              <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300">{t('dealers.table.status')}</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t('table.actions')}</th>
+              <th>{t('dealers.table.dealer')}</th>
+              <th>{t('dealers.table.region')}</th>
+              <th>{t('dealers.table.manager')}</th>
+              <th className="text-right">{t('dealers.table.balanceUsd')}</th>
+              <th className="text-right">{t('dealers.table.balanceUzs')}</th>
+              <th>{t('dealers.table.phone')}</th>
+              <th>{t('dealers.table.address')}</th>
+              <th className="text-center">{t('dealers.table.status')}</th>
+              <th className="text-right">{t('table.actions')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
+          <tbody>
             {loading && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-sm text-slate-500">
-                  {t('dealers.messages.loading')}
+                <td colSpan={9}>
+                  <div className="flex items-center justify-center gap-3 py-12">
+                    <div className="spinner" />
+                    <span>{t('dealers.messages.loading')}</span>
+                  </div>
                 </td>
               </tr>
             )}
             {!loading &&
               dealers.map((dealer) => {
                 const balanceUsd = dealer.current_balance_usd ?? 0;
-                
-                // Use real UZS balance if exists, otherwise use converted balance
                 const balanceUzs = (dealer.current_balance_uzs && dealer.current_balance_uzs !== 0) 
                   ? dealer.current_balance_uzs 
                   : dealer.converted_balance_uzs;
@@ -621,50 +598,57 @@ const DealersPage = () => {
                 
                 return (
                   <tr key={dealer.id}>
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-slate-900 dark:text-white">{dealer.name}</div>
+                    <td>
+                      <div className="font-semibold">{dealer.name}</div>
                       <p className="text-xs text-slate-500">{dealer.code}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
-                      {dealer.region}
+                    <td>{dealer.region}</td>
+                    <td>{dealer.manager}</td>
+                    <td className={`text-right font-semibold ${balanceUsdClass}`}>
+                      <span className="text-number">
+                        ${balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
-                      {dealer.manager}
+                    <td className={`text-right font-semibold ${balanceUzsClass}`}>
+                      <span className="text-number">
+                        {balanceUzs.toLocaleString('uz-UZ')} so'm
+                      </span>
                     </td>
-                    <td className={`px-4 py-3 text-right font-semibold ${balanceUsdClass}`}>
-                      ${balanceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className={`px-4 py-3 text-right font-semibold ${balanceUzsClass}`}>
-                      {balanceUzs.toLocaleString('uz-UZ')} so'm
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
-                      {dealer.phone || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-200">
+                    <td>{dealer.phone || '—'}</td>
+                    <td>
                       <div className="max-w-xs truncate" title={dealer.address}>
                         {dealer.address || '—'}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="text-center">
                       {dealer.is_active ? (
-                        <span className="inline-block rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                        <span className="badge badge-success">
                           {t('dealers.status.active')}
                         </span>
                       ) : (
-                        <span className="inline-block rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <span className="badge badge-info">
                           {t('dealers.status.inactive')}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openDetails(dealer)}>
+                    <td>
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          onClick={() => openDetails(dealer)}
+                        >
                           {t('dealers.viewDetails')}
                         </button>
-                        <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(dealer)}>
+                        <button 
+                          className="btn btn-ghost btn-sm" 
+                          onClick={() => openModal(dealer)}
+                        >
                           {t('actions.edit')}
                         </button>
-                        <button className="text-rose-600 hover:text-rose-800 dark:text-rose-300" onClick={() => handleDelete(dealer)}>
+                        <button 
+                          className="btn btn-danger btn-sm" 
+                          onClick={() => handleDelete(dealer)}
+                        >
                           {t('actions.delete')}
                         </button>
                       </div>
@@ -674,8 +658,12 @@ const DealersPage = () => {
               })}
             {!loading && dealers.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
-                  {t('dealers.messages.noDealers')}
+                <td colSpan={9}>
+                  <div className="card border-dashed text-center py-12">
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {t('dealers.messages.noDealers')}
+                    </p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -683,7 +671,8 @@ const DealersPage = () => {
         </table>
       </div>
 
-      <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+      {/* Pagination */}
+      <div className="sticky bottom-0 card bg-white/90 dark:bg-slate-900/90 backdrop-blur">
         <PaginationControls
           page={page}
           pageSize={pageSize}
@@ -692,6 +681,8 @@ const DealersPage = () => {
           setPageSize={setPageSize}
         />
       </div>
+
+      {/* Import Modal */}
       <Modal
         open={importModalOpen}
         onClose={closeImportModal}
@@ -701,7 +692,7 @@ const DealersPage = () => {
             <button
               type="button"
               onClick={closeImportModal}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="btn btn-secondary"
             >
               {t('actions.cancel')}
             </button>
@@ -709,25 +700,32 @@ const DealersPage = () => {
               type="submit"
               form="dealer-import-form"
               disabled={importing}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="btn btn-success"
             >
-              {importing ? t('dealers.importing') : t('dealers.startImport')}
+              {importing ? (
+                <>
+                  <div className="spinner" />
+                  <span>{t('dealers.importing')}</span>
+                </>
+              ) : (
+                t('dealers.startImport')
+              )}
             </button>
           </>
         }
       >
         <form id="dealer-import-form" onSubmit={handleImportSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.excelFile')}</label>
+            <label className="text-label">{t('dealers.form.excelFile')}</label>
             <input
               type="file"
               accept=".xlsx,.xls"
               onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="input-field mt-1 w-full"
             />
           </div>
           {importSummary && (
-            <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <div className="card bg-slate-50 dark:bg-slate-800">
               <p>{t('dealers.importSummary.created')}: {importSummary.created}</p>
               <p>{t('dealers.importSummary.updated')}: {importSummary.updated}</p>
               {typeof importSummary.skipped === 'number' && <p>{t('dealers.importSummary.skipped')}: {importSummary.skipped}</p>}
@@ -736,6 +734,7 @@ const DealersPage = () => {
         </form>
       </Modal>
 
+      {/* Edit/Create Modal */}
       <Modal
         open={modalOpen}
         onClose={() => {
@@ -755,7 +754,7 @@ const DealersPage = () => {
                 setForm(emptyForm);
                 setEditing(null);
               }}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="btn btn-secondary"
             >
               {t('actions.cancel')}
             </button>
@@ -763,9 +762,16 @@ const DealersPage = () => {
               type="submit"
               form="dealer-form"
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-emerald-500 dark:text-slate-900"
+              className="btn btn-primary"
             >
-              {saving ? t('actions.saving') : t('actions.save')}
+              {saving ? (
+                <>
+                  <div className="spinner" />
+                  <span>{t('actions.saving')}</span>
+                </>
+              ) : (
+                t('actions.save')
+              )}
             </button>
           </>
         }
@@ -773,61 +779,61 @@ const DealersPage = () => {
         <form id="dealer-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.name')}</label>
+              <label className="text-label">{t('dealers.form.name')}</label>
               <input
                 required
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="input-field mt-1 w-full"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.code')}</label>
+              <label className="text-label">{t('dealers.form.code')}</label>
               <input
                 required
                 name="code"
                 value={form.code}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="input-field mt-1 w-full"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.phone')}</label>
+              <label className="text-label">{t('dealers.form.phone')}</label>
               <input
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
                 placeholder={t('dealers.form.phonePlaceholder')}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="input-field mt-1 w-full"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.contact')}</label>
+              <label className="text-label">{t('dealers.form.contact')}</label>
               <input
                 name="contact"
                 value={form.contact}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="input-field mt-1 w-full"
               />
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.address')}</label>
+            <label className="text-label">{t('dealers.form.address')}</label>
             <textarea
               name="address"
               value={form.address}
               onChange={handleChange as any}
               rows={2}
               placeholder={t('dealers.form.addressPlaceholder')}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="input-field mt-1 w-full"
             />
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.region')}</label>
+              <label className="text-label">{t('dealers.form.region')}</label>
               <Select
                 value={form.region_id === '' ? '' : String(form.region_id)}
                 onChange={(val) => setForm((prev) => ({ ...prev, region_id: val ? Number(val) : '' }))}
@@ -838,7 +844,7 @@ const DealersPage = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.manager')}</label>
+              <label className="text-label">{t('dealers.form.manager')}</label>
               <Select
                 value={form.manager_user_id === '' ? '' : String(form.manager_user_id)}
                 onChange={(val) => setForm((prev) => ({ ...prev, manager_user_id: val ? Number(val) : '' }))}
@@ -851,7 +857,7 @@ const DealersPage = () => {
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.openingBalanceUsd')}</label>
+              <label className="text-label">{t('dealers.form.openingBalanceUsd')}</label>
               <input
                 type="number"
                 step="0.01"
@@ -859,11 +865,11 @@ const DealersPage = () => {
                 value={form.opening_balance_usd}
                 onChange={handleChange}
                 placeholder={t('dealers.form.balancePlaceholder')}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="input-field mt-1 w-full"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('dealers.form.openingBalanceUzs')}</label>
+              <label className="text-label">{t('dealers.form.openingBalanceUzs')}</label>
               <input
                 type="number"
                 step="0.01"
@@ -871,13 +877,14 @@ const DealersPage = () => {
                 value={form.opening_balance_uzs}
                 onChange={handleChange}
                 placeholder={t('dealers.form.balancePlaceholder')}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="input-field mt-1 w-full"
               />
             </div>
           </div>
         </form>
       </Modal>
 
+      {/* Detail Modal */}
       <Modal
         open={detailOpen}
         onClose={() => {
@@ -888,46 +895,70 @@ const DealersPage = () => {
         title={selectedDealer ? `${selectedDealer.name} ${t('dealers.overview')}` : t('dealers.overview')}
         widthClass="max-w-4xl"
       >
-        {detailLoading && <p className="text-sm text-slate-500">{t('dealers.messages.loadingDetails')}</p>}
+        {detailLoading && (
+          <div className="flex items-center justify-center gap-3 py-8">
+            <div className="spinner" />
+            <span>{t('dealers.messages.loadingDetails')}</span>
+          </div>
+        )}
         {!detailLoading && selectedDealer && (
           <div className="space-y-6">
+            {/* Recent Orders */}
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">{t('dealers.recentOrders')}</h4>
-              {orders.length === 0 && <p className="text-sm text-slate-500">{t('dealers.messages.noOrders')}</p>}
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 mb-3">
+                {t('dealers.recentOrders')}
+              </h4>
+              {orders.length === 0 && (
+                <div className="card border-dashed text-center py-8">
+                  <p className="text-sm text-slate-500">{t('dealers.messages.noOrders')}</p>
+                </div>
+              )}
               {orders.length > 0 && (
-                <ul className="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-                  {orders.slice(0, 5).map((order) => (
-                    <li key={order.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">{order.display_no}</p>
-                        <p className="text-xs uppercase tracking-widest text-slate-500">{t('dealers.status')}: {order.status}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-slate-900 dark:text-white">{formatCurrency(order.total_usd)}</p>
-                        <p className="text-xs text-slate-500">{order.value_date}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div className="card">
+                  <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+                    {orders.slice(0, 5).map((order) => (
+                      <li key={order.id} className="flex items-center justify-between py-3">
+                        <div>
+                          <p className="font-semibold">{order.display_no}</p>
+                          <p className="text-xs text-slate-500 uppercase">
+                            {t('dealers.status')}: <span className="badge badge-info">{order.status}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-number">{formatCurrency(order.total_usd)}</p>
+                          <p className="text-xs text-slate-500">{order.value_date}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
+
+            {/* Recent Payments */}
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">{t('dealers.recentPayments')}</h4>
-              {payments.length === 0 && <p className="text-sm text-slate-500">{t('dealers.messages.noPayments')}</p>}
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 mb-3">
+                {t('dealers.recentPayments')}
+              </h4>
+              {payments.length === 0 && (
+                <div className="card border-dashed text-center py-8">
+                  <p className="text-sm text-slate-500">{t('dealers.messages.noPayments')}</p>
+                </div>
+              )}
               {payments.length > 0 && (
-                <div className="mt-3 space-y-3">
+                <div className="space-y-3">
                   {payments.slice(0, 5).map((payment) => (
-                    <div key={payment.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                    <div key={payment.id} className="card bg-slate-50 dark:bg-slate-800">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="text-lg font-bold text-slate-900 dark:text-white">
+                          <p className="text-lg font-bold text-number">
                             <Money value={payment.amount} currency={payment.currency || 'USD'} />
                           </p>
-                          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
                             {payment.method}
                           </p>
                         </div>
-                        <div className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                        <div className="badge badge-success">
                           {payment.pay_date}
                         </div>
                       </div>
@@ -944,4 +975,3 @@ const DealersPage = () => {
 };
 
 export default DealersPage;
-

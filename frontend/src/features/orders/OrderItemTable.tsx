@@ -15,81 +15,102 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove, readOnly 
 
   if (!items.length) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-        {t('orders.items.empty')}
+      <div className="card border-dashed text-center">
+        <p className="text-slate-500 dark:text-slate-400">
+          {t('orders.items.empty')}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="table-wrapper overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-        <thead className="bg-slate-50 dark:bg-slate-800">
+    <div className="card overflow-x-auto animate-fadeInUp">
+      <table className="modern-table">
+        <thead>
           <tr>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">#</th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-              {t('orders.table.product')}
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-              {t('orders.table.quantity')}
-            </th>
-            <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-200">
-              {t('orders.table.priceUsd')}
-            </th>
-            <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-200">
-              {t('orders.table.total')}
-            </th>
-            <th className="px-4 py-3" />
+            <th className="w-12">#</th>
+            <th>{t('orders.table.product')}</th>
+            <th className="w-32">{t('orders.table.quantity')}</th>
+            <th className="w-32">{t('orders.table.priceUsd')}</th>
+            <th className="w-32 text-right">{t('orders.table.total')}</th>
+            <th className="w-24" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-          {items.map((item, index) => (
-            <tr key={item.product}>
-              <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{index + 1}</td>
-              <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{item.productName}</td>
-              <td className="px-4 py-3">
-                <input
-                  type="number"
-                  min={0.01}
-                  step="0.01"
-                  inputMode="decimal"
-                  value={Number(item.qty ?? 0).toFixed(2)}
-                  onChange={(event) => {
-                    const nextValue = Number(event.target.value);
-                    onQtyChange(item.product, Number.isFinite(nextValue) ? nextValue : 0);
-                  }}
-                  disabled={readOnly}
-                  className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-800/50"
-                />
-              </td>
-              <td className="px-4 py-3">
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={item.price_usd}
-                  onChange={(event) => onPriceChange(item.product, Number(event.target.value) || 0)}
-                  disabled={readOnly}
-                  className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:disabled:bg-slate-800/50"
-                />
-              </td>
-              <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
-                {formatCurrency(Number(item.qty) * Number(item.price_usd), 'USD')}
-              </td>
-              <td className="px-4 py-3 text-right">
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => onRemove(item.product)}
-                    className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-900/30"
-                  >
-                    {t('actions.remove')}
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
+        <tbody>
+          {items.map((item, index) => {
+            const lineTotal = Number(item.qty) * Number(item.price_usd);
+            
+            return (
+              <tr key={item.product}>
+                <td className="text-slate-500 dark:text-slate-400">
+                  {index + 1}
+                </td>
+                <td className="font-medium">
+                  {item.productName}
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step="0.01"
+                    inputMode="decimal"
+                    value={Number(item.qty ?? 0).toFixed(2)}
+                    onChange={(event) => {
+                      const nextValue = Number(event.target.value);
+                      onQtyChange(item.product, Number.isFinite(nextValue) ? nextValue : 0);
+                    }}
+                    disabled={readOnly}
+                    className="input-field w-24"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={item.price_usd}
+                    onChange={(event) => onPriceChange(item.product, Number(event.target.value) || 0)}
+                    disabled={readOnly}
+                    className="input-field w-28"
+                  />
+                </td>
+                <td className="text-right font-semibold">
+                  <span className="text-number">
+                    {formatCurrency(lineTotal, 'USD')}
+                  </span>
+                </td>
+                <td className="text-right">
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(item.product)}
+                      className="btn btn-danger btn-sm"
+                      title={t('actions.remove')}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
+        <tfoot>
+          <tr className="bg-slate-50 dark:bg-slate-800/60 font-semibold">
+            <td colSpan={4} className="text-right">
+              {t('orders.table.grandTotal', 'Jami:')}
+            </td>
+            <td className="text-right">
+              <span className="text-number gradient-text text-lg">
+                {formatCurrency(
+                  items.reduce((sum, item) => sum + Number(item.qty) * Number(item.price_usd), 0),
+                  'USD'
+                )}
+              </span>
+            </td>
+            <td />
+          </tr>
+        </tfoot>
       </table>
     </div>
   );

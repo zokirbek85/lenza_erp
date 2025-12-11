@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Table, Tag, Typography, Spin, Alert } from 'antd';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import http from '../app/http';
@@ -16,14 +15,14 @@ interface OrderHistoryProps {
   orderId: number;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  created: 'default',
-  confirmed: 'blue',
-  packed: 'orange',
-  shipped: 'purple',
-  delivered: 'green',
-  cancelled: 'red',
-  returned: 'magenta',
+const STATUS_BADGE_MAP: Record<string, string> = {
+  created: 'badge badge-info',
+  confirmed: 'badge badge-blue',
+  packed: 'badge badge-blue',
+  shipped: 'badge badge-blue',
+  delivered: 'badge badge-success',
+  cancelled: 'badge badge-error',
+  returned: 'badge badge-warning',
 };
 
 export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
@@ -52,95 +51,104 @@ export const OrderHistory = ({ orderId }: OrderHistoryProps) => {
     fetchHistory();
   }, [orderId, t]);
 
-  const columns = [
-    {
-      title: t('orders.history.oldStatus'),
-      dataIndex: 'old_status',
-      key: 'old_status',
-      width: '25%',
-      render: (status: string | null) => {
-        if (!status) {
-          return <Tag color="default">{t('orders.history.initialCreation')}</Tag>;
-        }
-        return (
-          <Tag color={STATUS_COLORS[status] || 'default'}>
-            {t(`orders.status.${status}`, { defaultValue: status })}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t('orders.history.newStatus'),
-      dataIndex: 'new_status',
-      key: 'new_status',
-      width: '25%',
-      render: (status: string) => (
-        <Tag color={STATUS_COLORS[status] || 'blue'}>
-          {t(`orders.status.${status}`, { defaultValue: status })}
-        </Tag>
-      ),
-    },
-    {
-      title: t('orders.history.changedBy'),
-      dataIndex: 'by_user',
-      key: 'by_user',
-      width: '25%',
-      render: (user: string | null) => (
-        <Typography.Text>{user || t('orders.history.system')}</Typography.Text>
-      ),
-    },
-    {
-      title: t('orders.history.changedAt'),
-      dataIndex: 'at',
-      key: 'at',
-      width: '25%',
-      render: (date: string) => {
-        const d = new Date(date);
-        return (
-          <Typography.Text>
-            <ClockCircleOutlined style={{ marginRight: 8 }} />
-            {d.toLocaleString()}
-          </Typography.Text>
-        );
-      },
-    },
-  ];
-
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '24px' }}>
-        <Spin size="large" />
+      <div className="flex items-center justify-center gap-3 py-8">
+        <div className="spinner" />
+        <span className="text-sm text-slate-500 dark:text-slate-400">
+          {t('common:messages.loading')}
+        </span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Alert
-        message={t('common:messages.error')}
-        description={error}
-        type="error"
-        showIcon
-        style={{ marginTop: 16 }}
-      />
+      <div className="card bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+        <div className="flex items-start gap-3">
+          <span className="text-red-600 dark:text-red-400 text-xl">⚠️</span>
+          <div>
+            <h4 className="font-semibold text-red-900 dark:text-red-200">
+              {t('common:messages.error')}
+            </h4>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              {error}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="card border-dashed text-center">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t('orders.history.noHistory')}
+        </p>
+      </div>
     );
   }
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <Typography.Title level={5}>
+    <div className="space-y-4 animate-fadeInUp">
+      <h5 className="text-lg font-semibold text-slate-900 dark:text-white">
         {t('orders.history.title')}
-      </Typography.Title>
-      <Table
-        size="small"
-        columns={columns}
-        dataSource={logs}
-        rowKey="id"
-        pagination={false}
-        locale={{
-          emptyText: t('orders.history.noHistory'),
-        }}
-      />
+      </h5>
+      
+      <div className="card overflow-x-auto">
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th className="w-1/4">{t('orders.history.oldStatus')}</th>
+              <th className="w-1/4">{t('orders.history.newStatus')}</th>
+              <th className="w-1/4">{t('orders.history.changedBy')}</th>
+              <th className="w-1/4">{t('orders.history.changedAt')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => {
+              const oldBadgeClass = log.old_status 
+                ? STATUS_BADGE_MAP[log.old_status] || 'badge badge-info'
+                : 'badge badge-info';
+              const newBadgeClass = STATUS_BADGE_MAP[log.new_status] || 'badge badge-blue';
+              
+              const date = new Date(log.at);
+              const formattedDate = date.toLocaleString();
+
+              return (
+                <tr key={log.id}>
+                  <td>
+                    {log.old_status ? (
+                      <span className={oldBadgeClass}>
+                        {t(`orders.status.${log.old_status}`, { defaultValue: log.old_status })}
+                      </span>
+                    ) : (
+                      <span className="badge badge-info">
+                        {t('orders.history.initialCreation')}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <span className={newBadgeClass}>
+                      {t(`orders.status.${log.new_status}`, { defaultValue: log.new_status })}
+                    </span>
+                  </td>
+                  <td className="text-slate-700 dark:text-slate-300">
+                    {log.by_user || t('orders.history.system')}
+                  </td>
+                  <td className="text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <ClockCircleOutlined className="text-slate-400" />
+                      <span>{formattedDate}</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -25,17 +25,14 @@ export default function FinanceTransactions() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
-  // New UI state for modal/create/edit
   const [showModal, setShowModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<FinanceTransaction | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
 
-  // Reference data for modal
   const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
 
-  // Form data for modal
   const [formData, setFormData] = useState({
     type: 'income' as 'income' | 'expense',
     dealer: '',
@@ -51,7 +48,6 @@ export default function FinanceTransactions() {
     loadTransactions();
   }, [filters, page, pageSize]);
 
-  // Load reference data for modal (accounts, dealers, categories)
   useEffect(() => {
     loadReferenceData();
   }, []);
@@ -64,7 +60,6 @@ export default function FinanceTransactions() {
 
       const dealersRes = await getDealers({ page_size: 1000 });
       const dealersData = Array.isArray(dealersRes.data) ? dealersRes.data : [];
-      // Normalize dealer shape to match frontend types (ensure updated_at exists)
       const normalizedDealers = dealersData.map((d: any) => ({
         ...d,
         updated_at: d.updated_at || d.created_at || new Date().toISOString(),
@@ -91,23 +86,18 @@ export default function FinanceTransactions() {
       };
       
       const response = await getFinanceTransactions(params);
-      
-      // Normalize response - handle both paginated and non-paginated
       const data = response.data;
       let items: FinanceTransaction[] = [];
       let count = 0;
       
       if (Array.isArray(data)) {
-        // Direct array response (no pagination)
         items = data;
         count = data.length;
       } else if (data && typeof data === 'object') {
-        // Paginated response with results
         items = (data as any).results || (data as any).data || (data as any).items || [];
         count = (data as any).count || items.length;
       }
       
-      // Filter out any null/undefined items and ensure valid data
       const validItems = items.filter((item): item is FinanceTransaction => {
         return item !== null && 
                item !== undefined && 
@@ -156,31 +146,19 @@ export default function FinanceTransactions() {
 
   const handleDelete = async (id: number) => {
     const transaction = transactions.find(t => t.id === id);
-
-    // ✅ Different confirmation messages based on status
     let confirmMessage = t('finance.transaction.confirmDelete', 'Operatsiyani o\'chirasizmi?');
 
     if (transaction?.status === 'approved') {
       confirmMessage = t('finance.transaction.confirmDeleteApproved',
-        '⚠️ XAVFLI AMAL!\n\n' +
-        'Tasdiqlangan transactionni o\'chirish:\n' +
-        '• Balanslar avtomatik qayta hisoblanadi\n' +
-        '• O\'chirish tarixi saqlanadi\n' +
-        '• Hisobotlarga ta\'sir qiladi\n\n' +
-        'Haqiqatan ham o\'chirmoqchimisiz?'
+        '⚠️ XAVFLI AMAL!\n\nTasdiqlangan transactionni o\'chirish:\n• Balanslar avtomatik qayta hisoblanadi\n• O\'chirish tarixi saqlanadi\n• Hisobotlarga ta\'sir qiladi\n\nHaqiqatan ham o\'chirmoqchimisiz?'
       );
     } else if (transaction?.status === 'cancelled') {
       confirmMessage = t('finance.transaction.confirmDeleteCancelled',
-        '⚠️ OGOHLANTIRISH!\n\n' +
-        'Bekor qilingan transactionni o\'chirmoqchisiz.\n' +
-        'O\'chirish tarixi saqlanadi.\n\n' +
-        'Davom etasizmi?'
+        '⚠️ OGOHLANTIRISH!\n\nBekor qilingan transactionni o\'chirmoqchisiz.\nO\'chirish tarixi saqlanadi.\n\nDavom etasizmi?'
       );
     }
 
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
+    if (!window.confirm(confirmMessage)) return;
 
     try {
       await deleteFinanceTransaction(id);
@@ -192,7 +170,6 @@ export default function FinanceTransactions() {
     }
   };
 
-  // --- Modal / CRUD handlers ---
   const handleCreate = () => {
     setEditingTransaction(null);
     setFormData({
@@ -209,26 +186,17 @@ export default function FinanceTransactions() {
   };
 
   const handleEdit = (transaction: FinanceTransaction) => {
-    // ✅ Show warning for approved/cancelled transactions
     if (transaction.status === 'approved') {
       const confirmed = window.confirm(
         t('finance.transaction.confirmEditApproved',
-          '⚠️ OGOHLANTIRISH!\n\n' +
-          'Tasdiqlangan transactionni tahrirlash:\n' +
-          '• Balanslarni qayta hisoblab beradi\n' +
-          '• O\'zgarishlar tarixi saqlanadi\n' +
-          '• Kim, qachon o\'zgartirganligini ko\'rish mumkin\n\n' +
-          'Davom etishni xohlaysizmi?'
+          '⚠️ OGOHLANTIRISH!\n\nTasdiqlangan transactionni tahrirlash:\n• Balanslarni qayta hisoblab beradi\n• O\'zgarishlar tarixi saqlanadi\n• Kim, qachon o\'zgartirganligini ko\'rish mumkin\n\nDavom etishni xohlaysizmi?'
         )
       );
       if (!confirmed) return;
     } else if (transaction.status === 'cancelled') {
       const confirmed = window.confirm(
         t('finance.transaction.confirmEditCancelled',
-          '⚠️ OGOHLANTIRISH!\n\n' +
-          'Bekor qilingan transactionni tahrirlayapsiz.\n' +
-          'O\'zgarishlar tarixi saqlanadi.\n\n' +
-          'Davom etishni xohlaysizmi?'
+          '⚠️ OGOHLANTIRISH!\n\nBekor qilingan transactionni tahrirlayapsiz.\nO\'zgarishlar tarixi saqlanadi.\n\nDavom etishni xohlaysizmi?'
         )
       );
       if (!confirmed) return;
@@ -242,7 +210,6 @@ export default function FinanceTransactions() {
       date: transaction.date || new Date().toISOString().split('T')[0],
       currency: transaction.currency || 'USD',
       amount: transaction.amount?.toString() || '',
-      // ✅ FIX: Convert category to number for Select component
       category: transaction.category ? String(transaction.category) : '',
       comment: transaction.comment || '',
     });
@@ -266,7 +233,6 @@ export default function FinanceTransactions() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // validation
     if (!formData.account) {
       alert(t('finance.transaction.accountRequired', 'Account tanlash majburiy'));
       return;
@@ -344,26 +310,8 @@ export default function FinanceTransactions() {
     return labels[type] || type;
   };
 
-  const getTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      income: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
-      expense: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
-      opening_balance: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
-      currency_exchange_out: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
-      currency_exchange_in: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
-    };
-    return colors[type] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400';
-  };
-
   const getTransactionIcon = (type: string) => {
-    if (type === 'currency_exchange_out') {
-      return (
-        <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-        </svg>
-      );
-    }
-    if (type === 'currency_exchange_in') {
+    if (type === 'currency_exchange_out' || type === 'currency_exchange_in') {
       return (
         <svg className="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -381,15 +329,6 @@ export default function FinanceTransactions() {
       cancelled: t('finance.transaction.cancelled', 'Bekor qilingan'),
     };
     return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400',
-      approved: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400',
-      cancelled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   const handleExportPDF = () => {
@@ -412,12 +351,11 @@ export default function FinanceTransactions() {
     });
   };
 
-  // Modal component rendered when creating/editing a transaction
   const TransactionModal = () => {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl p-6">
-          <h2 className="text-xl font-semibold mb-4">
+        <div className="card w-full max-w-2xl animate-scaleIn">
+          <h2 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">
             {editingTransaction
               ? t('finance.transaction.edit', 'Transactionni tahrirlash')
               : t('finance.transaction.create', 'Yangi transaction')}
@@ -425,16 +363,20 @@ export default function FinanceTransactions() {
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.type', 'Turi')}</label>
+                <label className="text-label">{t('finance.transaction.type', 'Turi')}</label>
                 <Select
                   value={formData.type}
                   onChange={(val: any) => setFormData({ ...formData, type: val })}
-                  options={[{ value: 'income', label: t('finance.transaction.income', 'Kirim') }, { value: 'expense', label: t('finance.transaction.expense', 'Chiqim') }]}
+                  options={[
+                    { value: 'income', label: t('finance.transaction.income', 'Kirim') },
+                    { value: 'expense', label: t('finance.transaction.expense', 'Chiqim') }
+                  ]}
+                  className="mt-1 w-full"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.account', 'Account')}</label>
+                <label className="text-label">{t('finance.transaction.account', 'Account')}</label>
                 <Select
                   value={formData.account}
                   onChange={(val: any) => setFormData({ ...formData, account: String(val) })}
@@ -444,7 +386,7 @@ export default function FinanceTransactions() {
                   }))}
                   showSearch
                   optionFilterProp="children"
-                  style={{ width: '100%' }}
+                  className="mt-1 w-full"
                   popupMatchSelectWidth={false}
                   listHeight={300}
                   placeholder={t('common.select', 'Tanlang')}
@@ -453,14 +395,14 @@ export default function FinanceTransactions() {
 
               {formData.type === 'income' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.dealer', 'Diler')}</label>
+                  <label className="text-label">{t('finance.transaction.dealer', 'Diler')}</label>
                   <Select
                     value={formData.dealer}
                     onChange={(val: any) => setFormData({ ...formData, dealer: String(val) })}
                     options={dealers.map(d => ({ value: String(d.id), label: d.name }))}
                     showSearch
                     optionFilterProp="children"
-                    style={{ width: '100%' }}
+                    className="mt-1 w-full"
                     popupMatchSelectWidth={false}
                     listHeight={300}
                     placeholder={t('common.select', 'Tanlang')}
@@ -470,7 +412,7 @@ export default function FinanceTransactions() {
 
               {formData.type === 'expense' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.category', 'Kategoriya')}</label>
+                  <label className="text-label">{t('finance.transaction.category', 'Kategoriya')}</label>
                   <Select
                     value={formData.category ? Number(formData.category) : undefined}
                     onChange={(val: any) => setFormData({ ...formData, category: String(val) })}
@@ -483,7 +425,7 @@ export default function FinanceTransactions() {
                     filterOption={(input, option) =>
                       (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                     }
-                    style={{ width: '100%' }}
+                    className="mt-1 w-full"
                     popupMatchSelectWidth={false}
                     listHeight={300}
                     placeholder={t('common.select', 'Tanlang')}
@@ -492,37 +434,59 @@ export default function FinanceTransactions() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.amount', 'Summa')}</label>
+                <label className="text-label">{t('finance.transaction.amount', 'Summa')}</label>
                 <input
+                  type="number"
+                  step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full rounded border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                  className="input-field mt-1 w-full"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.date', 'Sana')}</label>
+                <label className="text-label">{t('finance.transaction.date', 'Sana')}</label>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full rounded border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                  className="input-field mt-1 w-full"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('finance.transaction.comment', 'Izoh')}</label>
+                <label className="text-label">{t('finance.transaction.comment', 'Izoh')}</label>
                 <textarea
                   value={formData.comment}
                   onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                  className="w-full rounded border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2"
+                  rows={3}
+                  className="input-field mt-1 w-full"
                 />
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={handleCloseModal} className="px-4 py-2 rounded border">{t('common.cancel', 'Cancel')}</button>
-              <button type="submit" disabled={modalLoading} className="px-4 py-2 rounded bg-blue-600 text-white">{modalLoading ? t('common.saving', 'Saving...') : t('common.save', 'Save')}</button>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-secondary"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={modalLoading}
+                className="btn btn-primary"
+              >
+                {modalLoading ? (
+                  <>
+                    <div className="spinner" />
+                    <span className="ml-2">{t('common.saving', 'Saving...')}</span>
+                  </>
+                ) : (
+                  t('common.save', 'Save')
+                )}
+              </button>
             </div>
           </form>
         </div>
@@ -534,8 +498,10 @@ export default function FinanceTransactions() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('common.loading', 'Loading...')}</p>
+          <div className="spinner mx-auto" />
+          <p className="mt-4 text-slate-600 dark:text-slate-400">
+            {t('common.loading', 'Loading...')}
+          </p>
         </div>
       </div>
     );
@@ -543,12 +509,12 @@ export default function FinanceTransactions() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+      <div className="page-wrapper">
+        <div className="card bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
           <p className="text-red-800 dark:text-red-200">{error}</p>
           <button
             onClick={loadTransactions}
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="btn btn-danger mt-4"
           >
             {t('common.retry', 'Retry')}
           </button>
@@ -558,67 +524,85 @@ export default function FinanceTransactions() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Render modal */}
+    <div className="page-wrapper space-y-6">
       {showModal && <TransactionModal />}
 
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+      {/* Header */}
+      <header className="card animate-fadeInUp">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
               {t('finance.transactions.title', 'Moliya Operatsiyalari')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-400 mt-1">
               {t('finance.transactions.subtitle', 'Kirim va chiqim operatsiyalari')}
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleExportPDF}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              className="btn btn-ghost btn-sm"
               title={t('common.exportPDF', 'Export PDF')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
-              PDF
+              <span className="ml-1">PDF</span>
             </button>
             <button
               onClick={handleExportXLSX}
-              className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center gap-2"
+              className="btn btn-ghost btn-sm"
               title={t('common.exportExcel', 'Export Excel')}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              XLSX
+              <span className="ml-1">XLSX</span>
+            </button>
+            <button
+              onClick={handleCreate}
+              className="btn btn-primary"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="ml-2">{t('finance.transaction.create', 'Yangi transaction')}</span>
             </button>
           </div>
         </div>
-        <div className="mt-4">
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {t('finance.transaction.create', 'Yangi transaction')}
-          </button>
+      </header>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeInUp">
+        <div className="kpi-card kpi-card--emerald">
+          <div className="kpi-value text-number">
+            {transactions.filter(t => t.type === 'income').length}
+          </div>
+          <div className="kpi-label">{t('finance.transaction.totalIncome', 'Jami Kirim')}</div>
+        </div>
+        <div className="kpi-card kpi-card--coral">
+          <div className="kpi-value text-number">
+            {transactions.filter(t => t.type === 'expense').length}
+          </div>
+          <div className="kpi-label">{t('finance.transaction.totalExpense', 'Jami Chiqim')}</div>
+        </div>
+        <div className="kpi-card kpi-card--blue">
+          <div className="kpi-value text-number">
+            {totalCount}
+          </div>
+          <div className="kpi-label">{t('finance.transaction.total', 'Jami Operatsiyalar')}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+      <div className="card animate-fadeInUp">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('finance.transaction.type', 'Turi')}
-            </label>
+            <label className="text-label">{t('finance.transaction.type', 'Turi')}</label>
             <select
               value={filters.type || ''}
               onChange={(e) => setFilters({ ...filters, type: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="input-field mt-1 w-full"
             >
               <option value="">{t('common.all', 'Barchasi')}</option>
               <option value="income">{t('finance.transaction.income', 'Kirim')}</option>
@@ -627,13 +611,11 @@ export default function FinanceTransactions() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('finance.transaction.status', 'Status')}
-            </label>
+            <label className="text-label">{t('finance.transaction.status', 'Status')}</label>
             <select
               value={filters.status || ''}
               onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="input-field mt-1 w-full"
             >
               <option value="">{t('common.all', 'Barchasi')}</option>
               <option value="draft">{t('finance.transaction.draft', 'Draft')}</option>
@@ -643,13 +625,11 @@ export default function FinanceTransactions() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('finance.transaction.currency', 'Valyuta')}
-            </label>
+            <label className="text-label">{t('finance.transaction.currency', 'Valyuta')}</label>
             <select
               value={filters.currency || ''}
               onChange={(e) => setFilters({ ...filters, currency: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="input-field mt-1 w-full"
             >
               <option value="">{t('common.all', 'Barchasi')}</option>
               <option value="UZS">UZS</option>
@@ -660,7 +640,7 @@ export default function FinanceTransactions() {
           <div className="flex items-end">
             <button
               onClick={() => setFilters({})}
-              className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+              className="btn btn-ghost w-full"
             >
               {t('common.clearFilters', 'Tozalash')}
             </button>
@@ -669,157 +649,144 @@ export default function FinanceTransactions() {
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('finance.transaction.date', 'Sana')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('finance.transaction.type', 'Turi')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('finance.transaction.dealer', 'Diler')}
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('finance.transaction.amount', 'Summa')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('finance.transaction.category', 'Kategoriya')}
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('finance.transaction.status', 'Status')}
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t('common.actions', 'Amallar')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {(transactions || []).map((transaction) => (
-                <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    #{transaction.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {formatDate(transaction.date)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
-                        {getTransactionIcon(transaction.type)}
-                        {getTypeLabel(transaction.type)}
-                      </span>
-                      {(transaction.type === 'currency_exchange_out' || transaction.type === 'currency_exchange_in') && transaction.related_account_name && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {transaction.type === 'currency_exchange_out' ? '→' : '←'} {transaction.related_account_name}
-                        </span>
-                      )}
-                      {(transaction.type === 'currency_exchange_out' || transaction.type === 'currency_exchange_in') && transaction.exchange_rate && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Rate: {formatNumber(transaction.exchange_rate)}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {transaction.dealer_name || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    {transaction.currency === 'USD' ? (
-                      <>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                          ${formatNumber(transaction.amount || 0)}
-                        </div>
-                        {transaction.amount_uzs && transaction.amount_uzs > 0 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            ≈ {formatNumber(transaction.amount_uzs)} UZS
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {formatNumber(transaction.amount || 0)} {transaction.currency}
-                        </div>
-                        {transaction.amount_usd && transaction.amount_usd > 0 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            ≈ ${formatNumber(transaction.amount_usd)}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {transaction.category || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
-                      {getStatusLabel(transaction.status)}
+      <div className="card overflow-x-auto animate-fadeInUp">
+        <table className="modern-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>{t('finance.transaction.date', 'Sana')}</th>
+              <th>{t('finance.transaction.type', 'Turi')}</th>
+              <th>{t('finance.transaction.dealer', 'Diler')}</th>
+              <th className="text-right">{t('finance.transaction.amount', 'Summa')}</th>
+              <th>{t('finance.transaction.category', 'Kategoriya')}</th>
+              <th className="text-center">{t('finance.transaction.status', 'Status')}</th>
+              <th className="text-center">{t('common.actions', 'Amallar')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="font-medium">#{transaction.id}</td>
+                <td>{formatDate(transaction.date)}</td>
+                <td>
+                  <div className="flex flex-col gap-1">
+                    <span className={
+                      transaction.type === 'income'
+                        ? 'badge badge-success'
+                        : transaction.type === 'expense'
+                        ? 'badge badge-error'
+                        : transaction.type === 'opening_balance'
+                        ? 'badge badge-blue'
+                        : 'badge badge-info'
+                    }>
+                      {getTransactionIcon(transaction.type)}
+                      {getTypeLabel(transaction.type)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                    <div className="flex items-center justify-center gap-2">
-                      {/* ✅ Edit button - available for all statuses */}
+                    {(transaction.type === 'currency_exchange_out' || transaction.type === 'currency_exchange_in') && transaction.related_account_name && (
+                      <span className="text-xs text-slate-500">
+                        {transaction.type === 'currency_exchange_out' ? '→' : '←'} {transaction.related_account_name}
+                      </span>
+                    )}
+                    {(transaction.type === 'currency_exchange_out' || transaction.type === 'currency_exchange_in') && transaction.exchange_rate && (
+                      <span className="text-xs text-slate-500">
+                        Rate: {formatNumber(transaction.exchange_rate)}
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td>{transaction.dealer_name || '—'}</td>
+                <td className="text-right">
+                  {transaction.currency === 'USD' ? (
+                    <>
+                      <div className="font-semibold text-number">
+                        ${formatNumber(transaction.amount || 0)}
+                      </div>
+                      {transaction.amount_uzs && transaction.amount_uzs > 0 && (
+                        <div className="text-xs text-slate-500">
+                          ≈ {formatNumber(transaction.amount_uzs)} UZS
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="font-semibold text-number">
+                        {formatNumber(transaction.amount || 0)} {transaction.currency}
+                      </div>
+                      {transaction.amount_usd && transaction.amount_usd > 0 && (
+                        <div className="text-xs text-slate-500">
+                          ≈ ${formatNumber(transaction.amount_usd)}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </td>
+                <td>{transaction.category || '—'}</td>
+                <td className="text-center">
+                  <span className={
+                    transaction.status === 'approved'
+                      ? 'badge badge-success'
+                      : transaction.status === 'cancelled'
+                      ? 'badge badge-error'
+                      : 'badge badge-warning'
+                  }>
+                    {getStatusLabel(transaction.status)}
+                  </span>
+                </td>
+                <td>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => handleEdit(transaction)}
+                      className="btn btn-ghost btn-sm"
+                      title={t('common.edit', 'Tahrirlash')}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7-7l7 7" />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(transaction.id)}
+                      className="btn btn-danger btn-sm"
+                      title={t('common.delete', 'O\'chirish')}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+
+                    {transaction.status === 'draft' && (
                       <button
-                        onClick={() => handleEdit(transaction)}
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                        title={t('common.edit', 'Tahrirlash')}
+                        onClick={() => handleApprove(transaction.id)}
+                        className="btn btn-success btn-sm"
+                        title={t('finance.transaction.approve', 'Tasdiqlash')}
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7-7l7 7" />
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       </button>
+                    )}
 
-                      {/* ✅ Delete button - available for all statuses */}
+                    {transaction.status === 'approved' && (
                       <button
-                        onClick={() => handleDelete(transaction.id)}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                        title={t('common.delete', 'O\'chirish')}
+                        onClick={() => handleCancel(transaction.id)}
+                        className="btn btn-secondary btn-sm"
+                        title={t('finance.transaction.cancel', 'Bekor qilish')}
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
-
-                      {/* Status-specific actions */}
-                      {transaction.status === 'draft' && (
-                        <button
-                          onClick={() => handleApprove(transaction.id)}
-                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                          title={t('finance.transaction.approve', 'Tasdiqlash')}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                      )}
-
-                      {transaction.status === 'approved' && (
-                        <button
-                          onClick={() => handleCancel(transaction.id)}
-                          className="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
-                          title={t('finance.transaction.cancel', 'Bekor qilish')}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
         {transactions.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">
+          <div className="card border-dashed text-center py-12">
+            <p className="text-slate-500 dark:text-slate-400">
               {t('finance.transactions.empty', 'Operatsiyalar topilmadi')}
             </p>
           </div>
@@ -828,56 +795,58 @@ export default function FinanceTransactions() {
 
       {/* Pagination */}
       {totalCount > pageSize && (
-        <div className="mt-6 flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-md px-6 py-4">
-          <div className="text-sm text-gray-700 dark:text-gray-300">
-            {t('common.showing', 'Ko\'rsatilmoqda')}{' '}
-            <span className="font-semibold">{Math.min((page - 1) * pageSize + 1, totalCount)}</span>
-            {' '}-{' '}
-            <span className="font-semibold">{Math.min(page * pageSize, totalCount)}</span>
-            {' '}{t('common.of', 'dan')}{' '}
-            <span className="font-semibold">{totalCount}</span>
-            {' '}{t('common.results', 'natija')}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t('common.previous', 'Oldingi')}
-            </button>
+        <div className="card bg-white/90 dark:bg-slate-900/90 backdrop-blur sticky bottom-0">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-slate-700 dark:text-slate-300">
+              {t('common.showing', 'Ko\'rsatilmoqda')}{' '}
+              <span className="font-semibold text-number">{Math.min((page - 1) * pageSize + 1, totalCount)}</span>
+              {' '}-{' '}
+              <span className="font-semibold text-number">{Math.min(page * pageSize, totalCount)}</span>
+              {' '}{t('common.of', 'dan')}{' '}
+              <span className="font-semibold text-number">{totalCount}</span>
+              {' '}{t('common.results', 'natija')}
+            </div>
             
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              {t('common.page', 'Sahifa')} {page} / {Math.ceil(totalCount / pageSize)}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="btn btn-secondary btn-sm"
+              >
+                {t('common.previous', 'Oldingi')}
+              </button>
+              
+              <span className="text-sm text-slate-700 dark:text-slate-300 px-3">
+                {t('common.page', 'Sahifa')} <span className="text-number">{page}</span> / <span className="text-number">{Math.ceil(totalCount / pageSize)}</span>
+              </span>
+              
+              <button
+                onClick={() => setPage(Math.min(Math.ceil(totalCount / pageSize), page + 1))}
+                disabled={page >= Math.ceil(totalCount / pageSize)}
+                className="btn btn-secondary btn-sm"
+              >
+                {t('common.next', 'Keyingi')}
+              </button>
+            </div>
             
-            <button
-              onClick={() => setPage(Math.min(Math.ceil(totalCount / pageSize), page + 1))}
-              disabled={page >= Math.ceil(totalCount / pageSize)}
-              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t('common.next', 'Keyingi')}
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-700 dark:text-gray-300">
-              {t('common.perPage', 'Sahifada')}:
-            </label>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-            >
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <label className="text-label">
+                {t('common.perPage', 'Sahifada')}:
+              </label>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="input-field"
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+            </div>
           </div>
         </div>
       )}
