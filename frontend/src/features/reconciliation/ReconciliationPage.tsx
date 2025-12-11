@@ -18,7 +18,7 @@ interface MovementEntry {
   label: string;
   amount_usd: number;
   direction: 'debit' | 'credit';
-  type: 'order' | 'payment' | 'return';
+  type: 'order' | 'payment' | 'return' | 'refund';
 }
 
 interface ReconciliationResponse {
@@ -345,6 +345,7 @@ const ReconciliationPage = () => {
                     <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                       <tr>
                         <th className="px-4 py-3">{t('reconciliation.date')}</th>
+                        <th className="px-4 py-3">{t('reconciliation.type', 'Turi')}</th>
                         <th className="px-4 py-3">{t('reconciliation.name')}</th>
                         <th className="px-4 py-3">{t('reconciliation.direction')}</th>
                         <th className="px-4 py-3 text-right">{t('reconciliation.amount')}</th>
@@ -355,6 +356,27 @@ const ReconciliationPage = () => {
                         <tr key={`${row.label}-${index}`} className="border-t border-slate-100 dark:border-slate-800">
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
                             {new Date(row.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                                row.type === 'refund'
+                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300'
+                                  : row.type === 'payment'
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
+                                  : row.type === 'order'
+                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
+                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300'
+                              }`}
+                            >
+                              {row.type === 'refund'
+                                ? t('reconciliation.typeRefund', 'Qaytarish')
+                                : row.type === 'payment'
+                                ? t('reconciliation.typePayment', 'To\'lov')
+                                : row.type === 'order'
+                                ? t('reconciliation.typeOrder', 'Buyurtma')
+                                : t('reconciliation.typeReturn', 'Vozvrat')}
+                            </span>
                           </td>
                           <td className="px-4 py-3 text-slate-900 dark:text-white">{row.label}</td>
                           <td className="px-4 py-3">
@@ -383,9 +405,30 @@ const ReconciliationPage = () => {
                       key={`${row.label}-${index}`}
                       className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                     >
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {new Date(row.date).toLocaleDateString()}
-                      </p>
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                          {new Date(row.date).toLocaleDateString()}
+                        </span>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                            row.type === 'refund'
+                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300'
+                              : row.type === 'payment'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
+                              : row.type === 'order'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-300'
+                          }`}
+                        >
+                          {row.type === 'refund'
+                            ? t('reconciliation.typeRefund', 'Qaytarish')
+                            : row.type === 'payment'
+                            ? t('reconciliation.typePayment', 'To\'lov')
+                            : row.type === 'order'
+                            ? t('reconciliation.typeOrder', 'Buyurtma')
+                            : t('reconciliation.typeReturn', 'Vozvrat')}
+                        </span>
+                      </div>
                       <p className="text-lg font-semibold text-slate-900 dark:text-white">{row.label}</p>
                       <div className="mt-2 flex items-center justify-between text-sm">
                         <span
