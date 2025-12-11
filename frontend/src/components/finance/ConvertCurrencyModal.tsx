@@ -73,13 +73,37 @@ export default function ConvertCurrencyModal({
       return;
     }
 
+    const parsedAmount = Number(formData.usd_amount);
+    const parsedRate = Number(formData.rate);
+
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      message.error(t('finance.currencyTransfer.amountInvalid', 'USD miqdori noto\'g\'ri')); 
+      return;
+    }
+    if (!Number.isFinite(parsedRate) || parsedRate <= 0) {
+      message.error(t('finance.currencyTransfer.rateInvalid', 'Kurs noto\'g\'ri')); 
+      return;
+    }
+
+    const fromAcc = usdAccounts.find((a) => a.id === formData.from_account_id);
+    const toAcc = uzsAccounts.find((a) => a.id === formData.to_account_id);
+
+    if (!fromAcc || fromAcc.currency !== 'USD') {
+      message.error(t('finance.currencyTransfer.fromMustBeUsd', 'USD kassani tanlang'));
+      return;
+    }
+    if (!toAcc || toAcc.currency !== 'UZS') {
+      message.error(t('finance.currencyTransfer.toMustBeUzs', 'UZS kassani tanlang'));
+      return;
+    }
+
     try {
       setLoading(true);
       await transferCurrency({
         from_account_id: formData.from_account_id,
         to_account_id: formData.to_account_id,
-        usd_amount: parseFloat(formData.usd_amount),
-        rate: parseFloat(formData.rate),
+        usd_amount: parsedAmount,
+        rate: parsedRate,
         date: formData.date,
         comment: formData.comment,
       });
