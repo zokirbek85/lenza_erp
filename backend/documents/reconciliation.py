@@ -98,6 +98,16 @@ class ReconciliationDocument(BaseDocument):
                 'is_debit': False,
             })
         
+        # Refunds
+        for refund in self.data.get('refunds', []):
+            all_items.append({
+                'date': refund['date'],
+                'type': 'refund',
+                'description': f"Refund ({refund.get('method', 'Refund')})",
+                'amount': Decimal(str(refund['amount_usd'])),
+                'is_debit': True,  # Refunds increase dealer balance
+            })
+        
         # Sort by date
         all_items.sort(key=lambda x: x['date'])
         
@@ -131,6 +141,7 @@ class ReconciliationDocument(BaseDocument):
             'total_orders': Decimal(str(self.data['totals']['orders'])),
             'total_returns': Decimal(str(self.data['totals']['returns'])),
             'total_payments': Decimal(str(self.data['totals']['payments'])),
+            'total_refunds': Decimal(str(self.data['totals'].get('refunds', 0))),
             'closing_balance': Decimal(str(self.data['closing_balance'])),
         }
     

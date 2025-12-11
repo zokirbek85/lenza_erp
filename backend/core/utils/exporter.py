@@ -210,6 +210,7 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False, language:
             'summary': 'Xulosa',
             'orders': 'Buyurtmalar',
             'payments': 'To\'lovlar',
+            'refunds': 'Qaytarishlar (Dilerga)',
             'returns': 'Qaytarishlar',
             'order_items': 'Buyurtma detallari',
             'dealer': 'Diler',
@@ -230,6 +231,7 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False, language:
             'summary': 'Сводка',
             'orders': 'Заказы',
             'payments': 'Платежи',
+            'refunds': 'Возвраты (Дилеру)',
             'returns': 'Возвраты',
             'order_items': 'Детали заказа',
             'dealer': 'Дилер',
@@ -250,6 +252,7 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False, language:
             'summary': 'Summary',
             'orders': 'Orders',
             'payments': 'Payments',
+            'refunds': 'Refunds (To Dealer)',
             'returns': 'Returns',
             'order_items': 'Order Items',
             'dealer': 'Dealer',
@@ -301,6 +304,16 @@ def export_reconciliation_to_excel(data: dict, detailed: bool = False, language:
     ws_payments.append([t['date'], t['method'], t['amount_usd']])
     for row in data.get('payments', []) or []:
         ws_payments.append([
+            row.get('date'),
+            row.get('method'),
+            float(row.get('amount_usd', 0)),
+        ])
+    
+    # Refunds sheet
+    ws_refunds = workbook.create_sheet(t['refunds'])
+    ws_refunds.append([t['date'], t['method'], t['amount_usd']])
+    for row in data.get('refunds', []) or []:
+        ws_refunds.append([
             row.get('date'),
             row.get('method'),
             float(row.get('amount_usd', 0)),
