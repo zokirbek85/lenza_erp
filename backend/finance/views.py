@@ -731,13 +731,20 @@ class DealerRefundView(APIView):
                 approved_at=timezone.now()
             )
         
-        # Get updated dealer balance using balance service
-        from dealers.services.balance import get_dealer_balance
+        # Try to get updated dealer balance using balance service
+        # Note: Dealer balance is calculated dynamically from all transactions
+        new_dealer_balance = None
         try:
-            balance_info = get_dealer_balance(dealer.id)
-            new_dealer_balance = balance_info.get('balance', None)
-        except Exception:
-            new_dealer_balance = None
+            from dealers.services.balance import calculate_dealer_balance
+            balance_info = calculate_dealer_balance(dealer)
+            # Use balance in dealer's currency
+            if dealer_currency == 'USD':
+                new_dealer_balance = float(balance_info.get('balance_usd', 0))
+            else:
+                new_dealer_balance = float(balance_info.get('balance_uzs', 0))
+        except Exception as e:
+            # If balance calculation fails, just continue without it
+            pass
         
         return Response({
             'success': True,
