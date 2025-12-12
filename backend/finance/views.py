@@ -659,9 +659,41 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
 class DealerRefundView(APIView):
     """
     Dealer refund - dilerga to'lov qaytarish
-    POST /api/finance/dealer-refund/
+    GET /api/finance/dealer-refund/ - list refunds with optional filters
+    POST /api/finance/dealer-refund/ - create new refund
     """
     permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get dealer refunds with optional filtering"""
+        from rest_framework.pagination import PageNumberPagination
+        
+        # Start with all refund transactions
+        queryset = FinanceTransaction.objects.filter(
+            type=FinanceTransaction.TransactionType.DEALER_REFUND
+        )
+        
+        # Apply filters
+        dealer_id = request.query_params.get('dealer_id')
+        if dealer_id:
+            queryset = queryset.filter(dealer_id=dealer_id)
+        
+        # Order by date descending
+        ordering = request.query_params.get('ordering', '-date')
+        queryset = queryset.order_by(ordering)
+        
+        # Paginate
+        paginator = PageNumberPagination()
+        page_size = request.query_params.get('page_size', 10)
+        paginator.page_size = int(page_size)
+        
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = FinanceTransactionSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = FinanceTransactionSerializer(queryset, many=True)
+        return Response(serializer.data)
     
     def post(self, request):
         """Refund money to dealer"""

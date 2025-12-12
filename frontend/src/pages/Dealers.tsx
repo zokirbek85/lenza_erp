@@ -332,7 +332,7 @@ const DealersPage = () => {
             page_size: 10
           }
         }),
-        http.get('/finance/dealer-refunds/', {
+        http.get('/finance/dealer-refund/', {
           params: {
             dealer_id: dealer.id,
             ordering: '-date',
