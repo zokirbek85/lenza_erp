@@ -15,7 +15,7 @@ interface SellOutletModalProps {
 }
 
 const SellOutletModal = ({ visible, defect, onCancel, onSuccess }: SellOutletModalProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['defects', 'common']);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 

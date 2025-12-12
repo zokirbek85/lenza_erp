@@ -35,7 +35,7 @@ import { useAuthStore } from '../auth/useAuthStore';
 const { RangePicker } = DatePicker;
 
 const DefectsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['defects', 'common']);
   const role = useAuthStore((state) => state.role);
   const isAdmin = role === 'admin';
   const isWarehouse = role === 'warehouse';

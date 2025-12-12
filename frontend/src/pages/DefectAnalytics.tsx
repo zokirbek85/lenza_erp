@@ -18,7 +18,7 @@ import { formatQuantity } from '../utils/formatters';
 const { RangePicker } = DatePicker;
 
 const DefectAnalyticsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['defects', 'common']);
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState<DefectStatistics | null>(null);
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([
@@ -51,8 +51,9 @@ const DefectAnalyticsPage = () => {
   const statusColumns = [
     {
       title: t('defects.status'),
-      dataIndex: 'status_display',
+      dataIndex: 'status',
       key: 'status',
+      render: (status: string) => t(`defects.status.${status}`, status),
     },
     {
       title: t('defects.count'),
@@ -61,8 +62,8 @@ const DefectAnalyticsPage = () => {
     },
     {
       title: t('defects.totalQty'),
-      dataIndex: 'total_qty',
-      key: 'total_qty',
+      dataIndex: 'qty_sum',
+      key: 'qty_sum',
       render: (qty: number) => formatQuantity(qty),
     },
   ];
@@ -70,24 +71,24 @@ const DefectAnalyticsPage = () => {
   const productColumns = [
     {
       title: t('defects.product'),
-      dataIndex: 'product_name',
-      key: 'product_name',
+      dataIndex: 'product__name',
+      key: 'product__name',
       render: (name: string, record: any) => (
         <div>
           <div className="font-medium">{name}</div>
-          <div className="text-xs text-gray-500">{record.product_sku}</div>
+          <div className="text-xs text-gray-500">{record.product__sku}</div>
         </div>
       ),
     },
     {
       title: t('defects.count'),
-      dataIndex: 'count',
-      key: 'count',
+      dataIndex: 'defect_count',
+      key: 'defect_count',
     },
     {
       title: t('defects.totalQty'),
-      dataIndex: 'total_qty',
-      key: 'total_qty',
+      dataIndex: 'defect_qty',
+      key: 'defect_qty',
       render: (qty: number) => formatQuantity(qty),
     },
   ];
@@ -133,7 +134,7 @@ const DefectAnalyticsPage = () => {
           <Card>
             <Statistic
               title={t('defects.totalDefects')}
-              value={statistics?.total_defects || 0}
+              value={statistics?.totals.total_defects || 0}
               prefix={<BarChartOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -143,7 +144,7 @@ const DefectAnalyticsPage = () => {
           <Card>
             <Statistic
               title={t('defects.totalQty')}
-              value={statistics?.total_qty || 0}
+              value={statistics?.totals.total_qty || 0}
               prefix={<ShoppingOutlined />}
               valueStyle={{ color: '#722ed1' }}
             />
@@ -153,7 +154,7 @@ const DefectAnalyticsPage = () => {
           <Card>
             <Statistic
               title={t('defects.repairableQty')}
-              value={statistics?.repairable_qty || 0}
+              value={statistics?.totals.total_repairable || 0}
               prefix={<ToolOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -163,7 +164,7 @@ const DefectAnalyticsPage = () => {
           <Card>
             <Statistic
               title={t('defects.nonRepairableQty')}
-              value={statistics?.non_repairable_qty || 0}
+              value={statistics?.totals.total_non_repairable || 0}
               prefix={<DeleteOutlined />}
               valueStyle={{ color: '#f5222d' }}
             />
@@ -189,7 +190,7 @@ const DefectAnalyticsPage = () => {
             <Table
               columns={defectTypeColumns}
               dataSource={statistics?.by_defect_type?.slice(0, 10) || []}
-              rowKey="type_id"
+              rowKey="type_name"
               pagination={false}
               size="small"
             />
@@ -203,7 +204,7 @@ const DefectAnalyticsPage = () => {
             <Table
               columns={productColumns}
               dataSource={statistics?.by_product?.slice(0, 20) || []}
-              rowKey="product_id"
+              rowKey="product__id"
               pagination={{ pageSize: 10 }}
               size="small"
             />

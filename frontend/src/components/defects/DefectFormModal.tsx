@@ -28,7 +28,7 @@ interface DefectFormModalProps {
 }
 
 const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormModalProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['defects', 'common']);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);

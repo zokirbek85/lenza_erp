@@ -165,33 +165,27 @@ export interface DefectAuditLog {
 // ============================================================================
 
 export interface DefectStatistics {
-  total_defects: number;
-  total_qty: number;
-  repairable_qty: number;
-  non_repairable_qty: number;
+  totals: {
+    total_defects: number;
+    total_qty: number;
+    total_repairable: number;
+    total_non_repairable: number;
+  };
   by_status: {
     status: DefectStatus;
-    status_display: string;
     count: number;
-    total_qty: number;
+    qty_sum: number;
   }[];
   by_product: {
-    product_id: number;
-    product_name: string;
-    product_sku: string;
-    count: number;
-    total_qty: number;
+    product__id: number;
+    product__name: string;
+    product__sku: string;
+    defect_count: number;
+    defect_qty: number;
   }[];
   by_defect_type: {
-    type_id: number;
     type_name: string;
-    count: number;
     total_qty: number;
-  }[];
-  recent_actions: {
-    action: string;
-    count: number;
-    date: string;
   }[];
 }
 

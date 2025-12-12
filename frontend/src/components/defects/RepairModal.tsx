@@ -18,7 +18,7 @@ interface RepairModalProps {
 }
 
 const RepairModal = ({ visible, defect, onCancel, onSuccess }: RepairModalProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['defects', 'common']);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [materials, setMaterials] = useState<RepairMaterial[]>([]);
