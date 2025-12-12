@@ -340,7 +340,7 @@ h3, .h3 {
 
 /* Zebra striping */
 .modern-table tbody tr:nth-child(even) {
-  background: rgba(248, 250, 252, 0.5);
+  background: var(--bg-secondary);
 }
 
 .modern-table tbody tr:nth-child(even):hover {

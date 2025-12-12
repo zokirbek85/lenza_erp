@@ -17,7 +17,7 @@ class OrderInvoiceView(APIView):
 
     def get(self, request, pk):
         order = get_object_or_404(
-            Order.objects.prefetch_related('items__product', 'dealer'),
+            Order.objects.prefetch_related('items__product__brand', 'dealer'),
             pk=pk
         )
         

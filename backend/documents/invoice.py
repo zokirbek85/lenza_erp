@@ -85,15 +85,21 @@ class InvoiceDocument(BaseDocument):
             qty = item.qty
             price_usd = item.price_usd
             total_usd = qty * price_usd
-            
+
+            # Get brand name from product
+            brand_name = ''
+            if item.product:
+                brand_name = item.product.brand.name if item.product.brand else ''
+
             items.append({
                 'product': item.product.name if item.product else f'Product #{item.product_id}',
+                'brand': brand_name,
                 'qty': self.format_quantity(qty),
                 'price_usd': self.format_currency(price_usd, 'USD'),
                 'total_usd': self.format_currency(total_usd, 'USD'),
                 'raw_total': total_usd,
             })
-        
+
         return items
     
     def get_totals(self) -> Dict[str, Any]:
@@ -251,6 +257,7 @@ class InvoiceTemplate:
             <thead>
                 <tr>
                     <th>№</th>
+                    <th>{% trans "Brand" %}</th>
                     <th>{% trans "Product" %}</th>
                     <th class="text-right">{% trans "Quantity" %}</th>
                     <th class="text-right">{% trans "Price (USD)" %}</th>
@@ -261,6 +268,7 @@ class InvoiceTemplate:
                 {% for item in items %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
+                    <td>{{ item.brand|default:"—" }}</td>
                     <td><strong>{{ item.product }}</strong></td>
                     <td class="text-right">{{ item.qty }}</td>
                     <td class="text-right">{{ item.price_usd }}</td>

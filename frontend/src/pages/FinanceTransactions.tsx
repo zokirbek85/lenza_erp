@@ -596,7 +596,10 @@ export default function FinanceTransactions() {
 
       {/* Filters */}
       <div className="card animate-fadeInUp">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
+          {t('common.filters', 'Filtrlar')}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="text-label">{t('finance.transaction.type', 'Turi')}</label>
             <select
@@ -637,14 +640,59 @@ export default function FinanceTransactions() {
             </select>
           </div>
 
-          <div className="flex items-end">
-            <button
-              onClick={() => setFilters({})}
-              className="btn btn-ghost w-full"
-            >
-              {t('common.clearFilters', 'Tozalash')}
-            </button>
+          <div>
+            <label className="text-label">{t('finance.transaction.account', 'Kassa')}</label>
+            <Select
+              value={filters.account || undefined}
+              onChange={(val: any) => setFilters({ ...filters, account: val })}
+              options={[
+                { value: undefined, label: t('common.all', 'Barchasi') },
+                ...accounts.map(a => ({
+                  value: a.id,
+                  label: `${a.name} (${a.currency})`
+                }))
+              ]}
+              showSearch
+              optionFilterProp="children"
+              className="mt-1 w-full"
+              popupMatchSelectWidth={false}
+              listHeight={300}
+              placeholder={t('common.all', 'Barchasi')}
+              allowClear
+            />
           </div>
+
+          <div>
+            <label className="text-label">{t('finance.transaction.dateFrom', 'Sanadan')}</label>
+            <input
+              type="date"
+              value={filters.date_from || ''}
+              onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+              className="input-field mt-1 w-full"
+            />
+          </div>
+
+          <div>
+            <label className="text-label">{t('finance.transaction.dateTo', 'Sanagacha')}</label>
+            <input
+              type="date"
+              value={filters.date_to || ''}
+              onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
+              className="input-field mt-1 w-full"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={() => setFilters({})}
+            className="btn btn-ghost"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            {t('common.clearFilters', 'Tozalash')}
+          </button>
         </div>
       </div>
 
