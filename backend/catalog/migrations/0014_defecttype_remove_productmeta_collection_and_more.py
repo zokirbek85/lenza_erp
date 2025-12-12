@@ -6,6 +6,57 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def safe_remove_old_models(apps, schema_editor):
+    """
+    Safely remove old models if they exist.
+    These models may have been already removed in previous migrations.
+    """
+    with schema_editor.connection.cursor() as cursor:
+        # Check and drop ProductMeta table if exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_productmeta'
+            );
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("DROP TABLE catalog_productmeta CASCADE;")
+
+        # Check and drop DoorModel table if exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_doormodel'
+            );
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("DROP TABLE catalog_doormodel CASCADE;")
+
+        # Check and drop DoorColor table if exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_doorcolor'
+            );
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("DROP TABLE catalog_doorcolor CASCADE;")
+
+        # Check and drop Collection table if exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'catalog_collection'
+            );
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("DROP TABLE catalog_collection CASCADE;")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -30,30 +81,8 @@ class Migration(migrations.Migration):
                 'ordering': ('name',),
             },
         ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='collection',
-        ),
-        migrations.RemoveField(
-            model_name='doormodel',
-            name='collection',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='color',
-        ),
-        migrations.AlterUniqueTogether(
-            name='doormodel',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='model',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='product',
-        ),
+        # Safely remove old models using custom SQL
+        migrations.RunPython(safe_remove_old_models, migrations.RunPython.noop),
         migrations.CreateModel(
             name='ProductDefect',
             fields=[
@@ -97,18 +126,6 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Логи изменений дефектов',
                 'ordering': ('-created_at',),
             },
-        ),
-        migrations.DeleteModel(
-            name='Collection',
-        ),
-        migrations.DeleteModel(
-            name='DoorColor',
-        ),
-        migrations.DeleteModel(
-            name='DoorModel',
-        ),
-        migrations.DeleteModel(
-            name='ProductMeta',
         ),
         migrations.AddIndex(
             model_name='productdefect',

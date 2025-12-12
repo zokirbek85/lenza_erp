@@ -35,6 +35,8 @@ import VerifyReconciliationPage from '../pages/verify/VerifyReconciliationPage';
 import FinanceDashboard from '../pages/FinanceDashboard';
 import FinanceTransactions from '../pages/FinanceTransactions';
 import ExpenseCategoryManagement from '../pages/ExpenseCategoryManagement';
+import DefectsPage from '../pages/Defects';
+import DefectAnalyticsPage from '../pages/DefectAnalytics';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
 const router = createBrowserRouter([
@@ -100,6 +102,22 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'warehouse']}>
             <InventoryAuditLogs />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'defects',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <DefectsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'defects/analytics',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse', 'owner']}>
+            <DefectAnalyticsPage />
           </ProtectedRoute>
         ),
       },
