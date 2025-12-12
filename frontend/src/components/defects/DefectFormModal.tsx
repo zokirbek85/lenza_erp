@@ -240,11 +240,10 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
             placeholder={t('defects.selectProduct')}
             optionFilterProp="children"
             filterOption={(input, option) => {
-              if (!option || !option.children) return false;
-              if (typeof option.children === 'string') {
-                return option.children.toLowerCase().includes(input.toLowerCase());
-              }
-              return false;
+              const children = option?.children;
+              return typeof children === 'string' 
+                ? children.toLowerCase().includes(input.toLowerCase())
+                : false;
             }}
             disabled={isEdit}
           >
