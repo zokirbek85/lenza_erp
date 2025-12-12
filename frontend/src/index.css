@@ -454,15 +454,33 @@ body {
 
 .ant-table-tbody > tr {
   transition: background var(--transition-fast);
+  background: var(--bg-elevated);
+}
+
+/* Subtle alternating row colors */
+.ant-table-tbody > tr:nth-child(even) {
+  background: var(--bg-base);
 }
 
 .ant-table-tbody > tr:hover {
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary) !important;
+  cursor: pointer;
 }
 
 .ant-table-tbody > tr > td {
   border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
+
+/* Selected row state */
+.ant-table-tbody > tr.ant-table-row-selected {
+  background: rgba(214, 182, 118, 0.08);
+}
+
+.ant-table-tbody > tr.ant-table-row-selected:hover {
+  background: rgba(214, 182, 118, 0.12) !important;
+}
+
 
 /* Card */
 .ant-card {
