@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Form, InputNumber, Input, Button, Space, Table, Select, Popconfirm, Alert } from 'antd';
+import { Modal, Form, InputNumber, Input, Button, Table, Select, Popconfirm, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import toast from 'react-hot-toast';
 
@@ -33,7 +33,7 @@ const RepairModal = ({ visible, defect, onCancel, onSuccess }: RepairModalProps)
   const loadProducts = async () => {
     try {
       const response = await fetchProducts({ page_size: 1000 });
-      setProducts(response.data.results);
+      setProducts(response.data.items || response.data.results || []);
     } catch (error) {
       console.error('Failed to load products:', error);
       toast.error(t('defects.loadProductsError'));
@@ -106,9 +106,13 @@ const RepairModal = ({ visible, defect, onCancel, onSuccess }: RepairModalProps)
           placeholder={t('defects.selectMaterial')}
           showSearch
           optionFilterProp="children"
-          filterOption={(input, option) =>
-            (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
-          }
+          filterOption={(input, option) => {
+            const label = option?.children;
+            if (typeof label === 'string') {
+              return label.toLowerCase().includes(input.toLowerCase());
+            }
+            return false;
+          }}
         >
           {products.map(product => (
             <Select.Option key={product.id} value={product.id}>

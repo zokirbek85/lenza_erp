@@ -55,7 +55,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
         fetchProducts({ page_size: 1000 }),
         getDefectTypes({ is_active: true, page_size: 1000 }),
       ]);
-      setProducts(productsRes.data.results);
+      setProducts(productsRes.data.items || productsRes.data.results || []);
       setDefectTypes(typesRes.data.results);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -239,9 +239,13 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
             showSearch
             placeholder={t('defects.selectProduct')}
             optionFilterProp="children"
-            filterOption={(input, option) =>
-              (option?.children as string)?.toLowerCase().includes(input.toLowerCase())
-            }
+            filterOption={(input, option) => {
+              const label = option?.children;
+              if (typeof label === 'string') {
+                return label.toLowerCase().includes(input.toLowerCase());
+              }
+              return false;
+            }}
             disabled={isEdit}
           >
             {products.map(product => (

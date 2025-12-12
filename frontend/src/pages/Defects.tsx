@@ -29,14 +29,14 @@ import DefectFormModal from '../components/defects/DefectFormModal';
 import RepairModal from '../components/defects/RepairModal';
 import DisposeModal from '../components/defects/DisposeModal';
 import SellOutletModal from '../components/defects/SellOutletModal';
-import { formatCurrency, formatQuantity } from '../utils/formatters';
+import { formatQuantity } from '../utils/formatters';
 import { useAuthStore } from '../auth/useAuthStore';
 
 const { RangePicker } = DatePicker;
 
 const DefectsPage = () => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role === 'admin';
   const isWarehouse = user?.role === 'warehouse';
 

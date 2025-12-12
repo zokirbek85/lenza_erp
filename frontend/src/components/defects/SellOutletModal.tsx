@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 import { sellOutletDefect } from '../../api/defects';
 import type { ProductDefectListItem, DefectSellOutletRequest } from '../../types/defects';
-import { formatQuantity, formatCurrency } from '../../utils/formatters';
+import { formatQuantity } from '../../utils/formatters';
 
 interface SellOutletModalProps {
   visible: boolean;

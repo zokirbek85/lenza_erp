@@ -5,7 +5,6 @@ import {
   ShoppingOutlined,
   ToolOutlined,
   DeleteOutlined,
-  DollarOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
