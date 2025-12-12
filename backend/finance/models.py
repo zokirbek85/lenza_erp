@@ -165,11 +165,12 @@ class FinanceAccount(models.Model):
             ]
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        # Expense: regular expense + currency exchange out
+        # Expense: regular expense + currency exchange out + dealer refund
         expense = approved_transactions.filter(
             type__in=[
                 FinanceTransaction.TransactionType.EXPENSE,
-                FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT
+                FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT,
+                FinanceTransaction.TransactionType.DEALER_REFUND
             ]
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
