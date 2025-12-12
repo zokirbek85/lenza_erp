@@ -107,10 +107,8 @@ const RepairModal = ({ visible, defect, onCancel, onSuccess }: RepairModalProps)
           showSearch
           optionFilterProp="children"
           filterOption={(input, option) => {
-            const children = option?.children;
-            return typeof children === 'string'
-              ? children.toLowerCase().includes(input.toLowerCase())
-              : false;
+            const children = String(option?.children || '');
+            return children.toLowerCase().includes(input.toLowerCase());
           }}
         >
           {products.map(product => (
