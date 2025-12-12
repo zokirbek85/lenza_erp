@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Iterable
 
@@ -207,7 +207,20 @@ def get_reconciliation_data(
     )
 
     totals = _aggregate_totals(dealer, start, end)
-    opening_balance = Decimal(dealer.opening_balance_usd or 0)
+    
+    # Calculate opening balance: initial balance + all transactions BEFORE start date
+    initial_balance = Decimal(dealer.opening_balance_usd or 0)
+    initial_date = dealer.opening_balance_date or start
+    
+    # If start date is after the initial date, we need to calculate accumulated balance
+    if start > initial_date:
+        # Get totals from initial_date up to (but not including) start date
+        prior_totals = _aggregate_totals(dealer, initial_date, start - timedelta(days=1))
+        opening_balance = initial_balance + prior_totals.orders - prior_totals.payments - prior_totals.returns
+    else:
+        # If requesting period from initial date or earlier, use initial balance
+        opening_balance = initial_balance
+    
     closing_balance = opening_balance + totals.orders - totals.payments - totals.returns
 
     def _format_orders():
