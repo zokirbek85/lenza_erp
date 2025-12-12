@@ -241,9 +241,8 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
             optionFilterProp="children"
             filterOption={(input, option) => {
               if (!option || !option.children) return false;
-              const label = option.children;
-              if (typeof label === 'string') {
-                return label.toLowerCase().includes(input.toLowerCase());
+              if (typeof option.children === 'string') {
+                return option.children.toLowerCase().includes(input.toLowerCase());
               }
               return false;
             }}
