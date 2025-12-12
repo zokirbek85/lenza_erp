@@ -33,7 +33,7 @@ const RepairModal = ({ visible, defect, onCancel, onSuccess }: RepairModalProps)
   const loadProducts = async () => {
     try {
       const response = await fetchProducts({ page_size: 1000 });
-      setProducts(response.data.items || response.data.results || []);
+      setProducts(response.items || []);
     } catch (error) {
       console.error('Failed to load products:', error);
       toast.error(t('defects.loadProductsError'));
@@ -107,7 +107,8 @@ const RepairModal = ({ visible, defect, onCancel, onSuccess }: RepairModalProps)
           showSearch
           optionFilterProp="children"
           filterOption={(input, option) => {
-            const label = option?.children;
+            if (!option || !option.children) return false;
+            const label = option.children;
             if (typeof label === 'string') {
               return label.toLowerCase().includes(input.toLowerCase());
             }

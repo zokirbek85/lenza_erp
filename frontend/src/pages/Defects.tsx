@@ -36,9 +36,9 @@ const { RangePicker } = DatePicker;
 
 const DefectsPage = () => {
   const { t } = useTranslation();
-  const user = useAuthStore((state) => state.user);
-  const isAdmin = user?.role === 'admin';
-  const isWarehouse = user?.role === 'warehouse';
+  const role = useAuthStore((state) => state.role);
+  const isAdmin = role === 'admin';
+  const isWarehouse = role === 'warehouse';
 
   const [defects, setDefects] = useState<ProductDefectListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -114,16 +114,6 @@ const DefectsPage = () => {
   const handleRepair = (defect: ProductDefectListItem) => {
     setSelectedDefect(defect);
     setRepairModalVisible(true);
-  };
-
-  const handleDispose = (defect: ProductDefectListItem) => {
-    setSelectedDefect(defect);
-    setDisposeModalVisible(true);
-  };
-
-  const handleSellOutlet = (defect: ProductDefectListItem) => {
-    setSelectedDefect(defect);
-    setSellOutletModalVisible(true);
   };
 
   const handleExport = async () => {
