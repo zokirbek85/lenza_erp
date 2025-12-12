@@ -13,6 +13,20 @@ module.exports = {
           graphite: '#1A1A1A',
           'graphite-light': '#2A2A2A',
         },
+        // Dark Navy palette (overrides default slate in dark mode)
+        slate: {
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',
+          700: '#334155',
+          800: '#1A1F29',  // Dark navy secondary
+          900: '#0F1419',  // Dark navy base
+          950: '#0A0E14',  // Deep navy body
+        },
         // Light theme backgrounds
         bg: {
           base: '#F8FAFC',

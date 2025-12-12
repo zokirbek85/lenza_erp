@@ -822,7 +822,7 @@ const OrdersPage = () => {
           </button>
         )}
 
-        <div className="sticky bottom-0 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="sticky bottom-0 rounded-2xl border border-slate-200 px-4 py-3 shadow-sm dark:border-[#2A2D30]" style={{ background: 'var(--bg-elevated)' }}>
           <PaginationControls
             page={page}
             pageSize={pageSize}
@@ -914,7 +914,7 @@ const OrdersPage = () => {
         <button
           type="button"
           onClick={() => setFiltersExpanded(!filtersExpanded)}
-          className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg"
+          className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-[#1A1F29] rounded-lg"
         >
           <div className="flex items-center gap-3">
             <span className="text-lg font-semibold text-slate-900 dark:text-white">{t('orders.filters.title')}</span>
@@ -1050,7 +1050,7 @@ const OrdersPage = () => {
 
                           {/* Discount Preview */}
                           {discountType !== 'none' && selectedItems.length > 0 && (
-                            <div className="card bg-slate-50 dark:bg-slate-900">
+                            <div className="card bg-slate-50 dark:bg-[#0F1419]">
                               <div className="mb-2 flex justify-between text-sm text-slate-600 dark:text-slate-400">
                                 <span>{t('orders.discount.subtotal', 'Oraliq jami')}:</span>
                                 <span className="text-number">${calculateOrderTotals().subtotal}</span>
@@ -1098,7 +1098,7 @@ const OrdersPage = () => {
                     </div>
 
                     {/* Product Selection */}
-                    <div className="card bg-slate-50/50 dark:bg-slate-800/30">
+                    <div className="card bg-slate-50/50 dark:bg-[#1A1F29]/50">
                       <div>
                         <label className="text-label">{t('orders.form.productSearch')}</label>
                         <input
@@ -1246,7 +1246,7 @@ const OrdersPage = () => {
               return (
                 <Fragment key={order.id}>
                   <tr
-                    className={`cursor-pointer ${isExpanded ? 'bg-slate-50 dark:bg-slate-800' : ''}`}
+                    className={`cursor-pointer ${isExpanded ? 'bg-slate-50 dark:bg-[#1A1F29]' : ''}`}
                     onClick={() => toggleOrderDetails(order.id)}
                   >
                     <td className="font-semibold text-number">{order.display_no}</td>
@@ -1296,7 +1296,7 @@ const OrdersPage = () => {
                   </tr>
                   {isExpanded && (
                     <tr>
-                      <td colSpan={7} className="bg-slate-50 dark:bg-slate-800/60">
+                      <td colSpan={7} className="bg-slate-50 dark:bg-[#1A1F29]/80">
                         <div className="p-4">
                           {order.items?.length ? (
                             <div className="space-y-2">
@@ -1333,7 +1333,7 @@ const OrdersPage = () => {
                           )}
                           
                           {order.exchange_rate && !isWarehouse && (
-                            <div className="mt-3 card bg-blue-50 dark:bg-blue-900/20">
+                            <div className="mt-3 card bg-blue-50 dark:bg-[#1A1F29]">
                               <div className="flex items-center gap-4 text-sm flex-wrap">
                                 <span>{t('orders.details.exchangeRate', 'Valyuta kursi')}:</span>
                                 <span className="font-semibold text-number">
@@ -1375,7 +1375,7 @@ const OrdersPage = () => {
       </div>
 
       {/* Pagination */}
-      <div className="sticky bottom-0 card bg-white/90 dark:bg-slate-900/90 backdrop-blur">
+      <div className="sticky bottom-0 card backdrop-blur" style={{ background: 'var(--bg-elevated)' }}>
         <PaginationControls
           page={page}
           pageSize={pageSize}

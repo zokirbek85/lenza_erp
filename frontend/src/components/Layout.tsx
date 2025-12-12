@@ -66,7 +66,7 @@ const Layout = () => {
     : t('layout.operationsAnonymous', { operations: t('app.operations') });
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#0A0E14]">
       <Sidebar
         collapsed={collapsed}
         isMobile={isMobile}
@@ -78,7 +78,7 @@ const Layout = () => {
         style={{ marginLeft: contentMarginLeft }}
       >
         <Container className="flex-1">
-          <header className="flex min-h-[64px] flex-wrap items-center justify-between gap-4 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60">
+          <header className="flex min-h-[64px] flex-wrap items-center justify-between gap-4 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur dark:border-[#2A2D30] dark:bg-[#1A1F29]/80">
             <div className="flex flex-col">
               <div className="flex items-center gap-1 text-lg font-semibold text-slate-900 dark:text-white">
                 <button
