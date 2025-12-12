@@ -2,7 +2,11 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import Brand, Category, DoorKitComponent, Product, ProductModel, ProductSKU, ProductVariant, Style
+from .models import (
+    Brand, Category, DoorKitComponent, Product, ProductModel, 
+    ProductSKU, ProductVariant, Style,
+    DefectType, ProductDefect, DefectAuditLog
+)
 
 
 class BrandSerializer(serializers.ModelSerializer):
@@ -505,3 +509,417 @@ class PublicVariantCatalogSerializer(serializers.ModelSerializer):
         size_stock = obj.get_size_stock()
         # Return only sizes, no stock information
         return [item['size'] for item in size_stock]
+
+
+# ============================================================================
+# DEFECT SERIALIZERS
+# ============================================================================
+
+
+class DefectTypeSerializer(serializers.ModelSerializer):
+    """Serializer for defect type reference"""
+    
+    class Meta:
+        model = DefectType
+        fields = (
+            'id',
+            'name',
+            'description',
+            'is_active',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class ProductDefectListSerializer(serializers.ModelSerializer):
+    """Compact serializer for defect list view"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    product_image = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    defect_summary = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductDefect
+        fields = (
+            'id',
+            'product',
+            'product_name',
+            'product_sku',
+            'product_image',
+            'qty',
+            'repairable_qty',
+            'non_repairable_qty',
+            'status',
+            'status_display',
+            'defect_summary',
+            'created_by_name',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
+    
+    def get_product_image(self, obj):
+        """Get product image URL"""
+        request = self.context.get('request')
+        if obj.product.image:
+            try:
+                if obj.product.image.storage.exists(obj.product.image.name):
+                    if request:
+                        return request.build_absolute_uri(obj.product.image.url)
+                    return obj.product.image.url
+            except Exception:
+                pass
+        return None
+    
+    def get_defect_summary(self, obj):
+        """Brief summary of defect types"""
+        if not obj.defect_details:
+            return None
+        
+        # Return first 3 defect types
+        summary = []
+        for item in obj.defect_details[:3]:
+            summary.append(f"{item.get('type_name', 'Unknown')} ({item.get('qty', 0)})")
+        
+        if len(obj.defect_details) > 3:
+            summary.append(f"+ {len(obj.defect_details) - 3} more")
+        
+        return ', '.join(summary)
+
+
+class ProductDefectDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for defect view/edit"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    product_image = serializers.SerializerMethodField()
+    product_price_usd = serializers.DecimalField(
+        source='product.sell_price_usd',
+        max_digits=12,
+        decimal_places=2,
+        read_only=True
+    )
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    updated_by_name = serializers.CharField(source='updated_by.username', read_only=True)
+    
+    # Enriched defect details with full defect type info
+    defect_details_enriched = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductDefect
+        fields = (
+            'id',
+            'product',
+            'product_name',
+            'product_sku',
+            'product_image',
+            'product_price_usd',
+            'qty',
+            'repairable_qty',
+            'non_repairable_qty',
+            'defect_details',
+            'defect_details_enriched',
+            'status',
+            'status_display',
+            'description',
+            'repair_materials',
+            'repair_completed_at',
+            'disposed_at',
+            'sold_outlet_at',
+            'created_by',
+            'created_by_name',
+            'updated_by',
+            'updated_by_name',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = (
+            'created_at', 'updated_at', 'repair_completed_at',
+            'disposed_at', 'sold_outlet_at'
+        )
+    
+    def get_product_image(self, obj):
+        """Get product image URL"""
+        request = self.context.get('request')
+        if obj.product.image:
+            try:
+                if obj.product.image.storage.exists(obj.product.image.name):
+                    if request:
+                        return request.build_absolute_uri(obj.product.image.url)
+                    return obj.product.image.url
+            except Exception:
+                pass
+        return None
+    
+    def get_defect_details_enriched(self, obj):
+        """Enrich defect details with full DefectType info"""
+        if not obj.defect_details:
+            return []
+        
+        enriched = []
+        for item in obj.defect_details:
+            type_id = item.get('type_id')
+            if type_id:
+                try:
+                    defect_type = DefectType.objects.get(id=type_id)
+                    enriched.append({
+                        'type_id': defect_type.id,
+                        'type_name': defect_type.name,
+                        'type_description': defect_type.description,
+                        'qty': item.get('qty', 0),
+                    })
+                except DefectType.DoesNotExist:
+                    enriched.append(item)
+            else:
+                enriched.append(item)
+        
+        return enriched
+    
+    def validate(self, attrs):
+        """Validate defect quantities"""
+        qty = attrs.get('qty', self.instance.qty if self.instance else Decimal('0'))
+        repairable_qty = attrs.get('repairable_qty', self.instance.repairable_qty if self.instance else Decimal('0'))
+        non_repairable_qty = attrs.get('non_repairable_qty', self.instance.non_repairable_qty if self.instance else Decimal('0'))
+        
+        total = repairable_qty + non_repairable_qty
+        if abs(total - qty) > Decimal('0.01'):
+            raise serializers.ValidationError({
+                'qty': f'Общее количество ({qty}) должно равняться сумме ремонтопригодных ({repairable_qty}) и неремонтопригодных ({non_repairable_qty})'
+            })
+        
+        # Validate defect_details if provided
+        defect_details = attrs.get('defect_details', [])
+        if defect_details:
+            for idx, detail in enumerate(defect_details):
+                if not isinstance(detail, dict):
+                    raise serializers.ValidationError({
+                        'defect_details': f'Defect detail {idx + 1} must be an object'
+                    })
+                
+                if 'type_id' not in detail or 'qty' not in detail:
+                    raise serializers.ValidationError({
+                        'defect_details': f'Defect detail {idx + 1} must have type_id and qty'
+                    })
+                
+                # Validate type_id exists
+                try:
+                    defect_type = DefectType.objects.get(id=detail['type_id'])
+                    # Add type_name for storage
+                    detail['type_name'] = defect_type.name
+                except DefectType.DoesNotExist:
+                    raise serializers.ValidationError({
+                        'defect_details': f'DefectType with id {detail["type_id"]} does not exist'
+                    })
+        
+        return attrs
+    
+    def create(self, validated_data):
+        """Create defect and log audit"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+            validated_data['updated_by'] = request.user
+        
+        defect = super().create(validated_data)
+        
+        # Create audit log
+        DefectAuditLog.objects.create(
+            defect=defect,
+            action=DefectAuditLog.Action.CREATED,
+            new_data={
+                'qty': str(defect.qty),
+                'repairable_qty': str(defect.repairable_qty),
+                'non_repairable_qty': str(defect.non_repairable_qty),
+                'status': defect.status,
+            },
+            description=f'Defect created for {defect.product.name}',
+            user=request.user if request and hasattr(request, 'user') else None,
+        )
+        
+        return defect
+    
+    def update(self, instance, validated_data):
+        """Update defect and log audit"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['updated_by'] = request.user
+        
+        # Capture old data for audit
+        old_data = {
+            'qty': str(instance.qty),
+            'repairable_qty': str(instance.repairable_qty),
+            'non_repairable_qty': str(instance.non_repairable_qty),
+            'status': instance.status,
+        }
+        
+        defect = super().update(instance, validated_data)
+        
+        # Create audit log
+        DefectAuditLog.objects.create(
+            defect=defect,
+            action=DefectAuditLog.Action.UPDATED,
+            old_data=old_data,
+            new_data={
+                'qty': str(defect.qty),
+                'repairable_qty': str(defect.repairable_qty),
+                'non_repairable_qty': str(defect.non_repairable_qty),
+                'status': defect.status,
+            },
+            description=f'Defect updated for {defect.product.name}',
+            user=request.user if request and hasattr(request, 'user') else None,
+        )
+        
+        return defect
+
+
+class DefectAuditLogSerializer(serializers.ModelSerializer):
+    """Serializer for defect audit log"""
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    action_display = serializers.CharField(source='get_action_display', read_only=True)
+    
+    class Meta:
+        model = DefectAuditLog
+        fields = (
+            'id',
+            'defect',
+            'action',
+            'action_display',
+            'old_data',
+            'new_data',
+            'description',
+            'user',
+            'user_name',
+            'created_at',
+        )
+        read_only_fields = ('created_at',)
+
+
+class DefectRepairSerializer(serializers.Serializer):
+    """Serializer for repair action"""
+    quantity = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        help_text="Количество единиц для ремонта"
+    )
+    materials = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        help_text='Материалы: [{"product_id": 123, "qty": 2}, ...]'
+    )
+    description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Описание ремонта"
+    )
+    
+    def validate_quantity(self, value):
+        """Validate repair quantity"""
+        defect = self.context.get('defect')
+        if not defect:
+            raise serializers.ValidationError("Defect not found in context")
+        
+        if value > defect.repairable_qty:
+            raise serializers.ValidationError(
+                f'Нельзя отремонтировать {value} единиц. Доступно только {defect.repairable_qty}'
+            )
+        
+        return value
+    
+    def validate_materials(self, materials):
+        """Validate materials availability"""
+        if not materials:
+            return materials
+        
+        for idx, material in enumerate(materials):
+            if 'product_id' not in material or 'qty' not in material:
+                raise serializers.ValidationError(
+                    f'Material {idx + 1} must have product_id and qty'
+                )
+            
+            product_id = material['product_id']
+            qty = Decimal(str(material['qty']))
+            
+            try:
+                product = Product.objects.get(id=product_id)
+                material['product_name'] = product.name
+                material['product_sku'] = product.sku
+                
+                # Check stock availability
+                if product.stock_ok < qty:
+                    raise serializers.ValidationError(
+                        f'Недостаточно материала "{product.name}". '
+                        f'Требуется: {qty}, доступно: {product.stock_ok}'
+                    )
+            except Product.DoesNotExist:
+                raise serializers.ValidationError(
+                    f'Product with id {product_id} does not exist'
+                )
+        
+        return materials
+
+
+class DefectDisposeSerializer(serializers.Serializer):
+    """Serializer for dispose action"""
+    quantity = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        help_text="Количество единиц для утилизации"
+    )
+    description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Причина утилизации"
+    )
+    
+    def validate_quantity(self, value):
+        """Validate dispose quantity"""
+        defect = self.context.get('defect')
+        if not defect:
+            raise serializers.ValidationError("Defect not found in context")
+        
+        if value > defect.non_repairable_qty:
+            raise serializers.ValidationError(
+                f'Нельзя утилизировать {value} единиц. Доступно только {defect.non_repairable_qty}'
+            )
+        
+        return value
+
+
+class DefectSellOutletSerializer(serializers.Serializer):
+    """Serializer for outlet sale action"""
+    quantity = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        help_text="Количество единиц для продажи"
+    )
+    sale_price_usd = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal('0.01'),
+        help_text="Цена продажи со скидкой (USD)"
+    )
+    description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Описание продажи"
+    )
+    
+    def validate_quantity(self, value):
+        """Validate sell quantity"""
+        defect = self.context.get('defect')
+        if not defect:
+            raise serializers.ValidationError("Defect not found in context")
+        
+        if value > defect.non_repairable_qty:
+            raise serializers.ValidationError(
+                f'Нельзя продать {value} единиц. Доступно только {defect.non_repairable_qty}'
+            )
+        
+        return value
+

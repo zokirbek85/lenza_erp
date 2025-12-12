@@ -1,7 +1,11 @@
 from django.contrib import admin
 from django.db.models import Q
 
-from .models import Brand, Category, DoorKitComponent, Product, ProductModel, ProductSKU, ProductVariant, Style
+from .models import (
+    Brand, Category, DoorKitComponent, Product, ProductModel, 
+    ProductSKU, ProductVariant, Style,
+    DefectType, ProductDefect, DefectAuditLog
+)
 
 
 @admin.register(Brand)
@@ -328,11 +332,160 @@ class DoorKitComponentAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'name', 'brand', 'category', 'sell_price_usd', 'stock_ok', 'is_active')
+    list_display = ('sku', 'name', 'brand', 'category', 'sell_price_usd', 'stock_ok', 'stock_defect', 'is_active')
     list_filter = ('is_active', 'brand', 'category')
     search_fields = ('sku', 'name', 'barcode')
     autocomplete_fields = ('brand', 'category', 'style')
-    
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('brand', 'category', 'style')
+
+
+# ============================================================================
+# DEFECT MANAGEMENT ADMIN
+# ============================================================================
+
+
+@admin.register(DefectType)
+class DefectTypeAdmin(admin.ModelAdmin):
+    """Admin for defect type reference"""
+    list_display = ('name', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'description')
+    ordering = ('name',)
+    
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'description', 'is_active')
+        }),
+    )
+
+
+class DefectAuditLogInline(admin.TabularInline):
+    """Inline for defect audit logs"""
+    model = DefectAuditLog
+    extra = 0
+    fields = ('action', 'user', 'description', 'created_at')
+    readonly_fields = ('action', 'user', 'description', 'created_at')
+    can_delete = False
+    max_num = 0
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ProductDefect)
+class ProductDefectAdmin(admin.ModelAdmin):
+    """Admin for product defects"""
+    list_display = (
+        'id',
+        'product_display',
+        'qty',
+        'repairable_qty',
+        'non_repairable_qty',
+        'status_display',
+        'created_by',
+        'created_at'
+    )
+    list_filter = ('status', 'created_at', 'product__brand')
+    search_fields = ('product__name', 'product__sku', 'description')
+    autocomplete_fields = ('product', 'created_by', 'updated_by')
+    readonly_fields = (
+        'repair_completed_at',
+        'disposed_at',
+        'sold_outlet_at',
+        'created_at',
+        'updated_at'
+    )
+    inlines = [DefectAuditLogInline]
+    
+    fieldsets = (
+        ('Product', {
+            'fields': ('product',)
+        }),
+        ('Quantities', {
+            'fields': ('qty', 'repairable_qty', 'non_repairable_qty')
+        }),
+        ('Defect Details', {
+            'fields': ('defect_details', 'status', 'description')
+        }),
+        ('Repair Info', {
+            'fields': ('repair_materials', 'repair_completed_at'),
+            'classes': ('collapse',)
+        }),
+        ('Disposal/Sale Info', {
+            'fields': ('disposed_at', 'sold_outlet_at'),
+            'classes': ('collapse',)
+        }),
+        ('Tracking', {
+            'fields': ('created_by', 'updated_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def product_display(self, obj):
+        return obj.product.name
+    product_display.short_description = 'Product'
+    product_display.admin_order_field = 'product__name'
+    
+    def status_display(self, obj):
+        return obj.get_status_display()
+    status_display.short_description = 'Status'
+    status_display.admin_order_field = 'status'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('product__brand', 'created_by', 'updated_by')
+
+
+@admin.register(DefectAuditLog)
+class DefectAuditLogAdmin(admin.ModelAdmin):
+    """Admin for defect audit logs (read-only)"""
+    list_display = (
+        'defect',
+        'action_display',
+        'user',
+        'created_at'
+    )
+    list_filter = ('action', 'created_at')
+    search_fields = ('defect__product__name', 'description', 'user__username')
+    readonly_fields = (
+        'defect',
+        'action',
+        'old_data',
+        'new_data',
+        'description',
+        'user',
+        'created_at'
+    )
+    
+    fieldsets = (
+        ('Defect', {
+            'fields': ('defect',)
+        }),
+        ('Action', {
+            'fields': ('action', 'description')
+        }),
+        ('Data', {
+            'fields': ('old_data', 'new_data')
+        }),
+        ('Tracking', {
+            'fields': ('user', 'created_at')
+        }),
+    )
+    
+    def action_display(self, obj):
+        return obj.get_action_display()
+    action_display.short_description = 'Action'
+    action_display.admin_order_field = 'action'
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('defect__product', 'user')
