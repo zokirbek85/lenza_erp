@@ -634,10 +634,14 @@ const OrdersPage = () => {
     );
   };
 
-  const handlePdf = async (orderId?: number, displayNo?: string) => {
+  const handlePdf = async (orderId?: number, displayNo?: string, dealerName?: string) => {
     try {
       if (orderId) {
-        const filename = displayNo ? `${displayNo}.pdf` : `order-${orderId}.pdf`;
+        let filename = displayNo ? `${displayNo}.pdf` : `order-${orderId}.pdf`;
+        if (dealerName) {
+          const sanitizedDealerName = dealerName.replace(/\s+/g, '_');
+          filename = displayNo ? `invoice_${displayNo}_${sanitizedDealerName}.pdf` : `invoice_${orderId}_${sanitizedDealerName}.pdf`;
+        }
         await downloadFile(`/orders/${orderId}/pdf/`, filename);
       } else {
         await downloadFile('/orders/report/pdf/', 'orders.pdf');
@@ -1287,7 +1291,7 @@ const OrdersPage = () => {
                         className="btn btn-ghost btn-sm"
                         onClick={(event) => {
                           event.stopPropagation();
-                          handlePdf(order.id, order.display_no);
+                          handlePdf(order.id, order.display_no, order.dealer?.name);
                         }}
                       >
                         PDF
