@@ -8,12 +8,12 @@
   color-scheme: dark;
   
   /* ===== BACKGROUND COLORS ===== */
-  --bg-base: #111315;
-  --bg-secondary: #1A1C1E;
-  --bg-body: #0D0F10;
-  --bg-container: #111315;
-  --bg-elevated: #1A1C1E;
-  --bg-tertiary: #21262D;
+  --bg-base: #0F1419;        /* Dark navy base */
+  --bg-secondary: #1A1F29;   /* Dark navy secondary */
+  --bg-body: #0A0E14;        /* Deep navy body */
+  --bg-container: #0F1419;   /* Dark navy container */
+  --bg-elevated: #1A1F29;    /* Dark navy elevated */
+  --bg-tertiary: #232936;    /* Lighter navy tertiary */
   --bg-overlay: rgba(0, 0, 0, 0.7);
   
   /* ===== TEXT COLORS ===== */
@@ -22,7 +22,7 @@
   --text-secondary: #A1A5AC;
   --text-tertiary: #6F737A;
   --text-disabled: #484F58;
-  --text-inverse: #111315;
+  --text-inverse: #0F1419;   /* Updated to match dark navy base */
   
   /* ===== BORDER COLORS ===== */
   --border-color: #2A2D30;
@@ -77,13 +77,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']):not(.light) {
     color-scheme: dark;
-    
-    --bg-base: #111315;
-    --bg-secondary: #1A1C1E;
-    --bg-body: #0D0F10;
-    --bg-container: #111315;
-    --bg-elevated: #1A1C1E;
-    --bg-tertiary: #21262D;
+
+    --bg-base: #0F1419;        /* Dark navy base */
+    --bg-secondary: #1A1F29;   /* Dark navy secondary */
+    --bg-body: #0A0E14;        /* Deep navy body */
+    --bg-container: #0F1419;   /* Dark navy container */
+    --bg-elevated: #1A1F29;    /* Dark navy elevated */
+    --bg-tertiary: #232936;    /* Lighter navy tertiary */
     --bg-overlay: rgba(0, 0, 0, 0.7);
     
     --text-color: #F3F4F6;
@@ -91,7 +91,7 @@
     --text-secondary: #A1A5AC;
     --text-tertiary: #6F737A;
     --text-disabled: #484F58;
-    --text-inverse: #111315;
+    --text-inverse: #0F1419;   /* Updated to match dark navy base */
     
     --border-color: #2A2D30;
     --border-base: #2A2D30;
