@@ -178,9 +178,20 @@ const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarP
 
   const renderNav = (
     <div className="flex h-full flex-col shadow-lg" style={{ backgroundColor: 'var(--bg-body)' }}>
-      <div className="px-4 py-5" style={{ borderBottom: '1px solid var(--border-base)' }}>
-        <p className="text-lg font-semibold font-heading" style={{ color: 'var(--text-primary)' }}>{t('app.title')}</p>
-        <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{t('app.suite')}</p>
+      <div className={clsx("px-4 py-5 transition-all duration-300", isCollapsed ? "flex justify-center" : "")} style={{ borderBottom: '1px solid var(--border-base)' }}>
+        <div className={clsx("flex items-center gap-3", !isCollapsed && "mb-2")}>
+          <img 
+            src="/logo-lenza.svg" 
+            alt="Lenza" 
+            className={clsx("w-auto transition-all duration-300", isCollapsed ? "h-8" : "h-10")}
+          />
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <p className="text-lg font-semibold font-heading" style={{ color: 'var(--text-primary)' }}>{t('app.title')}</p>
+              <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>{t('app.suite')}</p>
+            </div>
+          )}
+        </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-4">
         {menuItems.map((item) => (
