@@ -212,16 +212,26 @@ def get_reconciliation_data(
     initial_balance = Decimal(dealer.opening_balance_usd or 0)
     initial_date = dealer.opening_balance_date or start
     
+    logger.info(f"Initial balance: {initial_balance} (date: {initial_date})")
+    logger.info(f"Requested period: {start} to {end}")
+    
     # If start date is after the initial date, we need to calculate accumulated balance
     if start > initial_date:
         # Get totals from initial_date up to (but not including) start date
         prior_totals = _aggregate_totals(dealer, initial_date, start - timedelta(days=1))
+        logger.info(f"Prior period ({initial_date} to {start - timedelta(days=1)}):")
+        logger.info(f"  - Orders: {prior_totals.orders}")
+        logger.info(f"  - Payments (net): {prior_totals.payments}")
+        logger.info(f"  - Returns: {prior_totals.returns}")
         opening_balance = initial_balance + prior_totals.orders - prior_totals.payments - prior_totals.returns
+        logger.info(f"Opening balance calculation: {initial_balance} + {prior_totals.orders} - {prior_totals.payments} - {prior_totals.returns} = {opening_balance}")
     else:
         # If requesting period from initial date or earlier, use initial balance
         opening_balance = initial_balance
+        logger.info(f"Using initial balance as opening balance: {opening_balance}")
     
     closing_balance = opening_balance + totals.orders - totals.payments - totals.returns
+    logger.info(f"Closing balance: {opening_balance} + {totals.orders} - {totals.payments} - {totals.returns} = {closing_balance}")
 
     def _format_orders():
         for row in orders:
