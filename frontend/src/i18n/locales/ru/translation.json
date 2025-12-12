@@ -470,6 +470,7 @@
     "startImport": "Начать импорт",
     "recentOrders": "Последние заказы",
     "recentPayments": "Последние платежи",
+    "recentRefunds": "Последние возвраты (Дилеру)",
     "confirmDelete": "Удалить дилера {{name}}?",
     "filters": {
       "allRegions": "Все регионы"
@@ -520,6 +521,7 @@
       "noDealers": "Дилеры не найдены",
       "noOrders": "Нет заказов",
       "noPayments": "Нет платежей",
+      "noRefunds": "Нет возвратов",
       "created": "Дилер успешно создан",
       "updated": "Дилер успешно обновлён",
       "deleted": "Дилер успешно удалён",

@@ -443,6 +443,7 @@
     "startImport": "Start Import",
     "recentOrders": "Recent Orders",
     "recentPayments": "Recent Payments",
+    "recentRefunds": "Recent Refunds (To Dealer)",
     "confirmDelete": "Delete dealer {{name}}?",
     "filters": {
       "allRegions": "All Regions"
@@ -485,6 +486,7 @@
       "noDealers": "No dealers found",
       "noOrders": "No orders",
       "noPayments": "No payments",
+      "noRefunds": "No refunds",
       "created": "Dealer created successfully",
       "updated": "Dealer updated successfully",
       "deleted": "Dealer deleted successfully",

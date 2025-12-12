@@ -53,12 +53,13 @@ class ReconciliationDocument(BaseDocument):
         """Build unified transaction list with running balance."""
         transactions = []
         balance = Decimal(str(self.data['opening_balance']))
+        labels = self._get_labels()
         
         # Add opening balance
         transactions.append({
             'date': self.data['from_date'],
             'type': 'opening',
-            'description': 'Opening Balance',
+            'description': labels['opening_balance'],
             'debit': None,
             'credit': None,
             'balance': balance,
@@ -73,7 +74,7 @@ class ReconciliationDocument(BaseDocument):
             all_items.append({
                 'date': order['date'],
                 'type': 'order',
-                'description': f"Order #{order['order_no']}",
+                'description': f"{labels['order']} #{order['order_no']}",
                 'amount': Decimal(str(order['amount_usd'])),
                 'is_debit': True,
             })
@@ -83,7 +84,7 @@ class ReconciliationDocument(BaseDocument):
             all_items.append({
                 'date': ret['date'],
                 'type': 'return',
-                'description': f"Return (Order #{ret.get('order_no', '—')})",
+                'description': f"{labels['return']} ({labels['order']} #{ret.get('order_no', '—')})",
                 'amount': Decimal(str(ret['amount_usd'])),
                 'is_debit': False,
             })
@@ -93,7 +94,7 @@ class ReconciliationDocument(BaseDocument):
             all_items.append({
                 'date': payment['date'],
                 'type': 'payment',
-                'description': f"Payment ({payment.get('method', 'Cash')})",
+                'description': f"{labels['payment']} ({payment.get('method', 'Cash')})",
                 'amount': Decimal(str(payment['amount_usd'])),
                 'is_debit': False,
             })
@@ -103,7 +104,7 @@ class ReconciliationDocument(BaseDocument):
             all_items.append({
                 'date': refund['date'],
                 'type': 'refund',
-                'description': f"Refund ({refund.get('method', 'Refund')})",
+                'description': f"{labels['refund']} ({refund.get('method', 'Refund')})",
                 'amount': Decimal(str(refund['amount_usd'])),
                 'is_debit': True,  # Refunds increase dealer balance
             })
@@ -152,6 +153,9 @@ class ReconciliationDocument(BaseDocument):
         summary = self.get_summary_data()
         transactions = self._build_transaction_list()
         
+        # Get localized labels based on language
+        labels = self._get_labels()
+        
         context.update({
             'dealer': self.data['dealer'],
             'from_date': self.data['from_date'],
@@ -159,15 +163,97 @@ class ReconciliationDocument(BaseDocument):
             'transactions': transactions,
             'summary': summary,
             'show_detailed': self.show_detailed,
+            'labels': labels,
             # Formatted values
             'opening_balance_fmt': self.format_currency(summary['opening_balance'], 'USD'),
             'total_orders_fmt': self.format_currency(summary['total_orders'], 'USD'),
             'total_returns_fmt': self.format_currency(summary['total_returns'], 'USD'),
             'total_payments_fmt': self.format_currency(summary['total_payments'], 'USD'),
+            'total_refunds_fmt': self.format_currency(summary['total_refunds'], 'USD'),
             'closing_balance_fmt': self.format_currency(summary['closing_balance'], 'USD'),
         })
         
         return context
+    
+    def _get_labels(self) -> Dict[str, str]:
+        """Get localized labels based on document language."""
+        translations = {
+            'uz': {
+                'title': 'Akt Sverka',
+                'dealer': 'Diler',
+                'period': 'Davr',
+                'opening_balance': 'Boshlang\'ich qoldiq',
+                'closing_balance': 'Yakuniy qoldiq',
+                'date': 'Sana',
+                'description': 'Tavsif',
+                'debit': 'Debet',
+                'credit': 'Kredit',
+                'balance': 'Balans',
+                'order': 'Buyurtma',
+                'payment': 'To\'lov',
+                'refund': 'Qaytarish',
+                'return': 'Vozvrat',
+                'total_orders': 'Jami buyurtmalar',
+                'total_payments': 'Jami to\'lovlar',
+                'total_refunds': 'Jami qaytarishlar',
+                'total_returns': 'Jami vozvratlar',
+                'summary': 'Xulosa',
+                'company_representative': 'Kompaniya vakili',
+                'dealer_representative': 'Diler vakili',
+                'signature': 'Imzo',
+            },
+            'ru': {
+                'title': 'Акт Сверка',
+                'dealer': 'Дилер',
+                'period': 'Период',
+                'opening_balance': 'Начальный остаток',
+                'closing_balance': 'Конечный остаток',
+                'date': 'Дата',
+                'description': 'Описание',
+                'debit': 'Дебет',
+                'credit': 'Кредит',
+                'balance': 'Баланс',
+                'order': 'Заказ',
+                'payment': 'Платеж',
+                'refund': 'Возврат',
+                'return': 'Возврат товара',
+                'total_orders': 'Всего заказы',
+                'total_payments': 'Всего платежи',
+                'total_refunds': 'Всего возвраты',
+                'total_returns': 'Всего возвраты товара',
+                'summary': 'Итого',
+                'company_representative': 'Представитель компании',
+                'dealer_representative': 'Представитель дилера',
+                'signature': 'Подпись',
+            },
+            'en': {
+                'title': 'Reconciliation Statement',
+                'dealer': 'Dealer',
+                'period': 'Period',
+                'opening_balance': 'Opening Balance',
+                'closing_balance': 'Closing Balance',
+                'date': 'Date',
+                'description': 'Description',
+                'debit': 'Debit',
+                'credit': 'Credit',
+                'balance': 'Balance',
+                'order': 'Order',
+                'payment': 'Payment',
+                'refund': 'Refund',
+                'return': 'Return',
+                'total_orders': 'Total Orders',
+                'total_payments': 'Total Payments',
+                'total_refunds': 'Total Refunds',
+                'total_returns': 'Total Returns',
+                'summary': 'Summary',
+                'company_representative': 'Company Representative',
+                'dealer_representative': 'Dealer Representative',
+                'signature': 'Signature',
+            },
+        }
+        
+        lang = self.language or 'uz'
+        return translations.get(lang, translations['uz'])
 
 
 class ReconciliationTemplate:
@@ -290,7 +376,7 @@ class ReconciliationTemplate:
         
         <!-- Reconciliation Header -->
         <div class="recon-header">
-            <h1 class="recon-title">{% trans "Reconciliation Statement" %}</h1>
+            <h1 class="recon-title">{{ labels.title }}</h1>
             <div class="recon-period">
                 {{ from_date|date:"d.m.Y" }} — {{ to_date|date:"d.m.Y" }}
             </div>
@@ -304,27 +390,32 @@ class ReconciliationTemplate:
         <!-- Balance Summary -->
         <div class="balance-summary">
             <div class="balance-card">
-                <div class="balance-label">{% trans "Opening Balance" %}</div>
+                <div class="balance-label">{{ labels.opening_balance }}</div>
                 <div class="balance-value">{{ opening_balance_fmt }}</div>
             </div>
             
             <div class="balance-card">
-                <div class="balance-label">{% trans "Orders" %}</div>
+                <div class="balance-label">{{ labels.total_orders }}</div>
                 <div class="balance-value text-warning">+{{ total_orders_fmt }}</div>
             </div>
             
             <div class="balance-card">
-                <div class="balance-label">{% trans "Returns" %}</div>
+                <div class="balance-label">{{ labels.total_returns }}</div>
                 <div class="balance-value text-error">-{{ total_returns_fmt }}</div>
             </div>
             
             <div class="balance-card">
-                <div class="balance-label">{% trans "Payments" %}</div>
+                <div class="balance-label">{{ labels.total_payments }}</div>
                 <div class="balance-value text-success">-{{ total_payments_fmt }}</div>
             </div>
             
+            <div class="balance-card">
+                <div class="balance-label">{{ labels.total_refunds }}</div>
+                <div class="balance-value text-warning">+{{ total_refunds_fmt }}</div>
+            </div>
+            
             <div class="balance-card {% if summary.closing_balance > 0 %}positive{% else %}negative{% endif %}">
-                <div class="balance-label">{% trans "Closing Balance" %}</div>
+                <div class="balance-label">{{ labels.closing_balance }}</div>
                 <div class="balance-value">{{ closing_balance_fmt }}</div>
             </div>
         </div>
@@ -334,11 +425,11 @@ class ReconciliationTemplate:
         <table>
             <thead>
                 <tr>
-                    <th>{% trans "Date" %}</th>
-                    <th>{% trans "Description" %}</th>
-                    <th class="text-right">{% trans "Debit" %}</th>
-                    <th class="text-right">{% trans "Credit" %}</th>
-                    <th class="text-right">{% trans "Balance" %}</th>
+                    <th>{{ labels.date }}</th>
+                    <th>{{ labels.description }}</th>
+                    <th class="text-right">{{ labels.debit }}</th>
+                    <th class="text-right">{{ labels.credit }}</th>
+                    <th class="text-right">{{ labels.balance }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -359,12 +450,12 @@ class ReconciliationTemplate:
         <div class="signature-section">
             <div class="signature-box">
                 <div class="signature-line">
-                    {% trans "Company Representative" %}
+                    {{ labels.company_representative }}
                 </div>
             </div>
             <div class="signature-box">
                 <div class="signature-line">
-                    {% trans "Dealer Representative" %}
+                    {{ labels.dealer_representative }}
                 </div>
             </div>
         </div>

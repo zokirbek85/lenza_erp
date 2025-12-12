@@ -72,6 +72,15 @@ interface PaymentSummary {
   method: string;
 }
 
+interface RefundSummary {
+  id: number;
+  date: string;
+  amount: number;
+  currency: string;
+  method: string;
+  description?: string;
+}
+
 interface FinanceTransaction {
   id: number;
   type: 'income' | 'expense';
@@ -136,6 +145,7 @@ const DealersPage = () => {
   const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [payments, setPayments] = useState<PaymentSummary[]>([]);
+  const [refunds, setRefunds] = useState<RefundSummary[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
@@ -306,7 +316,7 @@ const DealersPage = () => {
     setDetailLoading(true);
     
     try {
-      const [ordersRes, financeRes] = await Promise.allSettled([
+      const [ordersRes, financeRes, refundsRes] = await Promise.allSettled([
         http.get('/orders/', { 
           params: { 
             dealer: dealer.id, 
@@ -318,6 +328,13 @@ const DealersPage = () => {
           params: {
             dealer: dealer.id,
             type: 'income',
+            ordering: '-date',
+            page_size: 10
+          }
+        }),
+        http.get('/finance/dealer-refunds/', {
+          params: {
+            dealer_id: dealer.id,
             ordering: '-date',
             page_size: 10
           }
@@ -342,11 +359,31 @@ const DealersPage = () => {
         console.warn('Finance transactions fetch failed:', financeRes.reason);
         setPayments([]);
       }
+      
+      if (refundsRes.status === 'fulfilled') {
+        const responseData = refundsRes.value.data as any;
+        const refundsData: any[] = Array.isArray(responseData)
+          ? responseData
+          : responseData?.results ?? [];
+        const mappedRefunds: RefundSummary[] = refundsData.map((r: any) => ({
+          id: r.id,
+          date: r.date || r.created_at,
+          amount: r.amount_usd ?? r.amount ?? 0,
+          currency: r.currency || 'USD',
+          method: r.account_name || 'Cash',
+          description: r.description || '',
+        }));
+        setRefunds(mappedRefunds);
+      } else {
+        console.warn('Refunds fetch failed:', refundsRes.reason);
+        setRefunds([]);
+      }
     } catch (error) {
       console.error('Failed to load dealer details:', error);
       toast.error(t('dealers.messages.loadHistoryError'));
       setOrders([]);
       setPayments([]);
+      setRefunds([]);
     } finally {
       setDetailLoading(false);
     }
@@ -960,6 +997,44 @@ const DealersPage = () => {
                         </div>
                         <div className="badge badge-success">
                           {payment.pay_date}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Recent Refunds */}
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 mb-3">
+                {t('dealers.recentRefunds')}
+              </h4>
+              {refunds.length === 0 && (
+                <div className="card border-dashed text-center py-8">
+                  <p className="text-sm text-slate-500">{t('dealers.messages.noRefunds')}</p>
+                </div>
+              )}
+              {refunds.length > 0 && (
+                <div className="space-y-3">
+                  {refunds.slice(0, 5).map((refund) => (
+                    <div key={refund.id} className="card bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-lg font-bold text-number text-orange-600 dark:text-orange-400">
+                            <Money value={refund.amount} currency={refund.currency || 'USD'} />
+                          </p>
+                          <p className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                            {refund.method}
+                          </p>
+                          {refund.description && (
+                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                              {refund.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="badge badge-warning">
+                          {refund.date}
                         </div>
                       </div>
                     </div>

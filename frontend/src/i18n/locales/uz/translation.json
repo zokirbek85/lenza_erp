@@ -876,6 +876,7 @@
     "startImport": "Importni boshlash",
     "recentOrders": "So'nggi buyurtmalar",
     "recentPayments": "So'nggi to'lovlar",
+    "recentRefunds": "So'nggi qaytarishlar (Dilerga)",
     "confirmDelete": "{{name}} dilerni o'chirishni xohlaysizmi?",
     "filters": {
       "allRegions": "Barcha hududlar"
@@ -926,6 +927,7 @@
       "noDealers": "Dilerlar topilmadi",
       "noOrders": "Buyurtmalar yo'q",
       "noPayments": "To'lovlar yo'q",
+      "noRefunds": "Qaytarishlar yo'q",
       "created": "Diler muvaffaqiyatli yaratildi",
       "updated": "Diler muvaffaqiyatli yangilandi",
       "deleted": "Diler muvaffaqiyatli o'chirildi",
