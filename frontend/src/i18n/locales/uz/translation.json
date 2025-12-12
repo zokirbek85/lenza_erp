@@ -46,6 +46,8 @@
     "kpiManager": "KPI boshqaruvi",
     "settings": "Sozlamalar",
     "returns": "Qaytishlar",
+    "defects": "Nuqsonlar",
+    "defectAnalytics": "Nuqsonlar tahlili",
     "notifications": "Bildirishnomalar",
     "userManual": "Qo'llanma"
   },

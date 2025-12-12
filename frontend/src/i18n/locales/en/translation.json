@@ -44,6 +44,8 @@
     "ledger": "Cash Ledger",
     "currency": "Currency",
     "returns": "Returns",
+    "defects": "Defects",
+    "defectAnalytics": "Defect Analytics",
     "reconciliation": "Reconciliation",
     "kpi": "KPI",
     "kpiLeaderboard": "KPI Leaderboard",

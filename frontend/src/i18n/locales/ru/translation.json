@@ -45,6 +45,8 @@
     "kpiManager": "Управление KPI",
     "settings": "Настройки",
     "returns": "Возвраты",
+    "defects": "Дефекты",
+    "defectAnalytics": "Аналитика дефектов",
     "notifications": "Уведомления",
     "userManual": "Руководство"
   },
