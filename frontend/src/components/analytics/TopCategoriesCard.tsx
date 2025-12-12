@@ -20,10 +20,10 @@ const TopCategoriesCard = ({ data, loading = false }: TopCategoriesCardProps) =>
   const containerRef = useRef<HTMLDivElement>(null);
   const { width, height, fontSize } = useAutoscale(containerRef);
 
-  // Color palette: black/graphite/blue with gold accent for largest
+  // Color palette: dark navy/graphite/blue with gold accent for largest
   const COLORS = [
     '#d4af37', // Gold for #1
-    '#1e293b', // Slate-800
+    '#1A1F29', // Dark navy
     '#475569', // Slate-600
     '#3b82f6', // Blue-500
     '#64748b', // Slate-500

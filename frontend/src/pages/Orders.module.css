@@ -45,22 +45,22 @@
 
 /* Dark mode */
 :global(.dark) .orderCollapsePanel :global(.ant-collapse-item) {
-  background: #1f1f1f;
-  border: 1px solid #2d2d2d;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-base);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 :global(.dark) .orderCollapsePanel :global(.ant-collapse-item:hover) {
-  background: #252525;
+  background: var(--bg-tertiary);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 :global(.dark) .orderCollapsePanel :global(.ant-collapse-header) {
-  color: #e5e7eb;
+  color: var(--text-primary);
 }
 
 :global(.dark) .orderCollapsePanel :global(.ant-collapse-content) {
-  border-top: 1px solid #2d2d2d;
+  border-top: 1px solid var(--border-base);
 }
 
 :global(.dark) .orderCollapsePanel :global(.ant-collapse-expand-icon) {

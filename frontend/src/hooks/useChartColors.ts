@@ -41,11 +41,11 @@ export function useChartColors(): ChartColorPalette {
         '#475569',
         '#334155',
       ],
-      background: '#0d1117',
+      background: '#0A0E14',
       text: '#e2e8f0',
       grid: '#374151',
       tooltip: {
-        background: '#1e293b',
+        background: '#1A1F29',
         border: '#475569',
         text: '#f1f5f9',
       },

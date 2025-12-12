@@ -39,7 +39,7 @@ export default function PublicCatalogue() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0e0e15] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0E14] flex items-center justify-center">
         <div className="text-white text-xl">Yuklanmoqda...</div>
       </div>
     );
@@ -47,16 +47,16 @@ export default function PublicCatalogue() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0e0e15] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0E14] flex items-center justify-center">
         <div className="text-red-400 text-xl">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0e0e15]">
+    <div className="min-h-screen bg-[#0A0E14]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0e0e15] to-[#151a21] border-b border-gray-800 py-12">
+      <div className="bg-gradient-to-r from-[#0A0E14] to-[#1A1F29] border-b border-gray-800 py-12">
         <div className="container mx-auto px-4">
           <h1 className="text-5xl font-bold text-white mb-3">Lenza Katalogi</h1>
           <p className="text-gray-400 text-lg">Yuqori sifatli eshiklar va aksessuarlar</p>
@@ -69,10 +69,10 @@ export default function PublicCatalogue() {
           {variants.map((variant) => (
             <div
               key={variant.id}
-              className="group relative w-full rounded-xl bg-[#151a21] border border-transparent hover:border-[#2f89ff] overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/10"
+              className="group relative w-full rounded-xl bg-[#1A1F29] border border-transparent hover:border-[#2f89ff] overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-blue-500/10"
             >
               {/* Image Container */}
-              <div className="h-[260px] bg-[#0e0e15] flex items-center justify-center p-4 overflow-hidden">
+              <div className="h-[260px] bg-[#0F1419] flex items-center justify-center p-4 overflow-hidden">
                 <img
                   src={variant.image}
                   alt={`${variant.brand} ${variant.model}`}
@@ -103,7 +103,7 @@ export default function PublicCatalogue() {
                     {variant.sizes.map((size, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-1 bg-[#232a35] text-gray-200 text-xs rounded hover:bg-[#2a3442] transition-colors"
+                        className="px-2 py-1 bg-[#232936] text-gray-200 text-xs rounded hover:bg-[#2A2D30] transition-colors"
                       >
                         {size}
                       </span>

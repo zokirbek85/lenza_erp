@@ -67,12 +67,12 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
             colorPrimary: getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim() || '#C9A86C',
             colorInfo: getComputedStyle(document.documentElement).getPropertyValue('--lenza-gold').trim() || '#C9A86C',
             
-            // Background colors - Lenza brand palette
-            colorBgBase: isDark ? '#0d1117' : '#ffffff',
-            colorBgContainer: isDark ? '#1b1f27' : '#ffffff',
-            colorBgElevated: isDark ? '#2a2e3a' : '#ffffff',
-            colorBgLayout: isDark ? '#0d1117' : '#f5f5f5',
-            colorBgSpotlight: isDark ? '#1b1f27' : '#fafafa',
+            // Background colors - Lenza brand palette (Dark Navy)
+            colorBgBase: isDark ? '#0A0E14' : '#ffffff',
+            colorBgContainer: isDark ? '#1A1F29' : '#ffffff',
+            colorBgElevated: isDark ? '#232936' : '#ffffff',
+            colorBgLayout: isDark ? '#0A0E14' : '#f5f5f5',
+            colorBgSpotlight: isDark ? '#1A1F29' : '#fafafa',
             
             // Text colors
             colorText: isDark ? '#f5f6fa' : '#141414',
@@ -81,14 +81,14 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
             colorTextQuaternary: isDark ? '#5c6066' : '#bfbfbf',
             
             // Border colors
-            colorBorder: isDark ? '#2a2a2a' : '#e8e8e8',
-            colorBorderSecondary: isDark ? '#1f2229' : '#f0f0f0',
-            
+            colorBorder: isDark ? '#2A2D30' : '#e8e8e8',
+            colorBorderSecondary: isDark ? '#1F2225' : '#f0f0f0',
+
             // Component-specific
-            colorFill: isDark ? '#1f2229' : '#f5f5f5',
-            colorFillSecondary: isDark ? '#1b1f27' : '#fafafa',
-            colorFillTertiary: isDark ? '#161920' : '#f0f0f0',
-            colorFillQuaternary: isDark ? '#0d1117' : '#f5f5f5',
+            colorFill: isDark ? '#1A1F29' : '#f5f5f5',
+            colorFillSecondary: isDark ? '#1A1F29' : '#fafafa',
+            colorFillTertiary: isDark ? '#0F1419' : '#f0f0f0',
+            colorFillQuaternary: isDark ? '#0A0E14' : '#f5f5f5',
             
             // Typography
             fontSize: 14,
@@ -109,33 +109,33 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
           },
           components: {
             Card: {
-              colorBgContainer: isDark ? '#1b1f27' : '#ffffff',
-              colorBorderSecondary: isDark ? '#2a2a2a' : '#f0f0f0',
+              colorBgContainer: isDark ? '#1A1F29' : '#ffffff',
+              colorBorderSecondary: isDark ? '#2A2D30' : '#f0f0f0',
             },
             Table: {
-              colorBgContainer: isDark ? '#1b1f27' : '#ffffff',
-              colorFillAlter: isDark ? '#1f2229' : '#fafafa',
-              headerBg: isDark ? '#1f2229' : '#fafafa',
+              colorBgContainer: isDark ? '#1A1F29' : '#ffffff',
+              colorFillAlter: isDark ? '#0F1419' : '#fafafa',
+              headerBg: isDark ? '#0F1419' : '#fafafa',
               headerColor: isDark ? '#f5f6fa' : '#141414',
-              rowHoverBg: isDark ? '#2a2e3a' : '#f5f5f5',
+              rowHoverBg: isDark ? '#232936' : '#f5f5f5',
             },
             Modal: {
-              contentBg: isDark ? '#1b1f27' : '#ffffff',
-              headerBg: isDark ? '#1b1f27' : '#ffffff',
+              contentBg: isDark ? '#1A1F29' : '#ffffff',
+              headerBg: isDark ? '#1A1F29' : '#ffffff',
             },
             Drawer: {
-              colorBgElevated: isDark ? '#1b1f27' : '#ffffff',
+              colorBgElevated: isDark ? '#1A1F29' : '#ffffff',
             },
             Select: {
-              colorBgContainer: isDark ? '#1b1f27' : '#ffffff',
-              colorBgElevated: isDark ? '#2a2e3a' : '#ffffff',
+              colorBgContainer: isDark ? '#1A1F29' : '#ffffff',
+              colorBgElevated: isDark ? '#232936' : '#ffffff',
             },
             Input: {
-              colorBgContainer: isDark ? '#1b1f27' : '#ffffff',
+              colorBgContainer: isDark ? '#1A1F29' : '#ffffff',
             },
             Collapse: {
-              contentBg: isDark ? '#1b1f27' : '#ffffff',
-              headerBg: isDark ? '#1f2229' : '#fafafa',
+              contentBg: isDark ? '#1A1F29' : '#ffffff',
+              headerBg: isDark ? '#0F1419' : '#fafafa',
             },
             Form: {
               labelColor: isDark ? '#f5f6fa' : '#141414',

@@ -107,9 +107,9 @@
 
 /* Dark Mode */
 .dark .dashboard-card {
-  background: var(--bg-elevated-dark, #1e293b);
+  background: var(--bg-elevated);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  color: var(--text-primary-dark, #f1f5f9);
+  color: var(--text-primary);
 }
 
 .dark .dashboard-card:hover {
@@ -117,7 +117,7 @@
 }
 
 .dark .dashboard-card-title {
-  color: var(--text-primary-dark, #f1f5f9);
+  color: var(--text-primary);
 }
 
 /* ===== ROW 1: KPI CARDS (4 columns) ===== */
@@ -194,11 +194,11 @@
 }
 
 .dark .stat-value-large {
-  color: var(--text-primary-dark, #f1f5f9);
+  color: var(--text-primary);
 }
 
 .dark .stat-label {
-  color: var(--text-secondary-dark, #94a3b8);
+  color: var(--text-secondary);
 }
 
 /* ===== ROW 3: TOP PRODUCTS (Full Width) ===== */
@@ -299,7 +299,7 @@
 }
 
 .dark .dashboard-page .ant-table-thead > tr > th {
-  background: var(--bg-base-dark, #0f172a);
+  background: var(--bg-base);
 }
 
 /* ===== LOADING STATES ===== */
