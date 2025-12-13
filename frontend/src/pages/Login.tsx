@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../auth/useAuthStore';
+import './LoginPremium.css';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -67,62 +68,81 @@ const Login = () => {
   const activeErrorKey = formError ?? resolveStoreErrorKey();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-16">
-      <div className="glass-card w-full max-w-md p-8 text-white animate-scaleIn">
-        <div className="mb-8 space-y-2 text-center">
-          <p className="text-sm uppercase tracking-[0.5em] text-slate-300">{t('app.title')}</p>
-          <h1 className="text-3xl font-semibold gradient-text">{t('auth.signIn')}</h1>
-          <p className="text-sm text-slate-200">{t('auth.continue')}</p>
+    <div className="login-premium">
+      {/* Gold Particles Background */}
+      <div className="login-particles">
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+        <div className="login-particle"></div>
+      </div>
+
+      {/* Login Card */}
+      <div className="login-card">
+        {/* Logo & Header */}
+        <div className="login-logo">
+          <div className="login-logo-shine">
+            <span className="login-logo-text">LENZA</span>
+          </div>
+          <p className="login-subtitle">{t('app.title')}</p>
+          <div className="login-divider"></div>
+          <h1 className="login-title">{t('auth.signIn')}</h1>
+          <p className="login-description">{t('auth.continue')}</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="text-label text-slate-200" htmlFor="username">
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-field">
+            <label className="login-label" htmlFor="username">
               {t('auth.username')}
             </label>
             <input
               id="username"
               type="text"
-              className="input-field mt-2 w-full border-white/20 bg-white/10 text-white placeholder:text-slate-300 focus:border-amber-400"
+              className="login-input"
+              placeholder={t('auth.username')}
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               required
               autoComplete="username"
             />
           </div>
-          
-          <div>
-            <label className="text-label text-slate-200" htmlFor="password">
+
+          <div className="login-field">
+            <label className="login-label" htmlFor="password">
               {t('auth.password')}
             </label>
             <input
               id="password"
               type="password"
-              className="input-field mt-2 w-full border-white/20 bg-white/10 text-white placeholder:text-slate-300 focus:border-amber-400"
+              className="login-input"
+              placeholder={t('auth.password')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
               autoComplete="current-password"
             />
           </div>
-          
+
           {activeErrorKey && (
-            <div
-              role="alert"
-              className="card border-rose-400/60 bg-rose-500/10 text-sm font-medium text-rose-100 animate-fadeInUp"
-            >
+            <div role="alert" className="login-error">
               {t(activeErrorKey)}
             </div>
           )}
-          
+
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary w-full bg-amber-400 text-slate-900 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className="login-btn"
           >
             {loading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="spinner" />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <div className="login-spinner" />
                 <span>{t('common.loading')}</span>
               </div>
             ) : (
