@@ -238,16 +238,10 @@ const DashboardPage = () => {
         </Card>
 
         <PaymentTrendChart
-          data={(() => {
-            console.log('Dashboard Summary:', data.summary);
-            console.log('Revenue by month:', data.summary?.revenue_by_month);
-            const chartData = data.summary?.revenue_by_month?.map(item => ({
-              date: item.month || '',
-              amount: item.total || 0,
-            })) || [];
-            console.log('Chart data:', chartData);
-            return chartData;
-          })()}
+          data={data.summary?.revenue_by_month?.map(item => ({
+            date: item.month || '',
+            amount: item.total || 0,
+          })) || []}
           loading={loading}
         />
 

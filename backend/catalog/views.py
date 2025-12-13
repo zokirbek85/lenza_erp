@@ -362,6 +362,15 @@ class CatalogExportPDFView(APIView, ExportMixin):
         search_query = request.query_params.get('search', '')
         view_mode = request.query_params.get('view', 'cards')  # cards, gallery
 
+        # Get markup parameters
+        markup_type = request.query_params.get('markup_type', 'percentage')  # 'percentage' or 'fixed'
+        markup_value = request.query_params.get('markup_value', '0')
+
+        try:
+            markup_value = float(markup_value)
+        except (ValueError, TypeError):
+            markup_value = 0
+
         # Get all catalog variants (new variant-based system)
         variants = ProductVariant.objects.filter(is_active=True).select_related(
             'product_model__brand'
@@ -389,6 +398,26 @@ class CatalogExportPDFView(APIView, ExportMixin):
         logger.info(f"PDF Export: Variants count from DB: {variants.count()}")
 
         for product in product_data:
+            # Apply markup to prices if specified
+            if markup_value > 0:
+                if markup_type == 'percentage':
+                    # Percentage markup
+                    multiplier = 1 + (markup_value / 100)
+                    if product.get('polotno_price_usd') is not None:
+                        product['polotno_price_usd'] = round(product['polotno_price_usd'] * multiplier, 2)
+                    if product.get('kit_price_usd') is not None:
+                        product['kit_price_usd'] = round(product['kit_price_usd'] * multiplier, 2)
+                    if product.get('full_set_price_usd') is not None:
+                        product['full_set_price_usd'] = round(product['full_set_price_usd'] * multiplier, 2)
+                else:
+                    # Fixed amount markup
+                    if product.get('polotno_price_usd') is not None:
+                        product['polotno_price_usd'] = round(product['polotno_price_usd'] + markup_value, 2)
+                    if product.get('kit_price_usd') is not None:
+                        product['kit_price_usd'] = round(product['kit_price_usd'] + markup_value, 2)
+                    if product.get('full_set_price_usd') is not None:
+                        product['full_set_price_usd'] = round(product['full_set_price_usd'] + markup_value, 2)
+
             if product.get('image'):
                 image_url = product['image']
                 # Handle both relative and absolute URLs
@@ -437,6 +466,14 @@ class CatalogExportPDFView(APIView, ExportMixin):
             if os.path.exists(frontend_public):
                 logger.warning(f"Files in public: {os.listdir(frontend_public)}")
 
+        # Prepare markup display text
+        markup_text = None
+        if markup_value > 0:
+            if markup_type == 'percentage':
+                markup_text = f"+{markup_value}%"
+            else:
+                markup_text = f"+${markup_value}"
+
         context = {
             'products': product_data,
             'category': 'Дверное полотно',
@@ -446,6 +483,8 @@ class CatalogExportPDFView(APIView, ExportMixin):
             'search_query': search_query,
             'total_products': len(product_data),
             'logo_path': logo_path,
+            'markup_text': markup_text,
+            'has_markup': markup_value > 0,
         }
 
         # Generate filename
@@ -471,7 +510,7 @@ class CatalogExportExcelView(APIView):
 
     def get(self, request):
         from openpyxl import Workbook
-        from openpyxl.styles import Font, Alignment
+        from openpyxl.styles import Font, Alignment, PatternFill
         from openpyxl.utils import get_column_letter
         from datetime import date
         from django.http import HttpResponse
@@ -480,56 +519,97 @@ class CatalogExportExcelView(APIView):
         brand_filter = request.query_params.get('brand', 'all')
         search_query = request.query_params.get('search', '')
 
-        # Get all catalog products
-        products = Product.objects.filter(
-            category__name='Дверное полотно',
-            is_active=True
-        ).select_related('brand', 'category').order_by('brand__name', 'name')
+        # Get markup parameters
+        markup_type = request.query_params.get('markup_type', 'percentage')  # 'percentage' or 'fixed'
+        markup_value = request.query_params.get('markup_value', '0')
+
+        try:
+            markup_value = float(markup_value)
+        except (ValueError, TypeError):
+            markup_value = 0
+
+        # Get all catalog products (using new variant-based system)
+        variants = ProductVariant.objects.filter(is_active=True).select_related(
+            'product_model__brand'
+        ).prefetch_related('skus__product', 'kit_components__component')
 
         # Apply brand filter
         if brand_filter and brand_filter != 'all':
-            products = products.filter(brand__name=brand_filter)
+            variants = variants.filter(product_model__brand__name=brand_filter)
 
-        # Serialize products
-        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
-        product_data = serializer.data
+        # Order by brand and model
+        variants = variants.order_by('product_model__brand__name', 'product_model__model_name', 'color')
+
+        # Serialize variants
+        serializer = VariantCatalogSerializer(variants, many=True, context={'request': request})
+        product_data = list(serializer.data)
+
+        # Apply markup to prices if specified
+        if markup_value > 0:
+            for product in product_data:
+                if markup_type == 'percentage':
+                    # Percentage markup
+                    multiplier = 1 + (markup_value / 100)
+                    if product.get('polotno_price_usd') is not None:
+                        product['polotno_price_usd'] = round(product['polotno_price_usd'] * multiplier, 2)
+                    if product.get('kit_price_usd') is not None:
+                        product['kit_price_usd'] = round(product['kit_price_usd'] * multiplier, 2)
+                    if product.get('full_set_price_usd') is not None:
+                        product['full_set_price_usd'] = round(product['full_set_price_usd'] * multiplier, 2)
+                else:
+                    # Fixed amount markup
+                    if product.get('polotno_price_usd') is not None:
+                        product['polotno_price_usd'] = round(product['polotno_price_usd'] + markup_value, 2)
+                    if product.get('kit_price_usd') is not None:
+                        product['kit_price_usd'] = round(product['kit_price_usd'] + markup_value, 2)
+                    if product.get('full_set_price_usd') is not None:
+                        product['full_set_price_usd'] = round(product['full_set_price_usd'] + markup_value, 2)
 
         # Create workbook
         wb = Workbook()
         ws = wb.active
         ws.title = 'Catalog'
 
+        # Add markup info if present
+        current_row = 1
+        if markup_value > 0:
+            markup_text = f"+{markup_value}%" if markup_type == 'percentage' else f"+${markup_value}"
+            ws.merge_cells(f'A1:J1')
+            info_cell = ws['A1']
+            info_cell.value = f'Каталог с устамой (Markup): {markup_text}'
+            info_cell.font = Font(bold=True, size=14, color='FF0000')
+            info_cell.alignment = Alignment(horizontal='center', vertical='center')
+            info_cell.fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+            current_row = 2
+
         # Define headers
-        headers = ['ID', 'Название', 'Бренд', 'Цена (USD)', '400мм', '600мм', '700мм', '800мм', '900мм', 'Всего']
+        headers = ['ID', 'Модель', 'Цвет', 'Бренд', 'Тип', 'Полотно ($)', 'Комплект ($)', 'Итого ($)', 'Макс. комплектов', 'Размеры в наличии']
 
         # Write headers
         for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num)
+            cell = ws.cell(row=current_row, column=col_num)
             cell.value = header
             cell.font = Font(bold=True)
             cell.alignment = Alignment(horizontal='center', vertical='center')
 
         # Write data
-        row_num = 2
+        row_num = current_row + 1
         for product in product_data:
-            stock = product.get('stock', {})
-            stock_400 = stock.get('400', 0)
-            stock_600 = stock.get('600', 0)
-            stock_700 = stock.get('700', 0)
-            stock_800 = stock.get('800', 0)
-            stock_900 = stock.get('900', 0)
-            total_stock = stock_400 + stock_600 + stock_700 + stock_800 + stock_900
+            # Get sizes with stock
+            sizes_with_stock = ', '.join([
+                f"{s['size']}: {s['stock']}" for s in product.get('sizes', []) if s['stock'] > 0
+            ]) or 'Н/Д'
 
             ws.cell(row=row_num, column=1, value=product.get('id'))
-            ws.cell(row=row_num, column=2, value=product.get('name'))
-            ws.cell(row=row_num, column=3, value=product.get('brand_name'))
-            ws.cell(row=row_num, column=4, value=float(product.get('price_usd', 0)))
-            ws.cell(row=row_num, column=5, value=stock_400)
-            ws.cell(row=row_num, column=6, value=stock_600)
-            ws.cell(row=row_num, column=7, value=stock_700)
-            ws.cell(row=row_num, column=8, value=stock_800)
-            ws.cell(row=row_num, column=9, value=stock_900)
-            ws.cell(row=row_num, column=10, value=total_stock)
+            ws.cell(row=row_num, column=2, value=product.get('model'))
+            ws.cell(row=row_num, column=3, value=product.get('color'))
+            ws.cell(row=row_num, column=4, value=product.get('brand'))
+            ws.cell(row=row_num, column=5, value=product.get('door_type_display'))
+            ws.cell(row=row_num, column=6, value=float(product.get('polotno_price_usd', 0)))
+            ws.cell(row=row_num, column=7, value=float(product.get('kit_price_usd', 0)))
+            ws.cell(row=row_num, column=8, value=float(product.get('full_set_price_usd', 0)))
+            ws.cell(row=row_num, column=9, value=product.get('max_full_sets_by_stock') or 0)
+            ws.cell(row=row_num, column=10, value=sizes_with_stock)
             row_num += 1
 
         # Auto-fit columns

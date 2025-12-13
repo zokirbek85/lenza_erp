@@ -188,6 +188,23 @@ class DashboardSummaryView(APIView):
         # payments_total calculated from FinanceTransaction above
         returns_total = decimal_or_zero(returns_qs.aggregate(total=Sum('amount_usd'))['total'])
 
+        # Calculate dealer refunds (money returned to dealers - increases debt)
+        refund_filter = Q(
+            type=FinanceTransaction.TransactionType.DEALER_REFUND,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            dealer__in=filtered_dealers
+        )
+        if start_date:
+            refund_filter &= Q(date__gte=start_date)
+        if end_date:
+            refund_filter &= Q(date__lte=end_date)
+
+        refunds_total = decimal_or_zero(
+            FinanceTransaction.objects.filter(refund_filter).aggregate(
+                total=Sum('amount_usd')
+            )['total']
+        )
+
         # Inventory totals (products are global, show all inventory)
         stock_agg = Product.objects.filter(is_active=True).aggregate(
             total_stock_good=Coalesce(Sum('stock_ok'), Decimal('0')),
@@ -197,7 +214,54 @@ class DashboardSummaryView(APIView):
             ),
         )
 
-        total_debt = opening_balance + orders_total - payments_total - returns_total
+        # Correct debt formula: opening_balance + orders + refunds - payments - returns
+        total_debt = opening_balance + orders_total + refunds_total - payments_total - returns_total
+
+        # Calculate revenue_by_day from FinanceTransaction (income) - last 30 days
+        from datetime import timedelta
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.info(f"Debt calculation: opening_balance={opening_balance}, orders={orders_total}, refunds={refunds_total}, payments={payments_total}, returns={returns_total}, total_debt={total_debt}")
+
+        # Get last 30 days
+        today = date.today()
+        thirty_days_ago = today - timedelta(days=30)
+
+        # Filter for last 30 days of income transactions
+        last_30_days_filter = Q(
+            type=FinanceTransaction.TransactionType.INCOME,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            date__gte=thirty_days_ago,
+            date__lte=today
+        )
+
+        # Apply dealer filters if specified (but don't require dealer to be set)
+        if dealer_ids or region_id or manager_id:
+            last_30_days_filter &= Q(dealer__in=filtered_dealers)
+
+        logger.info(f"Dashboard: Querying revenue_by_day with filter - last 30 days: {thirty_days_ago} to {today}")
+        logger.info(f"Dashboard: Dealer filters applied: dealer_ids={dealer_ids}, region_id={region_id}, manager_id={manager_id}")
+
+        # Group by date field directly (compatible with SQLite)
+        revenue_by_day_data = (
+            FinanceTransaction.objects.filter(last_30_days_filter)
+            .values('date')
+            .annotate(total=Sum('amount_usd'))
+            .order_by('date')
+        )
+
+        logger.info(f"Dashboard: Found {revenue_by_day_data.count()} days with revenue")
+
+        revenue_by_month = [
+            {
+                'month': item['date'].isoformat() if item['date'] else '',
+                'total': float(item['total'] or 0)
+            }
+            for item in revenue_by_day_data
+        ]
+
+        logger.info(f"Dashboard: Returning {len(revenue_by_month)} revenue data points")
 
         payload = {
             'total_sales': orders_total,
@@ -212,7 +276,7 @@ class DashboardSummaryView(APIView):
             'open_orders_count': orders_qs.count(),
             'satisfaction_score': Decimal('0'),
             'overdue_receivables': [],
-            'revenue_by_month': [],
+            'revenue_by_month': revenue_by_month,
             'revenue_by_product': [],
             'inventory_trend': [],
             'expenses_vs_budget': {'expenses': 0, 'budget': 100000},

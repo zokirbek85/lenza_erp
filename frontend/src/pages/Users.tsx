@@ -25,6 +25,8 @@ interface UserRecord {
   role: string;
   role_display?: string;
   is_active: boolean;
+  last_seen?: string;
+  is_online?: boolean;
 }
 
 const emptyForm = {
@@ -315,7 +317,17 @@ const UsersPage = () => {
             {!loading &&
               users.map((user) => (
                 <tr key={user.id}>
-                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{user.username}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                    <div className="flex items-center gap-2">
+                      {user.is_online && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                        </span>
+                      )}
+                      <span>{user.username}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 capitalize text-slate-600 dark:text-slate-200">{user.role_display ?? user.role}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-200">{user.email || '—'}</td>
                   <td className="px-4 py-3 text-right">

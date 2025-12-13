@@ -19,7 +19,8 @@
       "Bash(rm:*)",
       "Bash(git push:*)",
       "Bash(python manage.py check:*)",
-      "Bash(python manage.py shell:*)"
+      "Bash(python manage.py shell:*)",
+      "Bash(python -c:*)"
     ],
     "deny": [],
     "ask": []

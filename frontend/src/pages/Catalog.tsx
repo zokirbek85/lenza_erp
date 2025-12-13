@@ -16,8 +16,8 @@
  *   Output: Single card "Венеция Ясень белый ПГ" with stock for both 600mm and 800mm
  */
 
-import { Card, Col, Input, Row, Select, Spin, Typography, Image, Empty, Button, Space, Segmented, Tooltip, message, Divider } from 'antd';
-import { AppstoreOutlined, FileExcelOutlined, FilePdfOutlined, LayoutOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Col, Input, Row, Select, Spin, Typography, Image, Empty, Button, Space, Segmented, Tooltip, message, Divider, InputNumber, Radio, Modal } from 'antd';
+import { AppstoreOutlined, FileExcelOutlined, FilePdfOutlined, LayoutOutlined, PictureOutlined, CheckCircleOutlined, PercentageOutlined, DollarOutlined } from '@ant-design/icons';
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchVariantCatalog, type VariantCatalog } from '../api/productsApi';
@@ -31,6 +31,9 @@ const { Option } = Select;
 // View modes
 type ViewMode = 'cards' | 'gallery-comfort' | 'gallery-compact' | 'gallery-ultra';
 
+// Markup type
+type MarkupType = 'percentage' | 'fixed';
+
 const Catalog = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -39,6 +42,10 @@ const Catalog = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [exporting, setExporting] = useState(false);
+  const [showMarkupModal, setShowMarkupModal] = useState(false);
+  const [markupType, setMarkupType] = useState<MarkupType>('percentage');
+  const [markupValue, setMarkupValue] = useState<number>(0);
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'excel'>('pdf');
 
   useEffect(() => {
     loadCatalog();
@@ -56,75 +63,81 @@ const Catalog = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    setExporting(true);
-    try {
-      const params = new URLSearchParams();
-      if (selectedBrand !== 'all') params.append('brand', selectedBrand);
-      if (searchText) params.append('search', searchText);
-      
-      // Map view mode to PDF format
-      const pdfView = viewMode === 'cards' ? 'cards' : 'gallery';
-      params.append('view', pdfView);
-
-      const response = await http.get(`/catalog/export/pdf/?${params.toString()}`, {
-        responseType: 'blob',
-        timeout: 180000, // 3 minutes for large PDF generation
-      });
-
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-      const brandSlug = selectedBrand !== 'all' ? selectedBrand.replace(/\s+/g, '_') : 'all';
-      link.download = `catalog_${brandSlug}_${today}.pdf`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      message.success(t('catalog.exportSuccess'));
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      message.error(t('catalog.exportFailed'));
-    } finally {
-      setExporting(false);
-    }
+  const handleExportPDF = () => {
+    setExportFormat('pdf');
+    setShowMarkupModal(true);
   };
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = () => {
+    setExportFormat('excel');
+    setShowMarkupModal(true);
+  };
+
+  const handleConfirmExport = async () => {
     setExporting(true);
+    setShowMarkupModal(false);
+
     try {
       const params = new URLSearchParams();
       if (selectedBrand !== 'all') params.append('brand', selectedBrand);
       if (searchText) params.append('search', searchText);
 
-      const response = await http.get(`/catalog/export/excel/?${params.toString()}`, {
-        responseType: 'blob',
-      });
+      // Add markup parameters
+      if (markupValue > 0) {
+        params.append('markup_type', markupType);
+        params.append('markup_value', markupValue.toString());
+      }
 
-      const blob = new Blob([response.data], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-      const brandSlug = selectedBrand !== 'all' ? selectedBrand.replace(/\s+/g, '_') : 'all';
-      link.download = `catalog_${brandSlug}_${today}.xlsx`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
+      if (exportFormat === 'pdf') {
+        // Map view mode to PDF format
+        const pdfView = viewMode === 'cards' ? 'cards' : 'gallery';
+        params.append('view', pdfView);
+
+        const response = await http.get(`/catalog/export/pdf/?${params.toString()}`, {
+          responseType: 'blob',
+          timeout: 180000, // 3 minutes for large PDF generation
+        });
+
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const brandSlug = selectedBrand !== 'all' ? selectedBrand.replace(/\s+/g, '_') : 'all';
+        const markupSuffix = markupValue > 0 ? `_markup_${markupValue}${markupType === 'percentage' ? 'pct' : 'usd'}` : '';
+        link.download = `catalog_${brandSlug}${markupSuffix}_${today}.pdf`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        const response = await http.get(`/catalog/export/excel/?${params.toString()}`, {
+          responseType: 'blob',
+        });
+
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const brandSlug = selectedBrand !== 'all' ? selectedBrand.replace(/\s+/g, '_') : 'all';
+        const markupSuffix = markupValue > 0 ? `_markup_${markupValue}${markupType === 'percentage' ? 'pct' : 'usd'}` : '';
+        link.download = `catalog_${brandSlug}${markupSuffix}_${today}.xlsx`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+
       message.success(t('catalog.exportSuccess'));
     } catch (error) {
-      console.error('Excel export failed:', error);
+      console.error('Export failed:', error);
       message.error(t('catalog.exportFailed'));
     } finally {
       setExporting(false);
@@ -520,6 +533,97 @@ const Catalog = () => {
           {filteredVariants.map((variant) => renderVariant(variant))}
         </Row>
       )}
+
+      {/* Markup Modal */}
+      <Modal
+        title={
+          <Space>
+            {exportFormat === 'pdf' ? <FilePdfOutlined /> : <FileExcelOutlined />}
+            <span>Export katalog - Ustama qo'shish</span>
+          </Space>
+        }
+        open={showMarkupModal}
+        onOk={handleConfirmExport}
+        onCancel={() => setShowMarkupModal(false)}
+        okText="Export qilish"
+        cancelText="Bekor qilish"
+        width={500}
+      >
+        <div style={{ padding: '20px 0' }}>
+          <Text strong style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>
+            Katalog narxlariga ustama (markup) qo'shish:
+          </Text>
+
+          <div style={{ marginBottom: 20 }}>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+              Ustama turi:
+            </Text>
+            <Radio.Group
+              value={markupType}
+              onChange={(e) => setMarkupType(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Radio value="percentage">
+                  <Space>
+                    <PercentageOutlined />
+                    <span>Foiz (%) bo'yicha</span>
+                  </Space>
+                </Radio>
+                <Radio value="fixed">
+                  <Space>
+                    <DollarOutlined />
+                    <span>Belgilangan summa ($) bo'yicha</span>
+                  </Space>
+                </Radio>
+              </Space>
+            </Radio.Group>
+          </div>
+
+          <div>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+              Ustama qiymati:
+            </Text>
+            <InputNumber
+              value={markupValue}
+              onChange={(value) => setMarkupValue(value || 0)}
+              min={0}
+              max={markupType === 'percentage' ? 100 : undefined}
+              precision={2}
+              addonAfter={markupType === 'percentage' ? '%' : 'USD'}
+              style={{ width: '100%' }}
+              size="large"
+              placeholder={markupType === 'percentage' ? 'Masalan: 15' : 'Masalan: 10'}
+            />
+          </div>
+
+          {markupValue > 0 && (
+            <div style={{
+              marginTop: 20,
+              padding: 12,
+              background: '#f0f5ff',
+              borderRadius: 6,
+              border: '1px solid #d6e4ff'
+            }}>
+              <Text style={{ fontSize: 12 }}>
+                <strong>Misol:</strong> Agar mahsulot narxi <strong>$100</strong> bo'lsa, ustama bilan yangi narx:{' '}
+                <strong style={{ color: '#1890ff' }}>
+                  ${markupType === 'percentage'
+                    ? (100 * (1 + markupValue / 100)).toFixed(2)
+                    : (100 + markupValue).toFixed(2)
+                  }
+                </strong>
+              </Text>
+            </div>
+          )}
+
+          <div style={{ marginTop: 16 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              <strong>Izoh:</strong> Ustama 0 bo'lsa, asl narxlar bilan export qilinadi.
+            </Text>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

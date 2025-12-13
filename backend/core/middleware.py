@@ -3,6 +3,7 @@ import threading
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
 
 _audit_local = threading.local()
@@ -74,3 +75,18 @@ class AuditMiddleware(MiddlewareMixin):
             data_snapshot=snapshot if isinstance(snapshot, dict) else {'data': snapshot},
         )
         request._audit_logged = True
+
+
+class UpdateLastSeenMiddleware(MiddlewareMixin):
+    """
+    Updates the last_seen timestamp for authenticated users on each request.
+    This enables online status tracking in the user interface.
+    """
+    def process_response(self, request, response):
+        if request.user.is_authenticated:
+            # Update last_seen timestamp
+            # Using update() to avoid triggering signals and improve performance
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            User.objects.filter(pk=request.user.pk).update(last_seen=timezone.now())
+        return response

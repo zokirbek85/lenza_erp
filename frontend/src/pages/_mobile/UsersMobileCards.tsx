@@ -9,6 +9,7 @@ export type UserMobileItem = {
   full_name: string;
   role: string;
   is_active: boolean;
+  is_online?: boolean;
 };
 
 export type UsersMobileHandlers = {
@@ -48,6 +49,10 @@ export const UsersMobileCard = ({ user, handlers, permissions }: UsersMobileCard
       label: user.role,
       variant: 'info',
     },
+    ...(user.is_online ? [{
+      label: 'Online',
+      variant: 'status' as const,
+    }] : []),
   ];
 
   type Action = { icon: React.ReactElement; label: string; onClick: () => void };
