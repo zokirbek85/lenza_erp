@@ -10,7 +10,7 @@ from django.utils import timezone
 from core.utils.temp_files import cleanup_temp_files, get_tmp_dir
 from dealers.models import Dealer, Region
 
-EXPORT_COLUMNS = ['name', 'code', 'contact', 'region', 'manager_username', 'opening_balance_usd']
+EXPORT_COLUMNS = ['name', 'code', 'contact', 'region', 'manager_username', 'opening_balance_usd', 'current_debt_usd']
 
 User = get_user_model()
 
@@ -75,6 +75,7 @@ def export_dealers_to_excel() -> str:
                 'region': dealer.region.name if dealer.region else '',
                 'manager_username': dealer.manager_user.username if dealer.manager_user else '',
                 'opening_balance_usd': float(dealer.opening_balance_usd or 0),
+                'current_debt_usd': float(dealer.current_debt_usd or 0),
             }
         )
     dataframe = pd.DataFrame(data, columns=EXPORT_COLUMNS)

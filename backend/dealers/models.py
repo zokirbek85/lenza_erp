@@ -203,23 +203,17 @@ class Dealer(models.Model):
     @property
     def current_debt_usd(self) -> Decimal:
         """
-        Dealer's current debt in USD (only positive balances).
-        Returns 0 if balance is negative or zero.
+        Dealer's current balance in USD.
+        Positive = dealer owes money (debt)
+        Negative = dealer has overpaid (credit balance)
         """
-        balance = self.balance_usd
-        return balance if balance > 0 else Decimal('0')
+        return self.balance_usd
     
     @property
     def current_debt_uzs(self) -> Decimal:
         """
-        Dealer's current debt in UZS.
-        Uses current exchange rate for conversion.
+        Dealer's current balance in UZS.
+        Positive = dealer owes money (debt)
+        Negative = dealer has overpaid (credit balance)
         """
-        from core.utils.currency import usd_to_uzs
-        
-        debt_usd = self.current_debt_usd
-        if debt_usd == 0:
-            return Decimal('0')
-        
-        debt_uzs, _ = usd_to_uzs(debt_usd)
-        return debt_uzs.quantize(Decimal('0.01'))
+        return self.balance_uzs

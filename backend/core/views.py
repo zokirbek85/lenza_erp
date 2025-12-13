@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.db import connections
 from django.db.models import Count, DecimalField, F, OuterRef, Q, Subquery, Sum, Value
-from django.db.models.functions import Coalesce, TruncMonth
+from django.db.models.functions import Coalesce
 from django.db.utils import OperationalError
 from django.http import FileResponse
 from django.utils import timezone
@@ -174,36 +174,7 @@ class DashboardSummaryView(APIView):
             )['total']
         )
 
-        return_filter = Q(order__in=orders_qs)
-        if start_date:
-            return_filter &= Q(created_at__date__gte=start_date)
-        if end_date:
-            return_filter &= Q(created_at__date__lte=end_date)
-        returns_qs = OrderReturn.objects.filter(return_filter)
-
-        opening_balance = decimal_or_zero(
-            filtered_dealers.aggregate(total=Sum('opening_balance_usd'))['total']
-        )
         orders_total = decimal_or_zero(orders_qs.aggregate(total=Sum('total_usd'))['total'])
-        # payments_total calculated from FinanceTransaction above
-        returns_total = decimal_or_zero(returns_qs.aggregate(total=Sum('amount_usd'))['total'])
-
-        # Calculate dealer refunds (money returned to dealers - increases debt)
-        refund_filter = Q(
-            type=FinanceTransaction.TransactionType.DEALER_REFUND,
-            status=FinanceTransaction.TransactionStatus.APPROVED,
-            dealer__in=filtered_dealers
-        )
-        if start_date:
-            refund_filter &= Q(date__gte=start_date)
-        if end_date:
-            refund_filter &= Q(date__lte=end_date)
-
-        refunds_total = decimal_or_zero(
-            FinanceTransaction.objects.filter(refund_filter).aggregate(
-                total=Sum('amount_usd')
-            )['total']
-        )
 
         # Inventory totals (products are global, show all inventory)
         stock_agg = Product.objects.filter(is_active=True).aggregate(
@@ -214,15 +185,17 @@ class DashboardSummaryView(APIView):
             ),
         )
 
-        # Correct debt formula: opening_balance + orders + refunds - payments - returns
-        total_debt = opening_balance + orders_total + refunds_total - payments_total - returns_total
+        # Calculate total debt by summing each dealer's current_debt_usd
+        total_debt = Decimal('0')
+        for dealer in filtered_dealers:
+            total_debt += dealer.current_debt_usd
 
         # Calculate revenue_by_day from FinanceTransaction (income) - last 30 days
         from datetime import timedelta
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.info(f"Debt calculation: opening_balance={opening_balance}, orders={orders_total}, refunds={refunds_total}, payments={payments_total}, returns={returns_total}, total_debt={total_debt}")
+        logger.info(f"Total debt calculation: total_debt={total_debt} (sum of {filtered_dealers.count()} dealers' current_debt_usd)")
 
         # Get last 30 days
         today = date.today()
@@ -331,19 +304,8 @@ class DebtAnalyticsView(APIView):
         total_debt = Decimal('0')
 
         for dealer in dealers:
-            opening = decimal_or_zero(dealer.opening_balance_usd)
-            orders_total = decimal_or_zero(dealer.orders_total)
-            # Calculate payments from FinanceTransaction
-            from finance.models import FinanceTransaction
-            payments_total = decimal_or_zero(
-                FinanceTransaction.objects.filter(
-                    dealer=dealer,
-                    type=FinanceTransaction.TransactionType.INCOME,
-                    status=FinanceTransaction.TransactionStatus.APPROVED
-                ).aggregate(total=Sum('amount_usd'))['total']
-            )
-            returns_total = decimal_or_zero(dealer.returns_total)
-            debt = opening + orders_total - payments_total - returns_total
+            # Use current_debt_usd property which properly calculates balance
+            debt = dealer.current_debt_usd
             if debt == 0:
                 continue
             total_debt += debt
@@ -368,54 +330,23 @@ class DebtAnalyticsView(APIView):
             month = total_months % 12 + 1
             months.append(date(year, month, 1))
 
-        start_date = months[0]
+        # Calculate debt for each month by summing dealer balances as of that month's last day
+        from dealers.services.balance import calculate_dealer_balance
+        from calendar import monthrange
 
-        if dealer_ids:
-            orders_monthly = (
-                Order.objects.filter(dealer_id__in=dealer_ids, value_date__gte=start_date, is_imported=False)
-                .annotate(month=TruncMonth('value_date'))
-                .values('month')
-                .annotate(total=Sum('total_usd'))
-                .order_by('month')
-            )
-            # Payment module removed - payments_monthly is empty list
-            payments_monthly = []
-            returns_monthly = (
-                OrderReturn.objects.filter(order__dealer_id__in=dealer_ids, created_at__date__gte=start_date, order__is_imported=False)
-                .annotate(month=TruncMonth('created_at'))
-                .values('month')
-                .annotate(total=Sum('amount_usd'))
-                .order_by('month')
-            )
-        else:
-            orders_monthly = payments_monthly = returns_monthly = []
+        for month_date in months:
+            # Get last day of the month
+            last_day = monthrange(month_date.year, month_date.month)[1]
+            month_end = date(month_date.year, month_date.month, last_day)
 
-        def build_map(entries):
-            mapping = {}
-            for entry in entries:
-                month_value = entry['month']
-                if month_value is None:
-                    continue
-                mapping[month_value.strftime('%Y-%m')] = decimal_or_zero(entry['total'])
-            return mapping
+            # Calculate total debt as of this month
+            month_debt = Decimal('0')
+            for dealer in dealers:
+                balance_result = calculate_dealer_balance(dealer, as_of_date=month_end)
+                month_debt += balance_result['balance_usd']
 
-        orders_map = build_map(orders_monthly)
-        payments_map = {}  # Payment module removed
-        returns_map = build_map(returns_monthly)
-
-        opening_total = sum((decimal_or_zero(dealer.opening_balance_usd) for dealer in dealers), Decimal('0'))
-        running_debt = opening_total
-
-        for index, month_date in enumerate(months):
             key = month_date.strftime('%Y-%m')
-            delta = orders_map.get(key, Decimal('0')) - payments_map.get(key, Decimal('0')) - returns_map.get(
-                key, Decimal('0')
-            )
-            if index == 0:
-                running_debt = opening_total + delta
-            else:
-                running_debt += delta
-            monthly_points.append({'month': key, 'debt': float(running_debt)})
+            monthly_points.append({'month': key, 'debt': float(month_debt)})
 
         analytics_payload = {
             'total_debt': float(total_debt if dealers else Decimal('0')),
