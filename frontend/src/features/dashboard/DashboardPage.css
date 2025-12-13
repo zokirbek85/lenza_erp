@@ -139,16 +139,32 @@
   }
 }
 
-/* ===== ROW 2: INVENTORY CARD (Full Width) ===== */
+/* ===== ROW 2: INVENTORY CARD & PAYMENT CHART ===== */
 .inventory-card {
-  grid-column: span 4;
+  grid-column: span 1;
   min-height: 180px;
+}
+
+.payment-chart-card {
+  grid-column: span 3;
+  min-height: 180px;
+  background: #1e293b !important;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.payment-chart-card .card-header {
+  margin-bottom: 10px;
+}
+
+.payment-chart-card .dashboard-card-title {
+  color: #ffffff !important;
 }
 
 .inventory-content {
   display: flex;
-  gap: 48px;
+  gap: 24px;
   margin-top: 16px;
+  flex-direction: column;
 }
 
 .inventory-stat {
@@ -163,14 +179,14 @@
 }
 
 .stat-value-large {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-primary, #0f172a);
   line-height: 1.2;
 }
 
 .stat-value-medium {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: #10b981;
   line-height: 1.2;
@@ -178,7 +194,10 @@
 
 @media (max-width: 1400px) {
   .inventory-card {
-    grid-column: span 2;
+    grid-column: span 1;
+  }
+  .payment-chart-card {
+    grid-column: span 1;
   }
 }
 
@@ -186,10 +205,14 @@
   .inventory-card {
     grid-column: span 1;
   }
-  
+
+  .payment-chart-card {
+    grid-column: span 1;
+  }
+
   .inventory-content {
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
   }
 }
 

@@ -44,6 +44,8 @@ export default function FinanceTransactions() {
     comment: '',
   });
 
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
+
   useEffect(() => {
     loadTransactions();
   }, [filters, page, pageSize]);
@@ -596,10 +598,30 @@ export default function FinanceTransactions() {
 
       {/* Filters */}
       <div className="card animate-fadeInUp">
-        <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
-          {t('common.filters', 'Filtrlar')}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('common.filters', 'Filtrlar')}
+          </h3>
+          <button
+            onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+            className="btn btn-ghost btn-sm"
+            title={isFiltersExpanded ? t('common.collapse', 'Yig\'ish') : t('common.expand', 'Ochish')}
+          >
+            <svg
+              className={`w-5 h-5 transition-transform duration-300 ${isFiltersExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-300 overflow-hidden ${
+            isFiltersExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
           <div>
             <label className="text-label">{t('finance.transaction.type', 'Turi')}</label>
             <select
@@ -683,17 +705,19 @@ export default function FinanceTransactions() {
           </div>
         </div>
 
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={() => setFilters({})}
-            className="btn btn-ghost"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            {t('common.clearFilters', 'Tozalash')}
-          </button>
-        </div>
+        {isFiltersExpanded && (
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => setFilters({})}
+              className="btn btn-ghost"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              {t('common.clearFilters', 'Tozalash')}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Transactions Table */}

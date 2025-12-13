@@ -33,20 +33,24 @@ export const deleteFinanceAccount = (id: number) =>
   http.delete(`/finance/accounts/${id}/`);
 
 // Transactions
-export const getFinanceTransactions = (params?: FinanceTransactionFilters) => 
+export const getFinanceTransactions = (params?: FinanceTransactionFilters) =>
   http.get<PaginatedResponse<FinanceTransaction>>('/finance/transactions/', { params });
 
-export const getFinanceTransaction = (id: number) => 
+export const getFinanceTransaction = (id: number) =>
   http.get<FinanceTransaction>(`/finance/transactions/${id}/`);
 
-export const createFinanceTransaction = (data: Partial<FinanceTransaction>) => 
+export const createFinanceTransaction = (data: Partial<FinanceTransaction>) =>
   http.post<FinanceTransaction>('/finance/transactions/', data);
 
-export const updateFinanceTransaction = (id: number, data: Partial<FinanceTransaction>) => 
+export const updateFinanceTransaction = (id: number, data: Partial<FinanceTransaction>) =>
   http.patch<FinanceTransaction>(`/finance/transactions/${id}/`, data);
 
-export const deleteFinanceTransaction = (id: number) => 
+export const deleteFinanceTransaction = (id: number) =>
   http.delete(`/finance/transactions/${id}/`);
+
+// Payment Trend - Monthly statistics
+export const getPaymentTrend = () =>
+  http.get<Array<{ month: string; amount: number }>>('/finance/transactions/payment-trend/');
 
 export const approveFinanceTransaction = (id: number) => 
   http.post<FinanceTransaction>(`/finance/transactions/${id}/approve/`);

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { message, Modal, Table, Button, Input, Form, ColorPicker, Space, Tag, Popconfirm, Select, Checkbox } from 'antd';
+import { message, Modal, Table, Button, Input, Form, ColorPicker, Space, Tag, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, BarChartOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useAuthStore } from '../auth/useAuthStore';
 
 import {
   getExpenseCategories,
@@ -28,8 +27,6 @@ const EmojiInput = ({ value, onChange }: { value?: string; onChange?: (val: stri
 export default function ExpenseCategoryManagement() {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const role = useAuthStore((s) => s.role);
-  const [filterMode, setFilterMode] = useState<'all' | 'global' | 'mine'>('all');
   const [statistics, setStatistics] = useState<ExpenseCategoryStatistics[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -79,7 +76,6 @@ export default function ExpenseCategoryManagement() {
       color: '#6B7280',
       icon: '📁',
       is_active: true,
-      is_global: false,
     });
     setModalVisible(true);
   };
@@ -91,7 +87,6 @@ export default function ExpenseCategoryManagement() {
       color: category.color,
       icon: category.icon,
       is_active: category.is_active,
-      is_global: category.is_global,
     });
     setModalVisible(true);
   };
@@ -165,7 +160,6 @@ export default function ExpenseCategoryManagement() {
       render: (name: string, record) => (
         <Space>
           <span>{name}</span>
-          {record.is_global && <Tag color="green">{t('expenseCategory.global', 'Global')}</Tag>}
           {!record.is_active && <Tag color="red">{t('common.inactive', 'Inactive')}</Tag>}
         </Space>
       ),
@@ -299,24 +293,10 @@ export default function ExpenseCategoryManagement() {
         </Space>
       </div>
 
-      <div className="mb-4">
-        <Space>
-          <Select value={filterMode} onChange={(v: any) => setFilterMode(v)} options={[
-            { label: t('common.all', 'All'), value: 'all' },
-            { label: t('expenseCategory.globalFilter', 'Global'), value: 'global' },
-            { label: t('expenseCategory.mineFilter', 'My Categories'), value: 'mine' },
-          ]} />
-        </Space>
-      </div>
-
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <Table
           columns={columns}
-          dataSource={categories.filter(c => {
-            if (filterMode === 'all') return true;
-            if (filterMode === 'global') return c.is_global === true;
-            return c.is_global !== true; // mine
-          })}
+          dataSource={categories}
           rowKey="id"
           loading={loading}
           pagination={{
@@ -398,16 +378,6 @@ export default function ExpenseCategoryManagement() {
               <span>{t('expenseCategory.active', 'Faol')}</span>
             </Space>
           </Form.Item>
-
-          {role && ['admin', 'accountant', 'owner'].includes(role) && (
-            <Form.Item
-              label={t('expenseCategory.globalLabel', 'Global category')}
-              name="is_global"
-              valuePropName="checked"
-            >
-              <Checkbox>{t('expenseCategory.makeGlobal', 'Visible to all users (admin only)')}</Checkbox>
-            </Form.Item>
-          )}
         </Form>
       </Modal>
 

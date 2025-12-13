@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test PDF</title>
+    <style>
+        body {
+            background: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .page {
+            background: black;
+            min-height: 297mm;
+            page-break-after: always;
+        }
+        .test-box {
+            border: 3px solid red;
+            background: white;
+            color: black;
+            padding: 20px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1 style="color: gold;">TITLE PAGE</h1>
+        <p>Total products: {{ total_products }}</p>
+    </div>
+
+    {% for product in products %}
+    <div class="page">
+        <div class="test-box">
+            <h1>Product {{ loop.index }}</h1>
+            <p>ID: {{ product.id }}</p>
+            <p>Model: {{ product.model }}</p>
+            <p>Brand: {{ product.brand }}</p>
+            <p>Color: {{ product.color }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

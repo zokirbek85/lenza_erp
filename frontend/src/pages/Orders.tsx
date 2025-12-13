@@ -155,8 +155,11 @@ const OrdersPage = () => {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [mobileOrderDetailsOpen, setMobileOrderDetailsOpen] = useState(false);
   const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<Order | null>(null);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const role = useAuthStore((state) => state.role);
+  const userId = useAuthStore((state) => state.userId);
   const isWarehouse = role === 'warehouse';
+  const isSalesManager = role === 'sales';
 
   const {
     filters,
@@ -221,9 +224,13 @@ const OrdersPage = () => {
       const params: Record<string, string | number> = { page, page_size: pageSize };
       if (statusFilter) params.status = statusFilter;
       if (managerFilter) params.created_by = managerFilter;
+      // Sales manager faqat o'zi yaratgan orderlarni ko'radi
+      if (isSalesManager && userId && !managerFilter) {
+        params.created_by = userId;
+      }
       if (dateFrom) params.value_date_from = dateFrom;
       if (dateTo) params.value_date_to = dateTo;
-      
+
       const response = await http.get('/orders/', { params });
       const data = response.data;
       let normalized: Order[];
@@ -250,7 +257,7 @@ const OrdersPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, managerFilter, page, pageSize, statusFilter]);
+  }, [dateFrom, dateTo, managerFilter, page, pageSize, statusFilter, isSalesManager, userId]);
 
   const loadRefs = useCallback(async () => {
     try {
@@ -457,10 +464,38 @@ const OrdersPage = () => {
       toggleOrderDetails(orderId);
     }
   };
-  const handleEditOrder = (orderId: number) => {
-    setShowCreateForm(true);
-    if (!isMobile) {
-      toggleOrderDetails(orderId);
+  const handleEditOrder = async (orderId: number) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+
+    // Load full order details
+    try {
+      const response = await http.get(`/orders/${orderId}/`);
+      const fullOrder = response.data;
+
+      setEditingOrder(fullOrder);
+      setDealerId(String(fullOrder.dealer?.id || ''));
+      setOrderType(fullOrder.is_reserve ? 'reserve' : 'regular');
+      setNote(fullOrder.note || '');
+      setDiscountType(fullOrder.discount_type || 'none');
+      setDiscountValue(String(fullOrder.discount_value || '0'));
+
+      // Load order items into selected items
+      if (fullOrder.items && fullOrder.items.length > 0) {
+        setSelectedItems(fullOrder.items.map((item: OrderItem) => ({
+          ...item,
+          product_detail: item.product_detail || null,
+        })));
+      }
+
+      setShowCreateForm(true);
+
+      if (!isMobile) {
+        toggleOrderDetails(orderId);
+      }
+    } catch (error) {
+      console.error('Error loading order for edit:', error);
+      toast.error(t('orders.edit.loadError', 'Failed to load order'));
     }
   };
   const handleStatusUpdatedFromCards = (orderId: number, newStatus: string) => {
@@ -773,7 +808,10 @@ const OrdersPage = () => {
         {!isWarehouse && (
           <MobileOrderForm
             open={showCreateForm}
-            onClose={() => setShowCreateForm(false)}
+            onClose={() => {
+              setShowCreateForm(false);
+              setEditingOrder(null);
+            }}
             dealerId={dealerId}
             orderType={orderType}
             note={note}
@@ -789,6 +827,7 @@ const OrdersPage = () => {
             quantityInput={quantityInput}
             priceInput={priceInput}
             productsLoading={productsLoading}
+            editingOrder={editingOrder}
             onDealerChange={setDealerId}
             onOrderTypeChange={setOrderType}
             onNoteChange={setNote}
@@ -1061,6 +1100,17 @@ const OrdersPage = () => {
         </div>
       </header>
 
+      {/* Order Status Statistics Cards */}
+      <div className="animate-fadeInUp">
+        <OrderStatusCards
+          onStatusClick={(status) => {
+            setStatusFilter(status === statusFilter ? '' : status);
+            setPage(1);
+          }}
+          currentFilter={statusFilter}
+        />
+      </div>
+
       {/* Create Order Button */}
       {!isWarehouse && (
         <div className="flex justify-end animate-scaleIn">
@@ -1075,17 +1125,6 @@ const OrdersPage = () => {
           </button>
         </div>
       )}
-
-      {/* Order Status Statistics Cards */}
-      <div className="animate-fadeInUp">
-        <OrderStatusCards
-          onStatusClick={(status) => {
-            setStatusFilter(status === statusFilter ? '' : status);
-            setPage(1);
-          }}
-          currentFilter={statusFilter}
-        />
-      </div>
 
       {/* Filters Section */}
       <div className="card animate-fadeInUp">

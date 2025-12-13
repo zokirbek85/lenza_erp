@@ -19,6 +19,7 @@ import {
   RegionProductHeatmap,
 } from '../../components/analytics';
 import DebtTrendChart from '../../components/DebtTrendChart';
+import PaymentTrendChart from '../../components/PaymentTrendChart';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import type { DashboardFilters } from '../../store/useDashboardStore';
 import type { DashboardSummary } from '../../services/dashboardService';
@@ -214,7 +215,7 @@ const DashboardPage = () => {
           />
         </div>
 
-        {/* Row 2: Inventory Card - Full Width */}
+        {/* Row 2: Inventory Card & Payment Chart */}
         <Card className="dashboard-card inventory-card">
           <div className="card-header">
             <BoxPlotOutlined className="dashboard-icon" />
@@ -235,6 +236,20 @@ const DashboardPage = () => {
             </div>
           </div>
         </Card>
+
+        <PaymentTrendChart
+          data={(() => {
+            console.log('Dashboard Summary:', data.summary);
+            console.log('Revenue by month:', data.summary?.revenue_by_month);
+            const chartData = data.summary?.revenue_by_month?.map(item => ({
+              date: item.month || '',
+              amount: item.total || 0,
+            })) || [];
+            console.log('Chart data:', chartData);
+            return chartData;
+          })()}
+          loading={loading}
+        />
 
         {/* Row 3: Top Products - Full Width */}
         <div className="dashboard-card products-card">

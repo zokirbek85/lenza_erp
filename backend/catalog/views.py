@@ -352,7 +352,7 @@ class CatalogView(APIView):
 
 class CatalogExportPDFView(APIView, ExportMixin):
     """
-    Export catalog as PDF with grouped products
+    Export catalog as PDF with grouped products and komplektatsiya
     """
     permission_classes = [IsAdmin | IsSales | IsAccountant | IsOwner]
 
@@ -362,22 +362,54 @@ class CatalogExportPDFView(APIView, ExportMixin):
         search_query = request.query_params.get('search', '')
         view_mode = request.query_params.get('view', 'cards')  # cards, gallery
 
-        # Get all catalog products
-        products = Product.objects.filter(
-            category__name='Дверное полотно',
-            is_active=True
-        ).select_related('brand', 'category').order_by('brand__name', 'name')
+        # Get all catalog variants (new variant-based system)
+        variants = ProductVariant.objects.filter(is_active=True).select_related(
+            'product_model__brand'
+        ).prefetch_related('skus__product', 'kit_components__component')
 
         # Apply brand filter
         if brand_filter and brand_filter != 'all':
-            products = products.filter(brand__name=brand_filter)
+            variants = variants.filter(product_model__brand__name=brand_filter)
 
-        # Serialize products
-        serializer = CatalogProductSerializer(products, many=True, context={'request': request})
-        product_data = serializer.data
+        # Order by brand and model
+        variants = variants.order_by('product_model__brand__name', 'product_model__model_name', 'color')
+
+        # Serialize variants with request context for absolute URLs
+        serializer = VariantCatalogSerializer(variants, many=True, context={'request': request})
+        product_data = list(serializer.data)  # Convert to list to ensure it's mutable
+
+        # Convert image URLs to absolute file paths for PDF
+        from django.conf import settings
+        import os
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        for product in product_data:
+            if product.get('image'):
+                image_url = product['image']
+                # Handle both relative and absolute URLs
+                if '/media/' in image_url:
+                    # Extract media path
+                    media_path = image_url.split('/media/')[-1]
+                    full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+                    full_path = os.path.normpath(full_path)  # Normalize path for Windows
+                    if os.path.exists(full_path):
+                        product['image'] = f'file:///{full_path}'  # Note: 3 slashes for Windows
+                        logger.info(f"Image path converted: {image_url} -> {product['image']}")
+                    else:
+                        logger.warning(f"Image file not found: {full_path}")
+                        product['image'] = None
 
         # Prepare context for template
         from datetime import date
+
+        logger.info(f"PDF Export: Found {len(product_data)} products")
+        logger.info(f"PDF Export: Variants count from DB: {variants.count()}")
+        if product_data:
+            logger.info(f"First product keys: {list(product_data[0].keys())}")
+            logger.info(f"First product sample: {product_data[0]}")
+
         context = {
             'products': product_data,
             'category': 'Дверное полотно',
@@ -385,14 +417,16 @@ class CatalogExportPDFView(APIView, ExportMixin):
             'view_mode': view_mode,
             'export_date': date.today().strftime('%d.%m.%Y'),
             'search_query': search_query,
+            'total_products': len(product_data),
         }
 
         # Generate filename
         brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
         filename_prefix = f'catalog_{brand_slug}'
 
+        # Temporary: use simple template for debugging
         return self.render_pdf_with_qr(
-            'catalog/catalog_export.html',
+            'catalog/catalog_export_simple.html',
             context,
             filename_prefix=filename_prefix,
             request=request,

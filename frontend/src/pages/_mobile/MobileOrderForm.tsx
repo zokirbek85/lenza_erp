@@ -42,6 +42,7 @@ type MobileOrderFormProps = {
   quantityInput: string;
   priceInput: string;
   productsLoading: boolean;
+  editingOrder?: { id: number; display_no: string } | null;
   onDealerChange: (value: string) => void;
   onOrderTypeChange: (value: 'regular' | 'reserve') => void;
   onNoteChange: (value: string) => void;
@@ -87,6 +88,7 @@ const MobileOrderForm = ({
   quantityInput,
   priceInput,
   productsLoading,
+  editingOrder,
   onDealerChange,
   onOrderTypeChange,
   onNoteChange,
@@ -153,7 +155,7 @@ const MobileOrderForm = ({
           disabled={selectedItems.length === 0}
           className="mobile-btn flex-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500"
         >
-          {t('common:actions.create')}
+          {editingOrder ? t('common:actions.save', 'Saqlash') : t('common:actions.create')}
         </button>
       </div>
     </div>
@@ -163,7 +165,7 @@ const MobileOrderForm = ({
     <MobileDrawerForm
       open={open}
       onClose={onClose}
-      title={t('orders.header.panelTitle')}
+      title={editingOrder ? `${t('orders.edit.title', 'Buyurtmani tahrirlash')} #${editingOrder.display_no}` : t('orders.header.panelTitle')}
       footer={footer}
       onSubmit={onSubmit}  // ✅ YANGI PROP
     >

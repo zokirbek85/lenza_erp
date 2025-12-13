@@ -68,11 +68,11 @@ export default function OrderStatusCards({ onStatusClick, currentFilter }: Order
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {[...Array(7)].map((_, i) => (
           <div
             key={i}
-            className="animate-pulse rounded-xl border border-slate-200 bg-slate-100 p-4 dark:border-slate-700 dark:bg-slate-800"
+            className="animate-pulse rounded-xl border border-slate-200 bg-slate-100 p-3 dark:border-slate-700 dark:bg-slate-800"
           >
             <div className="h-12 w-full rounded bg-slate-200 dark:bg-slate-700"></div>
           </div>
@@ -88,7 +88,7 @@ export default function OrderStatusCards({ onStatusClick, currentFilter }: Order
   const statusEntries = Object.entries(stats) as [keyof StatusStats, number][];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
       {statusEntries.map(([status, count]) => {
         const isActive = currentFilter === status;
         const colorClass = STATUS_COLORS[status] || 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300';
@@ -99,21 +99,19 @@ export default function OrderStatusCards({ onStatusClick, currentFilter }: Order
             key={status}
             onClick={() => onStatusClick(status)}
             className={`
-              group relative rounded-xl border p-4 text-left shadow-sm transition-all
+              group relative rounded-xl border p-3 text-left shadow-sm transition-all
               hover:shadow-md hover:opacity-90
               ${colorClass}
               ${isActive ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : ''}
             `}
             title={t(`orders.status.${status}`, status)}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="mb-1 text-2xl">{icon}</div>
-                <div className="text-sm font-medium opacity-80">
-                  {t(`orders.status.${status}`, status)}
-                </div>
-                <div className="mt-1 text-2xl font-bold">{count}</div>
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="mb-1 text-xl">{icon}</div>
+              <div className="text-xs font-medium opacity-80 mb-1">
+                {t(`orders.status.${status}`, status)}
               </div>
+              <div className="text-xl font-bold">{count}</div>
               {isActive && (
                 <div className="absolute right-2 top-2 flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75"></span>
