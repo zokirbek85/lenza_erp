@@ -16,9 +16,9 @@ import KpiCard from '../../components/KpiCard';
 import {
   TopProductsCard,
   TopDealersCard,
-  ProductTrendLineChart,
   RegionProductHeatmap,
 } from '../../components/analytics';
+import DebtTrendChart from '../../components/DebtTrendChart';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import type { DashboardFilters } from '../../store/useDashboardStore';
 import type { DashboardSummary } from '../../services/dashboardService';
@@ -28,13 +28,13 @@ import {
   type InventoryStats,
   fetchTopProducts,
   fetchRegionProducts,
-  fetchProductTrend,
   fetchTopDealers,
   type TopProductItem,
   type RegionProductItem,
-  type ProductTrendPeriod,
   type TopDealerItem,
+  fetchDebtAnalytics,
 } from '../../services/dashboardService';
+import type { DebtAnalytics } from '../../types/dashboard';
 import './DashboardPage.css';
 
 interface DashboardData {
@@ -42,8 +42,8 @@ interface DashboardData {
   inventoryStats: InventoryStats | null;
   topProducts: TopProductItem[];
   regionProducts: RegionProductItem[];
-  productTrend: ProductTrendPeriod[];
   topDealers: TopDealerItem[];
+  debtAnalytics: DebtAnalytics | null;
 }
 
 const DashboardPage = () => {
@@ -71,8 +71,8 @@ const DashboardPage = () => {
     inventoryStats: null,
     topProducts: [],
     regionProducts: [],
-    productTrend: [],
     topDealers: [],
+    debtAnalytics: null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -90,7 +90,7 @@ const DashboardPage = () => {
         categories: effectiveFilters.categories?.length ? effectiveFilters.categories.join(',') : undefined,
       };
 
-      const [summary, inventory, topProducts, regionProducts, productTrend, topDealers] = await Promise.all([
+      const [summary, inventory, topProducts, regionProducts, topDealers, debtAnalytics] = await Promise.all([
         fetchDashboardSummary(effectiveFilters).catch(() => ({
           total_sales: 0,
           total_payments: 0,
@@ -111,8 +111,8 @@ const DashboardPage = () => {
         fetchInventoryStats().catch(() => ({ data: { total_quantity: 0, total_value_usd: 0 } })),
         fetchTopProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchRegionProducts(analyticsFilters).catch(() => ({ data: [] })),
-        fetchProductTrend(analyticsFilters).catch(() => ({ data: [] })),
         fetchTopDealers(analyticsFilters).catch(() => ({ data: [] })),
+        fetchDebtAnalytics().catch(() => ({ data: { total_debt: 0, by_dealers: [], by_regions: [], monthly: [] } })),
       ]);
 
       const newData = {
@@ -120,8 +120,8 @@ const DashboardPage = () => {
         inventoryStats: inventory?.data ?? null,
         topProducts: Array.isArray(topProducts?.data) ? topProducts.data : [],
         regionProducts: Array.isArray(regionProducts?.data) ? regionProducts.data : [],
-        productTrend: Array.isArray(productTrend?.data) ? productTrend.data : [],
         topDealers: Array.isArray(topDealers?.data) ? topDealers.data : [],
+        debtAnalytics: debtAnalytics?.data ?? null,
       };
 
       setData(newData);
@@ -245,13 +245,13 @@ const DashboardPage = () => {
           <TopProductsCard data={data.topProducts} loading={loading} />
         </div>
 
-        {/* Row 4: Region & Trend - 2 Columns */}
-        <div className="dashboard-card region-card">
-          <RegionProductHeatmap data={data.regionProducts} loading={loading} />
+        {/* Row 4: Debt Trend & Region Heatmap - 2 Columns */}
+        <div className="debt-card">
+          <DebtTrendChart data={data.debtAnalytics?.monthly || []} loading={loading} />
         </div>
 
-        <div className="dashboard-card trend-card">
-          <ProductTrendLineChart data={data.productTrend} loading={loading} />
+        <div className="region-card">
+          <RegionProductHeatmap data={data.regionProducts} loading={loading} />
         </div>
 
         {/* Row 5: Top Dealers - Full Width */}

@@ -169,7 +169,7 @@
 }
 
 .login-logo-img {
-  height: 80px;
+  height: 160px;
   width: auto;
   filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.4));
   transition: all 0.3s ease;
@@ -416,7 +416,7 @@
   }
 
   .login-logo-img {
-    height: 65px;
+    height: 130px;
   }
 
   .login-logo-text {

@@ -226,25 +226,30 @@
   }
 }
 
-/* ===== ROW 4: REGION & TREND (2 Columns) ===== */
-.region-card,
-.trend-card {
+/* ===== ROW 4: DEBT TREND & REGION HEATMAP (2 Columns) ===== */
+.debt-card,
+.region-card {
   grid-column: span 2;
-  min-height: 380px;
+  min-height: 450px;
+  height: 450px;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 1400px) {
-  .region-card,
-  .trend-card {
+  .debt-card,
+  .region-card {
     grid-column: span 1;
+    height: 450px;
   }
 }
 
 @media (max-width: 900px) {
-  .region-card,
-  .trend-card {
+  .debt-card,
+  .region-card {
     grid-column: span 1;
-    min-height: 350px;
+    min-height: 400px;
+    height: 400px;
   }
 }
 

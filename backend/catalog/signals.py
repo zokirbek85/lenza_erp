@@ -16,16 +16,22 @@ def update_product_stock_defect_on_save(sender, instance, created, **kwargs):
     """
     Update product.stock_defect when ProductDefect is saved.
     
-    product.stock_defect = sum(all ProductDefect.qty where status != disposed and != sold_outlet)
+    product.stock_defect = sum(all ProductDefect.qty where status is active)
+    Active statuses: detected, inspected, repairing
+    Inactive statuses: repaired, disposed, sold_outlet
     """
     product = instance.product
     
     # Calculate total defect qty for this product
-    # Exclude disposed and sold_outlet items
+    # Only count defects that are still in defective state
+    # Exclude: repaired (moved to stock_ok), disposed (removed), sold_outlet (sold)
     total_defect = ProductDefect.objects.filter(
-        product=product
-    ).exclude(
-        status__in=[ProductDefect.Status.DISPOSED, ProductDefect.Status.SOLD_OUTLET]
+        product=product,
+        status__in=[
+            ProductDefect.Status.DETECTED,
+            ProductDefect.Status.INSPECTED,
+            ProductDefect.Status.REPAIRING,
+        ]
     ).aggregate(
         total=Sum('qty')
     )['total'] or Decimal('0.00')
@@ -42,10 +48,14 @@ def update_product_stock_defect_on_delete(sender, instance, **kwargs):
     product = instance.product
     
     # Calculate total defect qty for this product
+    # Only count defects that are still in defective state
     total_defect = ProductDefect.objects.filter(
-        product=product
-    ).exclude(
-        status__in=[ProductDefect.Status.DISPOSED, ProductDefect.Status.SOLD_OUTLET]
+        product=product,
+        status__in=[
+            ProductDefect.Status.DETECTED,
+            ProductDefect.Status.INSPECTED,
+            ProductDefect.Status.REPAIRING,
+        ]
     ).aggregate(
         total=Sum('qty')
     )['total'] or Decimal('0.00')

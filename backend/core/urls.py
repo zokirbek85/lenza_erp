@@ -36,8 +36,10 @@ from catalog.views import (
 )
 from catalog.defect_views import (
     DefectTypeViewSet,
-    ProductDefectViewSet,
     DefectAuditLogViewSet,
+)
+from catalog.defects_from_products_view import (
+    ProductDefectFromStockViewSet,
 )
 from dealers.views_list_all import DealerListAllView
 from core.views import (
@@ -122,7 +124,7 @@ router.register('catalog/skus', ProductSKUViewSet, basename='product-sku')
 router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename='public-catalog')
 # Defect management routes
 router.register('defects/types', DefectTypeViewSet, basename='defect-type')
-router.register('defects', ProductDefectViewSet, basename='defect')
+router.register('defects', ProductDefectFromStockViewSet, basename='defect')
 router.register('defects/audit-logs', DefectAuditLogViewSet, basename='defect-audit-log')
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
 

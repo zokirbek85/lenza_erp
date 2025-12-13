@@ -1,0 +1,16 @@
+<svg width="420" height="120" viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon -->
+  <g transform="translate(20,20)">
+    <rect x="0" y="0" width="80" height="80" rx="14" fill="#FFFFFF"></rect>
+    <path d="M28 20 V60 H54" stroke="#0F172A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+  </g>
+
+  <!-- Text -->
+  <text x="120" y="62" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" fill="#FFFFFF" letter-spacing="2">
+    LENZA
+  </text>
+
+  <text x="120" y="90" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="500" fill="#CBD5E1" letter-spacing="3">
+    ERP
+  </text>
+</svg>

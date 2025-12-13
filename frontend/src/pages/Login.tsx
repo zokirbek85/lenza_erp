@@ -87,7 +87,7 @@ const Login = () => {
         {/* Logo & Header */}
         <div className="login-logo">
           <div className="login-logo-shine">
-            <img src="https://erp.lenza.uz/logo-lenza.svg" alt="Lenza Logo" className="login-logo-img" />
+            <img src="/logo-lenza.svg" alt="Lenza Logo" className="login-logo-img" />
           </div>
           <div className="login-divider"></div>
         </div>

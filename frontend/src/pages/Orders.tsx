@@ -1,7 +1,7 @@
 ﻿import type { FormEvent } from 'react';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { MinusOutlined, PlusOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Collapse, Select } from 'antd';
+import { Collapse, Select, Drawer } from 'antd';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -153,6 +153,8 @@ const OrdersPage = () => {
   const { isMobile } = useIsMobile();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [mobileOrderDetailsOpen, setMobileOrderDetailsOpen] = useState(false);
+  const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<Order | null>(null);
   const role = useAuthStore((state) => state.role);
   const isWarehouse = role === 'warehouse';
 
@@ -444,10 +446,22 @@ const OrdersPage = () => {
     toast.success(t('orders.toast.draftCleared'));
   };
 
-  const handleViewOrder = (orderId: number) => toggleOrderDetails(orderId);
+  const handleViewOrder = (orderId: number) => {
+    if (isMobile) {
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        setSelectedOrderForDetails(order);
+        setMobileOrderDetailsOpen(true);
+      }
+    } else {
+      toggleOrderDetails(orderId);
+    }
+  };
   const handleEditOrder = (orderId: number) => {
     setShowCreateForm(true);
-    toggleOrderDetails(orderId);
+    if (!isMobile) {
+      toggleOrderDetails(orderId);
+    }
   };
   const handleStatusUpdatedFromCards = (orderId: number, newStatus: string) => {
     handleStatusUpdated(orderId, newStatus);
@@ -815,6 +829,166 @@ const OrdersPage = () => {
         ) : (
           <OrdersMobileCards data={orders} handlers={mobileHandlers} />
         )}
+
+        {/* Mobile Order Details Drawer */}
+        <Drawer
+          open={mobileOrderDetailsOpen}
+          onClose={() => {
+            setMobileOrderDetailsOpen(false);
+            setSelectedOrderForDetails(null);
+          }}
+          placement="bottom"
+          height="85vh"
+          title={selectedOrderForDetails ? `${t('orders.details.title')} #${selectedOrderForDetails.display_no}` : ''}
+          className="rounded-t-3xl"
+        >
+          {selectedOrderForDetails && (
+            <div className="space-y-4 pb-6">
+              {/* Order Info */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t('orders.list.columns.dealer')}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {selectedOrderForDetails.dealer?.name ?? '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t('orders.list.columns.type')}</span>
+                  <span className={selectedOrderForDetails.is_reserve ? "badge badge-warning" : "badge badge-success"}>
+                    {selectedOrderForDetails.is_reserve ? t('orders.types.reserve') : t('orders.types.regular')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t('orders.list.columns.status')}</span>
+                  <StatusBadge status={selectedOrderForDetails.status} />
+                </div>
+                {!isWarehouse && (
+                  <>
+                    {selectedOrderForDetails.discount_type && selectedOrderForDetails.discount_type !== 'none' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">{t('orders.discount.label', 'Chegirma')}</span>
+                        <span className="text-sm text-red-600 dark:text-red-400 font-semibold">
+                          {selectedOrderForDetails.discount_type === 'percentage' 
+                            ? `${selectedOrderForDetails.discount_value}%`
+                            : `$${selectedOrderForDetails.discount_amount_usd?.toFixed(2)}`
+                          }
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500 dark:text-slate-400">{t('orders.list.columns.amount')}</span>
+                      <Money value={selectedOrderForDetails.total_usd} currency="USD" />
+                    </div>
+                  </>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t('orders.list.columns.date')}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {formatDate(selectedOrderForDetails.value_date)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Exchange Rate Info */}
+              {selectedOrderForDetails.exchange_rate && !isWarehouse && (
+                <div className="rounded-xl bg-blue-50 p-4 dark:bg-blue-900/20">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-600 dark:text-slate-400">{t('orders.details.exchangeRate', 'Valyuta kursi')}:</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        1 USD = {formatCurrency(selectedOrderForDetails.exchange_rate)} UZS
+                      </span>
+                    </div>
+                    {selectedOrderForDetails.exchange_rate_date && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {formatDate(selectedOrderForDetails.exchange_rate_date)}
+                      </div>
+                    )}
+                    {selectedOrderForDetails.total_uzs && (
+                      <div className="flex items-center justify-between pt-2 border-t border-blue-100 dark:border-blue-800">
+                        <span className="text-slate-600 dark:text-slate-400">{t('orders.list.columns.totalUzs', 'Jami UZS')}:</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {formatCurrency(selectedOrderForDetails.total_uzs)} UZS
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Order Items */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{t('orders.details.items')}</h3>
+                {selectedOrderForDetails.items?.length ? (
+                  <div className="space-y-2">
+                    {selectedOrderForDetails.items.map((item) => {
+                      const price = Number(item.price_usd);
+                      const lineTotal = item.qty * price;
+                      return (
+                        <div
+                          key={item.id}
+                          className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
+                        >
+                          <div className="font-medium text-slate-900 dark:text-white mb-2">
+                            {item.product_detail?.name ?? `${t('orders.details.product')} #${item.product ?? '—'}`}
+                          </div>
+                          {!isWarehouse && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-500 dark:text-slate-400">
+                                {formatQuantity(item.qty)} × {formatCurrency(price)}
+                              </span>
+                              <span className="font-semibold text-slate-900 dark:text-white">
+                                = {formatCurrency(lineTotal)}
+                              </span>
+                            </div>
+                          )}
+                          {isWarehouse && (
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                              {formatQuantity(item.qty)} {t('common.units.pcs')}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-slate-500">{t('orders.details.noItems')}</div>
+                )}
+              </div>
+
+              {/* Status Change */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{t('orders.status.change', "Holatni o'zgartirish")}</h3>
+                <OrderStatus
+                  value={selectedOrderForDetails.status}
+                  orderId={selectedOrderForDetails.id}
+                  onStatusUpdated={(orderId, newStatus) => {
+                    handleStatusUpdated(orderId, newStatus);
+                    setMobileOrderDetailsOpen(false);
+                  }}
+                  canEdit={selectedOrderForDetails.can_change_status}
+                  allowedStatuses={selectedOrderForDetails.allowed_next_statuses || []}
+                />
+              </div>
+
+              {/* Order History */}
+              <div className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-800">
+                <h3 className="font-semibold text-slate-900 dark:text-white">{t('orders.history.title', 'Buyurtma tarixi')}</h3>
+                <OrderHistory orderId={selectedOrderForDetails.id} />
+              </div>
+
+              {/* PDF Download */}
+              <button
+                className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white hover:bg-emerald-700 active:scale-95 transition-all dark:bg-emerald-500"
+                onClick={() => {
+                  handlePdf(selectedOrderForDetails.id, selectedOrderForDetails.display_no, selectedOrderForDetails.dealer?.name);
+                }}
+              >
+                {t('orders.actions.downloadPdf', 'PDF yuklash')}
+              </button>
+            </div>
+          )}
+        </Drawer>
 
         {!isWarehouse && (
           <button

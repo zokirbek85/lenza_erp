@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
-import { Spin } from 'antd';
+import { Spin, App as AntApp } from 'antd';
 import router from './app/router';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -25,9 +25,11 @@ function LoadingFallback() {
 export default function App() {
   return (
     <ThemeProvider>
-      <Suspense fallback={<LoadingFallback />}>        
-        <RouterProvider router={router} />
-      </Suspense>
+      <AntApp>
+        <Suspense fallback={<LoadingFallback />}>
+          <RouterProvider router={router} />
+        </Suspense>
+      </AntApp>
     </ThemeProvider>
   );
 }

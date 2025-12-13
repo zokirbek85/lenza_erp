@@ -7,6 +7,7 @@ import { useAuthStore } from '../../auth/useAuthStore';
 import type { UserRole } from '../../auth/useAuthStore';
 import type { AppRole } from '../../auth/routeAccess';
 import { rolesForPath } from '../../auth/routeAccess';
+import { useTheme } from '../../context/ThemeContext';
 
 import {
   DashboardOutlined,
@@ -184,19 +185,23 @@ type SidebarProps = {
 
 const Sidebar = ({ collapsed, isMobile, drawerVisible, onDrawerClose }: SidebarProps) => {
   const { t } = useTranslation();
+  const { mode } = useTheme();
   const role = useAuthStore((state) => state.role as AppRole | null);
   const menuItems = role ? MENU.filter((item) => item.roles?.includes(role)) : [];
 
   // Force full-width sidebar in mobile drawer mode - always show text labels
   const isCollapsed = isMobile ? false : collapsed;
 
+  // Select logo based on theme
+  const logoSrc = mode === 'dark' ? '/logo-lenza-dark.svg' : '/logo-lenza-light.svg';
+
   const renderNav = (
     <div className="flex h-full flex-col shadow-lg" style={{ backgroundColor: 'var(--bg-body)' }}>
       <div className={clsx("px-4 py-5 transition-all duration-300", isCollapsed ? "flex justify-center" : "")} style={{ borderBottom: '1px solid var(--border-base)' }}>
         <div className={clsx("flex items-center gap-3", !isCollapsed && "mb-2")}>
-          <img 
-            src="/logo-lenza.svg" 
-            alt="Lenza" 
+          <img
+            src={logoSrc}
+            alt="Lenza"
             className={clsx("w-auto transition-all duration-300", isCollapsed ? "h-8" : "h-10")}
           />
           {!isCollapsed && (
