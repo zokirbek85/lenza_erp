@@ -90,8 +90,6 @@ const Login = () => {
             <img src="https://erp.lenza.uz/logo-lenza.svg" alt="Lenza Logo" className="login-logo-img" />
           </div>
           <div className="login-divider"></div>
-          <h1 className="login-title">{t('auth.signIn')}</h1>
-          <p className="login-description">{t('auth.continue')}</p>
         </div>
 
         {/* Login Form */}
