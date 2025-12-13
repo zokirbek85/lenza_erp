@@ -37,6 +37,12 @@
     "totalManagers": "Jami Menejerlar",
     "totalSales": "Jami Savdo",
     "totalPayments": "Jami To'lovlar",
-    "totalBonus": "Jami Bonus"
+    "totalBonus": "Jami Bonus",
+    "debtManagement": "Qarzdorlik Boshqaruvi",
+    "debtManagementDesc": "Har bir menejerning dillerlari qarzdorligini boshqarish samaradorligi",
+    "startingDebt": "Boshlang'ich Qarz",
+    "endingDebt": "Yakuniy Qarz",
+    "debtChange": "Qarz O'zgarishi",
+    "changePercent": "O'zgarish %"
   }
 }

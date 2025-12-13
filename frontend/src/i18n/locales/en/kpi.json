@@ -37,6 +37,12 @@
     "totalManagers": "Total Managers",
     "totalSales": "Total Sales",
     "totalPayments": "Total Payments",
-    "totalBonus": "Total Bonus"
+    "totalBonus": "Total Bonus",
+    "debtManagement": "Debt Management",
+    "debtManagementDesc": "Performance of each manager in managing their dealers' debt",
+    "startingDebt": "Starting Debt",
+    "endingDebt": "Ending Debt",
+    "debtChange": "Debt Change",
+    "changePercent": "Change %"
   }
 }

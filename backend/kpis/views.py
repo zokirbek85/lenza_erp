@@ -1091,21 +1091,22 @@ class ManagerKPIOverviewView(APIView):
 class KPILeaderboardView(APIView):
     """
     KPI Leaderboard for all managers.
-    Shows ranking by total sales and bonus.
-    
+    Shows ranking by total sales, bonus, and debt management performance.
+
     GET /api/kpi/leaderboard/?from_date=2025-01-01&to_date=2025-12-31
     """
     permission_classes = [IsAdmin | IsOwner]
-    
+
     def get(self, request):
         from django.contrib.auth import get_user_model
-        
+        from dealers.services.balance import calculate_dealer_balance
+
         User = get_user_model()
-        
+
         # Parse dates
         from_date = request.query_params.get('from_date')
         to_date = request.query_params.get('to_date')
-        
+
         if from_date:
             try:
                 from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
@@ -1113,7 +1114,7 @@ class KPILeaderboardView(APIView):
                 from_date = timezone.now().date().replace(day=1)
         else:
             from_date = timezone.now().date().replace(day=1)
-        
+
         if to_date:
             try:
                 to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
@@ -1121,25 +1122,26 @@ class KPILeaderboardView(APIView):
                 to_date = timezone.now().date()
         else:
             to_date = timezone.now().date()
-        
+
         # Get all sales managers
         managers = User.objects.filter(role='sales')
-        
+
         confirmed_statuses = [
             Order.Status.CONFIRMED,
             Order.Status.PACKED,
             Order.Status.SHIPPED,
             Order.Status.DELIVERED,
         ]
-        
+
         leaderboard = []
-        
+
         for manager in managers:
-            dealer_ids = list(Dealer.objects.filter(manager_user=manager).values_list('id', flat=True))
-            
+            dealers = Dealer.objects.filter(manager_user=manager)
+            dealer_ids = list(dealers.values_list('id', flat=True))
+
             if not dealer_ids:
                 continue
-            
+
             # Sales
             sales = Order.objects.filter(
                 dealer_id__in=dealer_ids,
@@ -1150,7 +1152,7 @@ class KPILeaderboardView(APIView):
             ).aggregate(
                 total=Coalesce(Sum('total_usd'), Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)))
             )['total']
-            
+
             # Payments
             payments = FinanceTransaction.objects.filter(
                 dealer_id__in=dealer_ids,
@@ -1161,10 +1163,31 @@ class KPILeaderboardView(APIView):
             ).aggregate(
                 total=Coalesce(Sum('amount_usd'), Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)))
             )['total']
-            
+
             # Bonus
             bonus = (payments * Decimal('0.01')).quantize(Decimal('0.01'))
-            
+
+            # Debt management metrics
+            starting_debt = Decimal('0')
+            ending_debt = Decimal('0')
+
+            for dealer in dealers:
+                # Calculate debt at period start
+                start_balance = calculate_dealer_balance(dealer, as_of_date=from_date)
+                starting_debt += start_balance['balance_usd']
+
+                # Calculate debt at period end
+                end_balance = calculate_dealer_balance(dealer, as_of_date=to_date)
+                ending_debt += end_balance['balance_usd']
+
+            # Debt change (negative means debt decreased = good)
+            debt_change = ending_debt - starting_debt
+
+            # Debt change percentage
+            debt_change_percentage = Decimal('0')
+            if starting_debt > 0:
+                debt_change_percentage = ((debt_change / starting_debt) * 100).quantize(Decimal('0.01'))
+
             leaderboard.append({
                 'manager_id': manager.id,
                 'manager_name': manager.get_full_name() or manager.username,
@@ -1172,20 +1195,24 @@ class KPILeaderboardView(APIView):
                 'total_payments_usd': payments,
                 'bonus_usd': bonus,
                 'dealer_count': len(dealer_ids),
+                'starting_debt_usd': starting_debt,
+                'ending_debt_usd': ending_debt,
+                'debt_change_usd': debt_change,
+                'debt_change_percentage': debt_change_percentage,
             })
-        
+
         # Sort by sales descending
         leaderboard.sort(key=lambda x: x['total_sales_usd'], reverse=True)
-        
+
         # Add rank
         for idx, item in enumerate(leaderboard, start=1):
             item['rank'] = idx
-        
+
         data = {
             'period_start': from_date,
             'period_end': to_date,
             'managers': leaderboard,
         }
-        
+
         serializer = KPILeaderboardSerializer(data)
         return Response(serializer.data)

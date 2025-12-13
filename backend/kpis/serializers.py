@@ -62,6 +62,10 @@ class KPILeaderboardItemSerializer(serializers.Serializer):
     bonus_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
     dealer_count = serializers.IntegerField()
     rank = serializers.IntegerField()
+    starting_debt_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
+    ending_debt_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
+    debt_change_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
+    debt_change_percentage = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
 
 
 class KPILeaderboardSerializer(serializers.Serializer):

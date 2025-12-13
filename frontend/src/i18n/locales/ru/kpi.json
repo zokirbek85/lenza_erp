@@ -37,6 +37,12 @@
     "totalManagers": "Всего Менеджеров",
     "totalSales": "Общие Продажи",
     "totalPayments": "Общие Платежи",
-    "totalBonus": "Общий Бонус"
+    "totalBonus": "Общий Бонус",
+    "debtManagement": "Управление Долгом",
+    "debtManagementDesc": "Эффективность управления долгом дилеров каждого менеджера",
+    "startingDebt": "Начальный Долг",
+    "endingDebt": "Конечный Долг",
+    "debtChange": "Изменение Долга",
+    "changePercent": "Изменение %"
   }
 }

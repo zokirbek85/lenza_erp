@@ -11,6 +11,10 @@ interface LeaderboardItem {
   bonus_usd: number;
   dealer_count: number;
   rank: number;
+  starting_debt_usd: number;
+  ending_debt_usd: number;
+  debt_change_usd: number;
+  debt_change_percentage: number;
 }
 
 interface LeaderboardData {
@@ -236,6 +240,83 @@ export default function KPILeaderboard() {
           </div>
         </div>
       )}
+
+      {/* Debt Management Performance */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-6 py-4 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">{t('leaderboard.debtManagement')}</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('leaderboard.debtManagementDesc')}</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.manager')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.startingDebt')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.endingDebt')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.debtChange')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.changePercent')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {[...leaderboard.managers]
+                .sort((a, b) => a.debt_change_percentage - b.debt_change_percentage)
+                .map((manager, index) => {
+                const isDecrease = manager.debt_change_usd < 0;
+                const isIncrease = manager.debt_change_usd > 0;
+
+                return (
+                  <tr
+                    key={manager.manager_id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                        <span className="font-medium text-gray-800 dark:text-white">{manager.manager_name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-gray-800 dark:text-white">${manager.starting_debt_usd.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-gray-800 dark:text-white">${manager.ending_debt_usd.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className={`font-bold ${
+                        isDecrease ? 'text-green-600 dark:text-green-400' :
+                        isIncrease ? 'text-red-600 dark:text-red-400' :
+                        'text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {isDecrease ? '↓' : isIncrease ? '↑' : ''} ${Math.abs(manager.debt_change_usd).toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className={`font-bold ${
+                        isDecrease ? 'text-green-600 dark:text-green-400' :
+                        isIncrease ? 'text-red-600 dark:text-red-400' :
+                        'text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {isDecrease ? '' : isIncrease ? '+' : ''}{manager.debt_change_percentage.toFixed(1)}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
