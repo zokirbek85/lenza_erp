@@ -304,9 +304,13 @@
 <body>
     <!-- Title Page -->
     <div class="title-page">
-        <div style="font-size: 48pt; font-weight: 700; color: #d4af37; margin-bottom: 30px; letter-spacing: 2px;">
-            LENZA
-        </div>
+        {% if logo_path %}
+            <img src="{{ logo_path }}" alt="LENZA" class="title-logo">
+        {% else %}
+            <div style="font-size: 48pt; font-weight: 700; color: #d4af37; margin-bottom: 30px; letter-spacing: 2px;">
+                LENZA
+            </div>
+        {% endif %}
         <h1 class="title-main">Каталог продукции</h1>
         <div class="title-divider"></div>
         <div class="title-subtitle">{{ category }}</div>
@@ -317,80 +321,45 @@
         </div>
     </div>
 
-    <!-- Product Pages -->
-    {% if products %}
-        {% for product in products %}
-    <div class="product-page">
-        <div style="border: 2px solid red; padding: 20px; background: white; color: black;">
-            <h1>TEST - Product ID: {{ product.id }}</h1>
-            <p>Model: {{ product.model }}</p>
-            <p>Brand: {{ product.brand }}</p>
-        </div>
-        <div class="product-card">
-            <!-- Debug: Product ID = {{ product.id }} -->
-            <div class="image-container">
-                {% if product.image %}
-                    <img src="{{ product.image }}" alt="{{ product.model }}">
-                {% else %}
-                    <div class="no-image">📦</div>
-                {% endif %}
-            </div>
-            <div class="name">{{ product.model }} {{ product.color }} {{ product.door_type_display }}</div>
-            <div class="brand">{{ product.brand }}</div>
-
-            {% if product.kit_details %}
-                <!-- Three-tier pricing with kit -->
-                <div class="price-breakdown">
-                    <div class="price-row">
-                        <span class="price-label">Полотно:</span>
-                        <span class="price-value">${{ product.polotno_price_usd }}</span>
-                    </div>
-                    <div class="price-row">
-                        <span class="price-label">+ Комплект:</span>
-                        <span class="kit-value">+ ${{ product.kit_price_usd }}</span>
-                    </div>
-                    <div class="kit-components">
-                        ({{ product.kit_details|length }} компонентов)
-                    </div>
-                    <div class="price-row total-row">
-                        <span class="total-label">= Итого:</span>
-                        <span class="total-value">${{ product.full_set_price_usd }}</span>
-                    </div>
-                </div>
-
-                {% if product.max_full_sets_by_stock %}
-                    <div class="availability-info">
-                        ✓ Доступно: {{ product.max_full_sets_by_stock }} комплектов
-                    </div>
-                {% endif %}
-            {% else %}
-                <!-- Simple polotno-only pricing -->
-                <div class="price">${{ product.polotno_price_usd }}</div>
-            {% endif %}
-
-            {% if product.sizes %}
-            <div class="stock-title">Остаток по ширине:</div>
-            <div class="stock-grid">
-                {% for size_item in product.sizes %}
-                <div class="stock-item">
-                    <span class="label">{{ size_item.size }}:</span>
-                    <span class="value {% if size_item.stock > 0 %}available{% else %}unavailable{% endif %}">
-                        {% if size_item.stock > 0 %}{{ size_item.stock }}{% else %}Н/Д{% endif %}
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
+    <!-- Test Page 1 -->
+    <div class="product-page" style="padding: 40px;">
+        <h1 style="color: red; background: white; padding: 20px;">TEST PAGE 1 - STATIC</h1>
+        <p style="color: white; font-size: 20pt;">This page should always appear</p>
     </div>
-        {% endfor %}
-    {% else %}
-    <div class="product-page">
-        <div class="product-card" style="text-align: center; padding: 40px;">
-            <h2 style="color: #d4af37;">Mahsulotlar topilmadi</h2>
-            <p style="color: #e5e5e5;">Debug: total_products = {{ total_products }}</p>
-        </div>
+
+    <!-- Test Page 2 - Debug Info -->
+    <div class="product-page" style="padding: 40px;">
+        <h1 style="color: white; background: red; padding: 20px;">DEBUG INFO</h1>
+        <p style="color: white; font-size: 16pt; background: blue; padding: 10px;">
+            Products count: {{ products|length }}
+        </p>
+        <p style="color: white; font-size: 16pt; background: green; padding: 10px;">
+            Total products: {{ total_products }}
+        </p>
+        <p style="color: white; font-size: 16pt; background: orange; padding: 10px;">
+            Products type: {{ products|slice:":1" }}
+        </p>
     </div>
-    {% endif %}
+
+    <!-- Product Loop -->
+    {% for product in products %}
+    <div class="product-page" style="padding: 40px;">
+        <h1 style="color: black; background: yellow; padding: 20px;">PRODUCT {{ forloop.counter }}</h1>
+        <p style="color: white; font-size: 16pt;">ID: {{ product.id }}</p>
+        <p style="color: white; font-size: 16pt;">Model: {{ product.model }}</p>
+        <p style="color: white; font-size: 16pt;">Brand: {{ product.brand }}</p>
+        <p style="color: white; font-size: 16pt;">Color: {{ product.color }}</p>
+    </div>
+    {% empty %}
+    <div class="product-page" style="padding: 40px;">
+        <h1 style="color: red; background: white; padding: 20px;">NO PRODUCTS IN LOOP</h1>
+        <p style="color: white; font-size: 16pt;">Products list was empty or None</p>
+    </div>
+    {% endfor %}
+
+    <!-- Test Page 3 - End -->
+    <div class="product-page" style="padding: 40px;">
+        <h1 style="color: green; background: white; padding: 20px;">END OF DOCUMENT</h1>
+    </div>
 </body>
 </html>

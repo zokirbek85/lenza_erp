@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Каталог - {{ brand_filter }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1410 50%, #0a0a0a 100%);
+            color: #e5e5e5;
+        }
+        
+        .page {
+            page-break-after: always;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0;
+            padding: 15mm;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.08) 0%, #0c0c0c 70%);
+            position: relative;
+        }
+        
+        .page::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Title Page */
+        .title-page {
+            text-align: center;
+            padding-top: 80mm;
+            background: 
+                radial-gradient(circle at center, rgba(212, 175, 55, 0.12) 0%, #0a0a0a 70%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1410 50%, #0a0a0a 100%);
+        }
+        
+        .title-logo {
+            width: 250px;
+            max-width: 80%;
+            height: auto;
+            margin-bottom: 30px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .title-main {
+            font-size: 32pt;
+            font-weight: bold;
+            color: #d4af37;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .title-divider {
+            width: 150px;
+            height: 2px;
+            background: #d4af37;
+            margin: 20px auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .title-info {
+            font-size: 14pt;
+            color: #e5e5e5;
+            margin: 10px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .title-brand {
+            font-size: 16pt;
+            color: #d4af37;
+            margin: 20px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Product Card */
+        .product-card {
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            max-width: 180mm;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .image-container {
+            width: 100%;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            line-height: 400px;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 400px;
+            vertical-align: middle;
+        }
+        
+        .no-image {
+            color: rgba(212, 175, 55, 0.3);
+            font-size: 60pt;
+        }
+        
+        .product-name {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #d4af37;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .product-brand {
+            font-size: 12pt;
+            color: rgba(229, 229, 229, 0.7);
+            margin: 5px 0;
+            text-align: center;
+        }
+        
+        .price-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        
+        .price-row {
+            margin: 8px 0;
+            font-size: 11pt;
+        }
+        
+        .price-label {
+            color: rgba(229, 229, 229, 0.7);
+        }
+        
+        .price-value {
+            color: #e5e5e5;
+            font-weight: bold;
+        }
+        
+        .kit-value {
+            color: #d4af37;
+            font-weight: bold;
+        }
+        
+        .total-price {
+            font-size: 18pt;
+            color: #d4af37;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .simple-price {
+            font-size: 20pt;
+            color: #d4af37;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .stock-section {
+            margin-top: 15px;
+        }
+        
+        .stock-title {
+            font-size: 10pt;
+            color: rgba(229, 229, 229, 0.8);
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .stock-grid {
+            margin-top: 10px;
+        }
+        
+        .stock-item {
+            padding: 6px 10px;
+            margin: 3px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 5px;
+        }
+        
+        .stock-size {
+            color: rgba(229, 229, 229, 0.6);
+            font-size: 9pt;
+            display: inline-block;
+            width: 60px;
+        }
+        
+        .stock-value {
+            font-weight: bold;
+            font-size: 9pt;
+        }
+        
+        .stock-available {
+            color: #d4af37;
+        }
+        
+        .stock-unavailable {
+            color: rgba(229, 229, 229, 0.3);
+        }
+        
+        .availability-info {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            color: #d4af37;
+            margin: 10px 0;
+            font-size: 10pt;
+        }
+    </style>
+</head>
+<body>
+    <!-- Title Page -->
+    <div class="page title-page">
+        {% if logo_path %}
+            <img src="{{ logo_path }}" alt="LENZA" class="title-logo">
+        {% else %}
+            <div style="font-size: 48pt; font-weight: bold; color: #d4af37; margin-bottom: 30px;">
+                LENZA
+            </div>
+        {% endif %}
+        <h1 class="title-main">Каталог продукции</h1>
+        <div class="title-divider"></div>
+        <div class="title-info">{{ category }}</div>
+        <div class="title-brand">{{ brand_filter }}</div>
+        <div class="title-info" style="margin-top: 30px; color: rgba(212, 175, 55, 0.7);">
+            {{ export_date }}
+        </div>
+        <div class="title-info" style="color: rgba(212, 175, 55, 0.7);">
+            Всего товаров: {{ total_products }}
+        </div>
+    </div>
+
+    <!-- Products -->
+    {% for product in products %}
+    <div class="page">
+        <div class="product-card">
+            <div class="image-container">
+                {% if product.image %}
+                    <img src="{{ product.image }}" alt="{{ product.model }}">
+                {% else %}
+                    <span class="no-image">📦</span>
+                {% endif %}
+            </div>
+            
+            <div class="product-name">
+                {{ product.model }} {{ product.color }}
+            </div>
+            
+            <div class="product-brand">
+                {{ product.brand }} | {{ product.door_type_display }}
+            </div>
+            
+            {% if product.kit_details and product.kit_details|length > 0 %}
+                <!-- With Kit -->
+                <div class="price-section">
+                    <div class="price-row">
+                        <span class="price-label">Полотно:</span>
+                        <span class="price-value" style="float: right;">${{ product.polotno_price_usd }}</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">+ Комплект:</span>
+                        <span class="kit-value" style="float: right;">+ ${{ product.kit_price_usd }}</span>
+                    </div>
+                    <div style="text-align: center; color: rgba(212, 175, 55, 0.6); font-size: 9pt; margin: 5px 0;">
+                        ({{ product.kit_details|length }} компонентов)
+                    </div>
+                    <div style="border-top: 1px solid rgba(212, 175, 55, 0.3); margin-top: 8px; padding-top: 8px;">
+                        <div class="price-row">
+                            <span class="price-label" style="font-weight: bold;">Итого:</span>
+                            <span style="float: right; font-size: 14pt; color: #d4af37; font-weight: bold;">${{ product.full_set_price_usd }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if product.max_full_sets_by_stock %}
+                    <div class="availability-info">
+                        ✓ Доступно: {{ product.max_full_sets_by_stock }} комплектов
+                    </div>
+                {% endif %}
+            {% else %}
+                <!-- Polotno Only -->
+                <div class="simple-price">
+                    ${{ product.polotno_price_usd }}
+                </div>
+            {% endif %}
+            
+            {% if product.sizes %}
+            <div class="stock-section">
+                <div class="stock-title">Остаток по ширине:</div>
+                <div class="stock-grid">
+                    {% for size_item in product.sizes %}
+                    <div class="stock-item">
+                        <span class="stock-size">{{ size_item.size }}:</span>
+                        <span class="stock-value {% if size_item.stock > 0 %}stock-available{% else %}stock-unavailable{% endif %}">
+                            {% if size_item.stock > 0 %}{{ size_item.stock }} шт{% else %}Н/Д{% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="page">
+        <div class="product-card" style="text-align: center; padding: 60px 20px;">
+            <h2 style="color: #d4af37;">Mahsulotlar topilmadi</h2>
+            <p style="color: #e5e5e5; margin-top: 10px;">Tanlangan filtrlarga mos mahsulotlar yo'q</p>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

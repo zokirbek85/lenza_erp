@@ -385,6 +385,9 @@ class CatalogExportPDFView(APIView, ExportMixin):
 
         logger = logging.getLogger(__name__)
 
+        logger.info(f"PDF Export: Found {len(product_data)} products BEFORE image conversion")
+        logger.info(f"PDF Export: Variants count from DB: {variants.count()}")
+
         for product in product_data:
             if product.get('image'):
                 image_url = product['image']
@@ -404,11 +407,35 @@ class CatalogExportPDFView(APIView, ExportMixin):
         # Prepare context for template
         from datetime import date
 
-        logger.info(f"PDF Export: Found {len(product_data)} products")
-        logger.info(f"PDF Export: Variants count from DB: {variants.count()}")
+        logger.info(f"PDF Export: Final product count: {len(product_data)}")
         if product_data:
             logger.info(f"First product keys: {list(product_data[0].keys())}")
-            logger.info(f"First product sample: {product_data[0]}")
+            logger.info(f"First product data: {product_data[0]}")
+
+        # Get logo path
+        logo_path = None
+        # Try multiple possible logo locations
+        possible_logo_paths = [
+            os.path.join(settings.BASE_DIR, 'frontend', 'public', 'logo-lenza-dark.png'),
+            os.path.join(settings.BASE_DIR, 'frontend', 'public', 'logo.png'),
+            os.path.join(settings.BASE_DIR, 'frontend', 'public', 'assets', 'logo-lenza-dark.png'),
+            os.path.join(settings.BASE_DIR.parent, 'frontend', 'public', 'logo-lenza-dark.png'),
+        ]
+        
+        for logo_file in possible_logo_paths:
+            if os.path.exists(logo_file):
+                logo_path = f'file:///{os.path.normpath(logo_file).replace(os.sep, "/")}'
+                logger.info(f"Logo found: {logo_file}")
+                logger.info(f"Logo URL: {logo_path}")
+                break
+        
+        if not logo_path:
+            logger.warning(f"Logo file not found. Tried: {possible_logo_paths}")
+            # Try to get absolute path
+            frontend_public = os.path.join(settings.BASE_DIR.parent, 'frontend', 'public')
+            logger.warning(f"Frontend public dir exists: {os.path.exists(frontend_public)}")
+            if os.path.exists(frontend_public):
+                logger.warning(f"Files in public: {os.listdir(frontend_public)}")
 
         context = {
             'products': product_data,
@@ -418,15 +445,16 @@ class CatalogExportPDFView(APIView, ExportMixin):
             'export_date': date.today().strftime('%d.%m.%Y'),
             'search_query': search_query,
             'total_products': len(product_data),
+            'logo_path': logo_path,
         }
 
         # Generate filename
         brand_slug = brand_filter.replace(' ', '_') if brand_filter != 'all' else 'all'
         filename_prefix = f'catalog_{brand_slug}'
 
-        # Temporary: use simple template for debugging
+        # Use test template for debugging
         return self.render_pdf_with_qr(
-            'catalog/catalog_export_simple.html',
+            'catalog/catalog_export_test.html',
             context,
             filename_prefix=filename_prefix,
             request=request,
