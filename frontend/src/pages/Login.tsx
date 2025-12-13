@@ -87,9 +87,8 @@ const Login = () => {
         {/* Logo & Header */}
         <div className="login-logo">
           <div className="login-logo-shine">
-            <span className="login-logo-text">LENZA</span>
+            <img src="https://erp.lenza.uz/logo-lenza.svg" alt="Lenza Logo" className="login-logo-img" />
           </div>
-          <p className="login-subtitle">{t('app.title')}</p>
           <div className="login-divider"></div>
           <h1 className="login-title">{t('auth.signIn')}</h1>
           <p className="login-description">{t('auth.continue')}</p>

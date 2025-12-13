@@ -162,10 +162,22 @@
 .login-logo-shine {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   overflow: hidden;
   cursor: default;
+}
+
+.login-logo-img {
+  height: 60px;
+  width: auto;
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.4));
+  transition: all 0.3s ease;
+}
+
+.login-logo-shine:hover .login-logo-img {
+  filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.7));
+  transform: scale(1.08);
 }
 
 .login-logo-text {
@@ -401,6 +413,10 @@
   .login-card {
     padding: 36px 28px;
     border-radius: 20px;
+  }
+
+  .login-logo-img {
+    height: 50px;
   }
 
   .login-logo-text {
