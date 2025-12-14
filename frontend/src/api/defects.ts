@@ -4,12 +4,12 @@ import type {
   DefectTypeCreate,
   DefectTypeUpdate,
   ProductDefect,
-  // ProductDefectCreate, // Disabled for stock-based defects
-  // ProductDefectUpdate, // Disabled for stock-based defects
-  // DefectRepairRequest, // Disabled for stock-based defects
-  // DefectDisposeRequest, // Disabled for stock-based defects
-  // DefectSellOutletRequest, // Disabled for stock-based defects
-  // DefectStatusChangeRequest, // Disabled for stock-based defects
+  ProductDefectCreate,
+  ProductDefectUpdate,
+  DefectRepairRequest,
+  DefectDisposeRequest,
+  DefectSellOutletRequest,
+  DefectStatusChangeRequest,
   DefectStatistics,
   DefectFilters,
   PaginatedDefectsResponse,
@@ -54,44 +54,54 @@ export const getProductDefect = (id: number) =>
  * NOTE: The following operations are disabled for stock-based defects.
  * Defects are managed by editing Product.stock_defect directly.
  * Use the Products module to adjust defect quantities.
+ * 
+ * These stubs are kept for backward compatibility with existing components.
  */
 
-// DISABLED: Stock-based defects are read-only
-// export const createProductDefect = (data: ProductDefectCreate) =>
-//   http.post<ProductDefect>('/defects/', data);
+// Stub: Stock-based defects are read-only
+export const createProductDefect = async (_data: ProductDefectCreate): Promise<{ data: ProductDefect }> => {
+  throw new Error('Creating defects is disabled. Manage defect quantities via the Products module.');
+};
 
-// DISABLED: Stock-based defects are read-only
-// export const updateProductDefect = (id: number, data: ProductDefectUpdate) =>
-//   http.patch<ProductDefect>(`/defects/${id}/`, data);
+// Stub: Stock-based defects are read-only  
+export const updateProductDefect = async (_id: number, _data: ProductDefectUpdate): Promise<{ data: ProductDefect }> => {
+  throw new Error('Updating defects is disabled. Manage defect quantities via the Products module.');
+};
 
-// DISABLED: Stock-based defects are read-only
-// export const deleteProductDefect = (id: number) =>
-//   http.delete(`/defects/${id}/`);
+// Stub: Stock-based defects are read-only
+export const deleteProductDefect = async (_id: number): Promise<void> => {
+  throw new Error('Deleting defects is disabled. Manage defect quantities via the Products module.');
+};
 
 // ============================================================================
-// CUSTOM ACTIONS (DISABLED for stock-based defects)
+// CUSTOM ACTIONS (Stubs for backward compatibility)
 // ============================================================================
 
 /**
  * NOTE: These operations are for the legacy ProductDefect model.
  * For stock-based defects, manage quantities through the Products module.
+ * These stubs are kept for backward compatibility with existing components.
  */
 
-// DISABLED: Not applicable for stock-based defects
-// export const repairDefect = (id: number, data: DefectRepairRequest) =>
-//   http.post<ProductDefect>(`/defects/${id}/repair/`, data);
+// Stub: Not applicable for stock-based defects
+export const repairDefect = async (_id: number, _data: DefectRepairRequest): Promise<{ data: ProductDefect }> => {
+  throw new Error('Repair defect is disabled. Manage defect quantities via the Products module.');
+};
 
-// DISABLED: Not applicable for stock-based defects
-// export const disposeDefect = (id: number, data: DefectDisposeRequest) =>
-//   http.post<ProductDefect>(`/defects/${id}/dispose/`, data);
+// Stub: Not applicable for stock-based defects
+export const disposeDefect = async (_id: number, _data: DefectDisposeRequest): Promise<{ data: ProductDefect }> => {
+  throw new Error('Dispose defect is disabled. Manage defect quantities via the Products module.');
+};
 
-// DISABLED: Not applicable for stock-based defects
-// export const sellOutletDefect = (id: number, data: DefectSellOutletRequest) =>
-//   http.post<ProductDefect>(`/defects/${id}/sell_outlet/`, data);
+// Stub: Not applicable for stock-based defects
+export const sellOutletDefect = async (_id: number, _data: DefectSellOutletRequest): Promise<{ data: ProductDefect }> => {
+  throw new Error('Sell outlet defect is disabled. Manage defect quantities via the Products module.');
+};
 
-// DISABLED: Not applicable for stock-based defects
-// export const changeDefectStatus = (id: number, data: DefectStatusChangeRequest) =>
-//   http.post<ProductDefect>(`/defects/${id}/change_status/`, data);
+// Stub: Not applicable for stock-based defects
+export const changeDefectStatus = async (_id: number, _data: DefectStatusChangeRequest): Promise<{ data: ProductDefect }> => {
+  throw new Error('Change defect status is disabled. Manage defect quantities via the Products module.');
+};
 
 /**
  * Get defect statistics from stock-based defects
