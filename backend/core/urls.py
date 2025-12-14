@@ -133,11 +133,14 @@ router.register('catalog/skus', ProductSKUViewSet, basename='product-sku')
 # Public catalog (no auth required)
 router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename='public-catalog')
 # Defect management routes (legacy)
-router.register('defects/types', DefectTypeViewSet, basename='defect-type')
-router.register('defects', ProductDefectViewSet, basename='defect')
-router.register('defects/audit-logs', DefectAuditLogViewSet, basename='defect-audit-log')
+# Defect management routes
+# IMPORTANT: Register more specific routes BEFORE general ones to avoid conflicts
 # Stock-based defects endpoint (shows products with stock_defect > 0)
 router.register('defects/stock', ProductDefectFromStockViewSet, basename='defect-stock')
+router.register('defects/types', DefectTypeViewSet, basename='defect-type')
+router.register('defects/audit-logs', DefectAuditLogViewSet, basename='defect-audit-log')
+# Legacy defects (queries ProductDefect table - mostly empty)
+router.register('defects', ProductDefectViewSet, basename='defect')
 # Defects V2 - New defects module
 router.register('defects-v2/types', DefectTypeV2ViewSet, basename='defect-v2-type')
 router.register('defects-v2/spare-parts', SparePartViewSet, basename='defect-v2-spare-part')

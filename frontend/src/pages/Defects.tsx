@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, DatePicker, Button, Table, Tag, Input, Space, Tooltip, Popconfirm, Image } from 'antd';
+import { Select, DatePicker, Button, Table, Tag, Input, Space, Tooltip, Image, Alert } from 'antd';
 import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
-  ToolOutlined, 
   ExportOutlined,
   SearchOutlined,
   ClearOutlined,
@@ -17,7 +13,7 @@ import type { Dayjs } from 'dayjs';
 
 import {
   getProductDefects,
-  deleteProductDefect,
+  // deleteProductDefect, // Disabled for stock-based defects
   exportDefects,
 } from '../api/defects';
 import type {
@@ -25,20 +21,21 @@ import type {
   DefectStatus,
   DefectFilters,
 } from '../types/defects';
-import DefectFormModal from '../components/defects/DefectFormModal';
-import RepairModal from '../components/defects/RepairModal';
-import DisposeModal from '../components/defects/DisposeModal';
-import SellOutletModal from '../components/defects/SellOutletModal';
+// Modals disabled for stock-based defects - manage via Products module
+// import DefectFormModal from '../components/defects/DefectFormModal';
+// import RepairModal from '../components/defects/RepairModal';
+// import DisposeModal from '../components/defects/DisposeModal';
+// import SellOutletModal from '../components/defects/SellOutletModal';
 import { formatQuantity } from '../utils/formatters';
-import { useAuthStore } from '../auth/useAuthStore';
+// import { useAuthStore } from '../auth/useAuthStore'; // Unused for stock-based defects
 
 const { RangePicker } = DatePicker;
 
 const DefectsPage = () => {
   const { t } = useTranslation(['defects', 'common']);
-  const role = useAuthStore((state) => state.role);
-  const isAdmin = role === 'admin';
-  const isWarehouse = role === 'warehouse';
+  // const role = useAuthStore((state) => state.role); // Unused for stock-based defects
+  // const isAdmin = role === 'admin';
+  // const isWarehouse = role === 'warehouse';
 
   const [defects, setDefects] = useState<ProductDefectListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,13 +49,13 @@ const DefectsPage = () => {
   const [statusFilter, setStatusFilter] = useState<DefectStatus | undefined>();
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
 
-  // Modals
-  const [formModalVisible, setFormModalVisible] = useState(false);
-  const [editingDefect, setEditingDefect] = useState<ProductDefectListItem | null>(null);
-  const [repairModalVisible, setRepairModalVisible] = useState(false);
-  const [disposeModalVisible, setDisposeModalVisible] = useState(false);
-  const [sellOutletModalVisible, setSellOutletModalVisible] = useState(false);
-  const [selectedDefect, setSelectedDefect] = useState<ProductDefectListItem | null>(null);
+  // Modals - disabled for stock-based defects
+  // const [formModalVisible, setFormModalVisible] = useState(false);
+  // const [editingDefect, setEditingDefect] = useState<ProductDefectListItem | null>(null);
+  // const [repairModalVisible, setRepairModalVisible] = useState(false);
+  // const [disposeModalVisible, setDisposeModalVisible] = useState(false);
+  // const [sellOutletModalVisible, setSellOutletModalVisible] = useState(false);
+  // const [selectedDefect, setSelectedDefect] = useState<ProductDefectListItem | null>(null);
 
   // Fetch defects
   const fetchDefects = useCallback(async () => {
@@ -89,32 +86,8 @@ const DefectsPage = () => {
     fetchDefects();
   }, [fetchDefects]);
 
-  // Handlers
-  const handleCreate = () => {
-    setEditingDefect(null);
-    setFormModalVisible(true);
-  };
-
-  const handleEdit = (defect: ProductDefectListItem) => {
-    setEditingDefect(defect);
-    setFormModalVisible(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteProductDefect(id);
-      toast.success(t('defects:deleteSuccess'));
-      fetchDefects();
-    } catch (error) {
-      console.error('Failed to delete defect:', error);
-      toast.error(t('defects:deleteError'));
-    }
-  };
-
-  const handleRepair = (defect: ProductDefectListItem) => {
-    setSelectedDefect(defect);
-    setRepairModalVisible(true);
-  };
+  // Handlers - create/edit/delete/repair disabled for stock-based defects
+  // Defects are managed via Products module
 
   const handleExport = async () => {
     try {
@@ -235,47 +208,19 @@ const DefectsPage = () => {
     {
       title: t('common:labels.actions'),
       key: 'actions',
-      width: 180,
+      width: 150,
       fixed: 'right' as const,
       render: (_: any, record: ProductDefectListItem) => (
         <Space size="small">
-          {record.repairable_qty > 0 && (isAdmin || isWarehouse) && (
-            <Tooltip title={t('defects:repair')}>
-              <Button
-                type="link"
-                icon={<ToolOutlined />}
-                onClick={() => handleRepair(record)}
-                size="small"
-              />
-            </Tooltip>
-          )}
-          {isAdmin && (
-            <>
-              <Tooltip title={t('common:actions.edit')}>
-                <Button
-                  type="link"
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(record)}
-                  size="small"
-                />
-              </Tooltip>
-              <Popconfirm
-                title={t('defects:deleteConfirm')}
-                onConfirm={() => handleDelete(record.id)}
-                okText={t('common:yes')}
-                cancelText={t('common:no')}
-              >
-                <Tooltip title={t('common:actions.delete')}>
-                  <Button
-                    type="link"
-                    danger
-                    icon={<DeleteOutlined />}
-                    size="small"
-                  />
-                </Tooltip>
-              </Popconfirm>
-            </>
-          )}
+          <Tooltip title="View/Edit in Products Module">
+            <Button
+              type="link"
+              onClick={() => window.location.href = `/products?search=${record.product_sku}`}
+              size="small"
+            >
+              View Product
+            </Button>
+          </Tooltip>
         </Space>
       ),
     },
@@ -283,6 +228,16 @@ const DefectsPage = () => {
 
   return (
     <div className="p-6">
+      {/* Info Alert */}
+      <Alert
+        message="Stock-Based Defect Tracking"
+        description="This page displays products with defective stock (stock_defect > 0). Defect quantities are managed directly in the Products module. To adjust defect stock, edit the product's defect quantity."
+        type="info"
+        showIcon
+        closable
+        className="mb-4"
+      />
+
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold">{t('defects:title')}</h1>
         <Space>
@@ -300,15 +255,7 @@ const DefectsPage = () => {
           >
             {t('common:actions.export')}
           </Button>
-          {isAdmin && (
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreate}
-            >
-              {t('defects:create')}
-            </Button>
-          )}
+          {/* Create button removed - defects managed via Products module */}
         </Space>
       </div>
 
@@ -379,70 +326,7 @@ const DefectsPage = () => {
         scroll={{ x: 1400 }}
       />
 
-      {/* Modals */}
-      {formModalVisible && (
-        <DefectFormModal
-          visible={formModalVisible}
-          defect={editingDefect}
-          onCancel={() => {
-            setFormModalVisible(false);
-            setEditingDefect(null);
-          }}
-          onSuccess={() => {
-            setFormModalVisible(false);
-            setEditingDefect(null);
-            fetchDefects();
-          }}
-        />
-      )}
-
-      {repairModalVisible && selectedDefect && (
-        <RepairModal
-          visible={repairModalVisible}
-          defect={selectedDefect}
-          onCancel={() => {
-            setRepairModalVisible(false);
-            setSelectedDefect(null);
-          }}
-          onSuccess={() => {
-            setRepairModalVisible(false);
-            setSelectedDefect(null);
-            fetchDefects();
-          }}
-        />
-      )}
-
-      {disposeModalVisible && selectedDefect && (
-        <DisposeModal
-          visible={disposeModalVisible}
-          defect={selectedDefect}
-          onCancel={() => {
-            setDisposeModalVisible(false);
-            setSelectedDefect(null);
-          }}
-          onSuccess={() => {
-            setDisposeModalVisible(false);
-            setSelectedDefect(null);
-            fetchDefects();
-          }}
-        />
-      )}
-
-      {sellOutletModalVisible && selectedDefect && (
-        <SellOutletModal
-          visible={sellOutletModalVisible}
-          defect={selectedDefect}
-          onCancel={() => {
-            setSellOutletModalVisible(false);
-            setSelectedDefect(null);
-          }}
-          onSuccess={() => {
-            setSellOutletModalVisible(false);
-            setSelectedDefect(null);
-            fetchDefects();
-          }}
-        />
-      )}
+      {/* Modals removed - defects managed via Products module */}
     </div>
   );
 };

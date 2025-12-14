@@ -4,12 +4,12 @@ import type {
   DefectTypeCreate,
   DefectTypeUpdate,
   ProductDefect,
-  ProductDefectCreate,
-  ProductDefectUpdate,
-  DefectRepairRequest,
-  DefectDisposeRequest,
-  DefectSellOutletRequest,
-  DefectStatusChangeRequest,
+  // ProductDefectCreate, // Disabled for stock-based defects
+  // ProductDefectUpdate, // Disabled for stock-based defects
+  // DefectRepairRequest, // Disabled for stock-based defects
+  // DefectDisposeRequest, // Disabled for stock-based defects
+  // DefectSellOutletRequest, // Disabled for stock-based defects
+  // DefectStatusChangeRequest, // Disabled for stock-based defects
   DefectStatistics,
   DefectFilters,
   PaginatedDefectsResponse,
@@ -37,62 +37,68 @@ export const deleteDefectType = (id: number) =>
   http.delete(`/defects/types/${id}/`);
 
 // ============================================================================
-// PRODUCT DEFECTS
+// PRODUCT DEFECTS (Stock-based)
 // ============================================================================
 
+/**
+ * Get products with stock_defect > 0
+ * This queries the Product table directly, not a separate defects table
+ */
 export const getProductDefects = (params?: DefectFilters) =>
-  http.get<PaginatedDefectsResponse>('/defects/', { params });
+  http.get<PaginatedDefectsResponse>('/defects/stock/', { params });
 
 export const getProductDefect = (id: number) =>
-  http.get<ProductDefect>(`/defects/${id}/`);
+  http.get<ProductDefect>(`/defects/stock/${id}/`);
 
-export const createProductDefect = (data: ProductDefectCreate) =>
-  http.post<ProductDefect>('/defects/', data);
+/**
+ * NOTE: The following operations are disabled for stock-based defects.
+ * Defects are managed by editing Product.stock_defect directly.
+ * Use the Products module to adjust defect quantities.
+ */
 
-export const updateProductDefect = (id: number, data: ProductDefectUpdate) =>
-  http.patch<ProductDefect>(`/defects/${id}/`, data);
+// DISABLED: Stock-based defects are read-only
+// export const createProductDefect = (data: ProductDefectCreate) =>
+//   http.post<ProductDefect>('/defects/', data);
 
-export const deleteProductDefect = (id: number) =>
-  http.delete(`/defects/${id}/`);
+// DISABLED: Stock-based defects are read-only
+// export const updateProductDefect = (id: number, data: ProductDefectUpdate) =>
+//   http.patch<ProductDefect>(`/defects/${id}/`, data);
+
+// DISABLED: Stock-based defects are read-only
+// export const deleteProductDefect = (id: number) =>
+//   http.delete(`/defects/${id}/`);
 
 // ============================================================================
-// CUSTOM ACTIONS
+// CUSTOM ACTIONS (DISABLED for stock-based defects)
 // ============================================================================
 
 /**
- * Repair defective product
- * POST /defects/{id}/repair/
+ * NOTE: These operations are for the legacy ProductDefect model.
+ * For stock-based defects, manage quantities through the Products module.
  */
-export const repairDefect = (id: number, data: DefectRepairRequest) =>
-  http.post<ProductDefect>(`/defects/${id}/repair/`, data);
+
+// DISABLED: Not applicable for stock-based defects
+// export const repairDefect = (id: number, data: DefectRepairRequest) =>
+//   http.post<ProductDefect>(`/defects/${id}/repair/`, data);
+
+// DISABLED: Not applicable for stock-based defects
+// export const disposeDefect = (id: number, data: DefectDisposeRequest) =>
+//   http.post<ProductDefect>(`/defects/${id}/dispose/`, data);
+
+// DISABLED: Not applicable for stock-based defects
+// export const sellOutletDefect = (id: number, data: DefectSellOutletRequest) =>
+//   http.post<ProductDefect>(`/defects/${id}/sell_outlet/`, data);
+
+// DISABLED: Not applicable for stock-based defects
+// export const changeDefectStatus = (id: number, data: DefectStatusChangeRequest) =>
+//   http.post<ProductDefect>(`/defects/${id}/change_status/`, data);
 
 /**
- * Dispose non-repairable defect
- * POST /defects/{id}/dispose/
- */
-export const disposeDefect = (id: number, data: DefectDisposeRequest) =>
-  http.post<ProductDefect>(`/defects/${id}/dispose/`, data);
-
-/**
- * Sell defective product at outlet
- * POST /defects/{id}/sell_outlet/
- */
-export const sellOutletDefect = (id: number, data: DefectSellOutletRequest) =>
-  http.post<ProductDefect>(`/defects/${id}/sell_outlet/`, data);
-
-/**
- * Change defect status
- * POST /defects/{id}/change_status/
- */
-export const changeDefectStatus = (id: number, data: DefectStatusChangeRequest) =>
-  http.post<ProductDefect>(`/defects/${id}/change_status/`, data);
-
-/**
- * Get defect statistics
- * GET /defects/statistics/
+ * Get defect statistics from stock-based defects
+ * GET /defects/stock/statistics/
  */
 export const getDefectStatistics = (params?: { start_date?: string; end_date?: string }) =>
-  http.get<DefectStatistics>('/defects/statistics/', { params });
+  http.get<DefectStatistics>('/defects/stock/statistics/', { params });
 
 /**
  * Get audit logs for a defect
@@ -113,11 +119,11 @@ export const getAllAuditLogs = (params?: { defect?: number; action?: string; use
 // ============================================================================
 
 /**
- * Export defects to Excel
- * GET /defects/export/
+ * Export defects to Excel from stock-based data
+ * GET /defects/stock/export/
  */
 export const exportDefects = async (params?: DefectFilters) => {
-  const response = await http.get('/defects/export/', {
+  const response = await http.get('/defects/stock/export/', {
     params,
     responseType: 'blob',
   });

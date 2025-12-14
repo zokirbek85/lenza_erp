@@ -534,11 +534,11 @@ class DefectTypeSerializer(serializers.ModelSerializer):
 
 class ProductDefectListSerializer(serializers.ModelSerializer):
     """Compact serializer for defect list view"""
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True, allow_null=True)
+    product_sku = serializers.CharField(source='product.sku', read_only=True, allow_null=True)
     product_image = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True, allow_null=True)
     defect_summary = serializers.SerializerMethodField()
     
     class Meta:
@@ -563,15 +563,28 @@ class ProductDefectListSerializer(serializers.ModelSerializer):
     
     def get_product_image(self, obj):
         """Get product image URL"""
-        request = self.context.get('request')
-        if obj.product.image:
+        try:
+            if not obj.product or not obj.product.image:
+                return None
+            
+            request = self.context.get('request')
+            
+            # Try to get the image URL
             try:
                 if obj.product.image.storage.exists(obj.product.image.name):
                     if request:
                         return request.build_absolute_uri(obj.product.image.url)
                     return obj.product.image.url
             except Exception:
-                pass
+                # If storage check fails, just return the URL
+                try:
+                    if request:
+                        return request.build_absolute_uri(obj.product.image.url)
+                    return obj.product.image.url
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return None
     
     def get_defect_summary(self, obj):
@@ -592,18 +605,19 @@ class ProductDefectListSerializer(serializers.ModelSerializer):
 
 class ProductDefectDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for defect view/edit"""
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True, allow_null=True)
+    product_sku = serializers.CharField(source='product.sku', read_only=True, allow_null=True)
     product_image = serializers.SerializerMethodField()
     product_price_usd = serializers.DecimalField(
         source='product.sell_price_usd',
         max_digits=12,
         decimal_places=2,
-        read_only=True
+        read_only=True,
+        allow_null=True
     )
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
-    updated_by_name = serializers.CharField(source='updated_by.username', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True, allow_null=True)
+    updated_by_name = serializers.CharField(source='updated_by.username', read_only=True, allow_null=True)
     
     # Enriched defect details with full defect type info
     defect_details_enriched = serializers.SerializerMethodField()
@@ -643,15 +657,28 @@ class ProductDefectDetailSerializer(serializers.ModelSerializer):
     
     def get_product_image(self, obj):
         """Get product image URL"""
-        request = self.context.get('request')
-        if obj.product.image:
+        try:
+            if not obj.product or not obj.product.image:
+                return None
+            
+            request = self.context.get('request')
+            
+            # Try to get the image URL
             try:
                 if obj.product.image.storage.exists(obj.product.image.name):
                     if request:
                         return request.build_absolute_uri(obj.product.image.url)
                     return obj.product.image.url
             except Exception:
-                pass
+                # If storage check fails, just return the URL
+                try:
+                    if request:
+                        return request.build_absolute_uri(obj.product.image.url)
+                    return obj.product.image.url
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return None
     
     def get_defect_details_enriched(self, obj):
