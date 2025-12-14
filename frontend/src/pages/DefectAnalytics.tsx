@@ -38,7 +38,7 @@ const DefectAnalyticsPage = () => {
       setStatistics(response.data);
     } catch (error) {
       console.error('Failed to fetch statistics:', error);
-      toast.error(t('defects.fetchStatisticsError'));
+      toast.error(t('defects:fetchStatisticsError'));
     } finally {
       setLoading(false);
     }
@@ -50,18 +50,18 @@ const DefectAnalyticsPage = () => {
 
   const statusColumns = [
     {
-      title: t('defects.status'),
+      title: t('common:labels.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => t(`defects.status.${status}`, status),
+      render: (status: string) => t(`defects:status.${status}`, status),
     },
     {
-      title: t('defects.count'),
+      title: t('defects:count'),
       dataIndex: 'count',
       key: 'count',
     },
     {
-      title: t('defects.totalQty'),
+      title: t('defects:totalQty'),
       dataIndex: 'qty_sum',
       key: 'qty_sum',
       render: (qty: number) => formatQuantity(qty),
@@ -70,7 +70,7 @@ const DefectAnalyticsPage = () => {
 
   const productColumns = [
     {
-      title: t('defects.product'),
+      title: t('defects:product'),
       dataIndex: 'product__name',
       key: 'product__name',
       render: (name: string, record: any) => (
@@ -81,12 +81,12 @@ const DefectAnalyticsPage = () => {
       ),
     },
     {
-      title: t('defects.count'),
+      title: t('defects:count'),
       dataIndex: 'defect_count',
       key: 'defect_count',
     },
     {
-      title: t('defects.totalQty'),
+      title: t('defects:totalQty'),
       dataIndex: 'defect_qty',
       key: 'defect_qty',
       render: (qty: number) => formatQuantity(qty),
@@ -95,17 +95,17 @@ const DefectAnalyticsPage = () => {
 
   const defectTypeColumns = [
     {
-      title: t('defects.defectType'),
+      title: t('defects:defectType'),
       dataIndex: 'type_name',
       key: 'type_name',
     },
     {
-      title: t('defects.count'),
+      title: t('defects:count'),
       dataIndex: 'count',
       key: 'count',
     },
     {
-      title: t('defects.totalQty'),
+      title: t('defects:totalQty'),
       dataIndex: 'total_qty',
       key: 'total_qty',
       render: (qty: number) => formatQuantity(qty),
@@ -115,7 +115,7 @@ const DefectAnalyticsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{t('defects.analytics')}</h1>
+        <h1 className="text-2xl font-bold">{t('defects:analytics')}</h1>
         <Space>
           <RangePicker
             value={dateRange}
@@ -123,7 +123,7 @@ const DefectAnalyticsPage = () => {
             format="DD.MM.YYYY"
           />
           <Button type="primary" onClick={fetchStatistics} loading={loading}>
-            {t('common.refresh')}
+            {t('common:refresh')}
           </Button>
         </Space>
       </div>
@@ -133,7 +133,7 @@ const DefectAnalyticsPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title={t('defects.totalDefects')}
+              title={t('defects:totalDefects')}
               value={statistics?.totals.total_defects || 0}
               prefix={<BarChartOutlined />}
               valueStyle={{ color: '#1890ff' }}
@@ -143,7 +143,7 @@ const DefectAnalyticsPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title={t('defects.totalQty')}
+              title={t('defects:totalQty')}
               value={statistics?.totals.total_qty || 0}
               prefix={<ShoppingOutlined />}
               valueStyle={{ color: '#722ed1' }}
@@ -153,7 +153,7 @@ const DefectAnalyticsPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title={t('defects.repairableQty')}
+              title={t('defects:repairableQty')}
               value={statistics?.totals.total_repairable || 0}
               prefix={<ToolOutlined />}
               valueStyle={{ color: '#52c41a' }}
@@ -163,7 +163,7 @@ const DefectAnalyticsPage = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title={t('defects.nonRepairableQty')}
+              title={t('defects:nonRepairableQty')}
               value={statistics?.totals.total_non_repairable || 0}
               prefix={<DeleteOutlined />}
               valueStyle={{ color: '#f5222d' }}
@@ -175,7 +175,7 @@ const DefectAnalyticsPage = () => {
       {/* Tables */}
       <Row gutter={16} className="mb-6">
         <Col xs={24} lg={12}>
-          <Card title={t('defects.byStatus')} loading={loading}>
+          <Card title={t('defects:byStatus')} loading={loading}>
             <Table
               columns={statusColumns}
               dataSource={statistics?.by_status || []}
@@ -186,7 +186,7 @@ const DefectAnalyticsPage = () => {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title={t('defects.topDefectTypes')} loading={loading}>
+          <Card title={t('defects:topDefectTypes')} loading={loading}>
             <Table
               columns={defectTypeColumns}
               dataSource={statistics?.by_defect_type?.slice(0, 10) || []}
@@ -200,7 +200,7 @@ const DefectAnalyticsPage = () => {
 
       <Row gutter={16}>
         <Col xs={24}>
-          <Card title={t('defects.topProducts')} loading={loading}>
+          <Card title={t('defects:topProducts')} loading={loading}>
             <Table
               columns={productColumns}
               dataSource={statistics?.by_product?.slice(0, 20) || []}

@@ -20,7 +20,10 @@
       "Bash(git push:*)",
       "Bash(python manage.py check:*)",
       "Bash(python manage.py shell:*)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(npm run dev:*)",
+      "Bash(python manage.py:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

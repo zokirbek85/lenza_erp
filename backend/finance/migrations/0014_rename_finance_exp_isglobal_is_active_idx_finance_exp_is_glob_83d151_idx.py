@@ -3,6 +3,33 @@
 from django.db import migrations
 
 
+def safe_rename_index_v2(apps, schema_editor):
+    """
+    Database-agnostic index rename.
+    """
+    from django.db import connection
+
+    # Skip for SQLite - Django handles index renaming automatically
+    if connection.vendor == 'sqlite':
+        return
+
+    with schema_editor.connection.cursor() as cursor:
+        # Check if old index exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE indexname = 'finance_exp_isglobal_is_active_idx'
+            );
+        """)
+        old_index_exists = cursor.fetchone()[0]
+
+        if old_index_exists:
+            cursor.execute("""
+                ALTER INDEX finance_exp_isglobal_is_active_idx
+                RENAME TO finance_exp_is_glob_83d151_idx;
+            """)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,31 +37,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            # Check if old index exists before renaming
-            sql="""
-                DO $$
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1 FROM pg_indexes 
-                        WHERE indexname = 'finance_exp_isglobal_is_active_idx'
-                    ) THEN
-                        ALTER INDEX finance_exp_isglobal_is_active_idx 
-                        RENAME TO finance_exp_is_glob_83d151_idx;
-                    END IF;
-                END $$;
-            """,
-            reverse_sql="""
-                DO $$
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1 FROM pg_indexes 
-                        WHERE indexname = 'finance_exp_is_glob_83d151_idx'
-                    ) THEN
-                        ALTER INDEX finance_exp_is_glob_83d151_idx 
-                        RENAME TO finance_exp_isglobal_is_active_idx;
-                    END IF;
-                END $$;
-            """,
-        ),
+        migrations.RunPython(safe_rename_index_v2, migrations.RunPython.noop),
     ]

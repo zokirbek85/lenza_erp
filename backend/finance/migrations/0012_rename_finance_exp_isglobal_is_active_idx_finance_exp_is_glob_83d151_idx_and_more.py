@@ -8,7 +8,15 @@ def rename_index_if_exists(apps, schema_editor):
     Rename the index only if it exists.
     The index 'finance_exp_isglobal_is_active_idx' might not exist if it was defined
     in AlterModelOptions in migration 0009 but never actually created in the database.
+
+    This function is database-agnostic and works with both PostgreSQL and SQLite.
     """
+    from django.db import connection
+
+    # Skip for SQLite - Django handles index renaming automatically
+    if connection.vendor == 'sqlite':
+        return
+
     with schema_editor.connection.cursor() as cursor:
         # Check if the old index exists
         cursor.execute("""

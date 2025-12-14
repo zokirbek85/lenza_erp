@@ -79,7 +79,7 @@ const DefectsPage = () => {
       setTotal(response.data.count);
     } catch (error) {
       console.error('Failed to fetch defects:', error);
-      toast.error(t('defects.fetchError'));
+      toast.error(t('defects:fetchError'));
     } finally {
       setLoading(false);
     }
@@ -103,11 +103,11 @@ const DefectsPage = () => {
   const handleDelete = async (id: number) => {
     try {
       await deleteProductDefect(id);
-      toast.success(t('defects.deleteSuccess'));
+      toast.success(t('defects:deleteSuccess'));
       fetchDefects();
     } catch (error) {
       console.error('Failed to delete defect:', error);
-      toast.error(t('defects.deleteError'));
+      toast.error(t('defects:deleteError'));
     }
   };
 
@@ -125,10 +125,10 @@ const DefectsPage = () => {
         start_date: dateRange[0] ? dateRange[0].format('YYYY-MM-DD') : undefined,
         end_date: dateRange[1] ? dateRange[1].format('YYYY-MM-DD') : undefined,
       });
-      toast.success(t('defects.exportSuccess'));
+      toast.success(t('defects:exportSuccess'));
     } catch (error) {
       console.error('Failed to export defects:', error);
-      toast.error(t('defects.exportError'));
+      toast.error(t('defects:exportError'));
     }
   };
 
@@ -153,7 +153,7 @@ const DefectsPage = () => {
 
   const columns = [
     {
-      title: t('defects.product'),
+      title: t('defects:product'),
       dataIndex: 'product_name',
       key: 'product',
       width: 250,
@@ -177,14 +177,14 @@ const DefectsPage = () => {
       ),
     },
     {
-      title: t('defects.totalQty'),
+      title: t('defects:totalQty'),
       dataIndex: 'qty',
       key: 'qty',
       width: 100,
       render: (qty: number) => formatQuantity(qty),
     },
     {
-      title: t('defects.repairableQty'),
+      title: t('defects:repairableQty'),
       dataIndex: 'repairable_qty',
       key: 'repairable_qty',
       width: 120,
@@ -193,7 +193,7 @@ const DefectsPage = () => {
       ),
     },
     {
-      title: t('defects.nonRepairableQty'),
+      title: t('defects:nonRepairableQty'),
       dataIndex: 'non_repairable_qty',
       key: 'non_repairable_qty',
       width: 140,
@@ -202,7 +202,7 @@ const DefectsPage = () => {
       ),
     },
     {
-      title: t('defects.status'),
+      title: t('common:labels.status'),
       dataIndex: 'status',
       key: 'status',
       width: 130,
@@ -213,34 +213,34 @@ const DefectsPage = () => {
       ),
     },
     {
-      title: t('defects.defectSummary'),
+      title: t('defects:defectSummary'),
       dataIndex: 'defect_summary',
       key: 'defect_summary',
       ellipsis: true,
       render: (summary: string) => summary || '-',
     },
     {
-      title: t('defects.createdBy'),
+      title: t('defects:createdBy'),
       dataIndex: 'created_by_name',
       key: 'created_by',
       width: 120,
     },
     {
-      title: t('defects.createdAt'),
+      title: t('defects:createdAt'),
       dataIndex: 'created_at',
       key: 'created_at',
       width: 120,
       render: (date: string) => dayjs(date).format('DD.MM.YYYY'),
     },
     {
-      title: t('common.actions'),
+      title: t('common:labels.actions'),
       key: 'actions',
       width: 180,
       fixed: 'right' as const,
       render: (_: any, record: ProductDefectListItem) => (
         <Space size="small">
           {record.repairable_qty > 0 && (isAdmin || isWarehouse) && (
-            <Tooltip title={t('defects.repair')}>
+            <Tooltip title={t('defects:repair')}>
               <Button
                 type="link"
                 icon={<ToolOutlined />}
@@ -251,7 +251,7 @@ const DefectsPage = () => {
           )}
           {isAdmin && (
             <>
-              <Tooltip title={t('common.edit')}>
+              <Tooltip title={t('common:actions.edit')}>
                 <Button
                   type="link"
                   icon={<EditOutlined />}
@@ -260,12 +260,12 @@ const DefectsPage = () => {
                 />
               </Tooltip>
               <Popconfirm
-                title={t('defects.deleteConfirm')}
+                title={t('defects:deleteConfirm')}
                 onConfirm={() => handleDelete(record.id)}
-                okText={t('common.yes')}
-                cancelText={t('common.no')}
+                okText={t('common:yes')}
+                cancelText={t('common:no')}
               >
-                <Tooltip title={t('common.delete')}>
+                <Tooltip title={t('common:actions.delete')}>
                   <Button
                     type="link"
                     danger
@@ -284,21 +284,21 @@ const DefectsPage = () => {
   return (
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{t('defects.title')}</h1>
+        <h1 className="text-2xl font-bold">{t('defects:title')}</h1>
         <Space>
           <Button
             type="default"
             icon={<LineChartOutlined />}
             onClick={() => window.location.href = '/defects/analytics'}
           >
-            {t('defects.analytics')}
+            {t('defects:analytics')}
           </Button>
           <Button
             type="default"
             icon={<ExportOutlined />}
             onClick={handleExport}
           >
-            {t('common.export')}
+            {t('common:actions.export')}
           </Button>
           {isAdmin && (
             <Button
@@ -306,7 +306,7 @@ const DefectsPage = () => {
               icon={<PlusOutlined />}
               onClick={handleCreate}
             >
-              {t('defects.create')}
+              {t('defects:create')}
             </Button>
           )}
         </Space>
@@ -316,7 +316,7 @@ const DefectsPage = () => {
       <div className="mb-4 p-4 bg-white rounded-lg shadow">
         <Space wrap size="middle">
           <Input
-            placeholder={t('defects.searchPlaceholder')}
+            placeholder={t('defects:searchPlaceholder')}
             prefix={<SearchOutlined />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -325,36 +325,36 @@ const DefectsPage = () => {
             allowClear
           />
           <Select
-            placeholder={t('defects.statusFilter')}
+            placeholder={t('defects:statusFilter')}
             value={statusFilter}
             onChange={setStatusFilter}
             style={{ width: 180 }}
             allowClear
           >
-            <Select.Option value="pending">{t('defects.status.pending')}</Select.Option>
-            <Select.Option value="under_repair">{t('defects.status.underRepair')}</Select.Option>
-            <Select.Option value="repaired">{t('defects.status.repaired')}</Select.Option>
-            <Select.Option value="disposed">{t('defects.status.disposed')}</Select.Option>
-            <Select.Option value="sold_outlet">{t('defects.status.soldOutlet')}</Select.Option>
+            <Select.Option value="pending">{t('defects:status.pending')}</Select.Option>
+            <Select.Option value="under_repair">{t('defects:status.underRepair')}</Select.Option>
+            <Select.Option value="repaired">{t('defects:status.repaired')}</Select.Option>
+            <Select.Option value="disposed">{t('defects:status.disposed')}</Select.Option>
+            <Select.Option value="sold_outlet">{t('defects:status.soldOutlet')}</Select.Option>
           </Select>
           <RangePicker
             value={dateRange}
             onChange={(dates) => setDateRange(dates as [Dayjs | null, Dayjs | null])}
             format="DD.MM.YYYY"
-            placeholder={[t('common.startDate'), t('common.endDate')]}
+            placeholder={[t('common:startDate'), t('common:endDate')]}
           />
           <Button
             icon={<SearchOutlined />}
             type="primary"
             onClick={fetchDefects}
           >
-            {t('common.search')}
+            {t('common:actions.search')}
           </Button>
           <Button
             icon={<ClearOutlined />}
             onClick={handleClearFilters}
           >
-            {t('common.clear')}
+            {t('common:actions.clear')}
           </Button>
         </Space>
       </div>
@@ -370,7 +370,7 @@ const DefectsPage = () => {
           pageSize,
           total,
           showSizeChanger: true,
-          showTotal: (total) => t('common.totalItems', { total }),
+          showTotal: (total) => t('common:totalItems', { total }),
           onChange: (page, pageSize) => {
             setPage(page);
             setPageSize(pageSize);

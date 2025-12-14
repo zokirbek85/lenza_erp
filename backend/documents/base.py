@@ -19,8 +19,12 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.utils import translation
-from weasyprint import HTML
 import qrcode
+
+# Lazy import WeasyPrint to avoid startup errors if GTK not installed
+def get_weasyprint_html():
+    from weasyprint import HTML
+    return HTML
 
 
 class DocumentStyle:
@@ -455,6 +459,7 @@ class BaseDocument:
             PDF file as bytes
         """
         html_string = self.render_html(context)
+        HTML = get_weasyprint_html()
         return HTML(string=html_string, encoding='utf-8').write_pdf()
     
     def get_response(

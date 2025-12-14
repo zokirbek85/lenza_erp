@@ -9,7 +9,14 @@ def safe_rename_index(apps, schema_editor):
     """
     Safely rename the index only if the old name exists.
     This handles the case where migration 0012 already renamed it.
+    Database-agnostic version that works with PostgreSQL and SQLite.
     """
+    from django.db import connection
+
+    # Skip for SQLite - Django handles index renaming automatically
+    if connection.vendor == 'sqlite':
+        return
+
     with schema_editor.connection.cursor() as cursor:
         # Check if the old index name still exists
         cursor.execute("""

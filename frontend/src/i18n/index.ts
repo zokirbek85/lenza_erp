@@ -57,6 +57,8 @@ i18n
     lng: initialLanguage,
     supportedLngs: supportedLanguages,
     load: 'languageOnly',
+    defaultNS: 'translation',
+    ns: ['translation', 'common', 'cashbox', 'finance', 'kpi', 'defects'],
     interpolation: {
       escapeValue: false,
     },

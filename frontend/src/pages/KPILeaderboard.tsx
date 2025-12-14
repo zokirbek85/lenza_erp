@@ -255,6 +255,12 @@ export default function KPILeaderboard() {
                   {t('leaderboard.manager')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.sales')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  {t('leaderboard.payments')}
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {t('leaderboard.startingDebt')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -285,6 +291,12 @@ export default function KPILeaderboard() {
                         <span className="text-lg font-bold text-gray-500 dark:text-gray-400">#{index + 1}</span>
                         <span className="font-medium text-gray-800 dark:text-white">{manager.manager_name}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-gray-800 dark:text-white">${manager.total_sales_usd.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-gray-800 dark:text-white">${manager.total_payments_usd.toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span className="text-gray-800 dark:text-white">${manager.starting_debt_usd.toLocaleString()}</span>

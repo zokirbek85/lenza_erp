@@ -10,7 +10,11 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from openpyxl import Workbook
-from weasyprint import HTML
+
+# Lazy import WeasyPrint to avoid startup errors if GTK not installed
+def get_weasyprint_html():
+    from weasyprint import HTML
+    return HTML
 
 
 class ExportMixin:
@@ -35,8 +39,9 @@ class ExportMixin:
                 'generated_at': timezone.now(),
             },
         )
+        HTML = get_weasyprint_html()
         pdf_bytes = HTML(
-            string=html, 
+            string=html,
             base_url=request.build_absolute_uri('/'),
             encoding='utf-8'
         ).write_pdf()
@@ -91,8 +96,9 @@ class ExportMixin:
                 'generated_at': timezone.now(),
             },
         )
+        HTML = get_weasyprint_html()
         pdf_bytes = HTML(
-            string=html, 
+            string=html,
             base_url=request.build_absolute_uri('/'),
             encoding='utf-8'
         ).write_pdf()
