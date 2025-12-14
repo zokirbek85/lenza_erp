@@ -16,29 +16,38 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='collection',
-        ),
-        migrations.RemoveField(
-            model_name='doormodel',
-            name='collection',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='color',
-        ),
-        migrations.AlterUniqueTogether(
-            name='doormodel',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='model',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='product',
+        # These operations update Django's state only, as the tables were already
+        # dropped in migration 0014. Using SeparateDatabaseAndState prevents
+        # attempting to modify non-existent tables.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveField(
+                    model_name='productmeta',
+                    name='collection',
+                ),
+                migrations.RemoveField(
+                    model_name='doormodel',
+                    name='collection',
+                ),
+                migrations.RemoveField(
+                    model_name='productmeta',
+                    name='color',
+                ),
+                migrations.AlterUniqueTogether(
+                    name='doormodel',
+                    unique_together=None,
+                ),
+                migrations.RemoveField(
+                    model_name='productmeta',
+                    name='model',
+                ),
+                migrations.RemoveField(
+                    model_name='productmeta',
+                    name='product',
+                ),
+            ],
+            # No database operations needed - tables already dropped in 0014
+            database_operations=[],
         ),
         migrations.AlterModelOptions(
             name='defectauditlogv2',
@@ -377,16 +386,23 @@ class Migration(migrations.Migration):
             name='sparepartv2',
             table='spare_parts',
         ),
-        migrations.DeleteModel(
-            name='Collection',
-        ),
-        migrations.DeleteModel(
-            name='DoorColor',
-        ),
-        migrations.DeleteModel(
-            name='DoorModel',
-        ),
-        migrations.DeleteModel(
-            name='ProductMeta',
+        # Delete old models (state only - tables already dropped in 0014)
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.DeleteModel(
+                    name='Collection',
+                ),
+                migrations.DeleteModel(
+                    name='DoorColor',
+                ),
+                migrations.DeleteModel(
+                    name='DoorModel',
+                ),
+                migrations.DeleteModel(
+                    name='ProductMeta',
+                ),
+            ],
+            # No database operations needed - tables already dropped in 0014
+            database_operations=[],
         ),
     ]
