@@ -59,7 +59,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
       setDefectTypes(typesRes.data.results);
     } catch (error) {
       console.error('Failed to load data:', error);
-      toast.error(t('defects.loadDataError'));
+      toast.error(t('defects:loadDataError'));
     }
   };
 
@@ -85,7 +85,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
       }
     } catch (error) {
       console.error('Failed to load defect details:', error);
-      toast.error(t('defects.loadError'));
+      toast.error(t('defects:loadError'));
     }
   };
 
@@ -97,7 +97,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
       // Validate quantities
       const totalQty = values.repairable_qty + values.non_repairable_qty;
       if (Math.abs(totalQty - values.qty) > 0.01) {
-        toast.error(t('defects.qtyValidationError'));
+        toast.error(t('defects:qtyValidationError'));
         setLoading(false);
         return;
       }
@@ -113,10 +113,10 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
 
       if (isEdit) {
         await updateProductDefect(defect.id, data);
-        toast.success(t('defects.updateSuccess'));
+        toast.success(t('defects:updateSuccess'));
       } else {
         await createProductDefect(data as ProductDefectCreate);
-        toast.success(t('defects.createSuccess'));
+        toast.success(t('defects:createSuccess'));
       }
 
       onSuccess();
@@ -126,7 +126,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
         const errorMsg = Object.values(error.response.data).flat().join(', ');
         toast.error(errorMsg);
       } else {
-        toast.error(isEdit ? t('defects.updateError') : t('defects.createError'));
+        toast.error(isEdit ? t('defects:updateError') : t('defects:createError'));
       }
     } finally {
       setLoading(false);
@@ -160,7 +160,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
 
   const defectDetailsColumns = [
     {
-      title: t('defects.defectType'),
+      title: t('defects:defectType'),
       dataIndex: 'type_id',
       key: 'type_id',
       render: (typeId: number, _: DefectDetail, index: number) => (
@@ -168,7 +168,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
           value={typeId || undefined}
           onChange={(value) => handleDefectDetailChange(index, 'type_id', value)}
           style={{ width: '100%' }}
-          placeholder={t('defects.selectDefectType')}
+          placeholder={t('defects:selectDefectType')}
         >
           {defectTypes.map(type => (
             <Select.Option key={type.id} value={type.id}>
@@ -179,7 +179,7 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
       ),
     },
     {
-      title: t('defects.qty'),
+      title: t('defects:qty'),
       dataIndex: 'qty',
       key: 'qty',
       width: 150,
@@ -194,15 +194,15 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
       ),
     },
     {
-      title: t('common.actions'),
+      title: t('common:actions'),
       key: 'actions',
       width: 80,
       render: (_: any, __: DefectDetail, index: number) => (
         <Popconfirm
-          title={t('common.deleteConfirm')}
+          title={t('common:deleteConfirm')}
           onConfirm={() => handleRemoveDefectDetail(index)}
-          okText={t('common.yes')}
-          cancelText={t('common.no')}
+          okText={t('common:yes')}
+          cancelText={t('common:no')}
         >
           <Button type="link" danger icon={<DeleteOutlined />} size="small" />
         </Popconfirm>
@@ -212,14 +212,14 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
 
   return (
     <Modal
-      title={isEdit ? t('defects.editTitle') : t('defects.createTitle')}
+      title={isEdit ? t('defects:editTitle') : t('defects:createTitle')}
       open={visible}
       onCancel={onCancel}
       onOk={handleSubmit}
       confirmLoading={loading}
       width={800}
-      okText={t('common.save')}
-      cancelText={t('common.cancel')}
+      okText={t('common:save')}
+      cancelText={t('common:cancel')}
     >
       <Form
         form={form}
@@ -232,12 +232,12 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
       >
         <Form.Item
           name="product"
-          label={t('defects.product')}
-          rules={[{ required: true, message: t('defects.productRequired') }]}
+          label={t('defects:product')}
+          rules={[{ required: true, message: t('defects:productRequired') }]}
         >
           <Select
             showSearch
-            placeholder={t('defects.selectProduct')}
+            placeholder={t('defects:selectProduct')}
             optionFilterProp="children"
             filterOption={(input, option) => {
               const children = String(option?.children || '');
@@ -256,73 +256,73 @@ const DefectFormModal = ({ visible, defect, onCancel, onSuccess }: DefectFormMod
         <Space style={{ width: '100%' }} size="middle">
           <Form.Item
             name="qty"
-            label={t('defects.totalQty')}
+            label={t('defects:totalQty')}
             rules={[
-              { required: true, message: t('defects.qtyRequired') },
-              { type: 'number', min: 0.01, message: t('defects.qtyMinError') },
+              { required: true, message: t('defects:qtyRequired') },
+              { type: 'number', min: 0.01, message: t('defects:qtyMinError') },
             ]}
           >
             <InputNumber
               min={0}
               step={0.01}
               style={{ width: 200 }}
-              placeholder={t('defects.enterQty')}
+              placeholder={t('defects:enterQty')}
             />
           </Form.Item>
 
           <Form.Item
             name="repairable_qty"
-            label={t('defects.repairableQty')}
+            label={t('defects:repairableQty')}
             rules={[
-              { required: true, message: t('defects.repairableQtyRequired') },
-              { type: 'number', min: 0, message: t('defects.qtyMinError') },
+              { required: true, message: t('defects:repairableQtyRequired') },
+              { type: 'number', min: 0, message: t('defects:qtyMinError') },
             ]}
           >
             <InputNumber
               min={0}
               step={0.01}
               style={{ width: 200 }}
-              placeholder={t('defects.enterRepairableQty')}
+              placeholder={t('defects:enterRepairableQty')}
             />
           </Form.Item>
 
           <Form.Item
             name="non_repairable_qty"
-            label={t('defects.nonRepairableQty')}
+            label={t('defects:nonRepairableQty')}
             rules={[
-              { required: true, message: t('defects.nonRepairableQtyRequired') },
-              { type: 'number', min: 0, message: t('defects.qtyMinError') },
+              { required: true, message: t('defects:nonRepairableQtyRequired') },
+              { type: 'number', min: 0, message: t('defects:qtyMinError') },
             ]}
           >
             <InputNumber
               min={0}
               step={0.01}
               style={{ width: 200 }}
-              placeholder={t('defects.enterNonRepairableQty')}
+              placeholder={t('defects:enterNonRepairableQty')}
             />
           </Form.Item>
         </Space>
 
         <Form.Item
           name="description"
-          label={t('defects.description')}
+          label={t('defects:description')}
         >
           <Input.TextArea
             rows={3}
-            placeholder={t('defects.enterDescription')}
+            placeholder={t('defects:enterDescription')}
           />
         </Form.Item>
 
         <div className="mb-4">
           <div className="flex justify-between items-center mb-2">
-            <label className="font-medium">{t('defects.defectDetails')}</label>
+            <label className="font-medium">{t('defects:defectDetails')}</label>
             <Button
               type="dashed"
               icon={<PlusOutlined />}
               onClick={handleAddDefectDetail}
               size="small"
             >
-              {t('defects.addDefectDetail')}
+              {t('defects:addDefectDetail')}
             </Button>
           </div>
           {defectDetails.length > 0 && (
