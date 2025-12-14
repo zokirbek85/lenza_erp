@@ -28,12 +28,11 @@ import {
   EyeOutlined,
   LineChartOutlined,
   ToolOutlined,
-  DeleteOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import toast from 'react-hot-toast';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
 
 import { getDefectBatches } from '../../api/defectsV2';
 import type { DefectBatchListItem, DefectBatchStatus, DefectBatchFilters } from '../../types/defectsV2';
