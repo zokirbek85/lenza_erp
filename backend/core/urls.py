@@ -39,6 +39,9 @@ from catalog.defect_views import (
     ProductDefectViewSet,
     DefectAuditLogViewSet,
 )
+from catalog.defects_from_products_view import (
+    ProductDefectFromStockViewSet,
+)
 # Defects V2 - New defects module
 from catalog.defects_v2_views import (
     DefectTypeViewSet as DefectTypeV2ViewSet,
@@ -131,8 +134,10 @@ router.register('catalog/skus', ProductSKUViewSet, basename='product-sku')
 router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename='public-catalog')
 # Defect management routes (legacy)
 router.register('defects/types', DefectTypeViewSet, basename='defect-type')
-router.register('defects', ProductDefectViewSet, basename='defect')
+router.register('defects', ProductDefectFromStockViewSet, basename='defect')
 router.register('defects/audit-logs', DefectAuditLogViewSet, basename='defect-audit-log')
+# Legacy writable defects endpoint (for backward compatibility with old frontend components)
+router.register('defects/manage', ProductDefectViewSet, basename='defect-manage')
 # Defects V2 - New defects module
 router.register('defects-v2/types', DefectTypeV2ViewSet, basename='defect-v2-type')
 router.register('defects-v2/spare-parts', SparePartViewSet, basename='defect-v2-spare-part')
