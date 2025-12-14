@@ -36,10 +36,8 @@ from catalog.views import (
 )
 from catalog.defect_views import (
     DefectTypeViewSet,
+    ProductDefectViewSet,
     DefectAuditLogViewSet,
-)
-from catalog.defects_from_products_view import (
-    ProductDefectFromStockViewSet,
 )
 # Defects V2 - New defects module
 from catalog.defects_v2_views import (
@@ -133,7 +131,7 @@ router.register('catalog/skus', ProductSKUViewSet, basename='product-sku')
 router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename='public-catalog')
 # Defect management routes (legacy)
 router.register('defects/types', DefectTypeViewSet, basename='defect-type')
-router.register('defects', ProductDefectFromStockViewSet, basename='defect')
+router.register('defects', ProductDefectViewSet, basename='defect')
 router.register('defects/audit-logs', DefectAuditLogViewSet, basename='defect-audit-log')
 # Defects V2 - New defects module
 router.register('defects-v2/types', DefectTypeV2ViewSet, basename='defect-v2-type')
