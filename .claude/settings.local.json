@@ -23,7 +23,9 @@
       "Bash(python -c:*)",
       "Bash(npm run dev:*)",
       "Bash(python manage.py:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(ssh root@vps00405 'docker logs lenza_backend_blue 2>&1 | tail -100')",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
