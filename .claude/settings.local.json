@@ -30,7 +30,8 @@
       "Bash(findstr:*)",
       "Bash(taskkill /F /PID 24328)",
       "Bash(taskkill:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
