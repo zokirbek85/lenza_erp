@@ -165,6 +165,7 @@ const MobileProductSelector = ({
             {products.map((product) => {
               const stock = product.stock_ok ?? 0;
               const isOutOfStock = stock <= 0;
+              const isNegativeStock = stock < 0;
               const brandLabel = product.brand?.name ?? '-';
               const categoryLabel = product.category?.name ?? '-';
               
@@ -193,7 +194,14 @@ const MobileProductSelector = ({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                      <h3 
+                        className="font-semibold text-slate-900 dark:text-white"
+                        style={isNegativeStock ? { 
+                          color: '#FF6B6B',
+                          fontStyle: 'italic',
+                          fontWeight: 400
+                        } : undefined}
+                      >
                         {displayName}
                       </h3>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

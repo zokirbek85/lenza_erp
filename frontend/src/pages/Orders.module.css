@@ -80,3 +80,15 @@
 .orderCollapsePanel :global(.ant-collapse > .ant-collapse-item:last-child) {
   border-radius: 10px !important;
 }
+
+/* Low stock product styling (stock_ok < 0) */
+.lowStockOption {
+  color: #FF6B6B !important;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Dark mode low stock styling */
+:global(.dark) .lowStockOption {
+  color: #FF6B6B !important;
+}

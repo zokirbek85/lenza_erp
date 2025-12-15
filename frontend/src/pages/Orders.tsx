@@ -1336,6 +1336,7 @@ const OrdersPage = () => {
                             options={filteredProducts.map((product) => {
                               const stock = product.stock_ok ?? 0;
                               const isOutOfStock = stock <= 0;
+                              const isNegativeStock = stock < 0;
                               const brandLabel = product.brand?.name ?? '-';
                               const categoryLabel = product.category?.name ?? '-';
                               const stockLabel = isOutOfStock
@@ -1349,6 +1350,7 @@ const OrdersPage = () => {
                                 label: `${displayName} - ${brandLabel} - ${categoryLabel} ${stockLabel}`,
                                 value: String(product.id),
                                 disabled: isOutOfStock,
+                                className: isNegativeStock ? styles.lowStockOption : undefined,
                               };
                             })}
                             placeholder={t('orders.form.productSelectPlaceholder')}
