@@ -1350,9 +1350,20 @@ const OrdersPage = () => {
                                 label: `${displayName} - ${brandLabel} - ${categoryLabel} ${stockLabel}`,
                                 value: String(product.id),
                                 disabled: isOutOfStock,
-                                className: isNegativeStock ? styles.lowStockOption : undefined,
+                                isNegativeStock,
                               };
                             })}
+                            optionRender={(option) => (
+                              <span 
+                                style={option.data.isNegativeStock ? { 
+                                  color: '#FF6B6B',
+                                  fontStyle: 'italic',
+                                  fontWeight: 400
+                                } : undefined}
+                              >
+                                {option.label}
+                              </span>
+                            )}
                             placeholder={t('orders.form.productSelectPlaceholder')}
                             allowClear
                           />

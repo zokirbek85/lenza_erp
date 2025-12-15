@@ -195,12 +195,12 @@ const MobileProductSelector = ({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 
-                        className="font-semibold text-slate-900 dark:text-white"
+                        className={isNegativeStock ? '' : 'font-semibold text-slate-900 dark:text-white'}
                         style={isNegativeStock ? { 
                           color: '#FF6B6B',
                           fontStyle: 'italic',
                           fontWeight: 400
-                        } : undefined}
+                        } : { fontWeight: 600 }}
                       >
                         {displayName}
                       </h3>
