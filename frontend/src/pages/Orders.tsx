@@ -1351,22 +1351,16 @@ const OrdersPage = () => {
                                 value: String(product.id),
                                 disabled: isOutOfStock,
                                 isNegativeStock,
+                                className: isNegativeStock ? styles.lowStockOption : '',
                               };
                             })}
-                            optionRender={(option) => {
-                              const isDark = document.documentElement.classList.contains('dark');
-                              return (
-                                <span 
-                                  style={option.data.isNegativeStock ? { 
-                                    color: isDark ? '#FF8A8A' : '#FF6B6B',
-                                    fontStyle: 'italic',
-                                    fontWeight: 400
-                                  } : undefined}
-                                >
-                                  {option.label}
-                                </span>
-                              );
-                            }}
+                            optionRender={(option) => (
+                              <span 
+                                className={option.data.isNegativeStock ? styles.lowStockOption : ''}
+                              >
+                                {option.label}
+                              </span>
+                            )}
                             placeholder={t('orders.form.productSelectPlaceholder')}
                             allowClear
                           />
