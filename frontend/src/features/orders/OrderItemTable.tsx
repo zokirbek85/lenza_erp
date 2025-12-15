@@ -1,16 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import type { OrderItem } from '../../store/useOrderStore';
+import type { OrderItem, OrderProduct } from '../../store/useOrderStore';
 import { formatCurrency } from '../../utils/formatters';
 
 interface OrderItemTableProps {
   items: OrderItem[];
+  products?: OrderProduct[];
   onQtyChange: (productId: number, qty: number) => void;
   onPriceChange: (productId: number, price: number) => void;
   onRemove: (productId: number) => void;
   readOnly?: boolean;
 }
 
-const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove, readOnly = false }: OrderItemTableProps) => {
+const OrderItemTable = ({ items, products = [], onQtyChange, onPriceChange, onRemove, readOnly = false }: OrderItemTableProps) => {
   const { t } = useTranslation();
 
   if (!items.length) {
@@ -39,6 +40,9 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove, readOnly 
         <tbody>
           {items.map((item, index) => {
             const lineTotal = Number(item.qty) * Number(item.price_usd);
+            const product = products.find(p => p.id === item.product);
+            const stock = product?.stock_ok ?? 0;
+            const isNegativeStock = stock < 0;
             
             return (
               <tr key={item.product}>
@@ -46,7 +50,15 @@ const OrderItemTable = ({ items, onQtyChange, onPriceChange, onRemove, readOnly 
                   {index + 1}
                 </td>
                 <td className="font-medium">
-                  {item.productName}
+                  <span
+                    style={isNegativeStock ? {
+                      color: '#FF8A8A',
+                      fontStyle: 'italic',
+                      fontWeight: 400
+                    } : undefined}
+                  >
+                    {item.productName}
+                  </span>
                 </td>
                 <td>
                   <input

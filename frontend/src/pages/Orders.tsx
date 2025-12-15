@@ -1414,6 +1414,7 @@ const OrdersPage = () => {
                     {/* Order Items Table */}
                     <OrderItemTable
                       items={selectedItems}
+                      products={availableProducts}
                       onQtyChange={handleItemQtyChange}
                       onPriceChange={handleItemPriceChange}
                       onRemove={removeItem}
