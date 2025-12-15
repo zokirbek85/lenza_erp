@@ -197,7 +197,7 @@ const MobileProductSelector = ({
                       <h3 
                         className={isNegativeStock ? '' : 'font-semibold text-slate-900 dark:text-white'}
                         style={isNegativeStock ? { 
-                          color: '#FF6B6B',
+                          color: '#FF8A8A',
                           fontStyle: 'italic',
                           fontWeight: 400
                         } : { fontWeight: 600 }}

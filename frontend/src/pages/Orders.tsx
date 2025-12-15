@@ -1353,17 +1353,20 @@ const OrdersPage = () => {
                                 isNegativeStock,
                               };
                             })}
-                            optionRender={(option) => (
-                              <span 
-                                style={option.data.isNegativeStock ? { 
-                                  color: '#FF6B6B',
-                                  fontStyle: 'italic',
-                                  fontWeight: 400
-                                } : undefined}
-                              >
-                                {option.label}
-                              </span>
-                            )}
+                            optionRender={(option) => {
+                              const isDark = document.documentElement.classList.contains('dark');
+                              return (
+                                <span 
+                                  style={option.data.isNegativeStock ? { 
+                                    color: isDark ? '#FF8A8A' : '#FF6B6B',
+                                    fontStyle: 'italic',
+                                    fontWeight: 400
+                                  } : undefined}
+                                >
+                                  {option.label}
+                                </span>
+                              );
+                            }}
                             placeholder={t('orders.form.productSelectPlaceholder')}
                             allowClear
                           />
