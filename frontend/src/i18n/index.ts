@@ -17,9 +17,6 @@ import uzFinance from './locales/uz/finance.json';
 import enKpi from './locales/en/kpi.json';
 import ruKpi from './locales/ru/kpi.json';
 import uzKpi from './locales/uz/kpi.json';
-import enDefects from './locales/en/defects.json';
-import ruDefects from './locales/ru/defects.json';
-import uzDefects from './locales/uz/defects.json';
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_OPTIONS,
@@ -28,9 +25,9 @@ import {
 } from './languages';
 
 const resources = {
-  en: { translation: en, common: enCommon, cashbox: enCashbox, finance: enFinance, kpi: enKpi, defects: enDefects },
-  ru: { translation: ru, common: ruCommon, cashbox: ruCashbox, finance: ruFinance, kpi: ruKpi, defects: ruDefects },
-  uz: { translation: uz, common: uzCommon, cashbox: uzCashbox, finance: uzFinance, kpi: uzKpi, defects: uzDefects },
+  en: { translation: en, common: enCommon, cashbox: enCashbox, finance: enFinance, kpi: enKpi },
+  ru: { translation: ru, common: ruCommon, cashbox: ruCashbox, finance: ruFinance, kpi: ruKpi },
+  uz: { translation: uz, common: uzCommon, cashbox: uzCashbox, finance: uzFinance, kpi: uzKpi },
 };
 
 const supportedLanguages: SupportedLanguage[] = LANGUAGE_OPTIONS.map((option) => option.code);
@@ -58,7 +55,7 @@ i18n
     supportedLngs: supportedLanguages,
     load: 'languageOnly',
     defaultNS: 'translation',
-    ns: ['translation', 'common', 'cashbox', 'finance', 'kpi', 'defects'],
+    ns: ['translation', 'common', 'cashbox', 'finance', 'kpi'],
     interpolation: {
       escapeValue: false,
     },

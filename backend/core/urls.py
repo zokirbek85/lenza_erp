@@ -34,23 +34,6 @@ from catalog.views import (
     VariantCatalogViewSet,
     PublicVariantCatalogViewSet,
 )
-from catalog.defect_views import (
-    DefectTypeViewSet,
-    ProductDefectViewSet,
-    DefectAuditLogViewSet,
-)
-from catalog.defects_from_products_view import (
-    ProductDefectFromStockViewSet,
-)
-# Defects V2 - New defects module
-from catalog.defects_v2_views import (
-    DefectTypeViewSet as DefectTypeV2ViewSet,
-    SparePartViewSet,
-    DefectBatchViewSet,
-    DefectRepairViewSet,
-    DefectWriteOffViewSet,
-    DefectAnalyticsViewSet,
-)
 from dealers.views_list_all import DealerListAllView
 from core.views import (
     AuditLogViewSet,
@@ -132,22 +115,6 @@ router.register('catalog/variants-detail', ProductVariantViewSet, basename='prod
 router.register('catalog/skus', ProductSKUViewSet, basename='product-sku')
 # Public catalog (no auth required)
 router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename='public-catalog')
-# Defect management routes (legacy)
-# Defect management routes
-# IMPORTANT: Register more specific routes BEFORE general ones to avoid conflicts
-# Stock-based defects endpoint (shows products with stock_defect > 0)
-router.register('defects/stock', ProductDefectFromStockViewSet, basename='defect-stock')
-router.register('defects/types', DefectTypeViewSet, basename='defect-type')
-router.register('defects/audit-logs', DefectAuditLogViewSet, basename='defect-audit-log')
-# Legacy defects (queries ProductDefect table - mostly empty)
-router.register('defects', ProductDefectViewSet, basename='defect')
-# Defects V2 - New defects module
-router.register('defects-v2/types', DefectTypeV2ViewSet, basename='defect-v2-type')
-router.register('defects-v2/spare-parts', SparePartViewSet, basename='defect-v2-spare-part')
-router.register('defects-v2/batches', DefectBatchViewSet, basename='defect-v2-batch')
-router.register('defects-v2/repairs', DefectRepairViewSet, basename='defect-v2-repair')
-router.register('defects-v2/write-offs', DefectWriteOffViewSet, basename='defect-v2-write-off')
-router.register('defects-v2/analytics', DefectAnalyticsViewSet, basename='defect-v2-analytics')
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
 
 urlpatterns = [

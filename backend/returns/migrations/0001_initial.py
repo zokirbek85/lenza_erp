@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('catalog', '0004_alter_product_stock_defect_alter_product_stock_ok'),
+        ('catalog', '0003_brand_remove_product_currency_and_more'),
         ('orders', '0006_alter_orderitem_qty_alter_orderreturn_quantity'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

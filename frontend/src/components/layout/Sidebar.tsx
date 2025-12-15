@@ -25,8 +25,6 @@ import {
   AppstoreOutlined,
   DollarOutlined,
   FolderOutlined,
-  ToolOutlined,
-  BarChartOutlined,
 } from '@ant-design/icons';
 
 export interface MenuItem {
@@ -120,18 +118,6 @@ const BASE_MENU: MenuItem[] = [
       label: 'nav.returns',
       icon: <AuditOutlined />,
       roles: ['admin', 'sales', 'warehouse', 'accountant'],
-    },
-    {
-      path: '/defects',
-      label: 'nav.defects',
-      icon: <ToolOutlined />,
-      roles: ['admin', 'warehouse'],
-    },
-    {
-      path: '/defects/analytics',
-      label: 'nav.defectAnalytics',
-      icon: <BarChartOutlined />,
-      roles: ['admin', 'warehouse', 'owner'],
     },
     {
       path: '/reconciliation',

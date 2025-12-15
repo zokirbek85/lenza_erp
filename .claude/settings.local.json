@@ -25,7 +25,12 @@
       "Bash(python manage.py:*)",
       "Bash(grep:*)",
       "Bash(ssh root@vps00405 'docker logs lenza_backend_blue 2>&1 | tail -100')",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill /F /PID 24328)",
+      "Bash(taskkill:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
