@@ -433,7 +433,7 @@ class TopDealersByAverageCheckView(APIView):
                     Value(Decimal('0'), output_field=DecimalField(max_digits=20, decimal_places=2))
                 )
             )
-            .filter(total_orders__gt=0)  # Only dealers with orders
+            .filter(total_orders__gt=1)  # Only dealers with more than 1 order
             .values('id', 'name', 'total_orders', 'total_amount', 'total_returns')
         )
 
