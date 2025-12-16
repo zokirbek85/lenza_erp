@@ -18,7 +18,7 @@ const FaqSection = ({ faq, title }: FaqSectionProps) => {
   return (
     <Card title={title} className="shadow-sm">
       <Collapse
-        bordered={false}
+        variant="borderless"
         items={faq.map((item, index) => ({
           key: String(index),
           label: item.question,

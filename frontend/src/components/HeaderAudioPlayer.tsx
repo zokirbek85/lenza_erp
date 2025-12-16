@@ -189,7 +189,7 @@ export default function HeaderAudioPlayer() {
       }}
     >
       <Card
-        bordered
+        variant="outlined"
         style={{
           width: '280px',
           borderRadius: '12px',

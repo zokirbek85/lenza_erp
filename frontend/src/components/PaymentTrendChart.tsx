@@ -38,7 +38,7 @@ export default function PaymentTrendChart({ data, loading }: PaymentTrendChartPr
   const chartData = hasData ? data : [];
 
   return (
-    <Card className="dashboard-card payment-chart-card" bordered={false}>
+    <Card className="dashboard-card payment-chart-card" variant="borderless">
       <div className="card-header">
         <DollarOutlined className="dashboard-icon" />
         <h2 className="dashboard-card-title">{t('dashboard.paymentTrend', "To'lovlar dinamikasi (30 kun)")}</h2>
