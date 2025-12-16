@@ -977,7 +977,7 @@
         "label": "Debt"
       },
       "debtTrend": {
-        "title": "Monthly Debt Trends",
+        "title": "Daily Debt Trends",
         "label": "Total Debt"
       }
     },

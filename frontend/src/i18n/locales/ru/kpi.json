@@ -17,7 +17,23 @@
     "salesByRegion": "Продажи по Регионам",
     "topProducts": "Топ Продукты",
     "noRegionData": "Нет данных по регионам",
-    "noProductData": "Нет данных по продуктам"
+    "noProductData": "Нет данных по продуктам",
+    "sales": "Продажи",
+    "salesUsd": "Продажи (USD)",
+    "manager": {
+      "mySales": "Мои Продажи",
+      "myPayments": "Мои Платежи",
+      "myDealers": "Мои Дилеры",
+      "assignedToMe": "Назначены мне",
+      "topDealers": "Топ Дилеры",
+      "topDealersShare": "Доля Топ Дилеров",
+      "myRegions": "Мои Регионы",
+      "topCategories": "Топ Категории",
+      "categoriesBySales": "Категории по продажам"
+    },
+    "messages": {
+      "loadError": "Ошибка при загрузке данных"
+    }
   },
   "units": "шт",
   "currency": {

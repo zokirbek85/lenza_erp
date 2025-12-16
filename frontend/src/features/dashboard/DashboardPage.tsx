@@ -113,7 +113,7 @@ const DashboardPage = () => {
         fetchTopProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchRegionProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchTopDealers(analyticsFilters).catch(() => ({ data: [] })),
-        fetchDebtAnalytics().catch(() => ({ data: { total_debt: 0, by_dealers: [], by_regions: [], monthly: [] } })),
+        fetchDebtAnalytics('daily').catch(() => ({ data: { total_debt: 0, by_dealers: [], by_regions: [], monthly: [], daily: [] } })),
       ]);
 
       const newData = {
@@ -256,7 +256,7 @@ const DashboardPage = () => {
 
         {/* Row 4: Debt Trend & Region Heatmap - 2 Columns */}
         <div className="debt-card">
-          <DebtTrendChart data={data.debtAnalytics?.monthly || []} loading={loading} />
+          <DebtTrendChart data={data.debtAnalytics?.daily || []} loading={loading} />
         </div>
 
         <div className="region-card">

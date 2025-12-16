@@ -22,7 +22,7 @@ import { useTheme } from '../context/ThemeContext';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 interface DebtTrendChartProps {
-  data: { month: string; debt: number }[];
+  data: { date?: string; month?: string; debt: number }[];
   loading?: boolean;
 }
 
@@ -37,7 +37,7 @@ const DebtTrendChart = ({ data, loading }: DebtTrendChartProps) => {
   const { height, fontSize, chartPadding } = useAutoscale(containerRef);
 
   const chartData: ChartData<'line'> = {
-    labels: data.map((item) => item.month),
+    labels: data.map((item) => item.date || item.month || ''),
     datasets: [
       {
         label: t('kpis.charts.debtTrend.label'),

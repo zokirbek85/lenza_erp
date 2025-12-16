@@ -17,7 +17,23 @@
     "salesByRegion": "Sales by Region",
     "topProducts": "Top Products",
     "noRegionData": "No region data",
-    "noProductData": "No product data"
+    "noProductData": "No product data",
+    "sales": "Sales",
+    "salesUsd": "Sales (USD)",
+    "manager": {
+      "mySales": "My Sales",
+      "myPayments": "My Payments",
+      "myDealers": "My Dealers",
+      "assignedToMe": "Assigned to me",
+      "topDealers": "Top Dealers",
+      "topDealersShare": "Top Dealers Share",
+      "myRegions": "My Regions",
+      "topCategories": "Top Categories",
+      "categoriesBySales": "Categories by sales"
+    },
+    "messages": {
+      "loadError": "Error loading data"
+    }
   },
   "units": "units",
   "currency": {

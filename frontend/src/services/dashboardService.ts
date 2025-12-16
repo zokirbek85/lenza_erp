@@ -77,7 +77,11 @@ export const fetchDashboardSummary = async (filters: DashboardFilters): Promise<
   return normalizeDashboardSummary(response.data);
 };
 
-export const fetchDebtAnalytics = () => http.get<DebtAnalytics>('/dashboard/debt-analytics/');
+export const fetchDebtAnalytics = (grouping: 'daily' | 'monthly' = 'daily') => {
+  const params = new URLSearchParams();
+  params.append('grouping', grouping);
+  return http.get<DebtAnalytics>(`/dashboard/debt-analytics/?${params.toString()}`);
+};
 
 /**
  * Fetch dashboard KPI data with optional filters

@@ -17,7 +17,23 @@
     "salesByRegion": "Hududlar Bo'yicha Savdo",
     "topProducts": "Top Mahsulotlar",
     "noRegionData": "Hudud ma'lumotlari yo'q",
-    "noProductData": "Mahsulot ma'lumotlari yo'q"
+    "noProductData": "Mahsulot ma'lumotlari yo'q",
+    "sales": "Savdo",
+    "salesUsd": "Savdo (USD)",
+    "manager": {
+      "mySales": "Mening Savdolarim",
+      "myPayments": "Mening To'lovlarim",
+      "myDealers": "Mening Dilerlarim",
+      "assignedToMe": "Menga biriktirilgan",
+      "topDealers": "Top Dilerlar",
+      "topDealersShare": "Top Dilerlar Ulushi",
+      "myRegions": "Mening Hududlarim",
+      "topCategories": "Top Kategoriyalar",
+      "categoriesBySales": "Savdo bo'yicha kategoriyalar"
+    },
+    "messages": {
+      "loadError": "Ma'lumotlarni yuklashda xatolik yuz berdi"
+    }
   },
   "units": "dona",
   "currency": {
