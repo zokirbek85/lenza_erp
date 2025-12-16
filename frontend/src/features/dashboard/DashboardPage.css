@@ -358,7 +358,9 @@
 
 /* Hide mobile-only elements on desktop */
 .mobile-rank,
-.mobile-stats {
+.mobile-stats,
+.mobile-product-meta,
+.mobile-qty {
   display: none !important;
 }
 
@@ -377,7 +379,9 @@
 @media (max-width: 640px) {
   /* Show mobile elements */
   .mobile-rank,
-  .mobile-stats {
+  .mobile-stats,
+  .mobile-product-meta,
+  .mobile-qty {
     display: flex !important;
   }
 

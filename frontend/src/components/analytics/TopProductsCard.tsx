@@ -24,7 +24,8 @@ const TopProductsCard = ({ data, loading = false }: TopProductsCardProps) => {
       title: '#',
       dataIndex: 'rank',
       key: 'rank',
-      width: 50,
+      width: 40,
+      responsive: ['sm'] as any,
       render: (_: any, __: any, index: number) => (
         <span
           className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
@@ -42,51 +43,105 @@ const TopProductsCard = ({ data, loading = false }: TopProductsCardProps) => {
       title: t('Mahsulot'),
       dataIndex: 'product_name',
       key: 'product_name',
-      render: (text: string) => (
-        <span className="font-medium text-slate-900 dark:text-white">{text}</span>
+      ellipsis: true,
+      render: (text: string, record: TopProductItem, index: number) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span
+              className="inline-flex items-center justify-center rounded-full text-xs font-bold mobile-rank"
+              style={{
+                minWidth: '20px',
+                height: '20px',
+                background: index === 0 ? '#d4af37' : token.colorBgContainer,
+                color: index === 0 ? '#000' : token.colorTextSecondary,
+                border: index === 0 ? 'none' : `1px solid ${token.colorBorder}`,
+                fontSize: '10px',
+              }}
+            >
+              {index + 1}
+            </span>
+            <span className="font-medium" style={{ color: token.colorText }}>
+              {text}
+            </span>
+          </div>
+          <div
+            className="mobile-product-meta"
+            style={{
+              display: 'flex',
+              gap: '8px',
+              fontSize: '10px',
+              color: token.colorTextSecondary,
+              paddingLeft: '26px',
+            }}
+          >
+            {record.brand_name && <span>{record.brand_name}</span>}
+            {record.brand_name && record.category_name && <span>•</span>}
+            {record.category_name && <span>{record.category_name}</span>}
+          </div>
+        </div>
       ),
     },
     {
       title: t('Brend'),
       dataIndex: 'brand_name',
       key: 'brand_name',
+      width: 120,
+      responsive: ['md'] as any,
       render: (text: string) => (
-        <span className="text-slate-600 dark:text-slate-400">{text || '—'}</span>
+        <span style={{ color: token.colorTextSecondary }}>{text || '—'}</span>
       ),
     },
     {
       title: t('Kategoriya'),
       dataIndex: 'category_name',
       key: 'category_name',
+      width: 120,
+      responsive: ['lg'] as any,
       render: (text: string) => (
-        <span className="text-slate-600 dark:text-slate-400">{text || '—'}</span>
+        <span style={{ color: token.colorTextSecondary }}>{text || '—'}</span>
       ),
     },
     {
       title: t('Miqdor'),
       dataIndex: 'total_qty',
       key: 'total_qty',
+      width: 80,
       align: 'right' as const,
+      responsive: ['md'] as any,
       render: (value: number) => (
-        <span className="font-mono text-slate-700 dark:text-slate-300">
+        <span className="font-mono" style={{ color: token.colorText }}>
           {formatQuantity(value)}
         </span>
       ),
     },
     {
-      title: t('Jami summa'),
+      title: t('Summa'),
       dataIndex: 'total_sum_usd',
       key: 'total_sum_usd',
+      width: 120,
       align: 'right' as const,
-      render: (value: number, _: any, index: number) => (
-        <span
-          className="font-mono font-semibold"
-          style={{
-            color: index === 0 ? '#d4af37' : token.colorText,
-          }}
-        >
-          {formatCurrency(value)}
-        </span>
+      render: (value: number, record: TopProductItem, index: number) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end' }}>
+          <span
+            className="font-mono font-semibold"
+            style={{
+              color: index === 0 ? '#d4af37' : token.colorText,
+              fontSize: '13px',
+            }}
+          >
+            {formatCurrency(value)}
+          </span>
+          <span
+            className="mobile-qty"
+            style={{
+              fontSize: '10px',
+              color: token.colorTextSecondary,
+              fontFamily: 'monospace',
+            }}
+          >
+            {formatQuantity(record.total_qty)}
+          </span>
+        </div>
       ),
     },
   ];
