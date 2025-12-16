@@ -8,6 +8,9 @@ import ManualSection from './components/ManualSection';
 import type { ManualSectionContent } from './components/ManualSection';
 import FaqSection from './components/FaqSection';
 import type { ManualFaqItem } from './components/FaqSection';
+import OrdersManual from './components/OrdersManual';
+import FinanceManual from './components/FinanceManual';
+import './UserManual.css';
 
 const { Paragraph } = Typography;
 
@@ -21,6 +24,8 @@ const ManualsPage = () => {
     () => [
       { key: 'gettingStarted', label: t('manuals.nav.gettingStarted') },
       { key: 'concepts', label: t('manuals.nav.concepts') },
+      { key: 'orders', label: '📦 ' + t('manuals.nav.orders', 'Buyurtmalar (Orders)') },
+      { key: 'finance', label: '💰 ' + t('manuals.nav.finance', 'Moliya (Finance)') },
       { key: 'admin', label: t('manuals.nav.admin') },
       { key: 'director', label: t('manuals.nav.director') },
       { key: 'accountant', label: t('manuals.nav.accountant') },
@@ -41,6 +46,20 @@ const ManualsPage = () => {
   const activeSection =
     activeKey === 'faq' ? undefined : sections?.[activeKey as keyof ManualSections] ?? sections?.[defaultKey];
 
+  // Render content based on active key
+  const renderContent = () => {
+    switch (activeKey) {
+      case 'orders':
+        return <OrdersManual />;
+      case 'finance':
+        return <FinanceManual />;
+      case 'faq':
+        return <FaqSection faq={faq} title={t('manuals.nav.faq')} />;
+      default:
+        return <ManualSection section={activeSection} />;
+    }
+  };
+
   return (
     <section className="page-wrapper space-y-6">
       <header className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/60">
@@ -58,8 +77,7 @@ const ManualsPage = () => {
             <ManualSidebar items={navItems} activeKey={activeKey} onChange={setActiveKey} compact />
           )}
 
-          {activeKey !== 'faq' && <ManualSection section={activeSection} />}
-          <FaqSection faq={faq} title={t('manuals.nav.faq')} />
+          {renderContent()}
         </div>
       </div>
     </section>
