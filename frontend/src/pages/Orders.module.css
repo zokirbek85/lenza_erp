@@ -90,7 +90,7 @@
 
 /* Dark mode low stock styling */
 :global(.dark) .lowStockOption {
-  color: #FF8A8A !important;
+  color: #FFA5A5 !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }
@@ -105,7 +105,7 @@
 
 :global(.dark .ant-select-item-option) .lowStockOption,
 :global(.dark .ant-select-item-option-content) .lowStockOption {
-  color: #FF8A8A !important;
+  color: #FFA5A5 !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }
@@ -120,7 +120,7 @@
 
 :global(.dark .ant-select-selection-item) .lowStockOption,
 :global(.dark .ant-select-selector) .low-stock-product {
-  color: #FF8A8A !important;
+  color: #FFA5A5 !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }

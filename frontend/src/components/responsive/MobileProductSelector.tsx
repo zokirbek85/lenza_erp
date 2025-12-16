@@ -180,6 +180,8 @@ const MobileProductSelector = ({
                 ? `${cleanName(product.name)} — ${product.size}`
                 : cleanName(product.name);
 
+              const isDarkMode = document.documentElement.classList.contains('dark');
+
               return (
                 <button
                   key={product.id}
@@ -194,10 +196,10 @@ const MobileProductSelector = ({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 
+                      <h3
                         className={isNegativeStock ? '' : 'font-semibold text-slate-900 dark:text-white'}
-                        style={isNegativeStock ? { 
-                          color: '#FF8A8A',
+                        style={isNegativeStock ? {
+                          color: isDarkMode ? '#FFA5A5' : '#FF6B6B',
                           fontStyle: 'italic',
                           fontWeight: 400
                         } : { fontWeight: 600 }}

@@ -1354,26 +1354,30 @@ const OrdersPage = () => {
                                 className: isNegativeStock ? styles.lowStockOption : '',
                               };
                             })}
-                            optionRender={(option) => (
-                              <span
-                                className={option.data.isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
-                                style={option.data.isNegativeStock ? {
-                                  color: '#FF8A8A',
-                                  fontStyle: 'italic',
-                                  fontWeight: 400
-                                } : undefined}
-                              >
-                                {option.label}
-                              </span>
-                            )}
+                            optionRender={(option) => {
+                              const isDarkMode = document.documentElement.classList.contains('dark');
+                              return (
+                                <span
+                                  className={option.data.isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
+                                  style={option.data.isNegativeStock ? {
+                                    color: isDarkMode ? '#FFA5A5' : '#FF6B6B',
+                                    fontStyle: 'italic',
+                                    fontWeight: 400
+                                  } : undefined}
+                                >
+                                  {option.label}
+                                </span>
+                              );
+                            }}
                             labelRender={(props) => {
                               const product = filteredProducts.find(p => String(p.id) === props.value);
                               const isNegativeStock = product && (product.stock_ok ?? 0) < 0;
+                              const isDarkMode = document.documentElement.classList.contains('dark');
                               return (
                                 <span
                                   className={isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
                                   style={isNegativeStock ? {
-                                    color: '#FF8A8A',
+                                    color: isDarkMode ? '#FFA5A5' : '#FF6B6B',
                                     fontStyle: 'italic',
                                     fontWeight: 400
                                   } : undefined}
