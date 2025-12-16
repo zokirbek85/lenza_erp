@@ -16,6 +16,7 @@ import KpiCard from '../../components/KpiCard';
 import {
   TopProductsCard,
   TopDealersCard,
+  TopDealersByAvgCheckCard,
   RegionProductHeatmap,
 } from '../../components/analytics';
 import DebtTrendChart from '../../components/DebtTrendChart';
@@ -30,9 +31,11 @@ import {
   fetchTopProducts,
   fetchRegionProducts,
   fetchTopDealers,
+  fetchTopDealersByAvgCheck,
   type TopProductItem,
   type RegionProductItem,
   type TopDealerItem,
+  type TopDealerByAvgCheckItem,
   fetchDebtAnalytics,
 } from '../../services/dashboardService';
 import type { DebtAnalytics } from '../../types/dashboard';
@@ -44,6 +47,7 @@ interface DashboardData {
   topProducts: TopProductItem[];
   regionProducts: RegionProductItem[];
   topDealers: TopDealerItem[];
+  topDealersByAvgCheck: TopDealerByAvgCheckItem[];
   debtAnalytics: DebtAnalytics | null;
 }
 
@@ -73,6 +77,7 @@ const DashboardPage = () => {
     topProducts: [],
     regionProducts: [],
     topDealers: [],
+    topDealersByAvgCheck: [],
     debtAnalytics: null,
   });
   const [loading, setLoading] = useState(false);
@@ -91,7 +96,7 @@ const DashboardPage = () => {
         categories: effectiveFilters.categories?.length ? effectiveFilters.categories.join(',') : undefined,
       };
 
-      const [summary, inventory, topProducts, regionProducts, topDealers, debtAnalytics] = await Promise.all([
+      const [summary, inventory, topProducts, regionProducts, topDealers, topDealersByAvgCheck, debtAnalytics] = await Promise.all([
         fetchDashboardSummary(effectiveFilters).catch(() => ({
           total_sales: 0,
           total_payments: 0,
@@ -113,6 +118,10 @@ const DashboardPage = () => {
         fetchTopProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchRegionProducts(analyticsFilters).catch(() => ({ data: [] })),
         fetchTopDealers(analyticsFilters).catch(() => ({ data: [] })),
+        fetchTopDealersByAvgCheck({
+          date_from: analyticsFilters.start_date,
+          date_to: analyticsFilters.end_date,
+        }).catch(() => ({ data: { dealers: [] } })),
         fetchDebtAnalytics('daily').catch(() => ({ data: { total_debt: 0, by_dealers: [], by_regions: [], monthly: [], daily: [] } })),
       ]);
 
@@ -122,6 +131,7 @@ const DashboardPage = () => {
         topProducts: Array.isArray(topProducts?.data) ? topProducts.data : [],
         regionProducts: Array.isArray(regionProducts?.data) ? regionProducts.data : [],
         topDealers: Array.isArray(topDealers?.data) ? topDealers.data : [],
+        topDealersByAvgCheck: Array.isArray(topDealersByAvgCheck?.data?.dealers) ? topDealersByAvgCheck.data.dealers : [],
         debtAnalytics: debtAnalytics?.data ?? null,
       };
 
@@ -266,6 +276,11 @@ const DashboardPage = () => {
         {/* Row 5: Top Dealers - Full Width */}
         <div className="dashboard-card dealers-card">
           <TopDealersCard data={data.topDealers} loading={loading} />
+        </div>
+
+        {/* Row 6: Top Dealers by Average Check - Full Width */}
+        <div className="dashboard-card dealers-avg-check-card">
+          <TopDealersByAvgCheckCard data={data.topDealersByAvgCheck} loading={loading} />
         </div>
       </div>
     </div>

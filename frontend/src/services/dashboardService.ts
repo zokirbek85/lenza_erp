@@ -272,6 +272,13 @@ export interface TopDealerItem {
   orders_count: number;
 }
 
+export interface TopDealerByAvgCheckItem {
+  dealer_id: number;
+  dealer_name: string;
+  orders_count: number;
+  average_check: number;
+}
+
 export interface AnalyticsFilters {
   start_date?: string;
   end_date?: string;
@@ -326,6 +333,18 @@ export const fetchTopDealers = async (filters: AnalyticsFilters = {}) => {
   const params = buildAnalyticsParams(filters);
   const url = `/analytics/top-dealers/?${params.toString()}`;
   return http.get<TopDealerItem[]>(url);
+};
+
+export const fetchTopDealersByAvgCheck = async (filters: {
+  date_from?: string;
+  date_to?: string;
+} = {}) => {
+  const params = new URLSearchParams();
+  if (filters.date_from) params.append('date_from', filters.date_from);
+  if (filters.date_to) params.append('date_to', filters.date_to);
+
+  const url = `/dashboard/top-dealers-avg-check/?${params.toString()}`;
+  return http.get<{ dealers: TopDealerByAvgCheckItem[] }>(url);
 };
 
 // Dashboard Layout API

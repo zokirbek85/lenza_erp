@@ -43,6 +43,7 @@ from core.views import (
     SearchView,
     SystemBackupView,
     SystemConfigView,
+    TopDealersByAverageCheckView,
     UserManualViewSet,
     HealthCheckView,
 )
@@ -126,6 +127,7 @@ urlpatterns = [
     # Dashboard summary
     path('api/dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
     path('api/dashboard/debt-analytics/', DebtAnalyticsView.as_view(), name='dashboard-debt-analytics'),
+    path('api/dashboard/top-dealers-avg-check/', TopDealersByAverageCheckView.as_view(), name='dashboard-top-dealers-avg-check'),
     path('api/dashboard/layout/', DashboardLayoutView.as_view(), name='dashboard-layout'),
     path('api/health/', HealthCheckView.as_view(), name='health-check'),
     path('api/orders/<int:pk>/invoice/', OrderInvoiceView.as_view(), name='order-invoice'),

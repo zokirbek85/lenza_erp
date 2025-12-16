@@ -30,6 +30,7 @@ from .serializers import (
     CompanyInfoSerializer,
     DashboardSummarySerializer,
     DebtAnalyticsSerializer,
+    TopDealersByAverageCheckSerializer,
     UserManualSerializer,
 )
 from .utils.backup import create_backup, get_latest_backup
@@ -373,6 +374,87 @@ class UserManualViewSet(viewsets.ModelViewSet):
         if role:
             return UserManual.objects.filter(role=role)
         return UserManual.objects.none()
+
+
+class TopDealersByAverageCheckView(APIView):
+    """
+    TOP-10 dillerlar o'rtacha chek summasi bo'yicha.
+
+    O'rtacha chek = jami buyurtma summasi / buyurtmalar soni
+    Faqat yakunlangan (completed/shipped/delivered) buyurtmalar
+    Qaytarilgan summalar ayiriladi
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = getattr(user, 'role', None)
+        allowed_roles = {'admin', 'owner', 'accountant', 'sales'}
+
+        if not (getattr(user, 'is_superuser', False) or role in allowed_roles):
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Get date filters from request
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+
+        # Default to current month if no dates provided
+        if not date_from or not date_to:
+            today = timezone.now().date()
+            date_from = today.replace(day=1)
+            date_to = today
+
+        # Filter orders by date and status
+        order_filter = Q(
+            created_at__date__gte=date_from,
+            created_at__date__lte=date_to,
+            status__in=[Order.Status.SHIPPED, Order.Status.DELIVERED],
+            is_imported=False
+        )
+
+        # Apply role-based filtering
+        dealer_qs = Dealer.objects.all()
+        if role == 'sales' and not getattr(user, 'is_superuser', False):
+            dealer_qs = dealer_qs.filter(manager_user=user)
+            order_filter &= Q(dealer__manager_user=user)
+
+        # Aggregate data per dealer
+        dealers_data = (
+            dealer_qs
+            .annotate(
+                total_orders=Count('orders', filter=order_filter),
+                total_amount=Coalesce(
+                    Sum('orders__total_usd', filter=order_filter),
+                    Value(Decimal('0'), output_field=DecimalField(max_digits=20, decimal_places=2))
+                ),
+                total_returns=Coalesce(
+                    Sum('orders__returns__amount_usd', filter=order_filter & Q(orders__returns__isnull=False)),
+                    Value(Decimal('0'), output_field=DecimalField(max_digits=20, decimal_places=2))
+                )
+            )
+            .filter(total_orders__gt=0)  # Only dealers with orders
+            .values('id', 'name', 'total_orders', 'total_amount', 'total_returns')
+        )
+
+        # Calculate average check and prepare data
+        dealers_list = []
+        for dealer in dealers_data:
+            net_amount = dealer['total_amount'] - dealer['total_returns']
+            avg_check = net_amount / dealer['total_orders'] if dealer['total_orders'] > 0 else Decimal('0')
+
+            dealers_list.append({
+                'dealer_id': dealer['id'],
+                'dealer_name': dealer['name'],
+                'orders_count': dealer['total_orders'],
+                'average_check': float(avg_check)
+            })
+
+        # Sort by average check (descending) and get top 10
+        dealers_list.sort(key=lambda x: x['average_check'], reverse=True)
+        top_10 = dealers_list[:10]
+
+        serializer = TopDealersByAverageCheckSerializer({'dealers': top_10})
+        return Response(serializer.data)
 
 
 class HealthCheckView(APIView):

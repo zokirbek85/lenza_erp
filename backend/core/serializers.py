@@ -46,6 +46,17 @@ class DebtAnalyticsSerializer(serializers.Serializer):
     monthly = MonthlyDebtSerializer(many=True)
 
 
+class TopDealerSerializer(serializers.Serializer):
+    dealer_id = serializers.IntegerField()
+    dealer_name = serializers.CharField()
+    orders_count = serializers.IntegerField()
+    average_check = serializers.FloatField()
+
+
+class TopDealersByAverageCheckSerializer(serializers.Serializer):
+    dealers = TopDealerSerializer(many=True)
+
+
 class DashboardSummarySerializer(serializers.Serializer):
     total_sales = serializers.DecimalField(max_digits=18, decimal_places=2)
     total_payments = serializers.DecimalField(max_digits=18, decimal_places=2)

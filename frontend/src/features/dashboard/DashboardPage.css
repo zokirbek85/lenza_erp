@@ -295,6 +295,25 @@
   }
 }
 
+/* ===== ROW 6: TOP DEALERS BY AVG CHECK (Full Width) ===== */
+.dealers-avg-check-card {
+  grid-column: span 4;
+  min-height: 450px;
+}
+
+@media (max-width: 1400px) {
+  .dealers-avg-check-card {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .dealers-avg-check-card {
+    grid-column: span 1;
+    min-height: 400px;
+  }
+}
+
 /* ===== NESTED ANT DESIGN CARDS ===== */
 .dashboard-card .ant-card {
   border-radius: 12px;
