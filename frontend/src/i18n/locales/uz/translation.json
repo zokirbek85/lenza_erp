@@ -881,7 +881,11 @@
     "recentRefunds": "So'nggi qaytarishlar (Dilerga)",
     "confirmDelete": "{{name}} dilerni o'chirishni xohlaysizmi?",
     "filters": {
-      "allRegions": "Barcha hududlar"
+      "allRegions": "Barcha hududlar",
+      "region": "Hudud",
+      "title": "Filtrlar",
+      "startDate": "Boshlanish sanasi",
+      "endDate": "Tugash sanasi"
     },
     "table": {
       "dealer": "Diler",
@@ -937,6 +941,8 @@
       "deleteError": "Dilerni o'chirishda xatolik",
       "loadHistoryError": "Tarixni yuklashda xatolik",
       "exportError": "Eksport qilishda xatolik",
+      "pdfExportSuccess": "PDF muvaffaqiyatli yuklandi",
+      "pdfExportError": "PDF yuklashda xatolik",
       "importError": "Import qilishda xatolik",
       "importSuccess": "Dilerlar muvaffaqiyatli import qilindi",
       "templateError": "Shablonni yuklashda xatolik",

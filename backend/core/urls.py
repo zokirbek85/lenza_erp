@@ -50,6 +50,7 @@ from core.views import (
 from dealers.views import (
     DealerBalancePDFView,
     DealerExportExcelView,
+    DealerExportPDFView,
     DealerImportExcelView,
     DealerImportTemplateView,
     DealerReconciliationExcelView,
@@ -161,6 +162,7 @@ urlpatterns = [
     path('api/orders/report', OrderViewSet.as_view({'get': 'report'})),
     path('api/dealers/balance/pdf/', DealerBalancePDFView.as_view(), name='dealer-balance-pdf'),
     path('api/dealers/export/excel/', DealerExportExcelView.as_view(), name='dealers-export-excel'),
+    path('api/dealers/export/pdf/', DealerExportPDFView.as_view(), name='dealers-export-pdf'),
     path('api/dealers/import/excel/', DealerImportExcelView.as_view(), name='dealers-import-excel'),
     path('api/dealers/import/template/', DealerImportTemplateView.as_view(), name='dealers-import-template'),
     path('api/dealers/<int:pk>/reconciliation/', DealerReconciliationView.as_view(), name='dealer-reconciliation'),

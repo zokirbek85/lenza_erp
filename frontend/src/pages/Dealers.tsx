@@ -135,7 +135,22 @@ const DealersPage = () => {
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
-  const [filter, setFilter] = useState({ region_id: '' });
+  
+  // Default to current month
+  const getDefaultDates = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return {
+      start_date: firstDay.toISOString().split('T')[0],
+      end_date: lastDay.toISOString().split('T')[0],
+    };
+  };
+  
+  const [filter, setFilter] = useState({ 
+    region_id: '', 
+    ...getDefaultDates() 
+  });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -233,8 +248,8 @@ const DealersPage = () => {
     }
   }, [total, pageSize, page]);
 
-  const handleFilterChange = (value: string) => {
-    setFilter({ region_id: value });
+  const handleFilterChange = (field: string, value: string) => {
+    setFilter(prev => ({ ...prev, [field]: value }));
     setPage(1);
   };
 
@@ -408,6 +423,20 @@ const DealersPage = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const params = new URLSearchParams({
+        start_date: filter.start_date,
+        end_date: filter.end_date,
+      });
+      await downloadFile(`/dealers/export/pdf/?${params.toString()}`, 'dealers_report.pdf');
+      toast.success(t('dealers.messages.pdfExportSuccess'));
+    } catch (error) {
+      console.error(error);
+      toast.error(t('dealers.messages.pdfExportError'));
+    }
+  };
+
   const handleTemplateDownload = async () => {
     try {
       await downloadFile('/dealers/import/template/', 'dealers_import_template.xlsx');
@@ -476,11 +505,33 @@ const DealersPage = () => {
         </label>
         <Select
           value={filter.region_id}
-          onChange={(val) => handleFilterChange(String(val))}
+          onChange={(val) => handleFilterChange('region_id', String(val))}
           className="mt-1 w-full"
           options={[{ label: t('dealers.filters.allRegions'), value: '' }, ...regions.map(r => ({ label: r.name, value: String(r.id) }))]}
           placeholder={t('dealers.filters.allRegions')}
           allowClear
+        />
+      </div>
+      <div>
+        <label className="text-label">
+          {t('dealers.filters.startDate', 'Boshlanish sanasi')}
+        </label>
+        <input
+          type="date"
+          value={filter.start_date}
+          onChange={(e) => handleFilterChange('start_date', e.target.value)}
+          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+        />
+      </div>
+      <div>
+        <label className="text-label">
+          {t('dealers.filters.endDate', 'Tugash sanasi')}
+        </label>
+        <input
+          type="date"
+          value={filter.end_date}
+          onChange={(e) => handleFilterChange('end_date', e.target.value)}
+          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white"
         />
       </div>
     </div>
@@ -549,14 +600,41 @@ const DealersPage = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">{t('dealers.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex gap-2">
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1">{t('dealers.filters.startDate', 'Boshlanish')}</label>
+                <input
+                  type="date"
+                  value={filter.start_date}
+                  onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                  className="px-2 py-1 text-sm border border-gray-300 rounded-md dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-500 mb-1">{t('dealers.filters.endDate', 'Tugash')}</label>
+                <input
+                  type="date"
+                  value={filter.end_date}
+                  onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                  className="px-2 py-1 text-sm border border-gray-300 rounded-md dark:bg-slate-800 dark:border-slate-600 dark:text-white"
+                />
+              </div>
+            </div>
             <Select
               value={filter.region_id}
-              onChange={(val) => handleFilterChange(String(val))}
+              onChange={(val) => handleFilterChange('region_id', String(val))}
               style={{ width: 200 }}
               options={[{ label: t('dealers.filters.allRegions'), value: '' }, ...regions.map(r => ({ label: r.name, value: String(r.id) }))]}
               placeholder={t('dealers.filters.allRegions')}
               allowClear
             />
+            <button
+              onClick={handleExportPDF}
+              className="btn btn-ghost btn-sm"
+              title={t('dealers.exportPdf', 'PDF yuklab olish')}
+            >
+              📄 PDF
+            </button>
             <button
               onClick={handleTemplateDownload}
               className="btn btn-ghost btn-sm"

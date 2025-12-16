@@ -1,0 +1,134 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { 
+        font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif; 
+        font-size: 10px; 
+        margin: 20px; 
+      }
+      .header { 
+        display: flex; 
+        align-items: center; 
+        margin-bottom: 10px; 
+      }
+      .logo { 
+        height: 40px; 
+        margin-right: 10px; 
+      }
+      h1 { 
+        text-align: center; 
+        font-size: 16px;
+        margin: 10px 0;
+      }
+      .period {
+        text-align: center;
+        font-size: 11px;
+        color: #555;
+        margin-bottom: 15px;
+      }
+      table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-top: 10px; 
+        font-size: 9px;
+      }
+      th, td { 
+        border: 1px solid #999; 
+        padding: 4px 6px; 
+        text-align: left; 
+      }
+      th { 
+        background: #e8e8e8; 
+        font-weight: 700;
+        font-size: 8px;
+      }
+      .text-right { 
+        text-align: right; 
+      }
+      .text-center { 
+        text-align: center; 
+      }
+      .footer { 
+        margin-top: 20px; 
+        text-align: center; 
+        font-size: 8px; 
+        color: #666; 
+      }
+      .positive {
+        color: #d32f2f;
+      }
+      .negative {
+        color: #388e3c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img src="{{ company_logo }}" class="logo"/>
+      <div>
+        <div style="font-weight:700; font-size:14px;">{{ company_name }}</div>
+        <div style="font-size:9px; color:#555;">{{ company_slogan }}</div>
+        <div style="font-size:8px;">{{ company_address }}{% if company_phone %} | {{ company_phone }}{% endif %}</div>
+      </div>
+    </div>
+    
+    <h1>{% trans 'Dealers Financial Report' %}</h1>
+    <div class="period">
+      {% trans 'Period' %}: {{ start_date }} – {{ end_date }}
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 30px;">№</th>
+          <th style="width: 120px;">{% trans 'Dealer Name' %}</th>
+          <th class="text-right" style="width: 70px;">{% trans 'Opening Balance' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 70px;">{% trans 'Orders' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 70px;">{% trans 'Returns' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 60px;">{% trans 'Cash' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 60px;">{% trans 'Card' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 60px;">{% trans 'Bank' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 70px;">{% trans 'Total Payments' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 60px;">{% trans 'Refunds' %}<br/>(USD)</th>
+          <th class="text-right" style="width: 70px;">{% trans 'Final Debt' %}<br/>(USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in dealers_data %}
+        <tr>
+          <td class="text-center">{{ item.index }}</td>
+          <td>{{ item.dealer.name }}</td>
+          <td class="text-right">{% if item.opening_balance != '0.00' %}{{ item.opening_balance }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.orders_sum != '0.00' %}{{ item.orders_sum }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.returns_sum != '0.00' %}{{ item.returns_sum }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.cash_income != '0.00' %}{{ item.cash_income }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.card_income != '0.00' %}{{ item.card_income }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.bank_income != '0.00' %}{{ item.bank_income }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.total_income != '0.00' %}{{ item.total_income }}{% else %}—{% endif %}</td>
+          <td class="text-right">{% if item.refunds != '0.00' %}{{ item.refunds }}{% else %}—{% endif %}</td>
+          <td class="text-right {% if item.final_debt_raw > 0 %}positive{% elif item.final_debt_raw < 0 %}negative{% endif %}">
+            {% if item.final_debt != '0.00' %}{{ item.final_debt }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="11" class="text-center">{% trans 'No data available for selected period' %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+    <div class="footer">
+      <p>{% trans 'Generated' %}: {{ generated_date }}</p>
+      <p style="margin-top: 5px; font-size: 7px; color: #999;">
+        {% trans 'Formula' %}: Opening Balance + Orders - Returns - Payments + Refunds = Final Debt<br/>
+        {% trans 'Positive debt (red) = dealer owes money' %} | 
+        {% trans 'Negative debt (green) = overpayment by dealer' %}
+      </p>
+      <p style="margin-top: 8px;">{{ company_name }} | {{ company_address }}</p>
+    </div>
+  </body>
+</html>
