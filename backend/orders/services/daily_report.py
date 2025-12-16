@@ -317,8 +317,8 @@ class DailyFinancialReportService:
                 'card_payments': payment_summary['card_payments'],
                 'bank_payments': payment_summary['bank_payments'],
                 'total_usd': float(
-                    payment_summary['cash_usd'] +
-                    payment_summary['cash_uzs_usd_equivalent'] +
+                    float(payment_summary['cash_usd']) +
+                    float(payment_summary['cash_uzs_usd_equivalent']) +
                     sum(p['amount_usd'] for p in payment_summary['card_payments']) +
                     sum(p['amount_usd'] for p in payment_summary['bank_payments'])
                 ),
