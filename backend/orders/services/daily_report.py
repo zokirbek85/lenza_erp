@@ -281,13 +281,19 @@ class DailyFinancialReportService:
         )
 
         # 5. Umumiy qarzdorlik (barcha dillerlar)
+        # Balance musbat bo'lsa - diller to'lagan (bizning qarzdorligimiz)
+        # Balance manfiy bo'lsa - diller qarzdor (biz undan olishimiz kerak)
+        # Shuning uchun qarzdorlikni ko'rsatish uchun balansni teskari qilamiz
         from dealers.services.balance import annotate_dealers_with_balances
         all_dealers = Dealer.objects.filter(is_active=True)
         dealers_with_balances = annotate_dealers_with_balances(all_dealers)
 
-        total_debt = dealers_with_balances.aggregate(
+        total_balance = dealers_with_balances.aggregate(
             total_balance_usd=Coalesce(Sum('calculated_balance_usd'), Decimal('0'), output_field=DecimalField())
         )
+        
+        # Qarzdorlik = -balance (manfiy balans = musbat qarz)
+        total_debt_usd = -float(total_balance['total_balance_usd'])
 
         # 6. Ombor holati
         warehouse_stats = Product.objects.aggregate(
@@ -340,7 +346,7 @@ class DailyFinancialReportService:
 
             # Umumiy holat
             'overall': {
-                'total_dealers_debt_usd': float(total_debt['total_balance_usd']),
+                'total_dealers_debt_usd': total_debt_usd,
                 'warehouse_total_quantity': float(warehouse_stats['total_quantity']),
                 'warehouse_total_value_usd': float(warehouse_stats['total_value_usd']),
             },
