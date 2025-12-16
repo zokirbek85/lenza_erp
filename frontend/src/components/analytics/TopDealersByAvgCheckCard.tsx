@@ -20,7 +20,8 @@ const TopDealersByAvgCheckCard = ({ data, loading = false }: TopDealersByAvgChec
     {
       title: '#',
       key: 'rank',
-      width: 50,
+      width: 40,
+      responsive: ['sm'] as any,
       render: (_: any, __: any, index: number) => (
         <span style={{
           color: token.colorTextSecondary,
@@ -35,21 +36,44 @@ const TopDealersByAvgCheckCard = ({ data, loading = false }: TopDealersByAvgChec
       dataIndex: 'dealer_name',
       key: 'dealer_name',
       ellipsis: true,
-      render: (name: string) => (
-        <span style={{
-          color: token.colorText,
-          fontWeight: 500,
-        }}>
-          {name}
-        </span>
+      render: (name: string, record: TopDealerByAvgCheckItem, index: number) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              color: token.colorTextSecondary,
+              fontWeight: 500,
+              fontSize: '11px',
+              minWidth: '16px',
+            }} className="mobile-rank">
+              {index + 1}.
+            </span>
+            <span style={{
+              color: token.colorText,
+              fontWeight: 500,
+            }}>
+              {name}
+            </span>
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '11px',
+            color: token.colorTextSecondary,
+            paddingLeft: '22px',
+          }} className="mobile-stats">
+            <span>{record.orders_count} ta</span>
+          </div>
+        </div>
       ),
     },
     {
       title: t('Buyurtmalar'),
       dataIndex: 'orders_count',
       key: 'orders_count',
-      width: 120,
+      width: 100,
       align: 'center',
+      responsive: ['md'] as any,
       render: (count: number) => (
         <span style={{
           color: token.colorTextSecondary,
@@ -63,7 +87,7 @@ const TopDealersByAvgCheckCard = ({ data, loading = false }: TopDealersByAvgChec
       title: t('O\'rtacha chek'),
       dataIndex: 'average_check',
       key: 'average_check',
-      width: 150,
+      width: 140,
       align: 'right',
       render: (value: number) => (
         <span style={{
