@@ -45,17 +45,17 @@ export default function PaymentTrendChart({ data, loading }: PaymentTrendChartPr
       </div>
       {!hasData ? (
         <div style={{
-          height: 130,
+          height: 100,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'rgba(148, 163, 184, 0.6)',
-          fontSize: 12
+          fontSize: 11
         }}>
           Ma'lumot mavjud emas
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={130}>
+        <ResponsiveContainer width="100%" height={100}>
           <LineChart
             data={chartData}
             margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
@@ -73,12 +73,12 @@ export default function PaymentTrendChart({ data, loading }: PaymentTrendChartPr
             />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: 'rgba(148, 163, 184, 0.7)' }}
+              tick={{ fontSize: 8, fill: 'rgba(148, 163, 184, 0.7)' }}
               stroke="rgba(148, 163, 184, 0.2)"
               tickLine={false}
               angle={-45}
               textAnchor="end"
-              height={50}
+              height={40}
               tickFormatter={(value) => {
                 // Format: YYYY-MM-DD -> MM/DD
                 const date = new Date(value);
@@ -86,7 +86,7 @@ export default function PaymentTrendChart({ data, loading }: PaymentTrendChartPr
               }}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: 'rgba(148, 163, 184, 0.7)' }}
+              tick={{ fontSize: 8, fill: 'rgba(148, 163, 184, 0.7)' }}
               stroke="rgba(148, 163, 184, 0.2)"
               tickLine={false}
               axisLine={false}
@@ -109,9 +109,9 @@ export default function PaymentTrendChart({ data, loading }: PaymentTrendChartPr
               type="monotone"
               dataKey="amount"
               stroke="#eab308"
-              strokeWidth={3}
-              dot={{ fill: '#eab308', r: 4, strokeWidth: 2, stroke: '#1e293b' }}
-              activeDot={{ r: 6, fill: '#eab308', strokeWidth: 2, stroke: '#1e293b' }}
+              strokeWidth={2}
+              dot={{ fill: '#eab308', r: 3, strokeWidth: 1.5, stroke: '#1e293b' }}
+              activeDot={{ r: 5, fill: '#eab308', strokeWidth: 1.5, stroke: '#1e293b' }}
             />
           </LineChart>
         </ResponsiveContainer>

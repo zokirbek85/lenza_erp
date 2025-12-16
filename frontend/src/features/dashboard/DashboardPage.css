@@ -465,7 +465,17 @@
 
   /* Payment Chart */
   .payment-chart-card {
-    min-height: 180px !important;
+    min-height: 150px !important;
+  }
+
+  /* Payment chart title - smaller on mobile */
+  .payment-chart-card .dashboard-card-title {
+    font-size: 12px !important;
+  }
+
+  /* Chart responsive container */
+  .payment-chart-card .recharts-wrapper {
+    font-size: 9px !important;
   }
 
   /* Products Card */
@@ -627,7 +637,12 @@
 
   /* Payment Chart */
   .payment-chart-card {
-    min-height: 160px !important;
+    min-height: 130px !important;
+  }
+
+  /* Even smaller title on phones */
+  .payment-chart-card .dashboard-card-title {
+    font-size: 11px !important;
   }
 
   /* Products */
@@ -726,7 +741,12 @@
   }
 
   .payment-chart-card {
-    min-height: 140px !important;
+    min-height: 120px !important;
+  }
+
+  /* Very small title on smallest phones */
+  .payment-chart-card .dashboard-card-title {
+    font-size: 10px !important;
   }
 
   .products-card {
