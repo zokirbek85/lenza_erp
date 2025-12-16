@@ -405,18 +405,19 @@ class TopDealersByAverageCheckView(APIView):
             date_to = today
 
         # Filter orders by date and status
+        # Note: When using filter parameter in aggregations from Dealer side,
+        # we need to prefix Order fields with 'orders__'
         order_filter = Q(
-            created_at__date__gte=date_from,
-            created_at__date__lte=date_to,
-            status__in=[Order.Status.SHIPPED, Order.Status.DELIVERED],
-            is_imported=False
+            orders__created_at__date__gte=date_from,
+            orders__created_at__date__lte=date_to,
+            orders__status__in=[Order.Status.SHIPPED, Order.Status.DELIVERED],
+            orders__is_imported=False
         )
 
         # Apply role-based filtering
         dealer_qs = Dealer.objects.all()
         if role == 'sales' and not getattr(user, 'is_superuser', False):
             dealer_qs = dealer_qs.filter(manager_user=user)
-            order_filter &= Q(dealer__manager_user=user)
 
         # Aggregate data per dealer
         dealers_data = (
