@@ -1,5 +1,4 @@
 import { Typography, Divider, Space } from 'antd';
-import { useTranslation } from 'react-i18next';
 import AlertBox from './AlertBox';
 import WorkflowSteps from './WorkflowSteps';
 import type { WorkflowStep } from './WorkflowSteps';
@@ -9,7 +8,7 @@ import type { ScenarioStep } from './ExampleScenario';
 const { Title, Paragraph, Text } = Typography;
 
 const OrdersManual = () => {
-  // const { t } = useTranslation(); // Currently not used
+  // Translation hook removed as it's currently not used
 
   const orderCreationSteps: WorkflowStep[] = [
     {
