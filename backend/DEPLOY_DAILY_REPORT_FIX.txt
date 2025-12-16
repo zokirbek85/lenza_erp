@@ -1,0 +1,15 @@
+﻿# SSH into your VPS and run these commands:
+
+ssh root@erp.lenza.uz
+
+# Once logged in, run:
+cd /opt/lenza_erp
+git pull origin main
+sudo systemctl restart lenza_erp.service
+sudo systemctl status lenza_erp.service
+
+# Or if using Docker:
+cd /opt/lenza_erp
+git pull origin main
+docker-compose restart backend
+docker-compose logs -f backend
