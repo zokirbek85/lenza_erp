@@ -453,7 +453,8 @@ class TopDealersByAverageCheckView(APIView):
         dealers_list.sort(key=lambda x: x['average_check'], reverse=True)
         top_10 = dealers_list[:10]
 
-        serializer = TopDealersByAverageCheckSerializer({'dealers': top_10})
+        serializer = TopDealersByAverageCheckSerializer(data={'dealers': top_10})
+        serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
 
 
