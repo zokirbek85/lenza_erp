@@ -40,9 +40,16 @@ class ExportMixin:
             },
         )
         HTML = get_weasyprint_html()
+        
+        # Try to get base URL, fallback to None if it fails
+        try:
+            base_url = request.build_absolute_uri('/')
+        except Exception:
+            base_url = None
+            
         pdf_bytes = HTML(
             string=html,
-            base_url=request.build_absolute_uri('/'),
+            base_url=base_url,
             encoding='utf-8'
         ).write_pdf()
         response = HttpResponse(pdf_bytes, content_type='application/pdf; charset=utf-8')
@@ -77,13 +84,22 @@ class ExportMixin:
         
         # For QR code, link to frontend verification page (not API endpoint)
         # Frontend will make API call to fetch data
-        base_url = request.build_absolute_uri('/')
+        try:
+            base_url = request.build_absolute_uri('/')
+        except Exception:
+            # Fallback to relative URLs if build_absolute_uri fails
+            from django.conf import settings
+            base_url = getattr(settings, 'SITE_URL', 'https://erp.lenza.uz/')
+            
         if doc_type == 'order':
             verify_url = f"{base_url.rstrip('/')}/verify/order/{doc_id}/"
         elif doc_type == 'reconciliation':
             verify_url = f"{base_url.rstrip('/')}/verify/reconciliation/{doc_id}/"
         else:
-            verify_url = request.build_absolute_uri(reverse('verify-document', args=[doc_type, doc_id]))
+            try:
+                verify_url = request.build_absolute_uri(reverse('verify-document', args=[doc_type, doc_id]))
+            except Exception:
+                verify_url = f"{base_url.rstrip('/')}{reverse('verify-document', args=[doc_type, doc_id])}"
         
         qr_code = self._build_qr_code(verify_url)
 
@@ -97,9 +113,16 @@ class ExportMixin:
             },
         )
         HTML = get_weasyprint_html()
+        
+        # Try to get base URL for PDF rendering, fallback to None if it fails
+        try:
+            pdf_base_url = request.build_absolute_uri('/')
+        except Exception:
+            pdf_base_url = None
+            
         pdf_bytes = HTML(
             string=html,
-            base_url=request.build_absolute_uri('/'),
+            base_url=pdf_base_url,
             encoding='utf-8'
         ).write_pdf()
         filename = f"{filename_prefix}.pdf"

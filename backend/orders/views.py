@@ -378,10 +378,11 @@ class DailyReportPDFView(APIView, ExportMixin):
             report_data = service.generate_report()
 
             # Company information
+            # Use relative path for logo, as WeasyPrint will resolve it with base_url
             company_context = {
                 'company_name': 'LENZA',
                 'company_slogan': 'Premium Door Systems',
-                'company_logo': request.build_absolute_uri('/static/logo.png'),
+                'company_logo': '/static/logo.png',  # Relative path
                 'current_datetime': timezone.now(),
             }
 
@@ -402,7 +403,9 @@ class DailyReportPDFView(APIView, ExportMixin):
             )
 
         except Exception as e:
+            import traceback
             return Response({
                 'error': 'PDF yaratishda xatolik yuz berdi',
-                'message': str(e)
+                'message': str(e),
+                'traceback': traceback.format_exc()
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
