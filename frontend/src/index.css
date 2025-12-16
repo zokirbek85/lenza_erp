@@ -1018,21 +1018,34 @@ body {
    NEGATIVE STOCK STYLING FOR ORDER CREATION
    ========================================================================== */
 
-/* Force styling for negative stock products in Select dropdowns */
-.ant-select-item-option[data-negative-stock="true"],
-.ant-select-item-option[data-negative-stock="true"] .ant-select-item-option-content,
-.ant-select-item-option .low-stock-product {
-  color: #FF8A8A !important;
+/* Force styling for negative stock products in Select dropdowns - Light Mode */
+html:not(.dark) .ant-select-item-option .low-stock-product,
+html:not(.dark) .ant-select-item-option-content .low-stock-product,
+html:not(.dark) .ant-select-selection-item .low-stock-product,
+html:not(.dark) .ant-select-selector .low-stock-product {
+  color: #FF6B6B !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }
 
-/* Light theme override */
-html:not(.dark) .ant-select-item-option .low-stock-product {
-  color: #FF6B6B !important;
+/* Force styling for negative stock products in Select dropdowns - Dark Mode */
+.dark .ant-select-item-option .low-stock-product,
+.dark .ant-select-item-option-content .low-stock-product,
+.dark .ant-select-selection-item .low-stock-product,
+.dark .ant-select-selector .low-stock-product {
+  color: #FFA5A5 !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
 }
 
-/* Ensure specificity override */
-.ant-select-dropdown .ant-select-item-option-content span[style*="color: #FF8A8A"] {
-  color: #FF8A8A !important;
+/* Additional override for inline styles - Dark Mode */
+.dark .ant-select-item-option .low-stock-product[style],
+.dark .ant-select-selection-item .low-stock-product[style] {
+  color: #FFA5A5 !important;
+}
+
+/* Additional override for inline styles - Light Mode */
+html:not(.dark) .ant-select-item-option .low-stock-product[style],
+html:not(.dark) .ant-select-selection-item .low-stock-product[style] {
+  color: #FF6B6B !important;
 }
