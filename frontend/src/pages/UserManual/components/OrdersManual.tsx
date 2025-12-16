@@ -9,7 +9,7 @@ import type { ScenarioStep } from './ExampleScenario';
 const { Title, Paragraph, Text } = Typography;
 
 const OrdersManual = () => {
-  const { t } = useTranslation();
+  // const { t } = useTranslation(); // Currently not used
 
   const orderCreationSteps: WorkflowStep[] = [
     {

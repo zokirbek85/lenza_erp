@@ -57,7 +57,7 @@ const ExampleScenario = ({ title, type = 'common', steps, conclusion }: ExampleS
     >
       <Steps
         direction="vertical"
-        items={steps.map((step, index) => ({
+        items={steps.map((step) => ({
           title: (
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{step.actor}</span>
