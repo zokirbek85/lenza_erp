@@ -470,7 +470,12 @@
 
   /* Products Card */
   .products-card {
-    min-height: 260px !important;
+    min-height: 280px !important;
+  }
+
+  /* Product names - ellipsis for long text */
+  .products-card .ant-table-cell {
+    max-width: 180px;
   }
 
   /* Debt & Region Cards */
@@ -478,6 +483,27 @@
   .region-card {
     min-height: 240px !important;
     height: auto !important;
+  }
+
+  /* Region card - compact product names */
+  .region-card .ant-collapse-content-box {
+    padding: 8px !important;
+  }
+
+  .region-card .ant-collapse-content-box > div > div {
+    padding: 8px !important;
+    flex-wrap: wrap;
+  }
+
+  .region-card .ant-collapse-content-box p {
+    font-size: 11px !important;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   /* Dealers Cards */
@@ -606,13 +632,38 @@
 
   /* Products */
   .products-card {
-    min-height: 240px !important;
+    min-height: 260px !important;
+  }
+
+  /* Product names - smaller max width on mobile */
+  .products-card .ant-table-cell {
+    max-width: 150px;
   }
 
   /* Debt & Region */
   .debt-card,
   .region-card {
     min-height: 220px !important;
+  }
+
+  /* Region card - more compact on small screens */
+  .region-card .ant-collapse-content-box {
+    padding: 6px !important;
+  }
+
+  .region-card .ant-collapse-content-box > div > div {
+    padding: 6px !important;
+    gap: 6px;
+  }
+
+  .region-card .ant-collapse-content-box p {
+    font-size: 10px !important;
+    max-width: 140px;
+  }
+
+  .region-card .ant-collapse-content-box > div > div > div:last-child {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
   }
 
   /* Dealers */
