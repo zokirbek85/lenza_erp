@@ -95,14 +95,16 @@
   font-weight: 400 !important;
 }
 
-/* Global styling for negative stock products in Select dropdown */
-:global(.ant-select-item[data-negative-stock="true"]) {
+/* Additional specificity for Ant Design override */
+:global(.ant-select-item-option) .lowStockOption,
+:global(.ant-select-item-option-content) .lowStockOption {
   color: #FF6B6B !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }
 
-:global(.dark .ant-select-item[data-negative-stock="true"]) {
+:global(.dark .ant-select-item-option) .lowStockOption,
+:global(.dark .ant-select-item-option-content) .lowStockOption {
   color: #FF8A8A !important;
   font-style: italic !important;
   font-weight: 400 !important;

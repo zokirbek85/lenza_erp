@@ -1013,3 +1013,26 @@ body {
   backface-visibility: hidden;
   will-change: auto;
 }
+
+/* ==========================================================================
+   NEGATIVE STOCK STYLING FOR ORDER CREATION
+   ========================================================================== */
+
+/* Force styling for negative stock products in Select dropdowns */
+.ant-select-item-option[data-negative-stock="true"],
+.ant-select-item-option[data-negative-stock="true"] .ant-select-item-option-content,
+.ant-select-item-option .low-stock-product {
+  color: #FF8A8A !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+/* Light theme override */
+html:not(.dark) .ant-select-item-option .low-stock-product {
+  color: #FF6B6B !important;
+}
+
+/* Ensure specificity override */
+.ant-select-dropdown .ant-select-item-option-content span[style*="color: #FF8A8A"] {
+  color: #FF8A8A !important;
+}

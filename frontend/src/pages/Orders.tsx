@@ -1356,7 +1356,12 @@ const OrdersPage = () => {
                             })}
                             optionRender={(option) => (
                               <span 
-                                className={option.data.isNegativeStock ? styles.lowStockOption : ''}
+                                className={option.data.isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
+                                style={option.data.isNegativeStock ? { 
+                                  color: '#FF8A8A',
+                                  fontStyle: 'italic',
+                                  fontWeight: 400
+                                } : undefined}
                               >
                                 {option.label}
                               </span>
