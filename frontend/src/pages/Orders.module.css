@@ -109,3 +109,18 @@
   font-style: italic !important;
   font-weight: 400 !important;
 }
+
+/* Style for selected value in Select dropdown */
+:global(.ant-select-selection-item) .lowStockOption,
+:global(.ant-select-selector) .low-stock-product {
+  color: #FF6B6B !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+:global(.dark .ant-select-selection-item) .lowStockOption,
+:global(.dark .ant-select-selector) .low-stock-product {
+  color: #FF8A8A !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}

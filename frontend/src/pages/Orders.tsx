@@ -1355,9 +1355,9 @@ const OrdersPage = () => {
                               };
                             })}
                             optionRender={(option) => (
-                              <span 
+                              <span
                                 className={option.data.isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
-                                style={option.data.isNegativeStock ? { 
+                                style={option.data.isNegativeStock ? {
                                   color: '#FF8A8A',
                                   fontStyle: 'italic',
                                   fontWeight: 400
@@ -1366,6 +1366,22 @@ const OrdersPage = () => {
                                 {option.label}
                               </span>
                             )}
+                            labelRender={(props) => {
+                              const product = filteredProducts.find(p => String(p.id) === props.value);
+                              const isNegativeStock = product && (product.stock_ok ?? 0) < 0;
+                              return (
+                                <span
+                                  className={isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
+                                  style={isNegativeStock ? {
+                                    color: '#FF8A8A',
+                                    fontStyle: 'italic',
+                                    fontWeight: 400
+                                  } : undefined}
+                                >
+                                  {props.label}
+                                </span>
+                              );
+                            }}
                             placeholder={t('orders.form.productSelectPlaceholder')}
                             allowClear
                           />
