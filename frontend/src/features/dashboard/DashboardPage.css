@@ -362,156 +362,31 @@
   display: none !important;
 }
 
-@media (max-width: 768px) {
-  /* Show mobile elements, hide desktop rank column */
+/* Tablet and smaller (iPad and below) */
+@media (max-width: 1024px) {
+  .dashboard-page {
+    padding: 16px;
+  }
+
+  .dashboard-grid {
+    gap: 16px;
+  }
+}
+
+/* Large phones and small tablets (iPhone Pro Max, small tablets) */
+@media (max-width: 640px) {
+  /* Show mobile elements */
   .mobile-rank,
   .mobile-stats {
     display: flex !important;
   }
 
   .dashboard-page {
-    padding: 12px;
+    padding: 10px;
   }
 
   .dashboard-header {
-    margin-bottom: 12px;
-  }
-
-  .header-title {
-    font-size: 20px;
-  }
-
-  .header-subtitle {
-    font-size: 12px;
-  }
-
-  .dashboard-grid {
-    gap: 12px;
-  }
-
-  .dashboard-card {
-    padding: 12px 14px;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-
-  .dashboard-card:hover {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-  }
-
-  .card-header {
-    margin-bottom: 12px;
-    gap: 8px;
-  }
-
-  .dashboard-card-title {
-    font-size: 14px;
-    line-height: 1.3;
-  }
-
-  .dashboard-icon {
-    font-size: 16px;
-  }
-
-  /* KPI Cards - reduce height */
-  .kpi-card {
-    min-height: 100px !important;
-  }
-
-  .stat-value-large {
-    font-size: 24px;
-  }
-
-  .stat-value-medium {
-    font-size: 18px;
-  }
-
-  .stat-label {
-    font-size: 11px;
-    margin-bottom: 6px;
-  }
-
-  /* Inventory card */
-  .inventory-card {
-    min-height: 140px !important;
-  }
-
-  .inventory-content {
-    gap: 12px;
-    margin-top: 12px;
-  }
-
-  /* Payment Chart */
-  .payment-chart-card {
-    min-height: 240px !important;
-  }
-
-  /* Products Card */
-  .products-card {
-    min-height: 320px !important;
-  }
-
-  /* Debt & Region Cards */
-  .debt-card,
-  .region-card {
-    min-height: 300px !important;
-    height: auto !important;
-  }
-
-  /* Dealers Cards */
-  .dealers-card {
-    min-height: 280px !important;
-  }
-
-  .dealers-avg-check-card {
-    min-height: 300px !important;
-  }
-
-  /* Tables - optimize for mobile */
-  .dashboard-page .ant-table {
-    font-size: 12px;
-  }
-
-  .dashboard-page .ant-table-thead > tr > th {
-    font-size: 11px;
-    padding: 8px 10px;
-  }
-
-  .dashboard-page .ant-table-tbody > tr > td {
-    padding: 8px 10px;
-  }
-
-  /* Nested cards */
-  .dashboard-card .ant-card {
-    border-radius: 8px;
-  }
-
-  .dashboard-card .ant-card-head {
-    padding: 10px 12px;
-    min-height: auto;
-  }
-
-  .dashboard-card .ant-card-head-title {
-    font-size: 13px;
-  }
-
-  .dashboard-card .ant-card-body {
-    padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-page {
-    padding: 8px;
-  }
-
-  .dashboard-grid {
-    gap: 8px;
-  }
-
-  .dashboard-header {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .header-label {
@@ -527,9 +402,19 @@
     font-size: 11px;
   }
 
+  .dashboard-grid {
+    gap: 10px;
+  }
+
   .dashboard-card {
     padding: 10px 12px;
     border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+
+  .dashboard-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: none;
   }
 
   .card-header {
@@ -539,15 +424,16 @@
 
   .dashboard-card-title {
     font-size: 13px;
+    line-height: 1.3;
   }
 
   .dashboard-icon {
     font-size: 14px;
   }
 
-  /* Further reduce KPI cards */
+  /* KPI Cards - compact */
   .kpi-card {
-    min-height: 85px !important;
+    min-height: 80px !important;
   }
 
   .stat-value-large {
@@ -563,9 +449,9 @@
     margin-bottom: 4px;
   }
 
-  /* Inventory */
+  /* Inventory card */
   .inventory-card {
-    min-height: 120px !important;
+    min-height: 110px !important;
   }
 
   .inventory-content {
@@ -575,30 +461,31 @@
 
   /* Payment Chart */
   .payment-chart-card {
-    min-height: 200px !important;
+    min-height: 180px !important;
   }
 
-  /* Products */
+  /* Products Card */
   .products-card {
-    min-height: 280px !important;
-  }
-
-  /* Debt & Region */
-  .debt-card,
-  .region-card {
     min-height: 260px !important;
   }
 
-  /* Dealers */
-  .dealers-card {
+  /* Debt & Region Cards */
+  .debt-card,
+  .region-card {
     min-height: 240px !important;
+    height: auto !important;
+  }
+
+  /* Dealers Cards */
+  .dealers-card {
+    min-height: 220px !important;
   }
 
   .dealers-avg-check-card {
-    min-height: 260px !important;
+    min-height: 240px !important;
   }
 
-  /* Tables - more compact */
+  /* Tables - compact */
   .dashboard-page .ant-table {
     font-size: 11px;
   }
@@ -613,9 +500,14 @@
     padding: 6px 8px;
   }
 
-  /* Nested cards - more compact */
+  /* Nested cards */
+  .dashboard-card .ant-card {
+    border-radius: 6px;
+  }
+
   .dashboard-card .ant-card-head {
     padding: 8px 10px;
+    min-height: auto;
   }
 
   .dashboard-card .ant-card-head-title {
@@ -623,11 +515,179 @@
   }
 
   .dashboard-card .ant-card-body {
-    padding: 10px;
+    padding: 8px;
   }
 
   /* Loading skeleton */
   .dashboard-page .ant-skeleton {
-    padding: 12px;
+    padding: 10px;
+  }
+}
+
+/* Standard phones (iPhone 14, 13, 12, most Android phones) */
+@media (max-width: 430px) {
+  .dashboard-page {
+    padding: 8px;
+  }
+
+  .dashboard-grid {
+    gap: 8px;
+  }
+
+  .dashboard-header {
+    margin-bottom: 8px;
+  }
+
+  .header-label {
+    font-size: 9px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .header-subtitle {
+    font-size: 10px;
+  }
+
+  .dashboard-card {
+    padding: 8px 10px;
+  }
+
+  .card-header {
+    margin-bottom: 8px;
+    gap: 5px;
+  }
+
+  .dashboard-card-title {
+    font-size: 12px;
+  }
+
+  .dashboard-icon {
+    font-size: 13px;
+  }
+
+  /* KPI Cards - very compact */
+  .kpi-card {
+    min-height: 70px !important;
+  }
+
+  .stat-value-large {
+    font-size: 18px;
+  }
+
+  .stat-value-medium {
+    font-size: 14px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    margin-bottom: 3px;
+  }
+
+  /* Inventory */
+  .inventory-card {
+    min-height: 100px !important;
+  }
+
+  .inventory-content {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* Payment Chart */
+  .payment-chart-card {
+    min-height: 160px !important;
+  }
+
+  /* Products */
+  .products-card {
+    min-height: 240px !important;
+  }
+
+  /* Debt & Region */
+  .debt-card,
+  .region-card {
+    min-height: 220px !important;
+  }
+
+  /* Dealers */
+  .dealers-card {
+    min-height: 200px !important;
+  }
+
+  .dealers-avg-check-card {
+    min-height: 220px !important;
+  }
+
+  /* Tables - very compact */
+  .dashboard-page .ant-table {
+    font-size: 10px;
+  }
+
+  .dashboard-page .ant-table-thead > tr > th {
+    font-size: 9px;
+    padding: 5px 6px;
+  }
+
+  .dashboard-page .ant-table-tbody > tr > td {
+    padding: 5px 6px;
+  }
+
+  /* Nested cards */
+  .dashboard-card .ant-card-head {
+    padding: 6px 8px;
+  }
+
+  .dashboard-card .ant-card-head-title {
+    font-size: 11px;
+  }
+
+  .dashboard-card .ant-card-body {
+    padding: 6px;
+  }
+}
+
+/* Small phones (iPhone SE, small Android) */
+@media (max-width: 375px) {
+  .dashboard-page {
+    padding: 6px;
+  }
+
+  .dashboard-grid {
+    gap: 6px;
+  }
+
+  .kpi-card {
+    min-height: 65px !important;
+  }
+
+  .stat-value-large {
+    font-size: 16px;
+  }
+
+  .inventory-card {
+    min-height: 90px !important;
+  }
+
+  .payment-chart-card {
+    min-height: 140px !important;
+  }
+
+  .products-card {
+    min-height: 220px !important;
+  }
+
+  .debt-card,
+  .region-card {
+    min-height: 200px !important;
+  }
+
+  .dealers-card {
+    min-height: 180px !important;
+  }
+
+  .dealers-avg-check-card {
+    min-height: 200px !important;
   }
 }
