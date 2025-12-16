@@ -156,6 +156,8 @@ const OrdersPage = () => {
   const [mobileOrderDetailsOpen, setMobileOrderDetailsOpen] = useState(false);
   const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<Order | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [showDailyReportModal, setShowDailyReportModal] = useState(false);
+  const [dailyReportDate, setDailyReportDate] = useState('');
   const role = useAuthStore((state) => state.role);
   const userId = useAuthStore((state) => state.userId);
   const isWarehouse = role === 'warehouse';
@@ -703,6 +705,31 @@ const OrdersPage = () => {
 
   const handleExcel = () => downloadFile('/orders/export/excel/', 'orders.xlsx');
 
+  const handleOpenDailyReportModal = () => {
+    // Bugungi sanani default qilib qo'yish
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    setDailyReportDate(todayStr);
+    setShowDailyReportModal(true);
+  };
+
+  const handleDailyReportPDF = async () => {
+    try {
+      if (!dailyReportDate) {
+        toast.error(t('orders.dailyReport.selectDate'));
+        return;
+      }
+
+      const filename = `daily_report_${dailyReportDate}.pdf`;
+      await downloadFile(`/orders/daily-report/pdf/?report_date=${dailyReportDate}`, filename);
+      toast.success(t('orders.toast.dailyReportSuccess'));
+      setShowDailyReportModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(t('orders.toast.dailyReportError'));
+    }
+  };
+
   const handleDownloadTemplate = async () => {
     try {
       await downloadFile('/orders/import/template/', 'orders_import_template.xlsx');
@@ -1088,6 +1115,13 @@ const OrdersPage = () => {
                 className="btn btn-ghost btn-sm"
               >
                 {t('actions.exportPdf')}
+              </button>
+              <button
+                onClick={handleOpenDailyReportModal}
+                className="btn btn-secondary btn-sm"
+                title={t('orders.dailyReport.tooltip')}
+              >
+                📊 {t('orders.dailyReport.button')}
               </button>
               <button
                 onClick={handleExcel}
@@ -1637,6 +1671,46 @@ const OrdersPage = () => {
           setPageSize={setPageSize}
         />
       </div>
+
+      {/* Daily Report Date Picker Modal */}
+      {showDailyReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
+              {t('orders.dailyReport.modalTitle')}
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                {t('orders.dailyReport.selectDateLabel')}
+              </label>
+              <input
+                type="date"
+                value={dailyReportDate}
+                onChange={(e) => setDailyReportDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                         bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDailyReportModal(false)}
+                className="btn btn-ghost btn-sm"
+              >
+                {t('actions.cancel')}
+              </button>
+              <button
+                onClick={handleDailyReportPDF}
+                disabled={!dailyReportDate}
+                className="btn btn-primary btn-sm"
+              >
+                📥 {t('orders.dailyReport.download')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

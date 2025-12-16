@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.db.models import Count
 from django.http import FileResponse, HttpResponse
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -10,10 +11,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
 from core.permissions import IsAdmin, IsOwner, IsSales, IsWarehouse, IsAccountant
 from core.utils.exporter import export_orders_to_excel
 from core.mixins.report_mixin import BaseReportMixin
+from core.mixins.export_mixins import ExportMixin
 
 from .models import Order, OrderItem, OrderStatusLog
 from .filters import OrderFilter
@@ -346,5 +349,60 @@ class DailyFinancialReportAPIView(APIView):
         except Exception as e:
             return Response({
                 'error': 'Hisobotni yaratishda xatolik yuz berdi',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DailyReportPDFView(APIView, ExportMixin):
+    """
+    Kunlik orderlar va moliyaviy harakatlar hisobotini PDF formatida export qilish
+
+    GET params:
+    - date: YYYY-MM-DD format (required)
+
+    Returns:
+    - PDF file
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant]
+
+    def get(self, request):
+        # Validate request
+        request_serializer = DailyReportRequestSerializer(data=request.GET)
+        if not request_serializer.is_valid():
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        report_date = request_serializer.validated_data['report_date']
+
+        # Generate report data
+        try:
+            service = DailyFinancialReportService(report_date)
+            report_data = service.generate_report()
+
+            # Company information
+            company_context = {
+                'company_name': 'LENZA',
+                'company_slogan': 'Premium Door Systems',
+                'company_logo': request.build_absolute_uri('/static/logo.png'),
+                'current_datetime': timezone.now(),
+            }
+
+            # Prepare context for PDF template
+            context = {
+                **company_context,
+                'dealers': report_data['dealers'],
+                'summary': report_data['summary'],
+            }
+
+            # Render PDF
+            filename = f"daily_report_{report_date.strftime('%Y-%m-%d')}.pdf"
+            return self.render_pdf_simple(
+                template_path='reports/daily_report.html',
+                context=context,
+                filename=filename,
+                request=request,
+            )
+
+        except Exception as e:
+            return Response({
+                'error': 'PDF yaratishda xatolik yuz berdi',
                 'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

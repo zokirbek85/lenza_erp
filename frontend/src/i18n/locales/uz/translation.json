@@ -1723,6 +1723,14 @@
       "hideForm": "Formani yashirish",
       "panelTitle": "Yangi buyurtma yaratish"
     },
+    "dailyReport": {
+      "button": "Kunlik hisobot",
+      "tooltip": "Kunlik orderlar va moliyaviy harakatlar hisoboti",
+      "modalTitle": "Kunlik hisobot",
+      "selectDateLabel": "Hisobot sanasini tanlang",
+      "selectDate": "Iltimos, sanani tanlang",
+      "download": "Yuklab olish"
+    },
     "filters": {
       "title": "Filtrlash",
       "activeLabel": "Faol",
@@ -1774,6 +1782,8 @@
       "created": "Buyurtma yaratildi",
       "createError": "Buyurtmani yaratishda xatolik yuz berdi",
       "pdfError": "PDF yuklab olinmadi",
+      "dailyReportSuccess": "Kunlik hisobot yuklab olindi",
+      "dailyReportError": "Kunlik hisobotni yuklab olib bo'lmadi",
       "invalidDiscountPercentage": "Chegirma foizi 0 dan 100 gacha bo'lishi kerak",
       "invalidDiscountAmount": "Chegirma summasi manfiy bo'lishi mumkin emas"
     },

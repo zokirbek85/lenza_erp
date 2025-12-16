@@ -88,6 +88,7 @@ from kpis.views import (
 from notifications.views import NotificationViewSet
 from orders.views import (
     DailyFinancialReportAPIView,
+    DailyReportPDFView,
     OrderExportExcelView,
     OrderImportTemplateView,
     OrderImportExcelView,
@@ -147,6 +148,7 @@ urlpatterns = [
     path('api/orders/import/excel/', OrderImportExcelView.as_view(), name='orders-import-excel'),
     path('api/orders/report/pdf/', OrderSummaryPDFView.as_view(), name='orders-report-pdf'),
     path('api/orders/daily-report/', DailyFinancialReportAPIView.as_view(), name='orders-daily-report'),
+    path('api/orders/daily-report/pdf/', DailyReportPDFView.as_view(), name='orders-daily-report-pdf'),
     path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'),
     path('api/products/export/excel/', ProductExportExcelView.as_view(), name='products-export-excel'),
     path('api/products/export/catalog/pdf/', ProductCatalogNoPricePDFView.as_view(), name='products-catalog-no-price-pdf'),

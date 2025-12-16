@@ -1,0 +1,403 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'uz' }}">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 15mm;
+      }
+      body {
+        font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif;
+        font-size: 10px;
+        margin: 0;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 10px;
+      }
+      .logo {
+        height: 50px;
+        margin-right: 12px;
+      }
+      .company-info {
+        flex: 1;
+      }
+      .company-name {
+        font-weight: 700;
+        font-size: 18px;
+        color: #333;
+      }
+      .company-slogan {
+        font-size: 11px;
+        color: #666;
+        margin-top: 2px;
+      }
+      .report-title {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 700;
+        margin: 15px 0;
+        color: #333;
+      }
+      .report-date {
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 20px;
+      }
+
+      /* Diller bloki */
+      .dealer-block {
+        margin-bottom: 25px;
+        page-break-inside: avoid;
+      }
+      .dealer-header {
+        background: #2c3e50;
+        color: white;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      /* Jadval uslublari */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        font-size: 9px;
+      }
+      th {
+        background: #ecf0f1;
+        color: #2c3e50;
+        padding: 6px 8px;
+        text-align: left;
+        font-weight: 700;
+        border: 1px solid #bdc3c7;
+      }
+      td {
+        padding: 5px 8px;
+        border: 1px solid #ddd;
+      }
+      .section-title {
+        background: #34495e;
+        color: white;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-top: 10px;
+        margin-bottom: 5px;
+      }
+      .order-number {
+        color: #3498db;
+        font-weight: 700;
+      }
+      .total-row {
+        background: #f8f9fa;
+        font-weight: 700;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .text-center {
+        text-align: center;
+      }
+
+      /* Xulosa qismi */
+      .summary-section {
+        margin-top: 30px;
+        page-break-before: always;
+        padding: 20px;
+        background: #f9f9f9;
+        border: 2px solid #2c3e50;
+        border-radius: 5px;
+      }
+      .summary-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+      .summary-text {
+        font-size: 11px;
+        line-height: 1.8;
+        text-align: justify;
+        color: #333;
+      }
+      .summary-highlight {
+        font-weight: 700;
+        color: #2c3e50;
+      }
+      .summary-value {
+        font-weight: 700;
+        color: #e74c3c;
+      }
+
+      /* Payment types */
+      .payment-cash-usd { color: #27ae60; }
+      .payment-cash-uzs { color: #f39c12; }
+      .payment-card { color: #3498db; }
+      .payment-bank { color: #9b59b6; }
+
+      .footer {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        font-size: 9px;
+        color: #999;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <img src="{{ company_logo }}" class="logo" alt="Logo"/>
+      <div class="company-info">
+        <div class="company-name">{{ company_name }}</div>
+        <div class="company-slogan">{{ company_slogan }}</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 11px; color: #666;">{% trans 'Report Date' %}:</div>
+        <div style="font-size: 14px; font-weight: 700;">{{ summary.report_date|date:"d.m.Y" }}</div>
+        {% if summary.exchange_rate %}
+        <div style="font-size: 9px; color: #999; margin-top: 5px;">
+          1 USD = {{ summary.exchange_rate|floatformat:2 }} UZS
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="report-title">
+      {% trans 'Daily Financial Activities Report' %}
+    </div>
+    <div class="report-date">
+      {{ summary.report_date|date:"Y" }}-yil {{ summary.report_date|date:"d-E" }}
+    </div>
+
+    <!-- Har bir diller bo'yicha ma'lumotlar -->
+    {% for dealer in dealers %}
+    <div class="dealer-block">
+      <div class="dealer-header">
+        {{ forloop.counter }}. {{ dealer.dealer_name }}
+        {% if dealer.dealer_code %}({{ dealer.dealer_code }}){% endif %}
+      </div>
+
+      <!-- 1. ORDERLAR -->
+      {% if dealer.orders %}
+      <div class="section-title">📦 {% trans 'ORDERS' %}</div>
+      {% for order in dealer.orders %}
+        <div style="margin-bottom: 8px;">
+          <div style="background: #eef2f7; padding: 4px 8px; font-weight: 700; font-size: 10px;">
+            {% trans 'Order' %} <span class="order-number">{{ order.order_number }}</span> -
+            {{ order.created_at|date:"d.m.Y H:i" }} -
+            {{ order.status }}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">№</th>
+                <th style="width: 40%;">{% trans 'Product Name' %}</th>
+                <th style="width: 15%;">{% trans 'Size' %}</th>
+                <th style="width: 10%;">{% trans 'Unit' %}</th>
+                <th style="width: 10%;" class="text-right">{% trans 'Qty' %}</th>
+                <th style="width: 10%;" class="text-right">{% trans 'Price' %}</th>
+                <th style="width: 10%;" class="text-right">{% trans 'Total' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order.items %}
+              <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ item.product_name }}</td>
+                <td class="text-center">{{ item.size|default:"—" }}</td>
+                <td class="text-center">{{ item.unit }}</td>
+                <td class="text-right">{{ item.quantity|floatformat:2 }}</td>
+                <td class="text-right">${{ item.price_usd|floatformat:2 }}</td>
+                <td class="text-right">${{ item.total_usd|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+              <tr class="total-row">
+                <td colspan="6" class="text-right">{% trans 'Order Total' %}:</td>
+                <td class="text-right">${{ order.total_usd|floatformat:2 }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+      {% endif %}
+
+      <!-- 2. RETURNS -->
+      {% if dealer.returns %}
+      <div class="section-title">↩️ {% trans 'RETURNS' %}</div>
+      {% for return in dealer.returns %}
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%;">№</th>
+              <th style="width: 50%;">{% trans 'Product Name' %}</th>
+              <th style="width: 15%;" class="text-right">{% trans 'Quantity' %}</th>
+              <th style="width: 15%;" class="text-right">{% trans 'Price' %}</th>
+              <th style="width: 15%;" class="text-right">{% trans 'Total' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in return.items %}
+            <tr>
+              <td class="text-center">{{ forloop.counter }}</td>
+              <td>{{ item.product_name }}</td>
+              <td class="text-right">{{ item.quantity|floatformat:2 }}</td>
+              <td class="text-right">${{ item.price_usd|floatformat:2 }}</td>
+              <td class="text-right">${{ item.total_usd|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+              <td colspan="4" class="text-right">{% trans 'Return Total' %}:</td>
+              <td class="text-right">${{ return.total_usd|floatformat:2 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      {% endfor %}
+      {% endif %}
+
+      <!-- 3. PAYMENTS -->
+      {% if dealer.payments %}
+      <div class="section-title">💰 {% trans 'PAYMENTS' %}</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 10%;">№</th>
+            <th style="width: 25%;">{% trans 'Account Type' %}</th>
+            <th style="width: 30%;">{% trans 'Account Name' %}</th>
+            <th style="width: 15%;" class="text-right">{% trans 'Amount' %}</th>
+            <th style="width: 20%;" class="text-right">{% trans 'USD Equivalent' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in dealer.payments %}
+          <tr>
+            <td class="text-center">{{ forloop.counter }}</td>
+            <td>
+              {% if payment.currency == 'USD' and payment.account_type == 'Naqd' %}
+              <span class="payment-cash-usd">{{ payment.account_type }}</span>
+              {% elif payment.currency == 'UZS' and payment.account_type == 'Naqd' %}
+              <span class="payment-cash-uzs">{{ payment.account_type }}</span>
+              {% elif payment.account_type == 'Plastik karta' %}
+              <span class="payment-card">{{ payment.account_type }}</span>
+              {% elif payment.account_type == 'Bank' %}
+              <span class="payment-bank">{{ payment.account_type }}</span>
+              {% else %}
+              {{ payment.account_type }}
+              {% endif %}
+            </td>
+            <td>{{ payment.account_name }}</td>
+            <td class="text-right">
+              {{ payment.amount|floatformat:2 }} {{ payment.currency }}
+              {% if payment.exchange_rate %}
+              <br><small style="color: #999;">(1 USD = {{ payment.exchange_rate|floatformat:2 }})</small>
+              {% endif %}
+            </td>
+            <td class="text-right">${{ payment.amount_usd|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- 4. REFUNDS -->
+      {% if dealer.refunds %}
+      <div class="section-title">💸 {% trans 'REFUNDS' %}</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 10%;">№</th>
+            <th style="width: 70%;">{% trans 'Note' %}</th>
+            <th style="width: 20%;" class="text-right">{% trans 'Amount (USD)' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for refund in dealer.refunds %}
+          <tr>
+            <td class="text-center">{{ forloop.counter }}</td>
+            <td>{{ refund.note|default:"—" }}</td>
+            <td class="text-right">${{ refund.amount_usd|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 40px; color: #999;">
+      {% trans 'No financial activities for this date' %}
+    </div>
+    {% endfor %}
+
+    <!-- UMUMIY XULOSA -->
+    <div class="summary-section">
+      <div class="summary-title">
+        📊 {% trans 'DAILY SUMMARY' %}
+      </div>
+      <div class="summary-text">
+        <p>
+          <span class="summary-highlight">{{ summary.report_date|date:"Y" }}-yil {{ summary.report_date|date:"d-E" }}</span> holatiga ko'ra,
+          <span class="summary-value">{{ summary.orders.total_dealers }}</span> ta diller tomonidan jami
+          <span class="summary-value">{{ summary.orders.total_amount_usd|floatformat:2 }} AQSh dollari</span>
+          miqdorida buyurtmalar rasmiylashtirildi.
+          Buyurtmalarni bajarish uchun ombordan
+          <span class="summary-value">{{ summary.orders.total_products }}</span> turdagi mahsulotdan jami
+          <span class="summary-value">{{ summary.orders.total_quantity|floatformat:1 }}</span> dona chiqim qilindi.
+        </p>
+
+        <p>
+          Hisobot kuni davomida <span class="summary-value">{{ summary.payments.total_dealers }}</span> ta dillerdan jami
+          <span class="summary-value">{{ summary.payments.total_usd|floatformat:2 }} AQSh dollari</span> miqdorida to'lov qabul qilindi.
+          Shundan <span class="summary-value">{{ summary.payments.cash_usd|floatformat:2 }} AQSh dollari</span> naqd AQSh dollarida{% if summary.payments.cash_uzs > 0 %},
+          <span class="summary-value">{{ summary.payments.cash_uzs|floatformat:2 }} so'm</span>
+          ({{ summary.payments.cash_uzs_usd_equivalent|floatformat:2 }} USD ekvivalenti, kurs: 1 USD = {{ summary.exchange_rate|floatformat:2 }} so'm)
+          milliy valyutada{% endif %}{% if summary.payments.card_payments %},
+          plastik karta hisoblari orqali{% for card in summary.payments.card_payments %}
+          {{ card.name }}: {{ card.amount|floatformat:2 }} {{ card.currency }} ({{ card.amount_usd|floatformat:2 }} USD){% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% if summary.payments.bank_payments %},
+          bank hisoblari orqali{% for bank in summary.payments.bank_payments %}
+          {{ bank.name }}: {{ bank.amount|floatformat:2 }} {{ bank.currency }} ({{ bank.amount_usd|floatformat:2 }} USD){% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+          qabul qilindi.
+        </p>
+
+        {% if summary.returns.total_dealers > 0 %}
+        <p>
+          Shuningdek, <span class="summary-value">{{ summary.returns.total_dealers }}</span> ta diller tomonidan
+          <span class="summary-value">{{ summary.returns.total_products }}</span> turdagi mahsulotdan jami
+          <span class="summary-value">{{ summary.returns.total_quantity|floatformat:1 }}</span> dona
+          (<span class="summary-value">{{ summary.returns.total_amount_usd|floatformat:2 }} AQSh dollari</span>)
+          omborga qaytarildi{% if summary.refunds.total_dealers > 0 %} va
+          <span class="summary-value">{{ summary.refunds.total_dealers }}</span> ta dillerga
+          <span class="summary-value">{{ summary.refunds.total_amount_usd|floatformat:2 }} AQSh dollari</span>
+          miqdorida pul mablag'i qaytarildi{% endif %}.
+        </p>
+        {% endif %}
+
+        <p>
+          Kun yakuniga ko'ra, barcha dillerlarning umumiy qarzdorligi
+          <span class="summary-value">{{ summary.overall.total_dealers_debt_usd|floatformat:2 }} AQSh dollarini</span>
+          tashkil etdi. Omborda esa
+          <span class="summary-value">{{ summary.overall.warehouse_total_quantity|floatformat:0 }}</span> dona mahsulot mavjud bo'lib,
+          ularning umumiy balans qiymati
+          <span class="summary-value">{{ summary.overall.warehouse_total_value_usd|floatformat:2 }} AQSh dollariga</span> teng.
+        </p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>{% trans 'Generated by' %} <strong>{{ company_name }}</strong> {% trans 'ERP System' %}</p>
+      <p>{% trans 'Report generated at' %}: {{ current_datetime|date:"d.m.Y H:i:s" }}</p>
+    </div>
+  </body>
+</html>

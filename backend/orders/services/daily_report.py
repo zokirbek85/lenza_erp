@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Dict, List, Any
 from django.db.models import Sum, Q, F, Count, DecimalField
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 from catalog.models import Product
 from dealers.models import Dealer
@@ -20,8 +21,8 @@ class DailyFinancialReportService:
 
     def __init__(self, report_date: date):
         self.report_date = report_date
-        self.start_datetime = datetime.combine(report_date, datetime.min.time())
-        self.end_datetime = datetime.combine(report_date, datetime.max.time())
+        self.start_datetime = timezone.make_aware(datetime.combine(report_date, datetime.min.time()))
+        self.end_datetime = timezone.make_aware(datetime.combine(report_date, datetime.max.time()))
 
     def get_exchange_rate(self) -> Decimal:
         """Bugungi valyuta kursini olish"""
@@ -48,9 +49,9 @@ class DailyFinancialReportService:
 
         # To'lovlar qilgan dillerlar
         payment_dealers = FinanceTransaction.objects.filter(
-            transaction_date=self.report_date,
+            date=self.report_date,
             type=FinanceTransaction.TransactionType.INCOME,
-            status=FinanceTransaction.Status.APPROVED,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
             dealer__isnull=False
         ).values_list('dealer_id', flat=True).distinct()
         dealer_ids.update(payment_dealers)
@@ -63,9 +64,9 @@ class DailyFinancialReportService:
 
         # Refund olgan dillerlar
         refund_dealers = FinanceTransaction.objects.filter(
-            transaction_date=self.report_date,
+            date=self.report_date,
             type=FinanceTransaction.TransactionType.DEALER_REFUND,
-            status=FinanceTransaction.Status.APPROVED,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
             dealer__isnull=False
         ).values_list('dealer_id', flat=True).distinct()
         dealer_ids.update(refund_dealers)
@@ -88,9 +89,9 @@ class DailyFinancialReportService:
                     'product_name': item.product.name,
                     'size': getattr(item.product, 'size', ''),
                     'unit': 'шт.',  # Birlik
-                    'quantity': float(item.quantity),
+                    'quantity': float(item.qty),
                     'price_usd': float(item.price_usd),
-                    'total_usd': float(item.quantity * item.price_usd),
+                    'total_usd': float(item.qty * item.price_usd),
                 })
 
             result.append({
@@ -144,9 +145,9 @@ class DailyFinancialReportService:
     def get_dealer_payments(self, dealer_id: int) -> List[Dict]:
         """Diller to'lovlarini olish"""
         transactions = FinanceTransaction.objects.filter(
-            transaction_date=self.report_date,
+            date=self.report_date,
             type=FinanceTransaction.TransactionType.INCOME,
-            status=FinanceTransaction.Status.APPROVED,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
             dealer_id=dealer_id
         ).select_related('account')
 
@@ -175,9 +176,9 @@ class DailyFinancialReportService:
     def get_dealer_refunds(self, dealer_id: int) -> List[Dict]:
         """Dillerga qaytarilgan summalarni olish"""
         refunds = FinanceTransaction.objects.filter(
-            transaction_date=self.report_date,
+            date=self.report_date,
             type=FinanceTransaction.TransactionType.DEALER_REFUND,
-            status=FinanceTransaction.Status.APPROVED,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
             dealer_id=dealer_id
         )
 
@@ -209,15 +210,15 @@ class DailyFinancialReportService:
             order__in=orders
         ).aggregate(
             total_products=Count('product', distinct=True),
-            total_quantity=Coalesce(Sum('quantity'), Decimal('0'), output_field=DecimalField()),
-            total_value_usd=Coalesce(Sum(F('quantity') * F('price_usd')), Decimal('0'), output_field=DecimalField()),
+            total_quantity=Coalesce(Sum('qty'), Decimal('0'), output_field=DecimalField()),
+            total_value_usd=Coalesce(Sum(F('qty') * F('price_usd')), Decimal('0'), output_field=DecimalField()),
         )
 
         # 2. To'lovlar statistikasi
         payments = FinanceTransaction.objects.filter(
-            transaction_date=self.report_date,
+            date=self.report_date,
             type=FinanceTransaction.TransactionType.INCOME,
-            status=FinanceTransaction.Status.APPROVED,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
             dealer__isnull=False
         ).select_related('account')
 
@@ -270,9 +271,9 @@ class DailyFinancialReportService:
 
         # 4. Refundlar statistikasi
         refunds = FinanceTransaction.objects.filter(
-            transaction_date=self.report_date,
+            date=self.report_date,
             type=FinanceTransaction.TransactionType.DEALER_REFUND,
-            status=FinanceTransaction.Status.APPROVED,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
             dealer__isnull=False
         ).aggregate(
             total_dealers=Count('dealer', distinct=True),
@@ -280,12 +281,12 @@ class DailyFinancialReportService:
         )
 
         # 5. Umumiy qarzdorlik (barcha dillerlar)
-        from dealers.services import annotate_dealers_with_balances
+        from dealers.services.balance import annotate_dealers_with_balances
         all_dealers = Dealer.objects.filter(is_active=True)
         dealers_with_balances = annotate_dealers_with_balances(all_dealers)
 
         total_debt = dealers_with_balances.aggregate(
-            total_balance_usd=Coalesce(Sum('balance_usd'), Decimal('0'), output_field=DecimalField())
+            total_balance_usd=Coalesce(Sum('calculated_balance_usd'), Decimal('0'), output_field=DecimalField())
         )
 
         # 6. Ombor holati
