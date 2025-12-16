@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 from django.db.models import Count
@@ -18,6 +19,8 @@ from .models import Order, OrderItem, OrderStatusLog
 from .filters import OrderFilter
 from .returns import process_return
 from .serializers import OrderItemSerializer, OrderSerializer, OrderStatusLogSerializer
+from .serializers.daily_report import DailyFinancialReportSerializer, DailyReportRequestSerializer
+from .services.daily_report import DailyFinancialReportService
 from .utils.excel_tools import generate_import_template, import_orders_from_excel
 
 
@@ -293,13 +296,55 @@ class OrderStatusStatAPIView(APIView):
     def get(self, request):
         # Get count for each status
         stats = Order.objects.values('status').annotate(count=Count('id'))
-        
+
         # Convert to dictionary with status as key
         result = {item['status']: item['count'] for item in stats}
-        
+
         # Ensure all statuses are included (even if count is 0)
         for status_value, _ in Order.Status.choices:
             if status_value not in result:
                 result[status_value] = 0
-        
+
         return Response(result, status=status.HTTP_200_OK)
+
+
+class DailyFinancialReportAPIView(APIView):
+    """
+    Kunlik moliyaviy hisobot API
+
+    GET params:
+    - report_date: YYYY-MM-DD format (required)
+
+    Returns:
+    - JSON hisobot (dealers va summary)
+    """
+    permission_classes = [IsAdmin | IsOwner | IsAccountant]
+
+    def get(self, request):
+        # Validate request
+        request_serializer = DailyReportRequestSerializer(data=request.query_params)
+        if not request_serializer.is_valid():
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        report_date = request_serializer.validated_data['report_date']
+
+        # Generate report
+        try:
+            service = DailyFinancialReportService(report_date)
+            report_data = service.generate_report()
+
+            # Serialize response
+            response_serializer = DailyFinancialReportSerializer(data=report_data)
+            if response_serializer.is_valid():
+                return Response(response_serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Hisobotni yaratishda xatolik yuz berdi',
+                    'details': response_serializer.errors
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
+            return Response({
+                'error': 'Hisobotni yaratishda xatolik yuz berdi',
+                'message': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
