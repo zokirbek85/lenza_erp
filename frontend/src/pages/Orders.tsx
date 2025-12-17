@@ -1384,20 +1384,31 @@ const OrdersPage = () => {
                                 label: `${displayName} - ${brandLabel} - ${categoryLabel} ${stockLabel}`,
                                 value: String(product.id),
                                 disabled: isOutOfStock,
+                                isOutOfStock,
                                 isNegativeStock,
                                 className: isNegativeStock ? styles.lowStockOption : '',
                               };
                             })}
                             optionRender={(option) => {
                               const isDarkMode = document.documentElement.classList.contains('dark');
+                              const bgColor = option.data.isOutOfStock 
+                                ? (isDarkMode ? 'rgba(220, 38, 38, 0.2)' : 'rgba(239, 68, 68, 0.15)')
+                                : 'transparent';
                               return (
                                 <span
                                   className={option.data.isNegativeStock ? `${styles.lowStockOption} low-stock-product` : ''}
-                                  style={option.data.isNegativeStock ? {
-                                    color: isDarkMode ? '#FFA5A5' : '#FF6B6B',
-                                    fontStyle: 'italic',
-                                    fontWeight: 400
-                                  } : undefined}
+                                  style={{
+                                    ...(option.data.isNegativeStock ? {
+                                      color: isDarkMode ? '#FFA5A5' : '#FF6B6B',
+                                      fontStyle: 'italic',
+                                      fontWeight: 400
+                                    } : {}),
+                                    backgroundColor: bgColor,
+                                    display: 'block',
+                                    padding: '4px 8px',
+                                    margin: '-4px -8px',
+                                    borderRadius: '4px'
+                                  }}
                                 >
                                   {option.label}
                                 </span>
