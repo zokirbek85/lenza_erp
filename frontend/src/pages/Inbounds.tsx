@@ -44,11 +44,13 @@ const InboundsPage = () => {
       }
 
       const result = await fetchInbounds(params);
-      setInbounds(result.items);
+      setInbounds(Array.isArray(result.items) ? result.items : []);
       setTotal(result.total);
     } catch (error) {
       console.error('Error loading inbounds:', error);
       toast.error('Failed to load inbounds');
+      setInbounds([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -178,7 +180,7 @@ const InboundsPage = () => {
                 </td>
               </tr>
             ) : (
-              inbounds.map((inbound) => (
+              Array.isArray(inbounds) && inbounds.map((inbound) => (
                 <tr key={inbound.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     #{inbound.id}

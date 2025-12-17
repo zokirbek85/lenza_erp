@@ -95,10 +95,12 @@ const InboundFormPage = () => {
         setLoadingProducts(true);
         try {
           const result = await fetchProductsByCategory({ brandId: formData.brand });
-          setProducts(result);
+          // Ensure we always set an array
+          setProducts(Array.isArray(result) ? result : []);
         } catch (error) {
           console.error('Error loading products:', error);
           toast.error('Failed to load products');
+          setProducts([]);
         } finally {
           setLoadingProducts(false);
         }
@@ -273,7 +275,7 @@ const InboundFormPage = () => {
                   <option value={0}>
                     {loadingProducts ? 'Yuklanmoqda...' : 'Mahsulot tanlang...'}
                   </option>
-                  {products.map((product) => (
+                  {Array.isArray(products) && products.map((product) => (
                     <option key={product.id} value={product.id}>
                       {product.name} ({product.sku})
                     </option>
