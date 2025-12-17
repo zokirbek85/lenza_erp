@@ -380,12 +380,24 @@ class DailyReportPDFView(APIView, ExportMixin):
             service = DailyFinancialReportService(report_date)
             report_data = service.generate_report()
 
+            # Encode logo as base64 for embedding in PDF
+            import base64
+            import os
+            from django.conf import settings
+            
+            logo_path = os.path.join(settings.BASE_DIR, 'static', 'logo.png')
+            try:
+                with open(logo_path, 'rb') as logo_file:
+                    logo_base64 = base64.b64encode(logo_file.read()).decode('utf-8')
+                    company_logo = f'data:image/png;base64,{logo_base64}'
+            except FileNotFoundError:
+                company_logo = ''  # No logo if file not found
+
             # Company information
-            # Use relative path for logo, as WeasyPrint will resolve it with base_url
             company_context = {
                 'company_name': 'LENZA',
                 'company_slogan': 'Premium Door Systems',
-                'company_logo': '/static/logo.png',  # PNG format for better compatibility
+                'company_logo': company_logo,  # Base64 encoded logo
                 'current_datetime': timezone.now(),
             }
 
