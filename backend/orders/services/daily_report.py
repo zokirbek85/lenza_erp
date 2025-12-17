@@ -280,12 +280,12 @@ class DailyFinancialReportService:
             total_amount_usd=Coalesce(Sum('amount'), Decimal('0'), output_field=DecimalField()),
         )
 
-        # 5. Umumiy qarzdorlik (barcha dillerlar)
+        # 5. Umumiy qarzdorlik (barcha dillerlar - faol va nofaol)
         # Balance musbat bo'lsa - diller to'lagan (bizning qarzdorligimiz)
         # Balance manfiy bo'lsa - diller qarzdor (biz undan olishimiz kerak)
         # Shuning uchun qarzdorlikni ko'rsatish uchun balansni teskari qilamiz
         from dealers.services.balance import annotate_dealers_with_balances
-        all_dealers = Dealer.objects.filter(is_active=True)
+        all_dealers = Dealer.objects.all()  # Barcha dillerlar (faol va nofaol)
         dealers_with_balances = annotate_dealers_with_balances(all_dealers)
 
         total_balance = dealers_with_balances.aggregate(
