@@ -1407,7 +1407,8 @@ const OrdersPage = () => {
                                     display: 'block',
                                     padding: '4px 8px',
                                     margin: '-4px -8px',
-                                    borderRadius: '4px'
+                                    borderRadius: '4px',
+                                    fontStyle: option.data.isOutOfStock ? 'italic' : 'normal'
                                   }}
                                 >
                                   {option.label}
