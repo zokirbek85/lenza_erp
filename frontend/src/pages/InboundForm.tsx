@@ -61,6 +61,10 @@ const InboundFormPage = () => {
         setLoading(true);
         try {
           const inbound = await fetchInbound(Number(id));
+          console.log('Loaded inbound:', inbound);
+          console.log('Inbound items:', inbound.items);
+          console.log('Is items array?', Array.isArray(inbound.items));
+          
           if (inbound.status === 'confirmed') {
             toast.error('Cannot edit confirmed inbound');
             navigate('/products/inbounds');
@@ -71,7 +75,11 @@ const InboundFormPage = () => {
             date: inbound.date,
             comment: inbound.comment || '',
           });
-          setItems(inbound.items.map((item) => ({
+          
+          // Ensure items is an array before mapping
+          const itemsArray = Array.isArray(inbound.items) ? inbound.items : [];
+          console.log('Setting items:', itemsArray.length);
+          setItems(itemsArray.map((item) => ({
             id: item.id,
             product: item.product,
             quantity: item.quantity,
@@ -125,17 +133,17 @@ const InboundFormPage = () => {
     }
 
     // Check if product already exists
-    if (items.some((item) => item.product === currentItem.product)) {
+    if (Array.isArray(items) && items.some((item) => item.product === currentItem.product)) {
       toast.error('Product already added to this inbound');
       return;
     }
 
-    setItems([...items, { ...currentItem }]);
+    setItems([...(Array.isArray(items) ? items : []), { ...currentItem }]);
     setCurrentItem({ product: 0, quantity: 1 });
   };
 
   const handleRemoveItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    setItems(Array.isArray(items) ? items.filter((_, i) => i !== index) : []);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -146,7 +154,7 @@ const InboundFormPage = () => {
       return;
     }
 
-    if (items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0) {
       toast.error('Please add at least one product');
       return;
     }
@@ -360,7 +368,7 @@ const InboundFormPage = () => {
                   </table>
                 </div>
                 <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                  Jami miqdor: {items.reduce((sum, item) => sum + item.quantity, 0)}
+                  Jami miqdor: {Array.isArray(items) ? items.reduce((sum, item) => sum + item.quantity, 0) : 0}
                 </div>
               </div>
             )}
