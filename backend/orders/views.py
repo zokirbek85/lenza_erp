@@ -385,7 +385,7 @@ class DailyReportPDFView(APIView, ExportMixin):
             company_context = {
                 'company_name': 'LENZA',
                 'company_slogan': 'Premium Door Systems',
-                'company_logo': '/static/logo.png',  # Relative path
+                'company_logo': '/static/logo.svg',  # Lenza light logo
                 'current_datetime': timezone.now(),
             }
 
