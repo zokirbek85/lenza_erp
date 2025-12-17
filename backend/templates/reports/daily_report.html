@@ -385,9 +385,10 @@
         {% endif %}
 
         <p>
-          Kun yakuniga ko'ra, barcha dillerlarning umumiy qarzdorligi
+          <strong>Umumiy holat ({{ current_datetime|date:"d.m.Y H:i" }} holatiga ko'ra):</strong>
+          Barcha dillerlarning umumiy qarzdorligi
           <span class="summary-value">{{ summary.overall.total_dealers_debt_usd|floatformat:2 }} AQSh dollarini</span>
-          tashkil etdi. Omborda esa
+          tashkil etadi. Omborda esa
           <span class="summary-value">{{ summary.overall.warehouse_total_quantity|floatformat:0 }}</span> dona mahsulot mavjud bo'lib,
           ularning umumiy balans qiymati
           <span class="summary-value">{{ summary.overall.warehouse_total_value_usd|floatformat:2 }} AQSh dollariga</span> teng.
