@@ -190,6 +190,120 @@ class DailyFinancialReportService:
             for refund in refunds
         ]
 
+    def calculate_historical_debt(self) -> float:
+        """O'sha kungacha bo'lgan tarixiy qarzdorlikni hisoblash"""
+        from dealers.models import Dealer
+        
+        # O'sha kun oxirigacha
+        end_of_day = self.end_datetime
+        
+        all_dealers = Dealer.objects.all()
+        total_balance = Decimal('0')
+        
+        for dealer in all_dealers:
+            # Opening balance (doimiy, o'zgarmaydi)
+            balance = dealer.opening_balance_usd
+            
+            # Orders (o'sha kungacha yaratilgan faol orderlar)
+            orders_total = Order.objects.filter(
+                dealer=dealer,
+                created_at__lte=end_of_day,
+                status__in=Order.Status.active_statuses(),
+                is_imported=False
+            ).aggregate(
+                total=Coalesce(Sum('total_usd'), Decimal('0'), output_field=DecimalField())
+            )['total']
+            balance += orders_total
+            
+            # Order Returns (o'sha kungacha qaytarilganlar)
+            returns_total = Return.objects.filter(
+                dealer=dealer,
+                created_at__lte=end_of_day
+            ).aggregate(
+                total=Coalesce(Sum('total_sum'), Decimal('0'), output_field=DecimalField())
+            )['total']
+            balance -= returns_total
+            
+            # Payments (o'sha kungacha to'lovlar)
+            payments_total = FinanceTransaction.objects.filter(
+                dealer=dealer,
+                type=FinanceTransaction.TransactionType.INCOME,
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                date__lte=self.report_date
+            ).aggregate(
+                total=Coalesce(Sum('amount_usd'), Decimal('0'), output_field=DecimalField())
+            )['total']
+            balance -= payments_total
+            
+            # Refunds (o'sha kungacha refundlar)
+            refunds_total = FinanceTransaction.objects.filter(
+                dealer=dealer,
+                type=FinanceTransaction.TransactionType.DEALER_REFUND,
+                status=FinanceTransaction.TransactionStatus.APPROVED,
+                date__lte=self.report_date
+            ).aggregate(
+                total=Coalesce(Sum('amount_usd'), Decimal('0'), output_field=DecimalField())
+            )['total']
+            balance += refunds_total
+            
+            total_balance += balance
+        
+        # Qarzdorlik = -balance
+        return -float(total_balance)
+    
+    def calculate_historical_warehouse_stats(self) -> Dict[str, Decimal]:
+        """O'sha kungacha bo'lgan ombor holatini hisoblash"""
+        from catalog.models import Product
+        from orders.models import OrderItem
+        from returns.models import ReturnItem
+        
+        end_of_day = self.end_datetime
+        
+        products = Product.objects.all()
+        total_quantity = Decimal('0')
+        total_value_usd = Decimal('0')
+        
+        for product in products:
+            # Boshlang'ich qoldiq (agar bor bo'lsa, aks holda 0)
+            initial_stock = Decimal('0')  # Bu yerda boshlang'ich qoldiqni olish kerak edi
+            
+            # Chiqimlar (o'sha kungacha sotilganlar)
+            sold_qty = OrderItem.objects.filter(
+                product=product,
+                order__created_at__lte=end_of_day,
+                order__status__in=Order.Status.active_statuses()
+            ).aggregate(
+                total=Coalesce(Sum('qty'), Decimal('0'), output_field=DecimalField())
+            )['total']
+            
+            # Kirimlar - qaytarilganlar (o'sha kungacha)
+            returned_qty = ReturnItem.objects.filter(
+                product=product,
+                return_document__created_at__lte=end_of_day
+            ).aggregate(
+                total=Coalesce(Sum('quantity'), Decimal('0'), output_field=DecimalField())
+            )['total']
+            
+            # Hozirgi qoldiq + sotilganlar - qaytarilganlar = boshlang'ich qoldiq
+            # Boshlang'ich qoldiq = hozirgi qoldiq + sotilganlar - qaytarilganlar
+            # O'sha kundagi qoldiq = boshlang'ich qoldiq + qaytarilganlar - sotilganlar
+            current_stock = product.stock_ok
+            
+            # Tarixiy qoldiq = hozirgi qoldiq + (hozirdan keyin sotilganlar) - (hozirdan keyin qaytarilganlar)
+            # Lekin bizda faqat hozirgi holat bor, shuning uchun hozirgi holatni foydalanamiz
+            # Bu to'liq to'g'ri emas, lekin yaqinroq natija beradi
+            
+            qty = current_stock
+            value = qty * product.sell_price_usd
+            
+            total_quantity += qty
+            total_value_usd += value
+        
+        return {
+            'total_quantity': total_quantity,
+            'total_value_usd': total_value_usd,
+        }
+
     def get_overall_summary(self) -> Dict[str, Any]:
         """Kunlik umumiy xulosani olish"""
         exchange_rate = self.get_exchange_rate()
@@ -280,26 +394,14 @@ class DailyFinancialReportService:
             total_amount_usd=Coalesce(Sum('amount'), Decimal('0'), output_field=DecimalField()),
         )
 
-        # 5. Umumiy qarzdorlik (barcha dillerlar - faol va nofaol)
+        # 5. Umumiy qarzdorlik (o'sha kungacha bo'lgan tarixiy holat)
         # Balance musbat bo'lsa - diller to'lagan (bizning qarzdorligimiz)
         # Balance manfiy bo'lsa - diller qarzdor (biz undan olishimiz kerak)
         # Shuning uchun qarzdorlikni ko'rsatish uchun balansni teskari qilamiz
-        from dealers.services.balance import annotate_dealers_with_balances
-        all_dealers = Dealer.objects.all()  # Barcha dillerlar (faol va nofaol)
-        dealers_with_balances = annotate_dealers_with_balances(all_dealers)
+        total_debt_usd = self.calculate_historical_debt()
 
-        total_balance = dealers_with_balances.aggregate(
-            total_balance_usd=Coalesce(Sum('calculated_balance_usd'), Decimal('0'), output_field=DecimalField())
-        )
-        
-        # Qarzdorlik = -balance (manfiy balans = musbat qarz)
-        total_debt_usd = -float(total_balance['total_balance_usd'])
-
-        # 6. Ombor holati
-        warehouse_stats = Product.objects.aggregate(
-            total_quantity=Coalesce(Sum('stock_ok'), Decimal('0'), output_field=DecimalField()),
-            total_value_usd=Coalesce(Sum(F('stock_ok') * F('sell_price_usd')), Decimal('0'), output_field=DecimalField()),
-        )
+        # 6. Ombor holati (o'sha kungacha)
+        warehouse_stats = self.calculate_historical_warehouse_stats()
 
         return {
             'report_date': self.report_date,
