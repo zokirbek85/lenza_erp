@@ -45,10 +45,13 @@ const InboundFormPage = () => {
     const loadBrands = async () => {
       try {
         const response = await http.get<Brand[]>('/brands/');
-        setBrands(response.data);
+        console.log('Brands response:', response.data);
+        console.log('Is brands array?', Array.isArray(response.data));
+        setBrands(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error loading brands:', error);
         toast.error('Failed to load brands');
+        setBrands([]);
       }
     };
     loadBrands();
@@ -231,7 +234,7 @@ const InboundFormPage = () => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
               >
                 <option value="">Tanlang...</option>
-                {brands.map((brand) => (
+                {Array.isArray(brands) && brands.map((brand) => (
                   <option key={brand.id} value={brand.id}>
                     {brand.name}
                   </option>
@@ -345,7 +348,7 @@ const InboundFormPage = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {items.map((item, index) => (
+                      {Array.isArray(items) && items.map((item, index) => (
                         <tr key={index}>
                           <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
                             {getProductName(item.product)}
