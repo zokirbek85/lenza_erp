@@ -11,6 +11,7 @@ import {
 } from '../api/inboundApi';
 import { fetchProductsByCategory, type Product } from '../api/productsApi';
 import http from '../app/http';
+import { toArray } from '../utils/api';
 
 type Brand = {
   id: number;
@@ -44,10 +45,15 @@ const InboundFormPage = () => {
   useEffect(() => {
     const loadBrands = async () => {
       try {
-        const response = await http.get<Brand[]>('/brands/');
-        console.log('Brands response:', response.data);
-        console.log('Is brands array?', Array.isArray(response.data));
-        setBrands(Array.isArray(response.data) ? response.data : []);
+        const response = await http.get<any>('/brands/');
+        console.log('Brands raw response:', response.data);
+        
+        // Use toArray utility to handle both paginated and non-paginated responses
+        const brandsData = toArray<Brand>(response.data);
+        
+        console.log('Brands after toArray:', brandsData);
+        console.log('Brands count:', brandsData.length);
+        setBrands(brandsData);
       } catch (error) {
         console.error('Error loading brands:', error);
         toast.error('Failed to load brands');
