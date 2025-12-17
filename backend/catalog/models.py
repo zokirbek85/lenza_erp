@@ -503,3 +503,109 @@ class ProductSKU(models.Model):
     def sku_code(self):
         """SKU код из связанного Product"""
         return self.product.sku
+
+
+class Inbound(models.Model):
+    """
+    Inbound document for receiving products from suppliers (brands).
+    Temporarily stores incoming products until confirmation.
+    """
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('confirmed', 'Confirmed'),
+    ]
+    
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.PROTECT,
+        related_name='inbounds',
+        verbose_name="Supplier (Brand)",
+        help_text="Supplier from which products are received"
+    )
+    date = models.DateField(
+        verbose_name="Inbound date",
+        help_text="Date of product receipt"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='draft',
+        verbose_name="Status",
+        help_text="Document status"
+    )
+    comment = models.TextField(
+        blank=True,
+        verbose_name="Comment",
+        help_text="Optional notes about the inbound"
+    )
+    created_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='inbounds',
+        verbose_name="Created by",
+        help_text="User who created the inbound document"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created at"
+    )
+    confirmed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Confirmed at",
+        help_text="When the inbound was confirmed"
+    )
+    
+    class Meta:
+        ordering = ('-created_at',)
+        verbose_name = "Inbound"
+        verbose_name_plural = "Inbounds"
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['date']),
+            models.Index(fields=['status']),
+            models.Index(fields=['brand', 'date']),
+        ]
+    
+    def __str__(self) -> str:
+        brand_name = self.brand.name if self.brand else 'Unknown'
+        return f"Inbound from {brand_name} on {self.date} ({self.get_status_display()})"
+
+
+class InboundItem(models.Model):
+    """
+    Individual product line in an inbound document.
+    """
+    inbound = models.ForeignKey(
+        Inbound,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name="Inbound",
+        help_text="Related inbound document"
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name='inbound_items',
+        verbose_name="Product",
+        help_text="Product being received"
+    )
+    quantity = models.IntegerField(
+        verbose_name="Quantity",
+        help_text="Quantity received"
+    )
+    
+    class Meta:
+        ordering = ('id',)
+        verbose_name = "Inbound Item"
+        verbose_name_plural = "Inbound Items"
+        unique_together = [('inbound', 'product')]
+        indexes = [
+            models.Index(fields=['inbound']),
+            models.Index(fields=['product']),
+        ]
+    
+    def __str__(self) -> str:
+        product_name = self.product.name if self.product else 'Unknown'
+        return f"{product_name} x {self.quantity}"

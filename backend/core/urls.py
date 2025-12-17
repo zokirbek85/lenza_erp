@@ -20,6 +20,7 @@ from catalog.views import (
     ProductImportTemplateView,
     ProductReportPDFView,
     ProductViewSet,
+    InboundViewSet,
     # Marketing document generator views
     DealerCatalogPDFView,
     DealerCatalogExcelView,
@@ -111,6 +112,7 @@ router.register('brands', BrandViewSet, basename='brand')
 router.register('categories', CategoryViewSet, basename='category')
 router.register('styles', StyleViewSet, basename='style')
 router.register('products', ProductViewSet, basename='product')
+router.register('inbounds', InboundViewSet, basename='inbound')
 router.register('orders', OrderViewSet, basename='order')
 router.register('kpis', KPIRecordViewSet, basename='kpi')
 router.register('notifications', NotificationViewSet, basename='notification')

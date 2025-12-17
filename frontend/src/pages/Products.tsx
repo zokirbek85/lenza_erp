@@ -1,6 +1,7 @@
 ﻿import type { ChangeEvent, FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Select } from 'antd';
 import toast from 'react-hot-toast';
 
@@ -106,6 +107,7 @@ const ProductsPage = () => {
   const [auditResult, setAuditResult] = useState<any>(null);
   const auditFileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { role } = useAuthStore();
   const isAdmin = role === 'admin' || role === 'owner';
   const isWarehouse = role === 'warehouse';
@@ -728,6 +730,14 @@ const ProductsPage = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
+          {(isAdmin || isWarehouse) && (
+            <button
+              onClick={() => navigate('/products/inbounds')}
+              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+            >
+              📦 Mahsulot kirimi
+            </button>
+          )}
           <button
             onClick={() => downloadFile('/products/export/catalog/pdf/', `products_catalog_${new Date().toISOString().slice(0, 10)}.pdf`)}
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"

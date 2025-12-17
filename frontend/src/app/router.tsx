@@ -18,6 +18,8 @@ import ReturnsPage from '../pages/ReturnsPage';
 import ReturnEditPage from '../pages/returns/ReturnEditPage';
 import ProductsPage from '../pages/Products';
 import ProductVariantsPage from '../pages/ProductVariants';
+import InboundsPage from '../pages/Inbounds';
+import InboundFormPage from '../pages/InboundForm';
 import InventoryAuditLogs from '../pages/InventoryAuditLogs';
 import CatalogPage from '../pages/Catalog';
 import TwoFactor from '../pages/TwoFactor';
@@ -84,6 +86,38 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute roles={['admin', 'sales', 'warehouse', 'accountant']}>
             <ProductsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'products/inbounds',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <InboundsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'products/inbounds/create',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <InboundFormPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'products/inbounds/:id',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <InboundsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'products/inbounds/:id/edit',
+        element: (
+          <ProtectedRoute roles={['admin', 'warehouse']}>
+            <InboundFormPage />
           </ProtectedRoute>
         ),
       },

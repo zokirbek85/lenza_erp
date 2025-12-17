@@ -3,8 +3,8 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from .models import (
-    Brand, Category, DoorKitComponent, Product, ProductModel,
-    ProductSKU, ProductVariant, Style
+    Brand, Category, DoorKitComponent, Inbound, InboundItem, Product,
+    ProductModel, ProductSKU, ProductVariant, Style
 )
 
 
@@ -508,4 +508,99 @@ class PublicVariantCatalogSerializer(serializers.ModelSerializer):
         size_stock = obj.get_size_stock()
         # Return only sizes, no stock information
         return [item['size'] for item in size_stock]
+
+
+class InboundItemSerializer(serializers.ModelSerializer):
+    """Serializer for individual inbound items"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    brand_name = serializers.CharField(source='product.brand.name', read_only=True)
+    
+    class Meta:
+        model = InboundItem
+        fields = ('id', 'product', 'product_name', 'product_sku', 'brand_name', 'quantity')
+    
+    def validate_quantity(self, value):
+        """Ensure quantity is positive"""
+        if value <= 0:
+            raise serializers.ValidationError("Quantity must be greater than 0")
+        return value
+
+
+class InboundSerializer(serializers.ModelSerializer):
+    """Serializer for inbound documents"""
+    items = InboundItemSerializer(many=True, read_only=True)
+    brand_name = serializers.CharField(source='brand.name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    total_items = serializers.SerializerMethodField()
+    total_quantity = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Inbound
+        fields = (
+            'id', 'brand', 'brand_name', 'date', 'status', 'comment',
+            'created_by', 'created_by_name', 'created_at', 'confirmed_at',
+            'items', 'total_items', 'total_quantity'
+        )
+        read_only_fields = ('status', 'created_by', 'created_at', 'confirmed_at')
+    
+    def get_total_items(self, obj):
+        """Total number of distinct products in the inbound"""
+        return obj.items.count()
+    
+    def get_total_quantity(self, obj):
+        """Total quantity across all items"""
+        return sum(item.quantity for item in obj.items.all())
+
+
+class InboundCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating inbound documents with items"""
+    items = InboundItemSerializer(many=True)
+    
+    class Meta:
+        model = Inbound
+        fields = ('id', 'brand', 'date', 'comment', 'items')
+    
+    def validate_items(self, items):
+        """Validate that items list is not empty and has no duplicates"""
+        if not items:
+            raise serializers.ValidationError("Inbound must have at least one item")
+        
+        # Check for duplicate products
+        product_ids = [item['product'].id for item in items]
+        if len(product_ids) != len(set(product_ids)):
+            raise serializers.ValidationError("Duplicate products are not allowed in one inbound")
+        
+        return items
+    
+    def validate(self, attrs):
+        """Validate that all products belong to the selected brand"""
+        brand = attrs.get('brand')
+        items = attrs.get('items', [])
+        
+        for item in items:
+            product = item['product']
+            if product.brand_id != brand.id:
+                raise serializers.ValidationError(
+                    f"Product '{product.name}' does not belong to brand '{brand.name}'"
+                )
+        
+        return attrs
+    
+    def create(self, validated_data):
+        """Create inbound document with items"""
+        items_data = validated_data.pop('items')
+        
+        # Set created_by from request context
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+        
+        inbound = Inbound.objects.create(**validated_data)
+        
+        # Create items
+        for item_data in items_data:
+            InboundItem.objects.create(inbound=inbound, **item_data)
+        
+        return inbound
 

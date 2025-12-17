@@ -17,8 +17,9 @@ from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehous
 from core.mixins.export_mixins import ExportMixin
 from services.image_processing import process_product_image, delete_product_image, ImageProcessingError
 
-from .models import Brand, Category, Product, Style
+from .models import Brand, Category, Inbound, InboundItem, Product, Style
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CatalogProductSerializer, StyleSerializer
+from .serializers import InboundSerializer, InboundCreateSerializer, InboundItemSerializer
 from .utils.excel_tools import export_products_to_excel, export_products_to_excel_no_price, generate_import_template, import_products_from_excel
 
 
@@ -1456,3 +1457,147 @@ class PublicVariantCatalogViewSet(viewsets.ReadOnlyModelViewSet):
             'colors': sorted(list(colors)),
             'door_types': [{'value': val, 'label': label} for val, label in sorted(door_types, key=lambda x: x[1])],
         })
+
+
+class InboundViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing inbound documents.
+    Allows creating draft inbound documents and confirming them to update stock.
+    """
+    queryset = Inbound.objects.select_related('brand', 'created_by').prefetch_related('items__product').all()
+    permission_classes = [IsAdmin | IsWarehouse]
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filterset_fields = ('status', 'brand')
+    search_fields = ('comment',)
+    ordering_fields = ('date', 'created_at')
+    
+    def get_serializer_class(self):
+        """Use different serializers for create and list/retrieve"""
+        if self.action == 'create':
+            return InboundCreateSerializer
+        return InboundSerializer
+    
+    def get_queryset(self):
+        """Filter inbounds by query parameters"""
+        queryset = super().get_queryset()
+        
+        # Filter by date range
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        """Set created_by field when creating inbound"""
+        serializer.save(created_by=self.request.user)
+    
+    def update(self, request, *args, **kwargs):
+        """Only allow updating draft inbounds"""
+        instance = self.get_object()
+        if instance.status != 'draft':
+            raise ValidationError({'detail': 'Only draft inbounds can be edited'})
+        return super().update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Only allow deleting draft inbounds"""
+        instance = self.get_object()
+        if instance.status != 'draft':
+            raise ValidationError({'detail': 'Only draft inbounds can be deleted'})
+        return super().destroy(request, *args, **kwargs)
+    
+    @action(detail=True, methods=['post'])
+    def confirm(self, request, pk=None):
+        """
+        Confirm inbound and update stock.
+        This action is transactional - either all items are processed or none.
+        """
+        from django.db import transaction
+        from django.utils import timezone
+        
+        inbound = self.get_object()
+        
+        # Validate status
+        if inbound.status == 'confirmed':
+            raise ValidationError({'detail': 'Inbound is already confirmed'})
+        
+        if not inbound.items.exists():
+            raise ValidationError({'detail': 'Cannot confirm empty inbound'})
+        
+        try:
+            with transaction.atomic():
+                # Update stock for each item
+                for item in inbound.items.select_related('product'):
+                    product = item.product
+                    product.stock_ok += item.quantity
+                    product.save(update_fields=['stock_ok'])
+                
+                # Update inbound status
+                inbound.status = 'confirmed'
+                inbound.confirmed_at = timezone.now()
+                inbound.save(update_fields=['status', 'confirmed_at'])
+            
+            # Return updated inbound
+            serializer = InboundSerializer(inbound, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            raise ValidationError({'detail': f'Failed to confirm inbound: {str(e)}'})
+    
+    @action(detail=True, methods=['post'])
+    def add_item(self, request, pk=None):
+        """Add a new item to draft inbound"""
+        inbound = self.get_object()
+        
+        # Validate status
+        if inbound.status != 'draft':
+            raise ValidationError({'detail': 'Can only add items to draft inbounds'})
+        
+        # Validate and create item
+        item_serializer = InboundItemSerializer(data=request.data)
+        item_serializer.is_valid(raise_exception=True)
+        
+        product = item_serializer.validated_data['product']
+        
+        # Check if product belongs to the same brand
+        if product.brand_id != inbound.brand_id:
+            raise ValidationError({'detail': f'Product does not belong to brand {inbound.brand.name}'})
+        
+        # Check for duplicate
+        if InboundItem.objects.filter(inbound=inbound, product=product).exists():
+            raise ValidationError({'detail': 'This product is already in the inbound'})
+        
+        # Create item
+        item = InboundItem.objects.create(
+            inbound=inbound,
+            product=product,
+            quantity=item_serializer.validated_data['quantity']
+        )
+        
+        # Return updated inbound
+        serializer = InboundSerializer(inbound, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['delete'], url_path='items/(?P<item_id>[^/.]+)')
+    def remove_item(self, request, pk=None, item_id=None):
+        """Remove an item from draft inbound"""
+        inbound = self.get_object()
+        
+        # Validate status
+        if inbound.status != 'draft':
+            raise ValidationError({'detail': 'Can only remove items from draft inbounds'})
+        
+        # Get and delete item
+        try:
+            item = InboundItem.objects.get(id=item_id, inbound=inbound)
+            item.delete()
+            
+            # Return updated inbound
+            serializer = InboundSerializer(inbound, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except InboundItem.DoesNotExist:
+            raise ValidationError({'detail': 'Item not found in this inbound'})

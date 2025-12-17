@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.db.models import Q
 
 from .models import (
-    Brand, Category, DoorKitComponent, Product, ProductModel, 
-    ProductSKU, ProductVariant, Style,
+    Brand, Category, DoorKitComponent, Inbound, InboundItem, Product,
+    ProductModel, ProductSKU, ProductVariant, Style,
 )
 
 
@@ -339,3 +339,87 @@ class ProductAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('brand', 'category', 'style')
+
+
+class InboundItemInline(admin.TabularInline):
+    """Inline for inbound items"""
+    model = InboundItem
+    extra = 1
+    autocomplete_fields = ('product',)
+    fields = ('product', 'quantity')
+    
+    def has_change_permission(self, request, obj=None):
+        # Only allow editing items on draft inbounds
+        if obj and obj.status == 'confirmed':
+            return False
+        return super().has_change_permission(request, obj)
+
+
+@admin.register(Inbound)
+class InboundAdmin(admin.ModelAdmin):
+    list_display = ('id', 'brand', 'date', 'status', 'total_items', 'total_quantity', 'created_by', 'created_at')
+    list_filter = ('status', 'brand', 'date')
+    search_fields = ('comment', 'brand__name')
+    autocomplete_fields = ('brand', 'created_by')
+    date_hierarchy = 'date'
+    inlines = [InboundItemInline]
+    readonly_fields = ('created_at', 'confirmed_at')
+    
+    fieldsets = (
+        (None, {
+            'fields': ('brand', 'date', 'status')
+        }),
+        ('Details', {
+            'fields': ('comment',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'confirmed_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def total_items(self, obj):
+        return obj.items.count()
+    total_items.short_description = 'Items'
+    
+    def total_quantity(self, obj):
+        return sum(item.quantity for item in obj.items.all())
+    total_quantity.short_description = 'Total Qty'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('brand', 'created_by').prefetch_related('items')
+    
+    def has_delete_permission(self, request, obj=None):
+        # Only allow deleting draft inbounds
+        if obj and obj.status == 'confirmed':
+            return False
+        return super().has_delete_permission(request, obj)
+
+
+@admin.register(InboundItem)
+class InboundItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'inbound', 'product', 'quantity', 'inbound_status')
+    list_filter = ('inbound__status', 'inbound__date')
+    search_fields = ('product__name', 'product__sku', 'inbound__id')
+    autocomplete_fields = ('inbound', 'product')
+    
+    def inbound_status(self, obj):
+        return obj.inbound.get_status_display()
+    inbound_status.short_description = 'Inbound Status'
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('inbound', 'product')
+    
+    def has_change_permission(self, request, obj=None):
+        # Only allow editing items on draft inbounds
+        if obj and obj.inbound.status == 'confirmed':
+            return False
+        return super().has_change_permission(request, obj)
+    
+    def has_delete_permission(self, request, obj=None):
+        # Only allow deleting items from draft inbounds
+        if obj and obj.inbound.status == 'confirmed':
+            return False
+        return super().has_delete_permission(request, obj)
