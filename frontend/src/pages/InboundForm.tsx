@@ -95,8 +95,15 @@ const InboundFormPage = () => {
         setLoadingProducts(true);
         try {
           const result = await fetchProductsByCategory({ brandId: formData.brand });
+          
+          // Debug: log the response
+          console.log('Products API response:', result);
+          console.log('Is array?', Array.isArray(result));
+          
           // Ensure we always set an array
-          setProducts(Array.isArray(result) ? result : []);
+          const productsArray = Array.isArray(result) ? result : [];
+          console.log('Setting products:', productsArray.length, 'items');
+          setProducts(productsArray);
         } catch (error) {
           console.error('Error loading products:', error);
           toast.error('Failed to load products');
