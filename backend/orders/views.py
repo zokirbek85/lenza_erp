@@ -374,6 +374,9 @@ class DailyReportPDFView(APIView, ExportMixin):
 
         # Generate report data
         try:
+            # Get user's language preference
+            language_code = request.LANGUAGE_CODE if hasattr(request, 'LANGUAGE_CODE') else 'uz'
+            
             service = DailyFinancialReportService(report_date)
             report_data = service.generate_report()
 
@@ -391,16 +394,21 @@ class DailyReportPDFView(APIView, ExportMixin):
                 **company_context,
                 'dealers': report_data['dealers'],
                 'summary': report_data['summary'],
+                'LANGUAGE_CODE': language_code,
             }
 
-            # Render PDF
+            # Render PDF with user's language
             filename = f"daily_report_{report_date.strftime('%Y-%m-%d')}.pdf"
-            return self.render_pdf_simple(
-                template_path='reports/daily_report.html',
-                context=context,
-                filename=filename,
-                request=request,
-            )
+            
+            # Activate translation for PDF rendering
+            from django.utils import translation
+            with translation.override(language_code):
+                return self.render_pdf_simple(
+                    template_path='reports/daily_report.html',
+                    context=context,
+                    filename=filename,
+                    request=request,
+                )
 
         except Exception as e:
             import traceback
