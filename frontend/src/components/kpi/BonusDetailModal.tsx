@@ -1,4 +1,5 @@
 import { formatCurrency } from '../../utils/formatters';
+import { exportManagerKPIToXLSX } from '../../utils/exportUtils';
 import { useTranslation } from 'react-i18next';
 
 interface DealerBonus {
@@ -37,6 +38,12 @@ interface BonusDetailModalProps {
 const BonusDetailModal = ({ isOpen, onClose, data, loading }: BonusDetailModalProps) => {
   const { t } = useTranslation();
 
+  const handleExportToExcel = () => {
+    if (data) {
+      exportManagerKPIToXLSX(data);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -57,14 +64,23 @@ const BonusDetailModal = ({ isOpen, onClose, data, loading }: BonusDetailModalPr
               </p>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportToExcel}
+              disabled={loading || !data}
+              className="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              📊 {t('common.exportExcel', 'Export Excel')}
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}

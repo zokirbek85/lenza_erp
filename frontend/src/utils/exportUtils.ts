@@ -547,3 +547,227 @@ export const exportManagerKPIToPDF = (data: {
   const fileName = `manager-kpi-${data.manager_name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 };
+
+/**
+ * Export Manager KPI Details to XLSX (Excel)
+ * Shows dealer-level breakdown with sales, payments by type, and KPI calculation
+ * Styled to match the image format provided
+ */
+export const exportManagerKPIToXLSX = (data: {
+  manager_name: string;
+  regions: string;
+  from_date: string;
+  to_date: string;
+  dealers: Array<{
+    dealer_name: string;
+    sales_usd: number;
+    payment_cash_usd: number;
+    payment_card_usd: number;
+    payment_bank_usd: number;
+    total_payment_usd: number;
+    kpi_usd: number;
+  }>;
+  totals: {
+    sales_usd: number;
+    payment_cash_usd: number;
+    payment_card_usd: number;
+    payment_bank_usd: number;
+    total_payment_usd: number;
+    kpi_usd: number;
+  };
+}) => {
+  // Format date range for title
+  const formatDateRange = (from: string, to: string) => {
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `Dekabr(${pad(fromDate.getDate())}.${pad(fromDate.getMonth() + 1)}.${fromDate.getFullYear()}-${pad(toDate.getDate())}.${pad(toDate.getMonth() + 1)}.${toDate.getFullYear()})`;
+  };
+
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+
+  // Prepare data array
+  const excelData: any[][] = [
+    // Title row
+    [`Toshkent va Toshkent.vil (${data.manager_name})`],
+    // Date range row
+    [formatDateRange(data.from_date, data.to_date)],
+    // Empty row
+    [],
+    // Header row
+    [
+      'No',
+      'Klient',
+      'Tovar sum $',
+      'Prixod',
+      '',
+      '',
+      'Umumiy $',
+      'KPI (1%) $'
+    ],
+    // Sub-header for Prixod columns
+    ['', '', '', 'Naqd $', 'Plastik $', 'Per/ya $', '', ''],
+  ];
+
+  // Add dealer rows
+  data.dealers.forEach((dealer, index) => {
+    excelData.push([
+      index + 1,
+      dealer.dealer_name,
+      dealer.sales_usd,
+      dealer.payment_cash_usd,
+      dealer.payment_card_usd,
+      dealer.payment_bank_usd,
+      dealer.total_payment_usd,
+      dealer.kpi_usd,
+    ]);
+  });
+
+  // Add empty row before totals
+  excelData.push([]);
+
+  // Add totals row
+  excelData.push([
+    '',
+    'Umumiy',
+    data.totals.sales_usd,
+    data.totals.payment_cash_usd,
+    data.totals.payment_card_usd,
+    data.totals.payment_bank_usd,
+    data.totals.total_payment_usd,
+    data.totals.kpi_usd,
+  ]);
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 5 },   // No
+    { wch: 30 },  // Klient
+    { wch: 12 },  // Tovar sum
+    { wch: 12 },  // Naqd
+    { wch: 12 },  // Plastik
+    { wch: 12 },  // Per/ya
+    { wch: 12 },  // Umumiy
+    { wch: 12 },  // KPI
+  ];
+
+  // Merge cells for title
+  if (!ws['!merges']) ws['!merges'] = [];
+  ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }); // Title row
+  ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }); // Date row
+  ws['!merges'].push({ s: { r: 3, c: 3 }, e: { r: 3, c: 5 } }); // Prixod header merge
+  ws['!merges'].push({ s: { r: 3, c: 0 }, e: { r: 4, c: 0 } }); // No column merge
+  ws['!merges'].push({ s: { r: 3, c: 1 }, e: { r: 4, c: 1 } }); // Klient column merge
+  ws['!merges'].push({ s: { r: 3, c: 2 }, e: { r: 4, c: 2 } }); // Tovar sum column merge
+  ws['!merges'].push({ s: { r: 3, c: 6 }, e: { r: 4, c: 6 } }); // Umumiy column merge
+  ws['!merges'].push({ s: { r: 3, c: 7 }, e: { r: 4, c: 7 } }); // KPI column merge
+
+  // Apply styles
+  // Style title row (centered, bold, larger font)
+  if (ws['A1']) {
+    ws['A1'].s = {
+      font: { bold: true, sz: 14 },
+      alignment: { horizontal: 'center', vertical: 'center' },
+    };
+  }
+
+  // Style date row (centered)
+  if (ws['A2']) {
+    ws['A2'].s = {
+      font: { sz: 11 },
+      alignment: { horizontal: 'center', vertical: 'center' },
+    };
+  }
+
+  // Style header rows (yellow background, centered, bold)
+  for (let col = 0; col <= 7; col++) {
+    const cellAddress1 = XLSX.utils.encode_cell({ r: 3, c: col });
+    const cellAddress2 = XLSX.utils.encode_cell({ r: 4, c: col });
+
+    if (ws[cellAddress1]) {
+      ws[cellAddress1].s = {
+        fill: { fgColor: { rgb: 'FFC864' } },
+        font: { bold: true },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: {
+          top: { style: 'thin', color: { rgb: '000000' } },
+          bottom: { style: 'thin', color: { rgb: '000000' } },
+          left: { style: 'thin', color: { rgb: '000000' } },
+          right: { style: 'thin', color: { rgb: '000000' } },
+        },
+      };
+    }
+    if (ws[cellAddress2]) {
+      ws[cellAddress2].s = {
+        fill: { fgColor: { rgb: 'FFC864' } },
+        font: { bold: true },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: {
+          top: { style: 'thin', color: { rgb: '000000' } },
+          bottom: { style: 'thin', color: { rgb: '000000' } },
+          left: { style: 'thin', color: { rgb: '000000' } },
+          right: { style: 'thin', color: { rgb: '000000' } },
+        },
+      };
+    }
+  }
+
+  // Style data rows (alternating green/white, borders)
+  const totalRowIndex = excelData.length - 1;
+  for (let row = 5; row < totalRowIndex - 1; row++) {
+    const isGreen = (row - 5) % 2 === 0;
+    for (let col = 0; col <= 7; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+      if (ws[cellAddress]) {
+        ws[cellAddress].s = {
+          fill: isGreen ? { fgColor: { rgb: 'C8FFC8' } } : undefined,
+          alignment: {
+            horizontal: col === 1 ? 'left' : col === 0 ? 'center' : 'right',
+            vertical: 'center',
+          },
+          border: {
+            top: { style: 'thin', color: { rgb: '000000' } },
+            bottom: { style: 'thin', color: { rgb: '000000' } },
+            left: { style: 'thin', color: { rgb: '000000' } },
+            right: { style: 'thin', color: { rgb: '000000' } },
+          },
+          numFmt: col >= 2 ? '0.00' : undefined,
+        };
+      }
+    }
+  }
+
+  // Style totals row (orange background, bold, borders)
+  for (let col = 0; col <= 7; col++) {
+    const cellAddress = XLSX.utils.encode_cell({ r: totalRowIndex, c: col });
+    if (ws[cellAddress]) {
+      ws[cellAddress].s = {
+        fill: { fgColor: { rgb: 'FFC864' } },
+        font: { bold: true },
+        alignment: {
+          horizontal: col === 1 ? 'left' : col === 0 ? 'center' : 'right',
+          vertical: 'center',
+        },
+        border: {
+          top: { style: 'thin', color: { rgb: '000000' } },
+          bottom: { style: 'thin', color: { rgb: '000000' } },
+          left: { style: 'thin', color: { rgb: '000000' } },
+          right: { style: 'thin', color: { rgb: '000000' } },
+        },
+        numFmt: col >= 2 ? '0.00' : undefined,
+      };
+    }
+  }
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, ws, 'Manager KPI');
+
+  // Generate filename
+  const fileName = `manager-kpi-${data.manager_name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+  // Save file
+  XLSX.writeFile(wb, fileName);
+};
