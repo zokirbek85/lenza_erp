@@ -6,6 +6,7 @@ from .views import (
     OwnerKPIView,
     WarehouseKPIView,
     SalesManagerKPIView,
+    SalesManagerKPIDetailView,
     AccountantKPIView,
     CardKPIView,
     InventoryStatsView,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('owner/', OwnerKPIView.as_view(), name='owner-kpi'),
     path('warehouse/', WarehouseKPIView.as_view(), name='warehouse-kpi'),
     path('sales-manager/', SalesManagerKPIView.as_view(), name='sales-manager-kpi'),
+    path('sales-manager/detail/', SalesManagerKPIDetailView.as_view(), name='sales-manager-kpi-detail'),
     path('accountant/', AccountantKPIView.as_view(), name='accountant-kpi'),
     path('card/', CardKPIView.as_view(), name='card-kpi'),
     

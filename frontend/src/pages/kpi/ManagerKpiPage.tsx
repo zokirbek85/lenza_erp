@@ -9,6 +9,7 @@ import KpiSection from '../../components/kpi/KpiSection';
 import ChartBar from '../../components/kpi/ChartBar';
 import ChartPie from '../../components/kpi/ChartPie';
 import { formatCurrency, formatQuantity } from '../../utils/formatters';
+import { exportManagerKPIToPDF } from '../../utils/exportUtils';
 
 interface ManagerKpi {
   my_sales_usd: number;
@@ -72,6 +73,7 @@ const ManagerKpiPage = () => {
   const [data, setData] = useState<ManagerKpi | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
 
   // Update URL params when date range changes
   useEffect(() => {
@@ -163,6 +165,23 @@ const ManagerKpiPage = () => {
     setDateRange(getDefaultDateRange());
   };
 
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      const params = {
+        from_date: formatDate(dateRange.startDate),
+        to_date: formatDate(dateRange.endDate),
+      };
+      const response = await http.get('/kpis/sales-manager/detail/', { params });
+      exportManagerKPIToPDF(response.data);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      alert(t('kpi.messages.exportError', 'PDF export xatolik yuz berdi'));
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Date Range Picker */}
@@ -186,12 +205,21 @@ const ManagerKpiPage = () => {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                {t('common.endDate', 'Tugash sanasi')}
-              </label>
-              <input
-                type="date"
-                value={formatDate(dateRange.endDate)}
+           div className="flex gap-2">
+            <button
+              onClick={handleExportPDF}
+              disabled={exportingPDF}
+              className="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {exportingPDF ? t('common.exporting', 'Yuklanmoqda...') : t('common.exportPDF', 'PDF Export')}
+            </button>
+            <button
+              onClick={handleResetDates}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              {t('common.reset', 'Qayta tiklash')}
+            </button>
+          </divlue={formatDate(dateRange.endDate)}
                 onChange={(e) => {
                   const newEnd = parseDate(e.target.value);
                   if (newEnd && newEnd >= dateRange.startDate) {

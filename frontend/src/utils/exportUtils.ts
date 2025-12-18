@@ -363,7 +363,7 @@ export const exportTransactionsToXLSX = (
 
   // Transactions Sheet
   const transactionsData = [
-    ['Date', 'Type', 'Account', 'Category/Dealer', 'Amount', 'Currency', 'Status', 'Comment', 'Created By', 'Approved By'],
+    ['Date', 'Type', 'Account', 'Category/Dealer', 'Manager', 'Amount', 'Currency', 'Status', 'Comment', 'Created By', 'Approved By'],
     ...transactions.map(transaction => [
       formatDate(transaction.date),
       transaction.type.replace('_', ' ').toUpperCase(),
@@ -371,6 +371,7 @@ export const exportTransactionsToXLSX = (
       transaction.type === 'income'
         ? transaction.dealer_name || ''
         : transaction.category || '',
+      transaction.manager_name || '',
       Number(transaction.amount) || 0,
       transaction.currency || '',
       transaction.status.toUpperCase(),
@@ -388,6 +389,7 @@ export const exportTransactionsToXLSX = (
     { wch: 20 },  // Type
     { wch: 15 },  // Account
     { wch: 20 },  // Category/Dealer
+    { wch: 15 },  // Manager
     { wch: 15 },  // Amount
     { wch: 10 },  // Currency
     { wch: 10 },  // Status
@@ -400,4 +402,136 @@ export const exportTransactionsToXLSX = (
 
   // Save file
   XLSX.writeFile(wb, `finance-transactions-${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+/**
+ * Export Manager KPI Details to PDF
+ * Shows dealer-level breakdown with sales, payments by type, and KPI calculation
+ */
+export const exportManagerKPIToPDF = (data: {
+  manager_name: string;
+  regions: string;
+  from_date: string;
+  to_date: string;
+  dealers: Array<{
+    dealer_name: string;
+    sales_usd: number;
+    payment_cash_usd: number;
+    payment_card_usd: number;
+    payment_bank_usd: number;
+    total_payment_usd: number;
+    kpi_usd: number;
+  }>;
+  totals: {
+    sales_usd: number;
+    payment_cash_usd: number;
+    payment_card_usd: number;
+    payment_bank_usd: number;
+    total_payment_usd: number;
+    kpi_usd: number;
+  };
+}) => {
+  const doc = initPDFWithUTF8('landscape');
+  
+  // Format date range for title
+  const formatDateRange = (from: string, to: string) => {
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    const monthNames = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 
+                        'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
+    
+    if (fromDate.getMonth() === toDate.getMonth() && fromDate.getFullYear() === toDate.getFullYear()) {
+      return `${monthNames[fromDate.getMonth()]}(${String(fromDate.getDate()).padStart(2, '0')}.${String(fromDate.getMonth() + 1).padStart(2, '0')}.${fromDate.getFullYear()}-${String(toDate.getDate()).padStart(2, '0')}.${String(toDate.getMonth() + 1).padStart(2, '0')}.${toDate.getFullYear()})`;
+    }
+    return `${String(fromDate.getDate()).padStart(2, '0')}.${String(fromDate.getMonth() + 1).padStart(2, '0')}.${fromDate.getFullYear()}-${String(toDate.getDate()).padStart(2, '0')}.${String(toDate.getMonth() + 1).padStart(2, '0')}.${toDate.getFullYear()}`;
+  };
+  
+  // Title
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  const title = `${data.regions} (${data.manager_name})`;
+  doc.text(title, 148, 15, { align: 'center' });
+  
+  // Date range
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  const dateRange = formatDateRange(data.from_date, data.to_date);
+  doc.text(dateRange, 148, 22, { align: 'center' });
+  
+  // Prepare table data
+  const tableData = data.dealers.map((dealer, index) => [
+    (index + 1).toString(),
+    dealer.dealer_name,
+    dealer.sales_usd.toFixed(2),
+    dealer.payment_cash_usd.toFixed(2),
+    dealer.payment_card_usd.toFixed(2),
+    dealer.payment_bank_usd.toFixed(2),
+    dealer.total_payment_usd.toFixed(2),
+    dealer.kpi_usd.toFixed(2),
+  ]);
+  
+  // Add totals row
+  tableData.push([
+    '',
+    'Umumiy',
+    data.totals.sales_usd.toFixed(2),
+    data.totals.payment_cash_usd.toFixed(2),
+    data.totals.payment_card_usd.toFixed(2),
+    data.totals.payment_bank_usd.toFixed(2),
+    data.totals.total_payment_usd.toFixed(2),
+    data.totals.kpi_usd.toFixed(2),
+  ]);
+  
+  // Create table
+  autoTable(doc, {
+    startY: 28,
+    head: [[
+      'No',
+      'Klient',
+      'Tovar sum $',
+      'Naqd $',
+      'Plastik $',
+      'Per/ya $',
+      'Umumiy $',
+      'KPI (1%) $'
+    ]],
+    body: tableData,
+    theme: 'grid',
+    headStyles: {
+      fillColor: [255, 200, 100],
+      textColor: [0, 0, 0],
+      fontStyle: 'bold',
+      fontSize: 9,
+      halign: 'center',
+    },
+    bodyStyles: {
+      fontSize: 8,
+      textColor: [0, 0, 0],
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 10 },  // No
+      1: { halign: 'left', cellWidth: 60 },    // Klient
+      2: { halign: 'right', cellWidth: 25 },   // Tovar sum
+      3: { halign: 'right', cellWidth: 25 },   // Naqd
+      4: { halign: 'right', cellWidth: 25 },   // Plastik
+      5: { halign: 'right', cellWidth: 25 },   // Per/ya
+      6: { halign: 'right', cellWidth: 25 },   // Umumiy
+      7: { halign: 'right', cellWidth: 25 },   // KPI
+    },
+    didParseCell: (data) => {
+      // Highlight totals row
+      if (data.row.index === tableData.length - 1) {
+        data.cell.styles.fillColor = [255, 200, 100];
+        data.cell.styles.fontStyle = 'bold';
+      }
+      // Highlight green rows (like in the image)
+      if (data.row.index < tableData.length - 1 && data.row.index % 2 === 0) {
+        data.cell.styles.fillColor = [200, 255, 200];
+      }
+    },
+  });
+  
+  // Save PDF
+  const fileName = `manager-kpi-${data.manager_name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
 };

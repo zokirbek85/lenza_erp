@@ -26,6 +26,7 @@ export interface FinanceTransaction {
   type_display?: string;
   dealer: number | null;
   dealer_name?: string;
+  manager_name?: string;
   account: number;
   account_name?: string;
   related_account?: number | null;

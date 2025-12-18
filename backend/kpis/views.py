@@ -2,7 +2,10 @@ from decimal import Decimal
 from datetime import timedelta, datetime
 from collections import defaultdict
 
-from django.db.models import Avg, Sum, Count, Max, Q, F, DecimalField, Case, When, Value
+from django.db.models import (
+    Avg, Sum, Count, Max, Q, F, DecimalField, Case, When, Value,
+    OuterRef, Subquery, ExpressionWrapper
+)
 from django.db.models.functions import Coalesce, TruncMonth, TruncWeek
 from django.utils import timezone
 from rest_framework import viewsets
@@ -219,6 +222,165 @@ class SalesManagerKPIView(APIView):
             ],
         }
         return Response(data)
+
+
+class SalesManagerKPIDetailView(APIView):
+    """
+    Sales Manager KPI Detail View - provides detailed dealer breakdown for PDF export.
+    
+    Query params:
+    - from_date: Start date (YYYY-MM-DD). Defaults to first day of current month.
+    - to_date: End date (YYYY-MM-DD). Defaults to today.
+    
+    Returns detailed breakdown by dealer with sales, payments by type, and KPI calculation.
+    """
+    permission_classes = [IsAdmin | IsSales | IsOwner]
+
+    def get(self, request):
+        from datetime import datetime
+        
+        user = request.user
+        today = timezone.now().date()
+        
+        # Parse date parameters
+        from_date_str = request.query_params.get('from_date')
+        to_date_str = request.query_params.get('to_date')
+        
+        if from_date_str:
+            try:
+                from_date = datetime.strptime(from_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                from_date = today.replace(day=1)
+        else:
+            from_date = today.replace(day=1)
+        
+        if to_date_str:
+            try:
+                to_date = datetime.strptime(to_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                to_date = today
+        else:
+            to_date = today
+        
+        if from_date > to_date:
+            from_date, to_date = to_date, from_date
+        
+        # Get manager info
+        manager_name = user.get_full_name() or user.username
+        
+        # Get manager's dealers
+        manager_dealers = Dealer.objects.filter(manager_user=user).select_related('region')
+        dealer_ids = list(manager_dealers.values_list('id', flat=True))
+        
+        # Get regions for title
+        regions = list(manager_dealers.values_list('region__name', flat=True).distinct())
+        regions_str = ' va '.join([r for r in regions if r]) if regions else 'Unknown'
+        
+        # Filter orders by date range
+        confirmed_statuses = [
+            Order.Status.CONFIRMED,
+            Order.Status.PACKED,
+            Order.Status.SHIPPED,
+            Order.Status.DELIVERED,
+        ]
+        
+        # Sales by dealer
+        dealer_sales = Order.objects.filter(
+            dealer_id__in=dealer_ids,
+            status__in=confirmed_statuses,
+            is_imported=False,
+            value_date__gte=from_date,
+            value_date__lte=to_date
+        ).values('dealer__id', 'dealer__name').annotate(
+            sales_usd=Sum('total_usd')
+        )
+        
+        # Payments by dealer and account type
+        dealer_payments = FinanceTransaction.objects.filter(
+            dealer_id__in=dealer_ids,
+            type=FinanceTransaction.TransactionType.INCOME,
+            status=FinanceTransaction.TransactionStatus.APPROVED,
+            created_at__date__gte=from_date,
+            created_at__date__lte=to_date
+        ).values('dealer__id', 'dealer__name', 'account__type').annotate(
+            payment_usd=Sum('amount_usd')
+        )
+        
+        # Organize data by dealer
+        dealer_data_map = {}
+        
+        # Add sales data
+        for item in dealer_sales:
+            dealer_id = item['dealer__id']
+            dealer_data_map[dealer_id] = {
+                'dealer_name': item['dealer__name'],
+                'sales_usd': float(item['sales_usd'] or 0),
+                'payment_cash_usd': 0,
+                'payment_card_usd': 0,
+                'payment_bank_usd': 0,
+            }
+        
+        # Add payment data by account type
+        for item in dealer_payments:
+            dealer_id = item['dealer__id']
+            if dealer_id not in dealer_data_map:
+                dealer_data_map[dealer_id] = {
+                    'dealer_name': item['dealer__name'],
+                    'sales_usd': 0,
+                    'payment_cash_usd': 0,
+                    'payment_card_usd': 0,
+                    'payment_bank_usd': 0,
+                }
+            
+            account_type = item['account__type']
+            payment_amount = float(item['payment_usd'] or 0)
+            
+            if account_type == 'cash':
+                dealer_data_map[dealer_id]['payment_cash_usd'] += payment_amount
+            elif account_type == 'card':
+                dealer_data_map[dealer_id]['payment_card_usd'] += payment_amount
+            elif account_type == 'bank':
+                dealer_data_map[dealer_id]['payment_bank_usd'] += payment_amount
+        
+        # Calculate totals and KPI for each dealer
+        dealers_list = []
+        for dealer_id, data in dealer_data_map.items():
+            total_payment = data['payment_cash_usd'] + data['payment_card_usd'] + data['payment_bank_usd']
+            kpi_amount = total_payment * 0.01  # 1% KPI
+            
+            dealers_list.append({
+                'dealer_name': data['dealer_name'],
+                'sales_usd': data['sales_usd'],
+                'payment_cash_usd': data['payment_cash_usd'],
+                'payment_card_usd': data['payment_card_usd'],
+                'payment_bank_usd': data['payment_bank_usd'],
+                'total_payment_usd': total_payment,
+                'kpi_usd': kpi_amount,
+            })
+        
+        # Sort by sales descending
+        dealers_list.sort(key=lambda x: x['sales_usd'], reverse=True)
+        
+        # Calculate grand totals
+        totals = {
+            'sales_usd': sum(d['sales_usd'] for d in dealers_list),
+            'payment_cash_usd': sum(d['payment_cash_usd'] for d in dealers_list),
+            'payment_card_usd': sum(d['payment_card_usd'] for d in dealers_list),
+            'payment_bank_usd': sum(d['payment_bank_usd'] for d in dealers_list),
+            'total_payment_usd': sum(d['total_payment_usd'] for d in dealers_list),
+            'kpi_usd': sum(d['kpi_usd'] for d in dealers_list),
+        }
+        
+        response_data = {
+            'manager_name': manager_name,
+            'regions': regions_str,
+            'from_date': from_date.isoformat(),
+            'to_date': to_date.isoformat(),
+            'dealers': dealers_list,
+            'totals': totals,
+        }
+        
+        return Response(response_data)
 
 
 class AccountantKPIView(APIView):
@@ -977,13 +1139,36 @@ class ManagerKPIOverviewView(APIView):
             total_uzs=Coalesce(Sum('amount_uzs'), Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)))
         )
         
-        # Bonus = payments  0.01 (1%)
+        # Bonus = payments × 0.01 (1%)
         bonus_usd = (payments_agg['total_usd'] * Decimal('0.01')).quantize(Decimal('0.01'))
         
-        # Convert bonus to UZS using current rate
-        current_rate = ExchangeRate.objects.order_by('-rate_date').first()
-        exchange_rate = current_rate.usd_to_uzs if current_rate else Decimal('1')
-        bonus_uzs = (bonus_usd * exchange_rate).quantize(Decimal('0.01'))
+        # Calculate bonus_uzs using each payment's exchange rate on payment date
+        payments_with_bonus = payments_qs.annotate(
+            # Get exchange rate on or before payment date
+            payment_exchange_rate=Coalesce(
+                Subquery(
+                    ExchangeRate.objects.filter(
+                        rate_date__lte=OuterRef('date')
+                    ).order_by('-rate_date').values('usd_to_uzs')[:1]
+                ),
+                Value(Decimal('12800'), output_field=DecimalField(max_digits=12, decimal_places=2))
+            )
+        ).annotate(
+            # Calculate bonus for each payment: amount_usd × 0.01 × exchange_rate
+            payment_bonus_uzs=ExpressionWrapper(
+                F('amount_usd') * Decimal('0.01') * F('payment_exchange_rate'),
+                output_field=DecimalField(max_digits=18, decimal_places=2)
+            )
+        )
+        
+        # Sum all payment bonuses
+        bonus_uzs_result = payments_with_bonus.aggregate(
+            total_bonus=Coalesce(
+                Sum('payment_bonus_uzs'),
+                Value(Decimal('0'), output_field=DecimalField(max_digits=18, decimal_places=2))
+            )
+        )
+        bonus_uzs = bonus_uzs_result['total_bonus'].quantize(Decimal('0.01'))
         
         # Sales by region
         sales_by_region = (
@@ -1153,19 +1338,44 @@ class KPILeaderboardView(APIView):
                 total=Coalesce(Sum('total_usd'), Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)))
             )['total']
 
-            # Payments
-            payments = FinanceTransaction.objects.filter(
+            # Payments with bonus calculation
+            payments_qs = FinanceTransaction.objects.filter(
                 dealer_id__in=dealer_ids,
                 type=FinanceTransaction.TransactionType.INCOME,
                 status=FinanceTransaction.TransactionStatus.APPROVED,
                 date__gte=from_date,
                 date__lte=to_date
-            ).aggregate(
-                total=Coalesce(Sum('amount_usd'), Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)))
-            )['total']
-
-            # Bonus
+            )
+            
+            payments_with_bonus = payments_qs.annotate(
+                payment_exchange_rate=Coalesce(
+                    Subquery(
+                        ExchangeRate.objects.filter(
+                            rate_date__lte=OuterRef('date')
+                        ).order_by('-rate_date').values('usd_to_uzs')[:1]
+                    ),
+                    Value(Decimal('12800'), output_field=DecimalField(max_digits=12, decimal_places=2))
+                ),
+                payment_bonus_uzs=ExpressionWrapper(
+                    F('amount_usd') * Decimal('0.01') * F('payment_exchange_rate'),
+                    output_field=DecimalField(max_digits=18, decimal_places=2)
+                )
+            )
+            
+            payments_agg = payments_with_bonus.aggregate(
+                total_usd=Coalesce(
+                    Sum('amount_usd'), 
+                    Value(0, output_field=DecimalField(max_digits=18, decimal_places=2))
+                ),
+                total_bonus_uzs=Coalesce(
+                    Sum('payment_bonus_uzs'),
+                    Value(0, output_field=DecimalField(max_digits=18, decimal_places=2))
+                )
+            )
+            
+            payments = payments_agg['total_usd']
             bonus = (payments * Decimal('0.01')).quantize(Decimal('0.01'))
+            bonus_uzs = payments_agg['total_bonus_uzs'].quantize(Decimal('0.01'))
 
             # Debt management metrics
             starting_debt = Decimal('0')
@@ -1194,6 +1404,7 @@ class KPILeaderboardView(APIView):
                 'total_sales_usd': sales,
                 'total_payments_usd': payments,
                 'bonus_usd': bonus,
+                'bonus_uzs': bonus_uzs,  # ← QOSHILDI
                 'dealer_count': len(dealer_ids),
                 'starting_debt_usd': starting_debt,
                 'ending_debt_usd': ending_debt,

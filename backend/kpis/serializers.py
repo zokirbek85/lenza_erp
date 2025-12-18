@@ -60,6 +60,7 @@ class KPILeaderboardItemSerializer(serializers.Serializer):
     total_sales_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
     total_payments_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
     bonus_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
+    bonus_uzs = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)  # ← QOSHILDI
     dealer_count = serializers.IntegerField()
     rank = serializers.IntegerField()
     starting_debt_usd = serializers.DecimalField(max_digits=18, decimal_places=2, coerce_to_string=False)
