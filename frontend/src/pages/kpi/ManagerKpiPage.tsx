@@ -187,6 +187,9 @@ const ManagerKpiPage = () => {
   };
 
   const handleBonusCardClick = async () => {
+    if (!data) {
+      return;
+    }
     setBonusModalOpen(true);
     setBonusDetailLoading(true);
     try {
@@ -275,7 +278,7 @@ const ManagerKpiPage = () => {
           subtitle={t('kpi.manager.bonusFormula', 'bonusFormula: 1% of Payments')}
           accentColor="text-amber-600"
           onClick={handleBonusCardClick}
-          clickable
+          clickable={true}
         />
         <KpiCard
           title={t('kpi.manager.myDealers')}

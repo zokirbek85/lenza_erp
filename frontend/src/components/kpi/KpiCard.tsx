@@ -11,6 +11,12 @@ interface KpiCardProps {
 }
 
 const KpiCard = ({ title, value, subtitle, accentColor = 'text-slate-900', className, onClick, clickable }: KpiCardProps) => {
+  const handleClick = () => {
+    if (clickable && onClick) {
+      onClick();
+    }
+  };
+
   return (
     <article
       className={clsx(
@@ -18,7 +24,9 @@ const KpiCard = ({ title, value, subtitle, accentColor = 'text-slate-900', class
         clickable && 'cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]',
         className
       )}
-      onClick={onClick}
+      onClick={handleClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
     >
       <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
       <p className={clsx('mt-2 text-3xl font-semibold dark:text-white', accentColor)}>{value}</p>
