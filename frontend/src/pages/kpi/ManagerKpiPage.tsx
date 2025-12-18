@@ -205,7 +205,24 @@ const ManagerKpiPage = () => {
               />
             </div>
             <div className="flex flex-col gap-1">
-           div className="flex gap-2">
+              <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                {t('common.endDate', 'Tugash sanasi')}
+              </label>
+              <input
+                type="date"
+                value={formatDate(dateRange.endDate)}
+                onChange={(e) => {
+                  const newEnd = parseDate(e.target.value);
+                  if (newEnd && newEnd >= dateRange.startDate) {
+                    handleDateChange(dateRange.startDate, newEnd);
+                  }
+                }}
+                max={formatDate(new Date())}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
             <button
               onClick={handleExportPDF}
               disabled={exportingPDF}
@@ -219,24 +236,7 @@ const ManagerKpiPage = () => {
             >
               {t('common.reset', 'Qayta tiklash')}
             </button>
-          </divlue={formatDate(dateRange.endDate)}
-                onChange={(e) => {
-                  const newEnd = parseDate(e.target.value);
-                  if (newEnd && newEnd >= dateRange.startDate) {
-                    handleDateChange(dateRange.startDate, newEnd);
-                  }
-                }}
-                max={formatDate(new Date())}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
           </div>
-          <button
-            onClick={handleResetDates}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-          >
-            {t('common.reset', 'Qayta tiklash')}
-          </button>
         </div>
       </div>
 
