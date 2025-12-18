@@ -136,8 +136,11 @@ class SalesManagerKPIView(APIView):
         if from_date > to_date:
             from_date, to_date = to_date, from_date
         
-        # Get manager's dealers
-        manager_dealers = Dealer.objects.filter(manager_user=user)
+        # Get manager's dealers (only those included in KPI)
+        manager_dealers = Dealer.objects.filter(
+            manager_user=user,
+            include_in_manager_kpi=True
+        )
         dealer_ids = list(manager_dealers.values_list('id', flat=True))
         
         # Filter orders by date range and manager's dealers
@@ -268,8 +271,11 @@ class SalesManagerKPIDetailView(APIView):
         # Get manager info
         manager_name = user.get_full_name() or user.username
         
-        # Get manager's dealers
-        manager_dealers = Dealer.objects.filter(manager_user=user).select_related('region')
+        # Get manager's dealers (only those included in KPI)
+        manager_dealers = Dealer.objects.filter(
+            manager_user=user,
+            include_in_manager_kpi=True
+        ).select_related('region')
         dealer_ids = list(manager_dealers.values_list('id', flat=True))
         
         # Get regions for title

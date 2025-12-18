@@ -139,6 +139,11 @@ class Dealer(models.Model):
         verbose_name="Active status",
         help_text="Whether this dealer is currently active"
     )
+    include_in_manager_kpi = models.BooleanField(
+        default=True,
+        verbose_name="Include in manager KPI",
+        help_text="Whether this dealer's sales and payments should be included in manager KPI calculation"
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Created at",

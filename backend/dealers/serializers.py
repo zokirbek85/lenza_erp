@@ -164,6 +164,7 @@ class DealerSerializer(serializers.ModelSerializer):
             'current_balance_uzs',
             'converted_balance_uzs',
             'is_active',
+            'include_in_manager_kpi',
             'phone',
             'address',
             'contact',
