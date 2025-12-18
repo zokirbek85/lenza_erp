@@ -186,9 +186,9 @@ const ManagerKpiPage = () => {
     <div className="space-y-6">
       {/* Date Range Picker */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
+            <div className="flex flex-col gap-1 flex-1">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                 {t('common.startDate', 'Boshlanish sanasi')}
               </label>
@@ -204,7 +204,7 @@ const ManagerKpiPage = () => {
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 flex-1">
               <label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                 {t('common.endDate', 'Tugash sanasi')}
               </label>
@@ -221,21 +221,21 @@ const ManagerKpiPage = () => {
                 className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleExportPDF}
-              disabled={exportingPDF}
-              className="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {exportingPDF ? t('common.exporting', 'Yuklanmoqda...') : t('common.exportPDF', 'PDF Export')}
-            </button>
-            <button
-              onClick={handleResetDates}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-            >
-              {t('common.reset', 'Qayta tiklash')}
-            </button>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={handleExportPDF}
+                disabled={exportingPDF}
+                className="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {exportingPDF ? t('common.exporting', 'Yuklanmoqda...') : '📄 PDF Export'}
+              </button>
+              <button
+                onClick={handleResetDates}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 whitespace-nowrap"
+              >
+                {t('common.reset', 'Qayta tiklash')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
