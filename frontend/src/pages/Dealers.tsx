@@ -47,6 +47,7 @@ interface Dealer {
   current_balance_uzs: number;
   converted_balance_uzs: number;
   is_active: boolean;
+  include_in_manager_kpi: boolean;
   phone: string;
   address: string;
   contact: string;
@@ -322,6 +323,19 @@ const DealersPage = () => {
     } catch (error) {
       console.error(error);
       toast.error(t('dealers.messages.deleteError'));
+    }
+  };
+
+  const handleKPIToggle = async (dealerId: number, includeInKPI: boolean) => {
+    try {
+      await http.patch(`/dealers/${dealerId}/`, {
+        include_in_manager_kpi: includeInKPI
+      });
+      toast.success(includeInKPI ? 'Menejer KPI ga qo\'shildi' : 'Menejer KPI dan olib tashlandi');
+      loadDealers();
+    } catch (error) {
+      console.error(error);
+      toast.error('KPI sozlamalarini yangilashda xatolik');
     }
   };
 
@@ -677,13 +691,14 @@ const DealersPage = () => {
               <th>{t('dealers.table.phone')}</th>
               <th>{t('dealers.table.address')}</th>
               <th className="text-center">{t('dealers.table.status')}</th>
+              <th className="text-center">KPI</th>
               <th className="text-right">{t('table.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={9}>
+                <td colSpan={10}>
                   <div className="flex items-center justify-center gap-3 py-12">
                     <div className="spinner" />
                     <span>{t('dealers.messages.loading')}</span>
@@ -745,6 +760,15 @@ const DealersPage = () => {
                           {t('dealers.status.inactive')}
                         </span>
                       )}
+                    </td>
+                    <td className="text-center">
+                      <input
+                        type="checkbox"
+                        checked={dealer.include_in_manager_kpi ?? true}
+                        onChange={(e) => handleKPIToggle(dealer.id, e.target.checked)}
+                        className="checkbox checkbox-sm"
+                        title={dealer.include_in_manager_kpi ? 'Menejer KPI ga kiradi' : 'Menejer KPI ga kirmaydi'}
+                      />
                     </td>
                     <td>
                       <div className="flex items-center justify-end gap-2">

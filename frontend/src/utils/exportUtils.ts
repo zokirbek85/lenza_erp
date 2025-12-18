@@ -363,22 +363,33 @@ export const exportTransactionsToXLSX = (
 
   // Transactions Sheet
   const transactionsData = [
-    ['Date', 'Type', 'Account', 'Category/Dealer', 'Manager', 'Amount', 'Currency', 'Status', 'Comment', 'Created By', 'Approved By'],
-    ...transactions.map(transaction => [
-      formatDate(transaction.date),
-      transaction.type.replace('_', ' ').toUpperCase(),
-      transaction.account_name || '',
-      transaction.type === 'income'
-        ? transaction.dealer_name || ''
-        : transaction.category || '',
-      transaction.manager_name || '',
-      Number(transaction.amount) || 0,
-      transaction.currency || '',
-      transaction.status.toUpperCase(),
-      transaction.comment || '',
-      transaction.created_by_name || '',
-      transaction.approved_by_name || '',
-    ]),
+    ['Date', 'Type', 'Account', 'Category/Dealer', 'Manager', 'Amount USD', 'Amount UZS', 'Exchange Rate', 'Status', 'Comment', 'Created By', 'Approved By'],
+    ...transactions.map(transaction => {
+      const amountUSD = transaction.currency === 'USD' 
+        ? Number(transaction.amount) || 0
+        : Number(transaction.amount_usd) || 0;
+      const amountUZS = transaction.currency === 'UZS'
+        ? Number(transaction.amount) || 0
+        : Number(transaction.amount_uzs) || 0;
+      const exchangeRate = transaction.exchange_rate || '';
+      
+      return [
+        formatDate(transaction.date),
+        transaction.type.replace('_', ' ').toUpperCase(),
+        transaction.account_name || '',
+        transaction.type === 'income'
+          ? transaction.dealer_name || ''
+          : transaction.category || '',
+        transaction.manager_name || '',
+        amountUSD,
+        amountUZS,
+        exchangeRate,
+        transaction.status.toUpperCase(),
+        transaction.comment || '',
+        transaction.created_by_name || '',
+        transaction.approved_by_name || '',
+      ];
+    }),
   ];
 
   const transactionsSheet = XLSX.utils.aoa_to_sheet(transactionsData);
@@ -390,8 +401,9 @@ export const exportTransactionsToXLSX = (
     { wch: 15 },  // Account
     { wch: 20 },  // Category/Dealer
     { wch: 15 },  // Manager
-    { wch: 15 },  // Amount
-    { wch: 10 },  // Currency
+    { wch: 15 },  // Amount USD
+    { wch: 15 },  // Amount UZS
+    { wch: 12 },  // Exchange Rate
     { wch: 10 },  // Status
     { wch: 30 },  // Comment
     { wch: 15 },  // Created By
