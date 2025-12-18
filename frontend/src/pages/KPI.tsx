@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import http from '../app/http';
 import { useAuthStore } from '../auth/useAuthStore';
+import { exportManagerKPIToPDF } from '../utils/exportUtils';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -78,6 +79,7 @@ export default function KPIPage() {
   const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [selectedManagerId, setSelectedManagerId] = useState<number | null>(null);
   const [dateRange, setDateRange] = useState({
@@ -251,6 +253,30 @@ export default function KPIPage() {
             value={dateRange.to_date}
             onChange={(e) => setDateRange({ ...dateRange, to_date: e.target.value })}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
+          <button
+            onClick={async () => {
+              setExportingPDF(true);
+              try {
+                const managerId = role === 'admin' ? selectedManagerId : userId;
+                const response = await http.get('/kpis/sales-manager/detail/', {
+                  params: {
+                    from_date: dateRange.from_date,
+                    to_date: dateRange.to_date,
+                  },
+                });
+                exportManagerKPIToPDF(response.data);
+              } catch (err) {
+                console.error('PDF export error:', err);
+                alert('PDF export xatolik yuz berdi');
+              } finally {
+                setExportingPDF(false);
+              }
+            }}
+            disabled={exportingPDF}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {exportingPDF ? 'Yuklanmoqda...' : '📄 PDF Export'}
+          </button>
           />
         </div>
       </div>
