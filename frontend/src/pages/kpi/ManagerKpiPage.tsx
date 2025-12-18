@@ -213,7 +213,7 @@ const ManagerKpiPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Date Range Picker */}
+      {/* Date Range Picker and Actions */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
@@ -252,6 +252,13 @@ const ManagerKpiPage = () => {
             </div>
             <div className="flex gap-2 flex-shrink-0">
               <button
+                onClick={handleBonusCardClick}
+                disabled={!data || loading}
+                className="rounded-lg border border-amber-500 bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                📊 {t('kpi.manager.detailedReport', 'Detailed Report')}
+              </button>
+              <button
                 onClick={handleExportPDF}
                 disabled={exportingPDF}
                 className="rounded-lg border border-emerald-500 bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
@@ -277,8 +284,6 @@ const ManagerKpiPage = () => {
           value={formatCurrency((data?.my_payments_usd ?? 0) * 0.01)}
           subtitle={t('kpi.manager.bonusFormula', 'bonusFormula: 1% of Payments')}
           accentColor="text-amber-600"
-          onClick={handleBonusCardClick}
-          clickable={true}
         />
         <KpiCard
           title={t('kpi.manager.myDealers')}

@@ -31,7 +31,8 @@
       "Bash(taskkill /F /PID 24328)",
       "Bash(taskkill:*)",
       "Bash(dir:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(python manage.py collectstatic:*)"
     ],
     "deny": [],
     "ask": []
