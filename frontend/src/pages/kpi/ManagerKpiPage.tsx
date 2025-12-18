@@ -8,6 +8,7 @@ import KpiCard from '../../components/kpi/KpiCard';
 import KpiSection from '../../components/kpi/KpiSection';
 import ChartBar from '../../components/kpi/ChartBar';
 import ChartPie from '../../components/kpi/ChartPie';
+import BonusDetailModal from '../../components/kpi/BonusDetailModal';
 import { formatCurrency, formatQuantity } from '../../utils/formatters';
 import { exportManagerKPIToPDF } from '../../utils/exportUtils';
 
@@ -74,6 +75,9 @@ const ManagerKpiPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [bonusModalOpen, setBonusModalOpen] = useState(false);
+  const [bonusDetailData, setBonusDetailData] = useState<any>(null);
+  const [bonusDetailLoading, setBonusDetailLoading] = useState(false);
 
   // Update URL params when date range changes
   useEffect(() => {
@@ -182,6 +186,28 @@ const ManagerKpiPage = () => {
     }
   };
 
+  const handleBonusCardClick = async () => {
+    setBonusModalOpen(true);
+    setBonusDetailLoading(true);
+    try {
+      const params = {
+        from_date: formatDate(dateRange.startDate),
+        to_date: formatDate(dateRange.endDate),
+      };
+      const response = await http.get('/kpis/sales-manager/detail/', { params });
+      setBonusDetailData(response.data);
+    } catch (err) {
+      console.error('Bonus detail fetch error:', err);
+      alert(t('kpi.messages.loadError', "Ma'lumotlarni yuklashda xatolik"));
+    } finally {
+      setBonusDetailLoading(false);
+    }
+  };
+
+  const handleCloseBonusModal = () => {
+    setBonusModalOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Date Range Picker */}
@@ -240,9 +266,17 @@ const ManagerKpiPage = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <KpiCard title={t('kpi.manager.mySales')} value={formatCurrency(data?.my_sales_usd ?? 0)} />
         <KpiCard title={t('kpi.manager.myPayments')} value={formatCurrency(data?.my_payments_usd ?? 0)} />
+        <KpiCard
+          title={t('kpi.manager.bonus', 'Bonus')}
+          value={formatCurrency((data?.my_payments_usd ?? 0) * 0.01)}
+          subtitle={t('kpi.manager.bonusFormula', 'bonusFormula: 1% of Payments')}
+          accentColor="text-amber-600"
+          onClick={handleBonusCardClick}
+          clickable
+        />
         <KpiCard
           title={t('kpi.manager.myDealers')}
           value={formatQuantity(data?.my_dealers_count ?? 0)}
@@ -284,6 +318,13 @@ const ManagerKpiPage = () => {
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">{t('kpi.noData')}</p>
         )}
       </KpiSection>
+
+      <BonusDetailModal
+        isOpen={bonusModalOpen}
+        onClose={handleCloseBonusModal}
+        data={bonusDetailData}
+        loading={bonusDetailLoading}
+      />
     </div>
   );
 };

@@ -6,15 +6,19 @@ interface KpiCardProps {
   subtitle?: string;
   accentColor?: string;
   className?: string;
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
-const KpiCard = ({ title, value, subtitle, accentColor = 'text-slate-900', className }: KpiCardProps) => {
+const KpiCard = ({ title, value, subtitle, accentColor = 'text-slate-900', className, onClick, clickable }: KpiCardProps) => {
   return (
     <article
       className={clsx(
         'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/60',
+        clickable && 'cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]',
         className
       )}
+      onClick={onClick}
     >
       <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
       <p className={clsx('mt-2 text-3xl font-semibold dark:text-white', accentColor)}>{value}</p>
