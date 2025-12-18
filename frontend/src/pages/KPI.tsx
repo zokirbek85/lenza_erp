@@ -253,11 +253,11 @@ export default function KPIPage() {
             value={dateRange.to_date}
             onChange={(e) => setDateRange({ ...dateRange, to_date: e.target.value })}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
+          />
           <button
             onClick={async () => {
               setExportingPDF(true);
               try {
-                const managerId = role === 'admin' ? selectedManagerId : userId;
                 const response = await http.get('/kpis/sales-manager/detail/', {
                   params: {
                     from_date: dateRange.from_date,
@@ -277,7 +277,6 @@ export default function KPIPage() {
           >
             {exportingPDF ? 'Yuklanmoqda...' : '📄 PDF Export'}
           </button>
-          />
         </div>
       </div>
 
