@@ -267,7 +267,7 @@ export default function KPIPage() {
                 exportManagerKPIToPDF(response.data);
               } catch (err) {
                 console.error('PDF export error:', err);
-                alert('PDF export xatolik yuz berdi');
+                alert(t('pdfExportError'));
               } finally {
                 setExportingPDF(false);
               }
@@ -275,7 +275,7 @@ export default function KPIPage() {
             disabled={exportingPDF}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {exportingPDF ? 'Yuklanmoqda...' : '📄 PDF Export'}
+            {exportingPDF ? t('loading') : `📄 ${t('pdfExport')}`}
           </button>
         </div>
       </div>
