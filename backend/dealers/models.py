@@ -189,11 +189,22 @@ class Dealer(models.Model):
         """
         Calculate dealer balance in UZS using balance service.
         Includes both OrderReturn and ReturnItem.
-        Each operation uses its own stored exchange rate.
+        Each operation uses its own stored exchange rate (historical).
         """
         from dealers.services.balance import calculate_dealer_balance
         result = calculate_dealer_balance(self)
         return result['balance_uzs']
+    
+    @property
+    def balance_uzs_current_rate(self) -> Decimal:
+        """
+        Calculate dealer balance in UZS at today's exchange rate.
+        For display in dealers table only.
+        Formula: balance_usd * today's_exchange_rate
+        """
+        from dealers.services.balance import calculate_dealer_balance
+        result = calculate_dealer_balance(self)
+        return result['balance_uzs_current_rate']
     
     @property
     def current_balance_usd(self) -> Decimal:
@@ -202,8 +213,13 @@ class Dealer(models.Model):
     
     @property
     def current_balance_uzs(self) -> Decimal:
-        """Alias for balance_uzs for API compatibility."""
+        """Alias for balance_uzs for API compatibility (historical rates)."""
         return self.balance_uzs
+    
+    @property
+    def current_balance_uzs_current_rate(self) -> Decimal:
+        """Balance in UZS at today's rate (for dealers table display)."""
+        return self.balance_uzs_current_rate
     
     @property
     def current_debt_usd(self) -> Decimal:

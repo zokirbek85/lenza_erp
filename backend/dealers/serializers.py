@@ -45,7 +45,8 @@ class DealerSerializer(serializers.ModelSerializer):
     # Computed balance fields
     current_balance_usd = serializers.SerializerMethodField()
     current_balance_uzs = serializers.SerializerMethodField()
-    converted_balance_uzs = serializers.SerializerMethodField()
+    current_balance_uzs_current_rate = serializers.SerializerMethodField()  # For dealers table
+    converted_balance_uzs = serializers.SerializerMethodField()  # Alias for compatibility
     
     # Legacy compatibility
     balance = serializers.SerializerMethodField()
@@ -99,31 +100,24 @@ class DealerSerializer(serializers.ModelSerializer):
         return obj.balance_usd
     
     def get_current_balance_uzs(self, obj):
-        """Use annotated value if available, otherwise calculate from property"""
+        """Use annotated value if available, otherwise calculate from property (historical rates)"""
         if hasattr(obj, 'calculated_balance_uzs'):
             return obj.calculated_balance_uzs
         return obj.balance_uzs
     
+    def get_current_balance_uzs_current_rate(self, obj):
+        """
+        Balance in UZS at today's exchange rate.
+        For display in dealers table only.
+        """
+        return obj.balance_uzs_current_rate
+    
     def get_converted_balance_uzs(self, obj):
         """
-        Convert USD balance to UZS using today's exchange rate.
-        Always returns a value (never 0 or None if USD balance exists).
-        Formula: USD balance × current exchange rate
+        Alias for current_balance_uzs_current_rate for backward compatibility.
+        Returns USD balance × today's exchange rate.
         """
-        from decimal import Decimal
-        from finance.models import ExchangeRate
-        
-        # Get USD balance
-        usd_balance = self.get_current_balance_usd(obj)
-        if usd_balance is None:
-            usd_balance = Decimal('0')
-        
-        # Get today's exchange rate
-        latest_rate = ExchangeRate.objects.order_by('-rate_date').first()
-        rate = latest_rate.usd_to_uzs if latest_rate else Decimal('1')
-        
-        # Convert: USD × rate = UZS
-        return (Decimal(str(usd_balance)) * Decimal(str(rate))).quantize(Decimal('0.01'))
+        return obj.balance_uzs_current_rate
     
     def get_balance(self, obj):
         """Legacy field - uses current_balance_usd"""
@@ -162,7 +156,8 @@ class DealerSerializer(serializers.ModelSerializer):
             # Current balance fields (read-only, calculated)
             'current_balance_usd',
             'current_balance_uzs',
-            'converted_balance_uzs',
+            'current_balance_uzs_current_rate',  # For dealers table display
+            'converted_balance_uzs',  # Alias for compatibility
             'is_active',
             'include_in_manager_kpi',
             'phone',
@@ -179,6 +174,7 @@ class DealerSerializer(serializers.ModelSerializer):
             'balance',
             'current_balance_usd',
             'current_balance_uzs',
+            'current_balance_uzs_current_rate',
             'converted_balance_uzs',
             'current_debt_usd',
             'current_debt_uzs',
