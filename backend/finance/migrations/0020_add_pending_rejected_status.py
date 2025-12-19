@@ -10,11 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='expensecategory',
-            new_name='finance_exp_is_glob_83d151_idx',
-            old_name='finance_exp_isglobal_is_active_idx',
-        ),
+        # RenameIndex removed - index already renamed in previous migrations (0012, 0013, 0014, 0016)
+        # The index 'finance_exp_isglobal_is_active_idx' was already renamed to 'finance_exp_is_glob_83d151_idx'
         migrations.AlterField(
             model_name='financetransaction',
             name='status',
