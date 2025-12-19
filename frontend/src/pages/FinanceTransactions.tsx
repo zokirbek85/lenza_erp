@@ -327,7 +327,9 @@ export default function FinanceTransactions() {
     if (!status) return '-';
     const labels: Record<string, string> = {
       draft: t('finance.transaction.draft', 'Draft'),
+      pending: t('finance.transaction.pending', 'Kutilmoqda'),
       approved: t('finance.transaction.approved', 'Tasdiqlangan'),
+      rejected: t('finance.transaction.rejected', 'Rad etilgan'),
       cancelled: t('finance.transaction.cancelled', 'Bekor qilingan'),
     };
     return labels[status] || status;
@@ -644,7 +646,9 @@ export default function FinanceTransactions() {
             >
               <option value="">{t('common.all', 'Barchasi')}</option>
               <option value="draft">{t('finance.transaction.draft', 'Draft')}</option>
+              <option value="pending">{t('finance.transaction.pending', 'Kutilmoqda')}</option>
               <option value="approved">{t('finance.transaction.approved', 'Tasdiqlangan')}</option>
+              <option value="rejected">{t('finance.transaction.rejected', 'Rad etilgan')}</option>
               <option value="cancelled">{t('finance.transaction.cancelled', 'Bekor qilingan')}</option>
             </select>
           </div>
@@ -799,6 +803,10 @@ export default function FinanceTransactions() {
                       ? 'badge badge-success'
                       : transaction.status === 'cancelled'
                       ? 'badge badge-error'
+                      : transaction.status === 'rejected'
+                      ? 'badge badge-error'
+                      : transaction.status === 'pending'
+                      ? 'badge badge-info'
                       : 'badge badge-warning'
                   }>
                     {getStatusLabel(transaction.status)}
@@ -826,7 +834,7 @@ export default function FinanceTransactions() {
                       </svg>
                     </button>
 
-                    {transaction.status === 'draft' && (
+                    {(transaction.status === 'draft' || transaction.status === 'pending') && (
                       <button
                         onClick={() => handleApprove(transaction.id)}
                         className="btn btn-success btn-sm"
@@ -834,6 +842,18 @@ export default function FinanceTransactions() {
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    )}
+
+                    {transaction.status === 'pending' && (
+                      <button
+                        onClick={() => handleCancel(transaction.id)}
+                        className="btn btn-warning btn-sm"
+                        title={t('finance.transaction.reject', 'Rad etish')}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     )}

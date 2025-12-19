@@ -4,7 +4,7 @@ export type AccountType = 'cash' | 'card' | 'bank';
 
 export type TransactionType = 'income' | 'expense' | 'opening_balance' | 'currency_exchange_out' | 'currency_exchange_in';
 
-export type TransactionStatus = 'draft' | 'approved' | 'cancelled';
+export type TransactionStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export interface FinanceAccount {
   id: number;
