@@ -323,10 +323,12 @@ export default function KPIPage() {
             setShowDetailModal(true);
             setDetailLoading(true);
             try {
+              const managerId = role === 'admin' ? selectedManagerId : userId;
               const response = await http.get('/kpis/sales-manager/detail/', {
                 params: {
                   from_date: dateRange.from_date,
                   to_date: dateRange.to_date,
+                  manager_id: managerId,
                 },
               });
               setDetailData(response.data);

@@ -234,6 +234,7 @@ class SalesManagerKPIDetailView(APIView):
     Query params:
     - from_date: Start date (YYYY-MM-DD). Defaults to first day of current month.
     - to_date: End date (YYYY-MM-DD). Defaults to today.
+    - manager_id: Manager ID (optional). If provided and user is admin, shows that manager's data.
     
     Returns detailed breakdown by dealer with sales, payments by type, and KPI calculation.
     """
@@ -241,9 +242,21 @@ class SalesManagerKPIDetailView(APIView):
 
     def get(self, request):
         from datetime import datetime
+        from django.contrib.auth import get_user_model
         
+        User = get_user_model()
         user = request.user
         today = timezone.now().date()
+        
+        # Get manager_id parameter for admin users
+        manager_id = request.query_params.get('manager_id')
+        if manager_id and user.role == 'admin':
+            try:
+                target_manager = User.objects.get(id=manager_id)
+            except User.DoesNotExist:
+                target_manager = user
+        else:
+            target_manager = user
         
         # Parse date parameters
         from_date_str = request.query_params.get('from_date')
@@ -269,11 +282,11 @@ class SalesManagerKPIDetailView(APIView):
             from_date, to_date = to_date, from_date
         
         # Get manager info
-        manager_name = user.get_full_name() or user.username
+        manager_name = target_manager.get_full_name() or target_manager.username
         
         # Get manager's current dealers (only those included in KPI)
         current_dealers = Dealer.objects.filter(
-            manager_user=user,
+            manager_user=target_manager,
             include_in_manager_kpi=True
         ).select_related('region')
         dealer_ids = list(current_dealers.values_list('id', flat=True))
@@ -282,7 +295,7 @@ class SalesManagerKPIDetailView(APIView):
         from users.models import UserReplacement
         
         replacement_as_new = UserReplacement.objects.filter(
-            new_user=user,
+            new_user=target_manager,
             replacement_date__lte=to_date
         ).order_by('-replacement_date').first()
         
