@@ -1,7 +1,6 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import html2canvas from 'html2canvas';
 import type { CashSummary, FinanceTransaction } from '../types/finance';
 
 
