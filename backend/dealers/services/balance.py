@@ -150,35 +150,52 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     current_rate, _ = get_exchange_rate()  # Today's rate
     balance_uzs = (balance_usd * current_rate).quantize(Decimal('0.01'))
     
+    # Convert all USD amounts to UZS using today's rate for consistency
+    opening_balance_uzs_current = (opening_usd * current_rate).quantize(Decimal('0.01'))
+    total_orders_uzs_current = (total_orders_usd * current_rate).quantize(Decimal('0.01'))
+    total_returns_uzs_current = (total_returns_usd * current_rate).quantize(Decimal('0.01'))
+    order_returns_uzs_current = (total_order_returns_usd * current_rate).quantize(Decimal('0.01'))
+    return_items_uzs_current = (total_return_items_usd * current_rate).quantize(Decimal('0.01'))
+    total_payments_uzs_current = (total_payments_usd * current_rate).quantize(Decimal('0.01'))
+    total_refunds_uzs_current = (total_refunds_usd * current_rate).quantize(Decimal('0.01'))
+    net_payments_uzs_current = (net_payments_usd * current_rate).quantize(Decimal('0.01'))
+    
     return {
         'balance_usd': balance_usd,
         'balance_uzs': balance_uzs,
         'breakdown': {
-            # New fields with historical rate conversion
+            # Current rate info
+            'current_exchange_rate': current_rate,
+            # Opening balance
             'opening_balance': opening_balance_amount,
             'opening_balance_currency': opening_currency,
             'opening_balance_date': opening_date,
             'opening_balance_rate': opening_rate,
             'opening_balance_usd': opening_usd,
-            'opening_balance_uzs': opening_uzs,
-            # Legacy fields (kept for compatibility)
+            'opening_balance_uzs': opening_balance_uzs_current,  # Using current rate
+            # Legacy fields (historical rates - kept for reference)
             'legacy_opening_balance_usd': dealer.opening_balance_usd or Decimal('0'),
             'legacy_opening_balance_uzs': dealer.opening_balance_uzs or Decimal('0'),
-            # Transaction totals
+            'historical_opening_balance_uzs': opening_uzs,  # Historical rate
+            'historical_total_orders_uzs': total_orders_uzs,  # Historical rates
+            'historical_total_returns_uzs': total_returns_uzs,  # Historical rates
+            'historical_total_payments_uzs': total_payments_uzs,  # Historical rates
+            'historical_total_refunds_uzs': total_refunds_uzs,  # Historical rates
+            # Transaction totals (current rate)
             'total_orders_usd': total_orders_usd,
-            'total_orders_uzs': total_orders_uzs,
+            'total_orders_uzs': total_orders_uzs_current,
             'total_returns_usd': total_returns_usd,
-            'total_returns_uzs': total_returns_uzs,
+            'total_returns_uzs': total_returns_uzs_current,
             'order_returns_usd': total_order_returns_usd,
-            'order_returns_uzs': total_order_returns_uzs,
+            'order_returns_uzs': order_returns_uzs_current,
             'return_items_usd': total_return_items_usd,
-            'return_items_uzs': total_return_items_uzs,
+            'return_items_uzs': return_items_uzs_current,
             'total_payments_usd': total_payments_usd,
-            'total_payments_uzs': total_payments_uzs,
+            'total_payments_uzs': total_payments_uzs_current,
             'total_refunds_usd': total_refunds_usd,
-            'total_refunds_uzs': total_refunds_uzs,
+            'total_refunds_uzs': total_refunds_uzs_current,
             'net_payments_usd': net_payments_usd,
-            'net_payments_uzs': net_payments_uzs,
+            'net_payments_uzs': net_payments_uzs_current,
         }
     }
 
