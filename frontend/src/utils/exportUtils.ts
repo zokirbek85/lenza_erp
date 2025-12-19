@@ -581,15 +581,13 @@ export const exportManagerKPIToPDFWithHTML = async (data: {
 }) => {
   // Create temporary container
   const container = document.createElement('div');
-  container.style.position = 'fixed';
+  container.style.position = 'absolute';
   container.style.top = '0';
-  container.style.left = '0';
+  container.style.left = '-9999px';
   container.style.width = '1100px'; // Fixed pixel width for consistent rendering
   container.style.padding = '30px';
   container.style.backgroundColor = '#ffffff';
   container.style.fontFamily = 'Arial, sans-serif';
-  container.style.zIndex = '-1000';
-  container.style.opacity = '0';
   container.style.color = '#000000';
   document.body.appendChild(container);
 
@@ -648,15 +646,18 @@ export const exportManagerKPIToPDFWithHTML = async (data: {
 
   try {
     // Wait for DOM to be ready
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // Convert HTML to canvas
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
-      allowTaint: true,
+      allowTaint: false,
+      foreignObjectRendering: false,
+      width: 1100,
+      windowWidth: 1100,
     });
 
     // Create PDF
