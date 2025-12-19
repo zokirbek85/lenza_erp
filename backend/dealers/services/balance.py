@@ -142,9 +142,13 @@ def calculate_dealer_balance(dealer, as_of_date: Optional[date] = None) -> dict:
     net_payments_usd = total_payments_usd - total_refunds_usd
     net_payments_uzs = total_payments_uzs - total_refunds_uzs
     
-    # 5. Calculate final balance using historical opening balance
-    balance_usd = opening_usd + total_orders_usd - total_returns_usd - net_payments_usd
-    balance_uzs = opening_uzs + total_orders_uzs - total_returns_uzs - net_payments_uzs
+    # 5. Calculate final balance
+    # USD balance: opening_balance + orders + refunds - returns - payments
+    balance_usd = opening_usd + total_orders_usd + total_refunds_usd - total_returns_usd - total_payments_usd
+    
+    # UZS balance: USD balance converted at today's rate
+    current_rate, _ = get_exchange_rate()  # Today's rate
+    balance_uzs = (balance_usd * current_rate).quantize(Decimal('0.01'))
     
     return {
         'balance_usd': balance_usd,
