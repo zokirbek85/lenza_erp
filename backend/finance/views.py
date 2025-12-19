@@ -144,20 +144,16 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         """Dynamic permissions based on action"""
-        from core.permissions import IsSalesCanCreateTransaction, IsAdmin, IsAccountant, IsOwner
+        from core.permissions import IsSalesCanCreateTransaction
         
         if self.action == 'create':
             # Sales manager gets special permission (POST only)
             if hasattr(self.request, 'user') and self.request.user.is_authenticated and self.request.user.role == 'sales':
                 return [IsAuthenticated(), IsSalesCanCreateTransaction()]
-            # Admin, accountant, owner can create
-            return [IsAuthenticated(), IsAdmin() | IsAccountant() | IsOwner()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'approve', 'reject']:
-            # Only admin, accountant can modify
-            return [IsAuthenticated(), IsAdmin() | IsAccountant()]
-        else:
-            # GET operations - admin, accountant, owner
-            return [IsAuthenticated(), IsAdmin() | IsAccountant() | IsOwner()]
+        
+        # All other actions require authentication only
+        # Role-based filtering is done in get_queryset()
+        return [IsAuthenticated()]
     
     def get_queryset(self):
         """Filter by permissions"""
@@ -175,6 +171,13 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         """Create transaction - sales managers create with pending status"""
         user = request.user
         role = getattr(user, 'role', None)
+        
+        # Check if user has permission to create transactions
+        if role not in ['admin', 'accountant', 'owner', 'sales']:
+            return Response(
+                {'error': 'You do not have permission to create transactions'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Sales manager validations
         if role == 'sales':
@@ -220,6 +223,15 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
     
     def update(self, request, *args, **kwargs):
         """Update transaction - only admin/accountant can modify"""
+        user = request.user
+        role = getattr(user, 'role', None)
+        
+        # Only admin/accountant can update
+        if role not in ['admin', 'accountant']:
+            return Response(
+                {'error': 'Only administrators and accountants can modify transactions'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         instance = self.get_object()
         old_status = instance.status
@@ -313,7 +325,15 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         pass
     
     def destroy(self, request, *args, **kwargs):
-        self.check_modification_permission()
+        user = request.user
+        role = getattr(user, 'role', None)
+        
+        # Only admin/accountant can delete
+        if role not in ['admin', 'accountant']:
+            return Response(
+                {'error': 'Only administrators and accountants can delete transactions'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         instance = self.get_object()
 
