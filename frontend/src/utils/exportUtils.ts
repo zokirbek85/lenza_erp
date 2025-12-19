@@ -581,12 +581,16 @@ export const exportManagerKPIToPDFWithHTML = async (data: {
 }) => {
   // Create temporary container
   const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.width = '297mm'; // A4 landscape width
-  container.style.padding = '10mm';
-  container.style.backgroundColor = 'white';
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '1100px'; // Fixed pixel width for consistent rendering
+  container.style.padding = '30px';
+  container.style.backgroundColor = '#ffffff';
   container.style.fontFamily = 'Arial, sans-serif';
+  container.style.zIndex = '-1000';
+  container.style.opacity = '0';
+  container.style.color = '#000000';
   document.body.appendChild(container);
 
   // Format date range
@@ -598,56 +602,61 @@ export const exportManagerKPIToPDFWithHTML = async (data: {
 
   // Build HTML table
   container.innerHTML = `
-    <div style="text-align: center; margin-bottom: 15px;">
-      <h2 style="margin: 0; font-size: 18px; font-weight: bold;">${data.regions} (${data.manager_name})</h2>
-      <p style="margin: 5px 0; font-size: 14px;">${formatDateRange(data.from_date, data.to_date)}</p>
+    <div style="text-align: center; margin-bottom: 20px; color: #000000;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: bold; color: #000000;">${data.regions} (${data.manager_name})</h2>
+      <p style="margin: 8px 0; font-size: 16px; color: #000000;">${formatDateRange(data.from_date, data.to_date)}</p>
     </div>
-    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px; background-color: #ffffff;">
       <thead>
-        <tr style="background-color: #FFC864; font-weight: bold;">
-          <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 5%;">No</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: left; width: 25%;">Klient</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Tovar sum $</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Naqd $</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Plastik $</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Per/ya $</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Umumiy $</th>
-          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 10%;">KPI (1%) $</th>
+        <tr style="background-color: #FFC864;">
+          <th style="border: 2px solid #000000; padding: 10px; text-align: center; width: 5%; color: #000000; font-weight: bold;">No</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: left; width: 25%; color: #000000; font-weight: bold;">Klient</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Tovar sum $</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Naqd $</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Plastik $</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Per/ya $</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Umumiy $</th>
+          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 10%; color: #000000; font-weight: bold;">KPI (1%) $</th>
         </tr>
       </thead>
       <tbody>
         ${data.dealers.map((dealer, index) => `
           <tr style="background-color: ${index % 2 === 0 ? '#C8FFC8' : '#ffffff'};">
-            <td style="border: 1px solid #000; padding: 6px; text-align: center;">${index + 1}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: left;">${dealer.dealer_name}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.sales_usd.toFixed(2)}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.payment_cash_usd.toFixed(2)}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.payment_card_usd.toFixed(2)}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.payment_bank_usd.toFixed(2)}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.total_payment_usd.toFixed(2)}</td>
-            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.kpi_usd.toFixed(2)}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: center; color: #000000;">${index + 1}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: left; color: #000000;">${dealer.dealer_name}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.sales_usd.toFixed(2)}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.payment_cash_usd.toFixed(2)}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.payment_card_usd.toFixed(2)}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.payment_bank_usd.toFixed(2)}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.total_payment_usd.toFixed(2)}</td>
+            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.kpi_usd.toFixed(2)}</td>
           </tr>
         `).join('')}
-        <tr style="background-color: #FFC864; font-weight: bold;">
-          <td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: left;">Umumiy</td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.sales_usd.toFixed(2)}</td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.payment_cash_usd.toFixed(2)}</td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.payment_card_usd.toFixed(2)}</td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.payment_bank_usd.toFixed(2)}</td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.total_payment_usd.toFixed(2)}</td>
-          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.kpi_usd.toFixed(2)}</td>
+        <tr style="background-color: #FFC864;">
+          <td style="border: 2px solid #000000; padding: 8px; text-align: center; color: #000000; font-weight: bold;"></td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: left; color: #000000; font-weight: bold;">Umumiy</td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.sales_usd.toFixed(2)}</td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.payment_cash_usd.toFixed(2)}</td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.payment_card_usd.toFixed(2)}</td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.payment_bank_usd.toFixed(2)}</td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.total_payment_usd.toFixed(2)}</td>
+          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.kpi_usd.toFixed(2)}</td>
         </tr>
       </tbody>
     </table>
   `;
 
   try {
+    // Wait for DOM to be ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Convert HTML to canvas
     const canvas = await html2canvas(container, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
+      logging: false,
+      allowTaint: true,
     });
 
     // Create PDF
