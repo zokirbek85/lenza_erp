@@ -425,33 +425,6 @@ class CashSummaryView(APIView):
         
         # Barcha active accountlar
         accounts = FinanceAccount.objects.filter(is_active=True)
-
-
-class SalesManagerDealersView(APIView):
-    """Sales manager uchun faqat o'z dillerlarini olish"""
-    permission_classes = [IsAuthenticated]
-    
-    def get(self, request):
-        """Get dealers assigned to current sales manager"""
-        user = request.user
-        role = getattr(user, 'role', None)
-        
-        if role != 'sales':
-            return Response(
-                {'error': 'This endpoint is only for sales managers'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        from dealers.models import Dealer
-        from dealers.serializers import DealerSerializer
-        
-        dealers = Dealer.objects.filter(
-            manager_user=user,
-            is_active=True
-        ).select_related('region')
-        
-        serializer = DealerSerializer(dealers, many=True)
-        return Response(serializer.data)
         
         summary_data = []
         total_balance_uzs = Decimal('0')
@@ -520,6 +493,33 @@ class SalesManagerDealersView(APIView):
         }
         
         serializer = CashSummaryResponseSerializer(response_data)
+        return Response(serializer.data)
+
+
+class SalesManagerDealersView(APIView):
+    """Sales manager uchun faqat o'z dillerlarini olish"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get dealers assigned to current sales manager"""
+        user = request.user
+        role = getattr(user, 'role', None)
+        
+        if role != 'sales':
+            return Response(
+                {'error': 'This endpoint is only for sales managers'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from dealers.models import Dealer
+        from dealers.serializers import DealerSerializer
+        
+        dealers = Dealer.objects.filter(
+            manager_user=user,
+            is_active=True
+        ).select_related('region')
+        
+        serializer = DealerSerializer(dealers, many=True)
         return Response(serializer.data)
 
 
