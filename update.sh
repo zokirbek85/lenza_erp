@@ -168,8 +168,14 @@ BACKEND_CONTAINER="lenza_backend_${TARGET_STACK}"
 # Check for pending migrations inside backend container
 if docker exec "$BACKEND_CONTAINER" python manage.py showmigrations --plan | grep "\[ \]" >/dev/null 2>&1; then
     log_info "New migrations detected — applying..."
-    docker exec "$BACKEND_CONTAINER" python manage.py migrate --noinput
-    log_info "${GREEN}✓ Migrations applied successfully${NC}"
+    if docker exec "$BACKEND_CONTAINER" python manage.py migrate --noinput 2>&1; then
+        log_info "${GREEN}✓ Migrations applied successfully${NC}"
+    else
+        log_error "Migration failed"
+        log_error "Rolling back - stopping $TARGET_STACK stack"
+        docker compose -f "deploy/docker-compose.${TARGET_STACK}.yml" stop backend_${TARGET_STACK} frontend_${TARGET_STACK}
+        exit 1
+    fi
 else
     log_info "${YELLOW}No new migrations found — skipping${NC}"
 fi
