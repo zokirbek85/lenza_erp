@@ -306,7 +306,7 @@ class SalesManagerKPIDetailView(APIView):
         
         # Get regions for title
         regions = list(current_dealers.values_list('region__name', flat=True).distinct())
-        regions_str = ' va '.join([r for r in regions if r]) if regions else 'Unknown'
+        regions_str = ' va '.join(sorted(set([r for r in regions if r]))) if regions else 'Unknown'
         
         # Filter orders by date range
         confirmed_statuses = [
