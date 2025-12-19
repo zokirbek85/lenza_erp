@@ -827,7 +827,7 @@ const OrdersPage = () => {
   const handleCreatePayment = async () => {
     try {
       if (!paymentFormData.dealer || !paymentFormData.account || !paymentFormData.amount) {
-        toast.error(t('finance.form.fillRequired'));
+        toast.error(t('finance:form.fillRequired'));
         return;
       }
 
@@ -843,7 +843,7 @@ const OrdersPage = () => {
       };
 
       await http.post('/finance/transactions/', payload);
-      toast.success(t('finance.messages.createdSuccess'));
+      toast.success(t('finance:messages.createdSuccess'));
       
       setShowPaymentModal(false);
       setPaymentFormData({
@@ -856,7 +856,7 @@ const OrdersPage = () => {
       });
     } catch (error: any) {
       console.error('Payment creation error:', error);
-      const errorMsg = error?.response?.data?.error || error?.response?.data?.message || t('finance.messages.createError');
+      const errorMsg = error?.response?.data?.error || error?.response?.data?.message || t('finance:messages.createError');
       toast.error(errorMsg);
     }
   };
@@ -1771,7 +1771,7 @@ const OrdersPage = () => {
               {/* Dealer Select */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  {t('finance.form.dealer')} *
+                  {t('finance:form.dealer')} *
                 </label>
                 <select
                   value={paymentFormData.dealer}
@@ -1781,7 +1781,7 @@ const OrdersPage = () => {
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
-                  <option value="">{t('finance.form.selectDealer')}</option>
+                  <option value="">{t('finance:form.selectDealer')}</option>
                   {managerDealers.map((dealer) => (
                     <option key={dealer.id} value={dealer.id}>
                       {dealer.name}
@@ -1793,7 +1793,7 @@ const OrdersPage = () => {
               {/* Account Select */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  {t('finance.form.account')} *
+                  {t('finance:form.account')} *
                 </label>
                 <select
                   value={paymentFormData.account}
@@ -1803,7 +1803,7 @@ const OrdersPage = () => {
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
-                  <option value="">{t('finance.form.selectAccount')}</option>
+                  <option value="">{t('finance:form.selectAccount')}</option>
                   {accounts.map((account) => (
                     <option key={account.id} value={account.id}>
                       {account.name}
@@ -1815,7 +1815,7 @@ const OrdersPage = () => {
               {/* Date */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  {t('finance.form.date')} *
+                  {t('finance:form.date')} *
                 </label>
                 <input
                   type="date"
@@ -1832,7 +1832,7 @@ const OrdersPage = () => {
               {/* Currency */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  {t('finance.form.currency')} *
+                  {t('finance:form.currency')} *
                 </label>
                 <select
                   value={paymentFormData.currency}
@@ -1850,7 +1850,7 @@ const OrdersPage = () => {
               {/* Amount */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  {t('finance.form.amount')} *
+                  {t('finance:form.amount')} *
                 </label>
                 <input
                   type="number"
@@ -1869,7 +1869,7 @@ const OrdersPage = () => {
               {/* Comment */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                  {t('finance.form.comment')}
+                  {t('finance:form.comment')}
                 </label>
                 <textarea
                   value={paymentFormData.comment}
@@ -1878,14 +1878,14 @@ const OrdersPage = () => {
                            bg-white dark:bg-slate-700 text-slate-900 dark:text-white
                            focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
-                  placeholder={t('finance.form.commentPlaceholder')}
+                  placeholder={t('finance:form.commentPlaceholder')}
                 />
               </div>
 
               {/* Info Alert */}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
-                  ℹ️ {t('finance.form.pendingNote')}
+                  ℹ️ {t('finance:form.pendingNote')}
                 </p>
               </div>
             </div>
