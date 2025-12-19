@@ -510,12 +510,28 @@ export default function KPIPage() {
                   {detailData?.manager_name} - {detailData?.regions}
                 </p>
               </div>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-              >
-                <span className="text-2xl">✕</span>
-              </button>
+              <div className="flex items-center gap-3">
+                {detailData && (
+                  <button
+                    onClick={() => {
+                      try {
+                        exportManagerKPIToPDF(detailData);
+                      } catch (error) {
+                        console.error('PDF export error:', error);
+                      }
+                    }}
+                    className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-medium"
+                  >
+                    📄 PDF Export
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                >
+                  <span className="text-2xl">✕</span>
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
