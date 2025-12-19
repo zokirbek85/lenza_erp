@@ -261,7 +261,9 @@ class FinanceTransaction(models.Model):
     
     class TransactionStatus(models.TextChoices):
         DRAFT = 'draft', _('Draft')
+        PENDING = 'pending', _('Pending Approval')
         APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
         CANCELLED = 'cancelled', _('Cancelled')
     
     type = models.CharField(max_length=30, choices=TransactionType.choices)

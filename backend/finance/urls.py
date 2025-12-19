@@ -9,6 +9,7 @@ from .views import (
     ExpenseCategoryViewSet,
     FinanceAccountViewSet,
     FinanceTransactionViewSet,
+    SalesManagerDealersView,
 )
 
 router = DefaultRouter()
@@ -22,4 +23,5 @@ urlpatterns = [
     path('summary/', CashSummaryView.as_view(), name='cash-summary'),
     path('transfer-currency/', CurrencyTransferView.as_view(), name='transfer-currency'),
     path('dealer-refund/', DealerRefundView.as_view(), name='dealer-refund'),
+    path('manager-dealers/', SalesManagerDealersView.as_view(), name='manager-dealers'),
 ]

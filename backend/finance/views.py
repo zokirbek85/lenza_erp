@@ -142,6 +142,20 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
     # Enable pagination with large page size
     pagination_class = None  # Disable pagination for now, or configure per view
     
+    def get_permissions(self):
+        """Dynamic permissions based on action"""
+        from core.permissions import IsSalesCanCreateTransaction, IsAdmin, IsAccountant, IsOwner
+        
+        if self.action == 'create':
+            # Admin, accountant, owner, sales can create
+            return [IsAuthenticated(), (IsAdmin() | IsAccountant() | IsOwner() | IsSalesCanCreateTransaction())]
+        elif self.action in ['update', 'partial_update', 'destroy', 'approve', 'reject']:
+            # Only admin, accountant can modify
+            return [IsAuthenticated(), (IsAdmin() | IsAccountant() | IsOwner())]
+        else:
+            # GET operations - admin, accountant, owner
+            return [IsAuthenticated(), (IsAdmin() | IsAccountant() | IsOwner())]
+    
     def get_queryset(self):
         """Filter by permissions"""
         user = self.request.user
@@ -151,36 +165,54 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         if user.is_superuser or role in ['admin', 'accountant', 'owner']:
             return self.queryset
         
-        # Sales manager - faqat read-only
-        if role == 'sales_manager':
-            return self.queryset
-        
-        # Boshqalar - access yo'q
+        # Sales manager - access yo'q (ular faqat create qilishi mumkin)
         return self.queryset.none()
     
-    def check_modification_permission(self):
-        """Check if user can modify transactions (not create)"""
-        user = self.request.user
-        role = getattr(user, 'role', None)
-        
-        if not (user.is_superuser or role in ['admin', 'accountant']):
-            raise PermissionDenied(_('Sizda transaction tahrirlash huquqi yo\'q'))
-    
-    def check_create_permission(self):
-        """Check if user can create transactions"""
-        user = self.request.user
-        role = getattr(user, 'role', None)
-        
-        # Admin, accountant, sales yaratishi mumkin
-        if not (user.is_superuser or role in ['admin', 'accountant', 'sales']):
-            raise PermissionDenied(_('Sizda transaction yaratish huquqi yo\'q'))
-    
     def create(self, request, *args, **kwargs):
-        self.check_create_permission()
+        """Create transaction - sales managers create with pending status"""
+        user = request.user
+        role = getattr(user, 'role', None)
+        
+        # Sales manager validations
+        if role == 'sales':
+            # 1. Must be income transaction
+            if request.data.get('type') != 'income':
+                return Response(
+                    {'error': 'Sales managers can only create income transactions'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # 2. Must have dealer
+            dealer_id = request.data.get('dealer')
+            if not dealer_id:
+                return Response(
+                    {'error': 'Dealer is required for income transactions'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 3. Dealer must be assigned to this manager
+            from dealers.models import Dealer
+            try:
+                dealer = Dealer.objects.get(id=dealer_id)
+                if dealer.manager_user_id != user.id:
+                    return Response(
+                        {'error': 'You can only create transactions for dealers assigned to you'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            except Dealer.DoesNotExist:
+                return Response(
+                    {'error': 'Dealer not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # 4. Set status to pending and created_by
+            request.data['status'] = 'pending'
+            request.data['created_by'] = user.id
+        
         return super().create(request, *args, **kwargs)
     
     def update(self, request, *args, **kwargs):
-        self.check_modification_permission()
+        """Update transaction - only admin/accountant can modify"""
 
         instance = self.get_object()
         old_status = instance.status
@@ -386,6 +418,33 @@ class CashSummaryView(APIView):
         
         # Barcha active accountlar
         accounts = FinanceAccount.objects.filter(is_active=True)
+
+
+class SalesManagerDealersView(APIView):
+    """Sales manager uchun faqat o'z dillerlarini olish"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get dealers assigned to current sales manager"""
+        user = request.user
+        role = getattr(user, 'role', None)
+        
+        if role != 'sales':
+            return Response(
+                {'error': 'This endpoint is only for sales managers'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from dealers.models import Dealer
+        from dealers.serializers import DealerSerializer
+        
+        dealers = Dealer.objects.filter(
+            manager_user=user,
+            is_active=True
+        ).select_related('region')
+        
+        serializer = DealerSerializer(dealers, many=True)
+        return Response(serializer.data)
         
         summary_data = []
         total_balance_uzs = Decimal('0')

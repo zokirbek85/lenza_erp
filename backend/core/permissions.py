@@ -60,6 +60,31 @@ class IsManager(RolePermission):
     allowed_roles = {'manager'}
 
 
+class IsSalesCanCreateTransaction(BasePermission):
+    """
+    Permission for sales managers:
+    - Can POST (create) finance transactions
+    - Cannot GET, PUT, PATCH, DELETE
+    - Can only create transactions for dealers assigned to them
+    """
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return False
+        if getattr(user, 'is_superuser', False):
+            return True
+        
+        # Only allow POST (create) for sales role
+        if user.role == 'sales' and request.method == 'POST':
+            return True
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        """Sales managers cannot edit/delete transactions they created"""
+        return False
+
+
 class IsOwnerReadOnly(SafeRolePermission):
     allowed_roles = {'owner'}
 
