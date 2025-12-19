@@ -531,19 +531,19 @@ export default function KPIPage() {
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                       <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{t('totalSales')}</p>
                       <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                        ${detailData.total_sales?.toLocaleString() || 0}
+                        ${detailData.totals?.sales_usd?.toLocaleString() || 0}
                       </p>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                       <p className="text-sm text-green-600 dark:text-green-400 font-medium">{t('totalPayments')}</p>
                       <p className="text-2xl font-bold text-green-900 dark:text-green-100">
-                        ${detailData.total_payments?.toLocaleString() || 0}
+                        ${detailData.totals?.total_payment_usd?.toLocaleString() || 0}
                       </p>
                     </div>
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
                       <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">{t('totalBonus')}</p>
                       <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
-                        ${detailData.total_bonus?.toLocaleString() || 0}
+                        ${detailData.totals?.kpi_usd?.toLocaleString() || 0}
                       </p>
                     </div>
                   </div>
@@ -610,22 +610,22 @@ export default function KPIPage() {
                             <tr>
                               <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{t('total')}</td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.total_sales?.toLocaleString() || 0}
+                                ${detailData.totals?.sales_usd?.toLocaleString() || 0}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.total_cash?.toLocaleString() || 0}
+                                ${detailData.totals?.payment_cash_usd?.toLocaleString() || 0}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.total_card?.toLocaleString() || 0}
+                                ${detailData.totals?.payment_card_usd?.toLocaleString() || 0}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.total_bank?.toLocaleString() || 0}
+                                ${detailData.totals?.payment_bank_usd?.toLocaleString() || 0}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400">
-                                ${detailData.total_payments?.toLocaleString() || 0}
+                                ${detailData.totals?.total_payment_usd?.toLocaleString() || 0}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-yellow-600 dark:text-yellow-400">
-                                ${detailData.total_bonus?.toLocaleString() || 0}
+                                ${detailData.totals?.kpi_usd?.toLocaleString() || 0}
                               </td>
                             </tr>
                           </tfoot>
