@@ -208,9 +208,13 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # 4. Set status to pending and created_by
+            # 4. Modify request data (make it mutable first)
+            if hasattr(request.data, '_mutable'):
+                request.data._mutable = True
             request.data['status'] = 'pending'
             request.data['created_by'] = user.id
+            if hasattr(request.data, '_mutable'):
+                request.data._mutable = False
         
         return super().create(request, *args, **kwargs)
     
