@@ -64,6 +64,7 @@ class UserViewSet(viewsets.ModelViewSet):
         new_user_data = request.data.get('new_user', {})
         archive_reason = request.data.get('archive_reason', User.ArchiveReasons.REPLACED)
         comment = request.data.get('comment', '')
+        replacement_date = request.data.get('replacement_date')
         
         if not new_user_data.get('username'):
             return Response(
@@ -112,6 +113,7 @@ class UserViewSet(viewsets.ModelViewSet):
             replacement = UserReplacement.objects.create(
                 old_user=old_user,
                 new_user=new_user,
+                replacement_date=replacement_date or timezone.now().date(),
                 replaced_by=request.user,
                 comment=comment
             )

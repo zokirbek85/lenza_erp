@@ -27,10 +27,10 @@ class DashboardLayoutAdmin(admin.ModelAdmin):
 
 @admin.register(UserReplacement)
 class UserReplacementAdmin(admin.ModelAdmin):
-    list_display = ('old_user', 'new_user', 'replaced_at', 'replaced_by')
+    list_display = ('old_user', 'new_user', 'replacement_date', 'replaced_at', 'replaced_by')
     search_fields = ('old_user__username', 'new_user__username', 'replaced_by__username')
     readonly_fields = ('old_user', 'new_user', 'replaced_at', 'replaced_by')
-    list_filter = ('replaced_at',)
+    list_filter = ('replacement_date', 'replaced_at')
     
     def has_add_permission(self, request):
         # Only allow creation through API endpoint

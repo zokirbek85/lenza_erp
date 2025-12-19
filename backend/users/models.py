@@ -72,6 +72,7 @@ class UserReplacement(models.Model):
         related_name='replaced_to',
         help_text='Replacement user'
     )
+    replacement_date = models.DateField(default=timezone.now, help_text='Effective date of replacement')
     replaced_at = models.DateTimeField(auto_now_add=True, help_text='When replacement occurred')
     replaced_by = models.ForeignKey(
         User, 

@@ -25,6 +25,7 @@ class UserReplacementSerializer(serializers.ModelSerializer):
             'old_user_name',
             'new_user',
             'new_user_name',
+            'replacement_date',
             'replaced_at',
             'replaced_by',
             'replaced_by_name',

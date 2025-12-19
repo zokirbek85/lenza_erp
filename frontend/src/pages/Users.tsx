@@ -191,6 +191,7 @@ const UsersPage = () => {
     email: '',
     password: '',
     archive_reason: 'replaced',
+    replacement_date: new Date().toISOString().split('T')[0],
     comment: '',
   });
 
@@ -203,6 +204,7 @@ const UsersPage = () => {
       email: '',
       password: '',
       archive_reason: 'replaced',
+      replacement_date: new Date().toISOString().split('T')[0],
       comment: '',
     });
     setReplaceModalOpen(true);
@@ -223,6 +225,7 @@ const UsersPage = () => {
           password: replaceForm.password,
         },
         archive_reason: replaceForm.archive_reason,
+        replacement_date: replaceForm.replacement_date,
         comment: replaceForm.comment,
       });
       toast.success(t('users.messages.replaced'));
@@ -643,6 +646,16 @@ const UsersPage = () => {
                 />
               </div>
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.replacementDate')}</label>
+            <input
+              type="date"
+              value={replaceForm.replacement_date}
+              onChange={(e) => setReplaceForm({ ...replaceForm, replacement_date: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
           </div>
 
           <div>
