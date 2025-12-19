@@ -103,6 +103,12 @@ class UserViewSet(viewsets.ModelViewSet):
             new_user.groups.set(old_user.groups.all())
             new_user.user_permissions.set(old_user.user_permissions.all())
             
+            # Reassign dealers from old manager to new manager
+            from dealers.models import Dealer, Region
+            
+            dealers_updated = Dealer.objects.filter(manager_user=old_user).update(manager_user=new_user)
+            regions_updated = Region.objects.filter(manager_user=old_user).update(manager_user=new_user)
+            
             # Archive old user
             old_user.is_active = False
             old_user.archived_at = timezone.now()
@@ -121,7 +127,9 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({
             'old_user': self.get_serializer(old_user).data,
             'new_user': self.get_serializer(new_user).data,
-            'replacement': UserReplacementSerializer(replacement).data
+            'replacement': UserReplacementSerializer(replacement).data,
+            'dealers_reassigned': dealers_updated,
+            'regions_reassigned': regions_updated,
         }, status=status.HTTP_201_CREATED)
 
 

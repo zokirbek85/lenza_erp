@@ -216,7 +216,7 @@ const UsersPage = () => {
     
     setSubmitting(true);
     try {
-      await http.post(`/users/${userToReplace.id}/replace/`, {
+      const response = await http.post(`/users/${userToReplace.id}/replace/`, {
         new_user: {
           username: replaceForm.username,
           first_name: replaceForm.first_name,
@@ -228,7 +228,13 @@ const UsersPage = () => {
         replacement_date: replaceForm.replacement_date,
         comment: replaceForm.comment,
       });
-      toast.success(t('users.messages.replaced'));
+      
+      const { dealers_reassigned, regions_reassigned } = response.data;
+      let message = t('users.messages.replaced');
+      if (dealers_reassigned > 0 || regions_reassigned > 0) {
+        message += ` (${dealers_reassigned} ${t('users.dealersReassigned')}, ${regions_reassigned} ${t('users.regionsReassigned')})`;
+      }
+      toast.success(message);
       setReplaceModalOpen(false);
       setUserToReplace(null);
       loadUsers();

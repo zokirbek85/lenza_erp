@@ -1031,7 +1031,9 @@
       "other": "Boshqa sabab"
     },
     "comment": "Izoh",
-    "commentPlaceholder": "Almashtirish sababi yoki izoh..."
+    "commentPlaceholder": "Almashtirish sababi yoki izoh...",
+    "dealersReassigned": "ta diller",
+    "regionsReassigned": "ta hudud"
   },
   "regions": {
     "title": "Hududlar",
