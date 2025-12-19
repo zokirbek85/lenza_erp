@@ -16,6 +16,7 @@ class UserAdmin(DjangoUserAdmin):
     list_filter = ('role', 'is_staff', 'is_superuser', 'is_active', 'archived_reason')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     readonly_fields = ('archived_at',)
+    ordering = ('username',)
 
 
 @admin.register(DashboardLayout)
@@ -28,15 +29,16 @@ class DashboardLayoutAdmin(admin.ModelAdmin):
 @admin.register(UserReplacement)
 class UserReplacementAdmin(admin.ModelAdmin):
     list_display = ('old_user', 'new_user', 'replacement_date', 'replaced_at', 'replaced_by')
-    search_fields = ('old_user__username', 'new_user__username', 'replaced_by__username')
-    readonly_fields = ('old_user', 'new_user', 'replaced_at', 'replaced_by')
+    search_fields = ('old_user__username', 'new_user__username', 'replaced_by__username', 'comment')
+    readonly_fields = ('replaced_at',)
     list_filter = ('replacement_date', 'replaced_at')
-    
-    def has_add_permission(self, request):
-        # Only allow creation through API endpoint
-        return False
-    
-    def has_delete_permission(self, request, obj=None):
-        # Never allow deletion - this is an audit log
-        return False
+    fieldsets = (
+        ('Replacement Details', {
+            'fields': ('old_user', 'new_user', 'replacement_date')
+        }),
+        ('Metadata', {
+            'fields': ('replaced_at', 'replaced_by', 'comment')
+        }),
+    )
+    autocomplete_fields = ['old_user', 'new_user', 'replaced_by']
 
