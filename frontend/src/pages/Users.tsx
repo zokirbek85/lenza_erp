@@ -32,18 +32,6 @@ interface UserRecord {
   archived_reason_display?: string;
 }
 
-interface UserReplacementData {
-  new_user: {
-    username: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    password: string;
-  };
-  archive_reason: string;
-  comment: string;
-}
-
 const emptyForm = {
   username: '',
   first_name: '',
