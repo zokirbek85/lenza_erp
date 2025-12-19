@@ -147,14 +147,17 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         from core.permissions import IsSalesCanCreateTransaction, IsAdmin, IsAccountant, IsOwner
         
         if self.action == 'create':
-            # Admin, accountant, owner, sales can create
-            return [IsAuthenticated(), (IsAdmin() | IsAccountant() | IsOwner() | IsSalesCanCreateTransaction())]
+            # Sales manager gets special permission (POST only)
+            if hasattr(self.request, 'user') and self.request.user.is_authenticated and self.request.user.role == 'sales':
+                return [IsAuthenticated(), IsSalesCanCreateTransaction()]
+            # Admin, accountant, owner can create
+            return [IsAuthenticated(), IsAdmin() | IsAccountant() | IsOwner()]
         elif self.action in ['update', 'partial_update', 'destroy', 'approve', 'reject']:
             # Only admin, accountant can modify
-            return [IsAuthenticated(), (IsAdmin() | IsAccountant() | IsOwner())]
+            return [IsAuthenticated(), IsAdmin() | IsAccountant() | IsOwner()]
         else:
             # GET operations - admin, accountant, owner
-            return [IsAuthenticated(), (IsAdmin() | IsAccountant() | IsOwner())]
+            return [IsAuthenticated(), IsAdmin() | IsAccountant() | IsOwner()]
     
     def get_queryset(self):
         """Filter by permissions"""
