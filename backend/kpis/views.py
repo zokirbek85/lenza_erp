@@ -271,18 +271,76 @@ class SalesManagerKPIDetailView(APIView):
         # Get manager info
         manager_name = user.get_full_name() or user.username
         
-        # Get manager's dealers (only those included in KPI)
-        manager_dealers = Dealer.objects.filter(
-            manager_user=user,
-            include_in_manager_kpi=True
-        ).select_related('region')
-        dealer_ids = list(manager_dealers.values_list('id', flat=True))
+        # Get manager's dealers considering replacement history
+        from users.models import UserReplacement
+        
+        # Get current dealers (only those included in KPI)
+        current_dealer_ids = list(
+            Dealer.objects.filter(
+                manager_user=user,
+                include_in_manager_kpi=True
+            ).values_list('id', flat=True)
+        )
+        
+        # Get dealers that were transferred FROM this manager (old manager)
+        transferred_out = UserReplacement.objects.filter(
+            old_user=user,
+            replacement_date__gte=from_date,
+            replacement_date__lte=to_date
+        ).select_related('new_user')
+        
+        # Get dealers that were transferred TO this manager (new manager)
+        transferred_in = UserReplacement.objects.filter(
+            new_user=user,
+            replacement_date__gte=from_date,
+            replacement_date__lte=to_date
+        ).select_related('old_user')
+        
+        # Build dealer filter with date ranges
+        dealer_ids_with_dates = []
+        
+        # Current dealers
+        for dealer_id in current_dealer_ids:
+            transfer_in = transferred_in.filter(new_user=user).first()
+            if transfer_in:
+                dealer_ids_with_dates.append({
+                    'dealer_id': dealer_id,
+                    'from_date': max(from_date, transfer_in.replacement_date),
+                    'to_date': to_date
+                })
+            else:
+                dealer_ids_with_dates.append({
+                    'dealer_id': dealer_id,
+                    'from_date': from_date,
+                    'to_date': to_date
+                })
+        
+        # Transferred out dealers - only before replacement
+        for transfer_out in transferred_out:
+            transferred_dealer_ids = list(
+                Dealer.objects.filter(
+                    manager_user=transfer_out.new_user,
+                    include_in_manager_kpi=True
+                ).exclude(id__in=current_dealer_ids).values_list('id', flat=True)
+            )
+            for dealer_id in transferred_dealer_ids:
+                dealer_ids_with_dates.append({
+                    'dealer_id': dealer_id,
+                    'from_date': from_date,
+                    'to_date': min(to_date, transfer_out.replacement_date - timedelta(days=1))
+                })
+        
+        all_dealer_ids = list(set([d['dealer_id'] for d in dealer_ids_with_dates]))
+        
+        # Get manager's dealers for regions
+        manager_dealers = Dealer.objects.filter(id__in=all_dealer_ids).select_related('region')
+        dealer_ids = all_dealer_ids
         
         # Get regions for title
         regions = list(manager_dealers.values_list('region__name', flat=True).distinct())
         regions_str = ' va '.join([r for r in regions if r]) if regions else 'Unknown'
         
-        # Filter orders by date range
+        # Filter orders by date range with date-aware filtering
         confirmed_statuses = [
             Order.Status.CONFIRMED,
             Order.Status.PACKED,
@@ -290,24 +348,44 @@ class SalesManagerKPIDetailView(APIView):
             Order.Status.DELIVERED,
         ]
         
+        # Build Q object for sales
+        sales_date_filters = Q()
+        for dealer_info in dealer_ids_with_dates:
+            sales_date_filters |= Q(
+                dealer_id=dealer_info['dealer_id'],
+                value_date__gte=dealer_info['from_date'],
+                value_date__lte=dealer_info['to_date']
+            )
+        
+        if not sales_date_filters:
+            sales_date_filters = Q(id__in=[])
+        
         # Sales by dealer
         dealer_sales = Order.objects.filter(
-            dealer_id__in=dealer_ids,
+            sales_date_filters,
             status__in=confirmed_statuses,
             is_imported=False,
-            value_date__gte=from_date,
-            value_date__lte=to_date
         ).values('dealer__id', 'dealer__name').annotate(
             sales_usd=Sum('total_usd')
         )
         
+        # Build Q object for payments
+        payment_date_filters = Q()
+        for dealer_info in dealer_ids_with_dates:
+            payment_date_filters |= Q(
+                dealer_id=dealer_info['dealer_id'],
+                created_at__date__gte=dealer_info['from_date'],
+                created_at__date__lte=dealer_info['to_date']
+            )
+        
+        if not payment_date_filters:
+            payment_date_filters = Q(id__in=[])
+        
         # Payments by dealer and account type
         dealer_payments = FinanceTransaction.objects.filter(
-            dealer_id__in=dealer_ids,
+            payment_date_filters,
             type=FinanceTransaction.TransactionType.INCOME,
             status=FinanceTransaction.TransactionStatus.APPROVED,
-            created_at__date__gte=from_date,
-            created_at__date__lte=to_date
         ).values('dealer__id', 'dealer__name', 'account__type').annotate(
             payment_usd=Sum('amount_usd')
         )
@@ -1105,9 +1183,69 @@ class ManagerKPIOverviewView(APIView):
         else:
             to_date = timezone.now().date()
         
-        # Get manager's dealers
-        manager_dealers = Dealer.objects.filter(manager_user=manager)
-        dealer_ids = list(manager_dealers.values_list('id', flat=True))
+        # Get manager's dealers considering replacement history
+        from users.models import UserReplacement
+        
+        # Get current dealers
+        current_dealer_ids = list(Dealer.objects.filter(manager_user=manager).values_list('id', flat=True))
+        
+        # Get dealers that were transferred FROM this manager (old manager)
+        # These should only count BEFORE the replacement date
+        transferred_out = UserReplacement.objects.filter(
+            old_user=manager,
+            replacement_date__gte=from_date,
+            replacement_date__lte=to_date
+        ).select_related('new_user')
+        
+        # Get dealers that were transferred TO this manager (new manager)
+        # These should only count FROM the replacement date onwards
+        transferred_in = UserReplacement.objects.filter(
+            new_user=manager,
+            replacement_date__gte=from_date,
+            replacement_date__lte=to_date
+        ).select_related('old_user')
+        
+        # Build complex dealer filter considering replacement dates
+        dealer_ids_with_dates = []
+        
+        # Current dealers - all period (unless they were transferred in)
+        for dealer_id in current_dealer_ids:
+            # Check if this dealer was transferred to this manager
+            transfer_in = transferred_in.filter(
+                new_user=manager
+            ).first()
+            
+            if transfer_in:
+                # Only count from replacement date onwards
+                dealer_ids_with_dates.append({
+                    'dealer_id': dealer_id,
+                    'from_date': max(from_date, transfer_in.replacement_date),
+                    'to_date': to_date
+                })
+            else:
+                # Count entire period
+                dealer_ids_with_dates.append({
+                    'dealer_id': dealer_id,
+                    'from_date': from_date,
+                    'to_date': to_date
+                })
+        
+        # Add dealers that were transferred OUT - only count before replacement
+        for transfer_out in transferred_out:
+            transferred_dealer_ids = list(
+                Dealer.objects.filter(manager_user=transfer_out.new_user)
+                .exclude(id__in=current_dealer_ids)
+                .values_list('id', flat=True)
+            )
+            for dealer_id in transferred_dealer_ids:
+                dealer_ids_with_dates.append({
+                    'dealer_id': dealer_id,
+                    'from_date': from_date,
+                    'to_date': min(to_date, transfer_out.replacement_date - timedelta(days=1))
+                })
+        
+        # Collect all dealer IDs
+        all_dealer_ids = list(set([d['dealer_id'] for d in dealer_ids_with_dates]))
         
         # Orders: confirmed or higher status, not imported
         confirmed_statuses = [
@@ -1117,12 +1255,23 @@ class ManagerKPIOverviewView(APIView):
             Order.Status.DELIVERED,
         ]
         
+        # Build Q object for date-aware dealer filtering
+        dealer_date_filters = Q()
+        for dealer_info in dealer_ids_with_dates:
+            dealer_date_filters |= Q(
+                dealer_id=dealer_info['dealer_id'],
+                value_date__gte=dealer_info['from_date'],
+                value_date__lte=dealer_info['to_date']
+            )
+        
+        if not dealer_date_filters:
+            # No dealers, return empty KPI
+            dealer_date_filters = Q(id__in=[])
+        
         orders_qs = Order.objects.filter(
-            dealer_id__in=dealer_ids,
+            dealer_date_filters,
             status__in=confirmed_statuses,
             is_imported=False,
-            value_date__gte=from_date,
-            value_date__lte=to_date
         ).select_related('dealer__region')
         
         # Calculate total sales (use stored exchange rates)
@@ -1131,13 +1280,22 @@ class ManagerKPIOverviewView(APIView):
             total_uzs=Coalesce(Sum('total_uzs'), Value(0, output_field=DecimalField(max_digits=18, decimal_places=2)))
         )
         
-        # Payments: approved only
+        # Payments: approved only - use same date-aware filtering
+        payment_date_filters = Q()
+        for dealer_info in dealer_ids_with_dates:
+            payment_date_filters |= Q(
+                dealer_id=dealer_info['dealer_id'],
+                date__gte=dealer_info['from_date'],
+                date__lte=dealer_info['to_date']
+            )
+        
+        if not payment_date_filters:
+            payment_date_filters = Q(id__in=[])
+        
         payments_qs = FinanceTransaction.objects.filter(
-            dealer_id__in=dealer_ids,
+            payment_date_filters,
             type=FinanceTransaction.TransactionType.INCOME,
             status=FinanceTransaction.TransactionStatus.APPROVED,
-            date__gte=from_date,
-            date__lte=to_date
         )
         
         payments_agg = payments_qs.aggregate(
