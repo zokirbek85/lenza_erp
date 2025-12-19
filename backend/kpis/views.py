@@ -332,8 +332,8 @@ class SalesManagerKPIDetailView(APIView):
             dealer_id__in=dealer_ids,
             type=FinanceTransaction.TransactionType.INCOME,
             status=FinanceTransaction.TransactionStatus.APPROVED,
-            created_at__date__gte=effective_from_date,
-            created_at__date__lte=to_date
+            date__gte=effective_from_date,
+            date__lte=to_date
         ).values('dealer__id', 'dealer__name', 'account__type').annotate(
             payment_usd=Sum('amount_usd')
         )
