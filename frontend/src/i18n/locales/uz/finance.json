@@ -38,5 +38,22 @@
   "payment": "To'lov",
   "expense": "Xarajat",
   "noTransactions": "Tranzaksiyalar topilmadi",
-  "loadTransactionsError": "Tranzaksiyalarni yuklashda xatolik"
+  "loadTransactionsError": "Tranzaksiyalarni yuklashda xatolik",
+  "form": {
+    "dealer": "Diler",
+    "selectDealer": "Dilerni tanlang",
+    "account": "Hisob",
+    "selectAccount": "Hisobni tanlang",
+    "date": "Sana",
+    "currency": "Valyuta",
+    "amount": "Summa",
+    "comment": "Izoh",
+    "commentPlaceholder": "Qo'shimcha izohlar...",
+    "fillRequired": "Barcha majburiy maydonlarni to'ldiring",
+    "pendingNote": "To'lov tasdiqlash uchun yuboriladi va kutish holatida bo'ladi"
+  },
+  "messages": {
+    "createdSuccess": "To'lov muvaffaqiyatli yaratildi",
+    "createError": "To'lovni yaratishda xatolik"
+  }
 }

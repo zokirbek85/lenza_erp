@@ -1739,6 +1739,7 @@
     "showDetails": "Batafsil ko'rish"
   },
   "orders": {
+    "createPayment": "To'lov yaratish",
     "header": {
       "subtitle": "Statusni kuzatish va eksport qilish",
       "showForm": "Yangi buyurtma yaratish",

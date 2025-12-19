@@ -158,6 +158,17 @@ const OrdersPage = () => {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [showDailyReportModal, setShowDailyReportModal] = useState(false);
   const [dailyReportDate, setDailyReportDate] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [managerDealers, setManagerDealers] = useState<DealerOption[]>([]);
+  const [accounts, setAccounts] = useState<Array<{ id: number; name: string }>>([]);
+  const [paymentFormData, setPaymentFormData] = useState({
+    dealer: '',
+    account: '',
+    date: new Date().toISOString().split('T')[0],
+    currency: 'UZS',
+    amount: '',
+    comment: '',
+  });
   const role = useAuthStore((state) => state.role);
   const userId = useAuthStore((state) => state.userId);
   const isWarehouse = role === 'warehouse';
@@ -278,6 +289,25 @@ const OrdersPage = () => {
         fetchAllPages<CategoryOption>('/categories/'),
       ]);
       
+      // Load manager dealers if sales manager
+      if (isSalesManager) {
+        try {
+          const managerDealersResponse = await http.get('/finance/manager-dealers/');
+          setManagerDealers(managerDealersResponse.data);
+          
+          // Load accounts for payment creation
+          const accountsResponse = await http.get('/finance/accounts/');
+          const accountsData = Array.isArray(accountsResponse.data.results) 
+            ? accountsResponse.data.results 
+            : Array.isArray(accountsResponse.data) 
+            ? accountsResponse.data 
+            : [];
+          setAccounts(accountsData);
+        } catch (error) {
+          console.error('Failed to load manager dealers:', error);
+        }
+      }
+      
       console.log('Loaded data:', { 
         dealers: dealersData.length, 
         users: usersData.length, 
@@ -293,7 +323,7 @@ const OrdersPage = () => {
       console.error('Error loading references:', error);
       throw error;
     }
-  }, [fetchAllPages]);
+  }, [fetchAllPages, isSalesManager]);
 
   useEffect(() => {
     loadRefs().catch((error) => {
@@ -794,6 +824,43 @@ const OrdersPage = () => {
     event.target.value = '';
   };
 
+  const handleCreatePayment = async () => {
+    try {
+      if (!paymentFormData.dealer || !paymentFormData.account || !paymentFormData.amount) {
+        toast.error(t('finance.form.fillRequired'));
+        return;
+      }
+
+      const payload = {
+        type: 'income',
+        status: 'pending',
+        dealer: Number(paymentFormData.dealer),
+        account: Number(paymentFormData.account),
+        date: paymentFormData.date,
+        currency: paymentFormData.currency,
+        amount: Number(paymentFormData.amount),
+        comment: paymentFormData.comment || '',
+      };
+
+      await http.post('/finance/transactions/', payload);
+      toast.success(t('finance.messages.createdSuccess'));
+      
+      setShowPaymentModal(false);
+      setPaymentFormData({
+        dealer: '',
+        account: '',
+        date: new Date().toISOString().split('T')[0],
+        currency: 'UZS',
+        amount: '',
+        comment: '',
+      });
+    } catch (error: any) {
+      console.error('Payment creation error:', error);
+      const errorMsg = error?.response?.data?.error || error?.response?.data?.message || t('finance.messages.createError');
+      toast.error(errorMsg);
+    }
+  };
+
   const toggleOrderDetails = (orderId: number) =>
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
 
@@ -1091,6 +1158,15 @@ const OrdersPage = () => {
           </div>
           {!isWarehouse && (
             <div className="flex flex-wrap gap-3">
+              {isSalesManager && (
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="btn btn-primary btn-sm"
+                  title={t('orders.createPayment')}
+                >
+                  💳 {t('orders.createPayment')}
+                </button>
+              )}
               <button
                 onClick={handleDownloadTemplate}
                 title={t('orders.import.templateTooltip')}
@@ -1683,6 +1759,164 @@ const OrdersPage = () => {
           setPageSize={setPageSize}
         />
       </div>
+
+      {/* Payment Creation Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
+              {t('orders.createPayment')}
+            </h3>
+            <div className="space-y-4">
+              {/* Dealer Select */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  {t('finance.form.dealer')} *
+                </label>
+                <select
+                  value={paymentFormData.dealer}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, dealer: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                           bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">{t('finance.form.selectDealer')}</option>
+                  {managerDealers.map((dealer) => (
+                    <option key={dealer.id} value={dealer.id}>
+                      {dealer.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Account Select */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  {t('finance.form.account')} *
+                </label>
+                <select
+                  value={paymentFormData.account}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, account: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                           bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">{t('finance.form.selectAccount')}</option>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  {t('finance.form.date')} *
+                </label>
+                <input
+                  type="date"
+                  value={paymentFormData.date}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, date: e.target.value })}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                           bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              {/* Currency */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  {t('finance.form.currency')} *
+                </label>
+                <select
+                  value={paymentFormData.currency}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, currency: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                           bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="UZS">UZS</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  {t('finance.form.amount')} *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={paymentFormData.amount}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                           bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              {/* Comment */}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+                  {t('finance.form.comment')}
+                </label>
+                <textarea
+                  value={paymentFormData.comment}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, comment: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg 
+                           bg-white dark:bg-slate-700 text-slate-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder={t('finance.form.commentPlaceholder')}
+                />
+              </div>
+
+              {/* Info Alert */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  ℹ️ {t('finance.form.pendingNote')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPaymentFormData({
+                    dealer: '',
+                    account: '',
+                    date: new Date().toISOString().split('T')[0],
+                    currency: 'UZS',
+                    amount: '',
+                    comment: '',
+                  });
+                }}
+                className="btn btn-ghost btn-sm"
+              >
+                {t('actions.cancel')}
+              </button>
+              <button
+                onClick={handleCreatePayment}
+                className="btn btn-primary btn-sm"
+              >
+                💾 {t('actions.create')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Daily Report Date Picker Modal */}
       {showDailyReportModal && (
