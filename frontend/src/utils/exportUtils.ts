@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 import type { CashSummary, FinanceTransaction } from '../types/finance';
 
 
@@ -550,6 +551,125 @@ export const exportManagerKPIToPDF = (data: {
   // Save PDF
   const fileName = `manager-kpi-${data.manager_name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
+};
+
+/**
+ * Export Manager KPI to PDF using HTML rendering (better Unicode support)
+ */
+export const exportManagerKPIToPDFWithHTML = async (data: {
+  manager_name: string;
+  regions: string;
+  from_date: string;
+  to_date: string;
+  dealers: Array<{
+    dealer_name: string;
+    sales_usd: number;
+    payment_cash_usd: number;
+    payment_card_usd: number;
+    payment_bank_usd: number;
+    total_payment_usd: number;
+    kpi_usd: number;
+  }>;
+  totals: {
+    sales_usd: number;
+    payment_cash_usd: number;
+    payment_card_usd: number;
+    payment_bank_usd: number;
+    total_payment_usd: number;
+    kpi_usd: number;
+  };
+}) => {
+  // Create temporary container
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.width = '297mm'; // A4 landscape width
+  container.style.padding = '10mm';
+  container.style.backgroundColor = 'white';
+  container.style.fontFamily = 'Arial, sans-serif';
+  document.body.appendChild(container);
+
+  // Format date range
+  const formatDateRange = (from: string, to: string) => {
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    return `${String(fromDate.getDate()).padStart(2, '0')}.${String(fromDate.getMonth() + 1).padStart(2, '0')}.${fromDate.getFullYear()}-${String(toDate.getDate()).padStart(2, '0')}.${String(toDate.getMonth() + 1).padStart(2, '0')}.${toDate.getFullYear()}`;
+  };
+
+  // Build HTML table
+  container.innerHTML = `
+    <div style="text-align: center; margin-bottom: 15px;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: bold;">${data.regions} (${data.manager_name})</h2>
+      <p style="margin: 5px 0; font-size: 14px;">${formatDateRange(data.from_date, data.to_date)}</p>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+      <thead>
+        <tr style="background-color: #FFC864; font-weight: bold;">
+          <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 5%;">No</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: left; width: 25%;">Klient</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Tovar sum $</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Naqd $</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Plastik $</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Per/ya $</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 12%;">Umumiy $</th>
+          <th style="border: 1px solid #000; padding: 8px; text-align: right; width: 10%;">KPI (1%) $</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.dealers.map((dealer, index) => `
+          <tr style="background-color: ${index % 2 === 0 ? '#C8FFC8' : '#ffffff'};">
+            <td style="border: 1px solid #000; padding: 6px; text-align: center;">${index + 1}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: left;">${dealer.dealer_name}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.sales_usd.toFixed(2)}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.payment_cash_usd.toFixed(2)}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.payment_card_usd.toFixed(2)}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.payment_bank_usd.toFixed(2)}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.total_payment_usd.toFixed(2)}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">${dealer.kpi_usd.toFixed(2)}</td>
+          </tr>
+        `).join('')}
+        <tr style="background-color: #FFC864; font-weight: bold;">
+          <td style="border: 1px solid #000; padding: 6px; text-align: center;"></td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: left;">Umumiy</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.sales_usd.toFixed(2)}</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.payment_cash_usd.toFixed(2)}</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.payment_card_usd.toFixed(2)}</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.payment_bank_usd.toFixed(2)}</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.total_payment_usd.toFixed(2)}</td>
+          <td style="border: 1px solid #000; padding: 6px; text-align: right;">${data.totals.kpi_usd.toFixed(2)}</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  try {
+    // Convert HTML to canvas
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+    });
+
+    // Create PDF
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const imgWidth = 297; // A4 landscape width in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+    // Save PDF
+    const fileName = `manager-kpi-${data.manager_name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(fileName);
+  } finally {
+    // Clean up
+    document.body.removeChild(container);
+  }
 };
 
 /**

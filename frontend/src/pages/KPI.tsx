@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import http from '../app/http';
 import { useAuthStore } from '../auth/useAuthStore';
-import { exportManagerKPIToPDF } from '../utils/exportUtils';
+import { exportManagerKPIToPDF, exportManagerKPIToPDFWithHTML } from '../utils/exportUtils';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -513,9 +513,9 @@ export default function KPIPage() {
               <div className="flex items-center gap-3">
                 {detailData && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       try {
-                        exportManagerKPIToPDF(detailData);
+                        await exportManagerKPIToPDFWithHTML(detailData);
                       } catch (error) {
                         console.error('PDF export error:', error);
                       }
