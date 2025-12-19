@@ -86,6 +86,9 @@ export default function KPIPage() {
     from_date: new Date().getFullYear() + '-01-01',
     to_date: new Date().toISOString().split('T')[0],
   });
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailData, setDetailData] = useState<any>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchKPIData = async () => {
     const managerId = role === 'admin' ? selectedManagerId : userId;
@@ -314,8 +317,27 @@ export default function KPIPage() {
           </div>
         </div>
 
-        {/* Bonus Card - Gold Accent */}
-        <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-6 rounded-xl shadow-xl">
+        {/* Bonus Card - Gold Accent - Clickable */}
+        <div 
+          onClick={async () => {
+            setShowDetailModal(true);
+            setDetailLoading(true);
+            try {
+              const response = await http.get('/kpis/sales-manager/detail/', {
+                params: {
+                  from_date: dateRange.from_date,
+                  to_date: dateRange.to_date,
+                },
+              });
+              setDetailData(response.data);
+            } catch (err) {
+              console.error('Detailed KPI fetch error:', err);
+            } finally {
+              setDetailLoading(false);
+            }
+          }}
+          className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-6 rounded-xl shadow-xl cursor-pointer hover:from-yellow-500 hover:to-yellow-700 transition-all transform hover:scale-105"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-yellow-100">{t('bonus')} 🎉</p>
@@ -473,6 +495,150 @@ export default function KPIPage() {
           )}
         </div>
       </div>
+
+      {/* Detailed KPI Modal */}
+      {showDetailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 p-6 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-white">{t('detailedKPIReport')}</h2>
+                <p className="text-yellow-100 text-sm mt-1">
+                  {detailData?.manager_name} - {detailData?.regions}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+              >
+                <span className="text-2xl">✕</span>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {detailLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
+                </div>
+              ) : detailData ? (
+                <div className="space-y-6">
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{t('totalSales')}</p>
+                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                        ${detailData.total_sales?.toLocaleString() || 0}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-green-600 dark:text-green-400 font-medium">{t('totalPayments')}</p>
+                      <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                        ${detailData.total_payments?.toLocaleString() || 0}
+                      </p>
+                    </div>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                      <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">{t('totalBonus')}</p>
+                      <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                        ${detailData.total_bonus?.toLocaleString() || 0}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Dealers Table */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">{t('dealerBreakdown')}</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                              {t('dealer')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                              {t('sales')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                              {t('cashPayments')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                              {t('cardPayments')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                              {t('bankPayments')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                              {t('totalPayments')}
+                            </th>
+                            <th className="px-4 py-3 text-right text-xs font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">
+                              {t('bonus')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {detailData.dealers?.map((dealer: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                              <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                {dealer.dealer_name}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
+                                ${dealer.sales_usd?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
+                                ${dealer.payment_cash_usd?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
+                                ${dealer.payment_card_usd?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
+                                ${dealer.payment_bank_usd?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right font-semibold text-green-600 dark:text-green-400">
+                                ${dealer.total_payment_usd?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right font-bold text-yellow-600 dark:text-yellow-400">
+                                ${dealer.bonus_usd?.toLocaleString() || 0}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        {detailData.dealers?.length > 0 && (
+                          <tfoot className="bg-gray-100 dark:bg-gray-900 font-bold">
+                            <tr>
+                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{t('total')}</td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                                ${detailData.total_sales?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                                ${detailData.total_cash?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                                ${detailData.total_card?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                                ${detailData.total_bank?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400">
+                                ${detailData.total_payments?.toLocaleString() || 0}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-yellow-600 dark:text-yellow-400">
+                                ${detailData.total_bonus?.toLocaleString() || 0}
+                              </td>
+                            </tr>
+                          </tfoot>
+                        )}
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-12">{t('noData')}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
