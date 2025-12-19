@@ -443,30 +443,28 @@ export const exportManagerKPIToPDF = (data: {
     kpi_usd: number;
   };
 }) => {
-  const doc = initPDFWithUTF8('landscape');
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
+  });
   
   // Format date range for title
   const formatDateRange = (from: string, to: string) => {
     const fromDate = new Date(from);
     const toDate = new Date(to);
-    const monthNames = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 
-                        'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
-    
-    if (fromDate.getMonth() === toDate.getMonth() && fromDate.getFullYear() === toDate.getFullYear()) {
-      return `${monthNames[fromDate.getMonth()]}(${String(fromDate.getDate()).padStart(2, '0')}.${String(fromDate.getMonth() + 1).padStart(2, '0')}.${fromDate.getFullYear()}-${String(toDate.getDate()).padStart(2, '0')}.${String(toDate.getMonth() + 1).padStart(2, '0')}.${toDate.getFullYear()})`;
-    }
     return `${String(fromDate.getDate()).padStart(2, '0')}.${String(fromDate.getMonth() + 1).padStart(2, '0')}.${fromDate.getFullYear()}-${String(toDate.getDate()).padStart(2, '0')}.${String(toDate.getMonth() + 1).padStart(2, '0')}.${toDate.getFullYear()}`;
   };
   
   // Title
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('times', 'bold');
   const title = `${data.regions} (${data.manager_name})`;
   doc.text(title, 148, 15, { align: 'center' });
   
   // Date range
   doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('times', 'normal');
   const dateRange = formatDateRange(data.from_date, data.to_date);
   doc.text(dateRange, 148, 22, { align: 'center' });
   
@@ -509,16 +507,22 @@ export const exportManagerKPIToPDF = (data: {
     ]],
     body: tableData,
     theme: 'grid',
+    styles: {
+      font: 'times',
+      fontStyle: 'normal',
+    },
     headStyles: {
       fillColor: [255, 200, 100],
       textColor: [0, 0, 0],
       fontStyle: 'bold',
       fontSize: 9,
       halign: 'center',
+      font: 'times',
     },
     bodyStyles: {
       fontSize: 8,
       textColor: [0, 0, 0],
+      font: 'times',
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 10 },  // No
