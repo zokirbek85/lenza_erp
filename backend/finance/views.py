@@ -139,8 +139,6 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
     filterset_class = FinanceTransactionFilter
     ordering_fields = ['date', 'created_at', 'amount', 'amount_usd', 'amount_uzs']
     ordering = ['-date', '-created_at']
-    # Enable pagination with large page size
-    pagination_class = None  # Disable pagination for now, or configure per view
     
     def get_permissions(self):
         """Dynamic permissions based on action"""

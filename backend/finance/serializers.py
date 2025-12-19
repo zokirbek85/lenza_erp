@@ -68,10 +68,8 @@ class FinanceAccountSerializer(serializers.ModelSerializer):
 
 
 class FinanceTransactionSerializer(serializers.ModelSerializer):
-    dealer_detail = DealerSerializer(source='dealer', read_only=True)
     dealer_name = serializers.CharField(source='dealer.name', read_only=True, allow_null=True)
     manager_name = serializers.CharField(source='dealer.manager_user.get_full_name', read_only=True, allow_null=True)
-    account_detail = FinanceAccountSerializer(source='account', read_only=True)
     account_name = serializers.CharField(source='account.name', read_only=True)
     related_account_name = serializers.CharField(source='related_account.name', read_only=True, allow_null=True)
     type_display = serializers.CharField(source='get_type_display', read_only=True)
@@ -111,10 +109,8 @@ class FinanceTransactionSerializer(serializers.ModelSerializer):
             'dealer',
             'dealer_name',
             'manager_name',
-            'dealer_detail',
             'account',
             'account_name',
-            'account_detail',
             'related_account',
             'related_account_name',
             'date',
