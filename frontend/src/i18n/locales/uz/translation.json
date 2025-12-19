@@ -1013,8 +1013,24 @@
       "deleted": "Foydalanuvchi o'chirildi",
       "deleteConfirm": "Foydalanuvchini o'chirishni xohlaysizmi?",
       "passwordReset": "Parol tiklandi",
-      "twoFaRequired": "2FA sozlash talab qilinadi"
-    }
+      "twoFaRequired": "2FA sozlash talab qilinadi",
+      "replaced": "Foydalanuvchi almashtirildi",
+      "replaceError": "Almashtirish xatoligi"
+    },
+    "replace": "Almashtirish",
+    "replaceTitle": "Foydalanuvchini almashtirish:",
+    "replaceButton": "Almashtirish",
+    "replaceWarning": "Eski foydalanuvchi arxivga o'tkaziladi va yangi foydalanuvchi shu ruxsatlar bilan yaratiladi.",
+    "newUserInfo": "Yangi foydalanuvchi ma'lumotlari",
+    "archiveReason": "Arxivga o'tkazish sababi",
+    "archiveReasons": {
+      "replaced": "Almashtirilgan",
+      "terminated": "Ishdan bo'shatilgan",
+      "resigned": "O'zi ketgan",
+      "other": "Boshqa sabab"
+    },
+    "comment": "Izoh",
+    "commentPlaceholder": "Almashtirish sababi yoki izoh..."
   },
   "regions": {
     "title": "Hududlar",

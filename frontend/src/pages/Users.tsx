@@ -27,6 +27,21 @@ interface UserRecord {
   is_active: boolean;
   last_seen?: string;
   is_online?: boolean;
+  archived_at?: string;
+  archived_reason?: string;
+  archived_reason_display?: string;
+}
+
+interface UserReplacementData {
+  new_user: {
+    username: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+  };
+  archive_reason: string;
+  comment: string;
 }
 
 const emptyForm = {
@@ -179,6 +194,62 @@ const UsersPage = () => {
     }
   };
 
+  const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [userToReplace, setUserToReplace] = useState<UserRecord | null>(null);
+  const [replaceForm, setReplaceForm] = useState({
+    username: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    password: '',
+    archive_reason: 'replaced',
+    comment: '',
+  });
+
+  const openReplaceModal = (user: UserRecord) => {
+    setUserToReplace(user);
+    setReplaceForm({
+      username: '',
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      archive_reason: 'replaced',
+      comment: '',
+    });
+    setReplaceModalOpen(true);
+  };
+
+  const handleReplaceSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!userToReplace) return;
+    
+    setSubmitting(true);
+    try {
+      await http.post(`/users/${userToReplace.id}/replace/`, {
+        new_user: {
+          username: replaceForm.username,
+          first_name: replaceForm.first_name,
+          last_name: replaceForm.last_name,
+          email: replaceForm.email,
+          password: replaceForm.password,
+        },
+        archive_reason: replaceForm.archive_reason,
+        comment: replaceForm.comment,
+      });
+      toast.success(t('users.messages.replaced'));
+      setReplaceModalOpen(false);
+      setUserToReplace(null);
+      loadUsers();
+    } catch (error: any) {
+      console.error(error);
+      const errorMsg = error?.response?.data?.detail || t('users.messages.replaceError');
+      toast.error(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const mobileHandlers: UsersMobileHandlers = {
     onView: (userId: number) => {
       const user = users.find((u) => u.id === userId);
@@ -325,7 +396,10 @@ const UsersPage = () => {
                           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                         </span>
                       )}
-                      <span>{user.username}</span>
+                      <span className={user.archived_at ? 'text-slate-400 line-through' : ''}>{user.username}</span>
+                      {user.archived_at && (
+                        <span className="text-xs text-slate-400">({user.archived_reason_display})</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 capitalize text-slate-600 dark:text-slate-200">{user.role_display ?? user.role}</td>
@@ -347,12 +421,22 @@ const UsersPage = () => {
                         <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(user)}>
                           {t('actions.edit')}
                         </button>
-                        <button
-                          className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-300"
-                          onClick={() => toggleActive(user)}
-                        >
-                          {user.is_active ? t('users.deactivate') : t('users.activate')}
-                        </button>
+                        {!user.archived_at && (
+                          <>
+                            <button
+                              className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-300"
+                              onClick={() => toggleActive(user)}
+                            >
+                              {user.is_active ? t('users.deactivate') : t('users.activate')}
+                            </button>
+                            <button
+                              className="text-blue-600 hover:text-blue-800 dark:text-blue-300"
+                              onClick={() => openReplaceModal(user)}
+                            >
+                              {t('users.replace')}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   )}
@@ -480,9 +564,129 @@ const UsersPage = () => {
           </div>
         </form>
       </Modal>
+
+      <Modal
+        open={replaceModalOpen}
+        onClose={() => {
+          if (!submitting) {
+            setReplaceModalOpen(false);
+            setUserToReplace(null);
+          }
+        }}
+        title={`${t('users.replaceTitle')} ${userToReplace?.username || ''}`}
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setReplaceModalOpen(false);
+                setUserToReplace(null);
+              }}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t('actions.cancel')}
+            </button>
+            <button
+              type="submit"
+              form="replace-form"
+              disabled={submitting}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {submitting ? t('actions.saving') : t('users.replaceButton')}
+            </button>
+          </>
+        }
+      >
+        <form id="replace-form" onSubmit={handleReplaceSubmit} className="space-y-4">
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+            {t('users.replaceWarning')}
+          </div>
+          
+          <div>
+            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">{t('users.newUserInfo')}</h3>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.username')} *</label>
+                <input
+                  required
+                  name="username"
+                  value={replaceForm.username}
+                  onChange={(e) => setReplaceForm({ ...replaceForm, username: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.password')} *</label>
+                <input
+                  required
+                  type="password"
+                  name="password"
+                  value={replaceForm.password}
+                  onChange={(e) => setReplaceForm({ ...replaceForm, password: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.firstName')}</label>
+                <input
+                  name="first_name"
+                  value={replaceForm.first_name}
+                  onChange={(e) => setReplaceForm({ ...replaceForm, first_name: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.lastName')}</label>
+                <input
+                  name="last_name"
+                  value={replaceForm.last_name}
+                  onChange={(e) => setReplaceForm({ ...replaceForm, last_name: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.form.email')}</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={replaceForm.email}
+                  onChange={(e) => setReplaceForm({ ...replaceForm, email: e.target.value })}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.archiveReason')}</label>
+            <Select
+              value={replaceForm.archive_reason}
+              onChange={(val) => setReplaceForm({ ...replaceForm, archive_reason: String(val) })}
+              className="mt-1 w-full"
+              options={[
+                { label: t('users.archiveReasons.replaced'), value: 'replaced' },
+                { label: t('users.archiveReasons.terminated'), value: 'terminated' },
+                { label: t('users.archiveReasons.resigned'), value: 'resigned' },
+                { label: t('users.archiveReasons.other'), value: 'other' },
+              ]}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">{t('users.comment')}</label>
+            <textarea
+              name="comment"
+              value={replaceForm.comment}
+              onChange={(e) => setReplaceForm({ ...replaceForm, comment: e.target.value })}
+              rows={3}
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder={t('users.commentPlaceholder')}
+            />
+          </div>
+        </form>
+      </Modal>
     </section>
   );
 };
 
 export default UsersPage;
-

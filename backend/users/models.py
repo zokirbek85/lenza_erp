@@ -12,11 +12,25 @@ class User(AbstractUser):
         SALES = 'sales', 'Sales'
         OWNER = 'owner', 'Owner'
 
+    class ArchiveReasons(models.TextChoices):
+        TERMINATED = 'terminated', 'Ishdan bo\'shatilgan'
+        REPLACED = 'replaced', 'Almashtirilgan'
+        RESIGNED = 'resigned', 'O\'zi ketgan'
+        OTHER = 'other', 'Boshqa sabab'
+
     role = models.CharField(max_length=20, choices=Roles.choices, default=Roles.SALES)
     otp_secret = models.CharField(max_length=64, blank=True)
     is_2fa_enabled = models.BooleanField(default=False)
     telegram_id = models.CharField(max_length=64, blank=True)
     last_seen = models.DateTimeField(null=True, blank=True, help_text='Last activity timestamp')
+    archived_at = models.DateTimeField(null=True, blank=True, help_text='When user was archived')
+    archived_reason = models.CharField(
+        max_length=20, 
+        choices=ArchiveReasons.choices, 
+        null=True, 
+        blank=True,
+        help_text='Reason for archiving'
+    )
 
     def __str__(self) -> str:
         return f"{self.get_full_name() or self.username} ({self.get_role_display()})"
@@ -42,3 +56,38 @@ class DashboardLayout(models.Model):
 
     def __str__(self) -> str:
         return f"Dashboard layout for {self.user.username}"
+
+
+class UserReplacement(models.Model):
+    """Audit log for user replacements - preserves history of manager changes."""
+    old_user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='replaced_from',
+        help_text='User being replaced'
+    )
+    new_user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='replaced_to',
+        help_text='Replacement user'
+    )
+    replaced_at = models.DateTimeField(auto_now_add=True, help_text='When replacement occurred')
+    replaced_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True,
+        related_name='replacements_performed',
+        help_text='Admin who performed the replacement'
+    )
+    comment = models.TextField(blank=True, help_text='Reason or notes for replacement')
+
+    class Meta:
+        db_table = 'users_replacement'
+        verbose_name = 'User Replacement'
+        verbose_name_plural = 'User Replacements'
+        ordering = ['-replaced_at']
+
+    def __str__(self) -> str:
+        return f"{self.old_user.username} → {self.new_user.username} ({self.replaced_at.strftime('%Y-%m-%d')})"
+
