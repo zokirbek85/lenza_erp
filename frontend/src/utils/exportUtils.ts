@@ -554,7 +554,7 @@ export const exportManagerKPIToPDF = (data: {
 };
 
 /**
- * Export Manager KPI to PDF using HTML rendering (better Unicode support)
+ * Export Manager KPI to PDF using browser print API (best Unicode support)
  */
 export const exportManagerKPIToPDFWithHTML = async (data: {
   manager_name: string;
@@ -579,18 +579,6 @@ export const exportManagerKPIToPDFWithHTML = async (data: {
     kpi_usd: number;
   };
 }) => {
-  // Create temporary container
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.top = '0';
-  container.style.left = '-9999px';
-  container.style.width = '1100px'; // Fixed pixel width for consistent rendering
-  container.style.padding = '30px';
-  container.style.backgroundColor = '#ffffff';
-  container.style.fontFamily = 'Arial, sans-serif';
-  container.style.color = '#000000';
-  document.body.appendChild(container);
-
   // Format date range
   const formatDateRange = (from: string, to: string) => {
     const fromDate = new Date(from);
@@ -598,88 +586,158 @@ export const exportManagerKPIToPDFWithHTML = async (data: {
     return `${String(fromDate.getDate()).padStart(2, '0')}.${String(fromDate.getMonth() + 1).padStart(2, '0')}.${fromDate.getFullYear()}-${String(toDate.getDate()).padStart(2, '0')}.${String(toDate.getMonth() + 1).padStart(2, '0')}.${toDate.getFullYear()}`;
   };
 
-  // Build HTML table
-  container.innerHTML = `
-    <div style="text-align: center; margin-bottom: 20px; color: #000000;">
-      <h2 style="margin: 0; font-size: 20px; font-weight: bold; color: #000000;">${data.regions} (${data.manager_name})</h2>
-      <p style="margin: 8px 0; font-size: 16px; color: #000000;">${formatDateRange(data.from_date, data.to_date)}</p>
-    </div>
-    <table style="width: 100%; border-collapse: collapse; font-size: 13px; background-color: #ffffff;">
-      <thead>
-        <tr style="background-color: #FFC864;">
-          <th style="border: 2px solid #000000; padding: 10px; text-align: center; width: 5%; color: #000000; font-weight: bold;">No</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: left; width: 25%; color: #000000; font-weight: bold;">Klient</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Tovar sum $</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Naqd $</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Plastik $</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Per/ya $</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 12%; color: #000000; font-weight: bold;">Umumiy $</th>
-          <th style="border: 2px solid #000000; padding: 10px; text-align: right; width: 10%; color: #000000; font-weight: bold;">KPI (1%) $</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.dealers.map((dealer, index) => `
-          <tr style="background-color: ${index % 2 === 0 ? '#C8FFC8' : '#ffffff'};">
-            <td style="border: 2px solid #000000; padding: 8px; text-align: center; color: #000000;">${index + 1}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: left; color: #000000;">${dealer.dealer_name}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.sales_usd.toFixed(2)}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.payment_cash_usd.toFixed(2)}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.payment_card_usd.toFixed(2)}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.payment_bank_usd.toFixed(2)}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.total_payment_usd.toFixed(2)}</td>
-            <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000;">${dealer.kpi_usd.toFixed(2)}</td>
-          </tr>
-        `).join('')}
-        <tr style="background-color: #FFC864;">
-          <td style="border: 2px solid #000000; padding: 8px; text-align: center; color: #000000; font-weight: bold;"></td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: left; color: #000000; font-weight: bold;">Umumiy</td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.sales_usd.toFixed(2)}</td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.payment_cash_usd.toFixed(2)}</td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.payment_card_usd.toFixed(2)}</td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.payment_bank_usd.toFixed(2)}</td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.total_payment_usd.toFixed(2)}</td>
-          <td style="border: 2px solid #000000; padding: 8px; text-align: right; color: #000000; font-weight: bold;">${data.totals.kpi_usd.toFixed(2)}</td>
-        </tr>
-      </tbody>
-    </table>
+  // Create print window
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow popups for PDF export');
+    return;
+  }
+
+  // Build HTML content
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Manager KPI Report - ${data.manager_name}</title>
+      <style>
+        @page {
+          size: A4 landscape;
+          margin: 15mm;
+        }
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: Arial, sans-serif;
+          background: white;
+          color: black;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .container {
+          width: 100%;
+          padding: 10px;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 15px;
+        }
+        .header h1 {
+          font-size: 18px;
+          font-weight: bold;
+          margin-bottom: 5px;
+          color: black;
+        }
+        .header p {
+          font-size: 14px;
+          color: black;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 11px;
+          background: white;
+        }
+        th, td {
+          border: 2px solid black;
+          padding: 8px;
+          color: black;
+        }
+        th {
+          background-color: #FFC864 !important;
+          font-weight: bold;
+          text-align: center;
+        }
+        td {
+          background-color: white !important;
+        }
+        tr.green {
+          background-color: #C8FFC8 !important;
+        }
+        tr.green td {
+          background-color: #C8FFC8 !important;
+        }
+        tr.total {
+          background-color: #FFC864 !important;
+          font-weight: bold;
+        }
+        tr.total td {
+          background-color: #FFC864 !important;
+        }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+        @media print {
+          body { background: white; }
+          table { page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${data.regions} (${data.manager_name})</h1>
+          <p>${formatDateRange(data.from_date, data.to_date)}</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%;">No</th>
+              <th style="width: 25%;">Klient</th>
+              <th style="width: 12%;">Tovar sum $</th>
+              <th style="width: 12%;">Naqd $</th>
+              <th style="width: 12%;">Plastik $</th>
+              <th style="width: 12%;">Per/ya $</th>
+              <th style="width: 12%;">Umumiy $</th>
+              <th style="width: 10%;">KPI (1%) $</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.dealers.map((dealer, index) => `
+              <tr class="${index % 2 === 0 ? 'green' : ''}">
+                <td class="text-center">${index + 1}</td>
+                <td class="text-left">${dealer.dealer_name}</td>
+                <td class="text-right">${dealer.sales_usd.toFixed(2)}</td>
+                <td class="text-right">${dealer.payment_cash_usd.toFixed(2)}</td>
+                <td class="text-right">${dealer.payment_card_usd.toFixed(2)}</td>
+                <td class="text-right">${dealer.payment_bank_usd.toFixed(2)}</td>
+                <td class="text-right">${dealer.total_payment_usd.toFixed(2)}</td>
+                <td class="text-right">${dealer.kpi_usd.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+            <tr class="total">
+              <td class="text-center"></td>
+              <td class="text-left">Umumiy</td>
+              <td class="text-right">${data.totals.sales_usd.toFixed(2)}</td>
+              <td class="text-right">${data.totals.payment_cash_usd.toFixed(2)}</td>
+              <td class="text-right">${data.totals.payment_card_usd.toFixed(2)}</td>
+              <td class="text-right">${data.totals.payment_bank_usd.toFixed(2)}</td>
+              <td class="text-right">${data.totals.total_payment_usd.toFixed(2)}</td>
+              <td class="text-right">${data.totals.kpi_usd.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 500);
+        };
+        window.onafterprint = function() {
+          window.close();
+        };
+      </script>
+    </body>
+    </html>
   `;
 
-  try {
-    // Wait for DOM to be ready
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Convert HTML to canvas
-    const canvas = await html2canvas(container, {
-      scale: 3,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: false,
-      foreignObjectRendering: false,
-      width: 1100,
-      windowWidth: 1100,
-    });
-
-    // Create PDF
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const imgWidth = 297; // A4 landscape width in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-    // Save PDF
-    const fileName = `manager-kpi-${data.manager_name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
-    pdf.save(fileName);
-  } finally {
-    // Clean up
-    document.body.removeChild(container);
-  }
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
 };
 
 /**
