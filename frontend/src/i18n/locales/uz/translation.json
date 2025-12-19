@@ -1015,9 +1015,12 @@
       "passwordReset": "Parol tiklandi",
       "twoFaRequired": "2FA sozlash talab qilinadi",
       "replaced": "Foydalanuvchi almashtirildi",
-      "replaceError": "Almashtirish xatoligi"
+      "replaceError": "Almashtirish xatoligi",
+      "restored": "Foydalanuvchi tiklandi",
+      "restoreError": "Tiklashda xatolik"
     },
     "replace": "Almashtirish",
+    "restore": "Tiklash",
     "replaceTitle": "Foydalanuvchini almashtirish:",
     "replaceButton": "Almashtirish",
     "replaceWarning": "Eski foydalanuvchi arxivga o'tkaziladi va yangi foydalanuvchi shu ruxsatlar bilan yaratiladi.",

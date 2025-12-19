@@ -52,6 +52,16 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save(update_fields=['is_active'])
         return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='restore')
+    def restore(self, request, pk=None):
+        """Restore an archived user by clearing archived fields."""
+        user = self.get_object()
+        user.archived_at = None
+        user.archived_reason = None
+        user.is_active = True
+        user.save(update_fields=['archived_at', 'archived_reason', 'is_active'])
+        return Response(self.get_serializer(user).data, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='replace')
     def replace(self, request, pk=None):
         """

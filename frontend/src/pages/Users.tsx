@@ -182,6 +182,17 @@ const UsersPage = () => {
     }
   };
 
+  const restoreUser = async (user: UserRecord) => {
+    try {
+      await http.post(`/users/${user.id}/restore/`);
+      toast.success(t('users.messages.restored'));
+      loadUsers();
+    } catch (error) {
+      console.error(error);
+      toast.error(t('users.messages.restoreError'));
+    }
+  };
+
   const [replaceModalOpen, setReplaceModalOpen] = useState(false);
   const [userToReplace, setUserToReplace] = useState<UserRecord | null>(null);
   const [replaceForm, setReplaceForm] = useState({
@@ -415,11 +426,11 @@ const UsersPage = () => {
                   {canManage && (
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(user)}>
-                          {t('actions.edit')}
-                        </button>
                         {!user.archived_at && (
                           <>
+                            <button className="text-slate-600 hover:text-slate-900 dark:text-slate-300" onClick={() => openModal(user)}>
+                              {t('actions.edit')}
+                            </button>
                             <button
                               className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-300"
                               onClick={() => toggleActive(user)}
@@ -433,6 +444,14 @@ const UsersPage = () => {
                               {t('users.replace')}
                             </button>
                           </>
+                        )}
+                        {user.archived_at && (
+                          <button
+                            className="text-amber-600 hover:text-amber-800 dark:text-amber-300"
+                            onClick={() => restoreUser(user)}
+                          >
+                            {t('users.restore')}
+                          </button>
                         )}
                       </div>
                     </td>
