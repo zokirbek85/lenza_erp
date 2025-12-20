@@ -22,6 +22,7 @@ export type Product = {
   style?: { id: number; name: string; description?: string } | null;
   size?: string;
   sell_price_usd: number;
+  current_price?: number;
   stock_ok: number;
   stock_defect: number;
   availability_status: string;
