@@ -1148,7 +1148,7 @@ const ProductsPage = () => {
                         edit: t('actions.edit'),
                         delete: t('actions.delete'),
                         adjust: t('actions.update'),
-                        priceHistory: t('products.priceHistory') || 'Prices',
+                        priceHistory: 'Prices',
                       }}
                     />
                   </div>

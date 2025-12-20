@@ -40,11 +40,11 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
   const fetchPrices = async () => {
     try {
       setLoading(true);
-      const response = await http.get(`/api/catalog/product-prices/?product=${productId}`);
+      const response = await http.get(`/catalog/product-prices/?product=${productId}`);
       setPrices(response.data.results || response.data);
     } catch (error) {
       console.error('Failed to fetch price history:', error);
-      toast.error(t('products.priceHistory.fetchError') || 'Failed to load price history');
+      toast.error('Failed to load price history');
     } finally {
       setLoading(false);
     }
@@ -58,20 +58,20 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
     e.preventDefault();
     
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      toast.error(t('products.priceHistory.invalidPrice') || 'Please enter a valid price');
+      toast.error('Please enter a valid price');
       return;
     }
 
     try {
       setSaving(true);
-      await http.post('/api/catalog/product-prices/', {
+      await http.post('/catalog/product-prices/', {
         product: productId,
         price: parseFloat(formData.price),
         currency: formData.currency,
         valid_from: formData.valid_from,
       });
       
-      toast.success(t('products.priceHistory.priceAdded') || 'Price added successfully');
+      toast.success('Price added successfully');
       setShowAddForm(false);
       setFormData({
         price: '',
@@ -83,7 +83,6 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
       console.error('Failed to add price:', error);
       const errorMsg = error.response?.data?.valid_from?.[0] || 
                        error.response?.data?.detail ||
-                       t('products.priceHistory.addError') || 
                        'Failed to add price';
       toast.error(errorMsg);
     } finally {
@@ -95,7 +94,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
     <Modal
       open={true}
       onClose={onClose}
-      title={`${t('products.priceHistory.title') || 'Price History'} - ${productSku} (${productName})`}
+      title={`Price History - ${productSku} (${productName})`}
       widthClass="max-w-4xl"
     >
       <div className="space-y-4">
@@ -105,7 +104,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
             onClick={() => setShowAddForm(true)}
             className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            + {t('products.priceHistory.addPrice') || 'Add New Price'}
+            + Add New Price
           </button>
         )}
 
@@ -113,13 +112,13 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
         {showAddForm && (
           <form onSubmit={handleAddPrice} className="bg-gray-50 p-4 rounded-lg space-y-4">
             <h3 className="font-semibold text-lg">
-              {t('products.priceHistory.newPrice') || 'New Price'}
+              New Price
             </h3>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  {t('products.priceHistory.price') || 'Price'} *
+                  Price *
                 </label>
                 <input
                   type="number"
@@ -134,7 +133,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  {t('products.priceHistory.currency') || 'Currency'} *
+                  Currency *
                 </label>
                 <select
                   value={formData.currency}
@@ -148,7 +147,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  {t('products.priceHistory.validFrom') || 'Valid From'} *
+                  Valid From *
                 </label>
                 <input
                   type="date"
@@ -173,14 +172,14 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
                 }}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors"
               >
-                {t('common.cancel') || 'Cancel'}
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
-                {saving ? t('common.saving') || 'Saving...' : t('common.save') || 'Save'}
+                {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </form>
@@ -190,30 +189,30 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
         <div className="overflow-x-auto">
           {loading ? (
             <div className="text-center py-8 text-gray-500">
-              {t('common.loading') || 'Loading...'}
+              Loading...
             </div>
           ) : prices.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              {t('products.priceHistory.noHistory') || 'No price history available'}
+              No price history available
             </div>
           ) : (
             <table className="w-full">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
-                    {t('products.priceHistory.price') || 'Price'}
+                    Price
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
-                    {t('products.priceHistory.currency') || 'Currency'}
+                    Currency
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
-                    {t('products.priceHistory.validFrom') || 'Valid From'}
+                    Valid From
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
-                    {t('products.priceHistory.createdAt') || 'Created'}
+                    Created
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">
-                    {t('products.priceHistory.createdBy') || 'Created By'}
+                    Created By
                   </th>
                 </tr>
               </thead>
@@ -235,7 +234,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
                       {new Date(price.created_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {price.created_by_name || t('common.system') || 'System'}
+                      {price.created_by_name || 'System'}
                     </td>
                   </tr>
                 ))}
@@ -247,24 +246,20 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
         {/* Info box */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
           <div className="font-semibold mb-2">
-            ℹ️ {t('products.priceHistory.infoTitle') || 'Important Information'}
+            ℹ️ Important Information
           </div>
           <ul className="list-disc list-inside space-y-1 text-gray-700">
             <li>
-              {t('products.priceHistory.info1') || 
-                'Prices are applied based on the valid_from date'}
+              Prices are applied based on the valid_from date
             </li>
             <li>
-              {t('products.priceHistory.info2') || 
-                'Past orders keep their original prices and are never recalculated'}
+              Past orders keep their original prices and are never recalculated
             </li>
             <li>
-              {t('products.priceHistory.info3') || 
-                'You can add prices for past dates, but they only affect future operations'}
+              You can add prices for past dates, but they only affect future operations
             </li>
             <li>
-              {t('products.priceHistory.info4') || 
-                'Cannot have duplicate prices for the same date'}
+              Cannot have duplicate prices for the same date
             </li>
           </ul>
         </div>
