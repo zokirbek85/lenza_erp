@@ -19,11 +19,16 @@ class OrderItemSerializer(serializers.ModelSerializer):
         min_value=Decimal('0.01'),
         coerce_to_string=False,
     )
+    effective_price = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ('id', 'product', 'product_detail', 'qty', 'price_usd', 'status')
-        read_only_fields = ('status',)
+        fields = ('id', 'product', 'product_detail', 'qty', 'price_usd', 'price_at_time', 'currency', 'effective_price', 'status')
+        read_only_fields = ('status', 'price_at_time', 'currency', 'effective_price')
+    
+    def get_effective_price(self, obj):
+        """Return the price that should be used for calculations."""
+        return float(obj.get_effective_price())
     
     def validate(self, data):
         """Validate that product has sufficient good stock (stock_ok only)."""

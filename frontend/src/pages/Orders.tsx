@@ -67,6 +67,9 @@ interface OrderItem {
   product_detail?: ProductOption | null;
   qty: number;
   price_usd: number;
+  price_at_time?: number | null;
+  currency?: string;
+  effective_price?: number;
 }
 
 interface Order {
@@ -632,7 +635,7 @@ const OrdersPage = () => {
   );
 
   const calculateOrderTotals = () => {
-    const subtotal = selectedItems.reduce((sum, item) => sum + item.qty * item.price_usd, 0);
+    const subtotal = selectedItems.reduce((sum, item) => sum + item.qty * (item.effective_price || item.price_usd), 0);
     
     let discountAmount = 0;
     if (discountType === 'percentage') {
@@ -1055,7 +1058,7 @@ const OrdersPage = () => {
                 {selectedOrderForDetails.items?.length ? (
                   <div className="space-y-2">
                     {selectedOrderForDetails.items.map((item) => {
-                      const price = Number(item.price_usd);
+                      const price = Number(item.effective_price || item.price_usd);
                       const lineTotal = item.qty * price;
                       return (
                         <div
@@ -1678,7 +1681,7 @@ const OrdersPage = () => {
                               <div className="font-semibold">{t('orders.details.items')}</div>
                               <ul className="space-y-1">
                                 {order.items.map((item) => {
-                                  const price = Number(item.price_usd);
+                                  const price = Number(item.effective_price || item.price_usd);
                                   const lineTotal = item.qty * price;
                                   return (
                                     <li
