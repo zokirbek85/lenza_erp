@@ -375,12 +375,16 @@ class SalesManagerKPIDetailView(APIView):
             account_type = item['account__type']
             payment_amount = float(item['payment_usd'] or 0)
             
+            # Include all payment types, even if account_type is None or unknown
             if account_type == 'cash':
                 dealer_data_map[dealer_id]['payment_cash_usd'] += payment_amount
             elif account_type == 'card':
                 dealer_data_map[dealer_id]['payment_card_usd'] += payment_amount
             elif account_type == 'bank':
                 dealer_data_map[dealer_id]['payment_bank_usd'] += payment_amount
+            else:
+                # If account type is null or unknown, add to cash by default
+                dealer_data_map[dealer_id]['payment_cash_usd'] += payment_amount
         
         # Calculate totals and KPI for each dealer
         dealers_list = []
