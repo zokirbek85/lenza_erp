@@ -138,10 +138,13 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_current_price(self, obj):
         """Get current price from ProductPrice history."""
         try:
-            from django.utils import timezone
-            return float(ProductPrice.get_current_price(obj, currency='USD'))
-        except ValueError:
+            price = ProductPrice.get_current_price(obj, currency='USD')
+            if price is not None:
+                return float(price)
             # If no price history, return sell_price_usd
+            return float(obj.sell_price_usd or Decimal('0'))
+        except Exception as e:
+            # Fallback to sell_price_usd on any error
             return float(obj.sell_price_usd or Decimal('0'))
 
     def to_representation(self, instance):
