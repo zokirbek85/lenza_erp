@@ -20,6 +20,9 @@ export interface OrderItem {
   productName: string;
   qty: number;
   price_usd: number;
+  price_at_time?: number | null;
+  currency?: string;
+  effective_price?: number;
 }
 
 const clampQty = (qty: number): number => {
