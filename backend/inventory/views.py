@@ -12,7 +12,6 @@ from rest_framework.views import APIView
 from core.utils.exporter import export_returns_to_excel
 from core.mixins.export_mixins import ExportMixin
 from users.permissions import IsAdmin, IsWarehouse
-from orders.models import OrderReturn
 
 from .models import InventoryAdjustment, ReturnedProduct
 from .serializers import (
@@ -79,24 +78,25 @@ class ReturnsReportPDFView(APIView, ExportMixin):
 
     def get(self, request):
         from types import SimpleNamespace
+        from returns.models import Return, ReturnItem
         
-        # Use OrderReturn instead of ReturnedProduct (new returns system)
-        returns = OrderReturn.objects.select_related(
-            'item__order__dealer', 
-            'item__product'
+        # Use returns app (not orders.OrderReturn or inventory.ReturnedProduct)
+        returns_qs = Return.objects.select_related('dealer').prefetch_related(
+            'items__product'
         ).order_by('-created_at')
         
-        # Transform to match template structure using SimpleNamespace for dot notation
+        # Transform to match template structure using SimpleNamespace
         returns_data = []
-        for ret in returns:
-            returns_data.append(SimpleNamespace(
-                dealer=ret.item.order.dealer if ret.item and ret.item.order else None,
-                product=ret.item.product if ret.item else None,
-                quantity=ret.quantity,
-                return_type='defective' if ret.is_defect else 'good',
-                reason='',  # OrderReturn doesn't have reason field
-                created_at=ret.created_at,
-            ))
+        for ret in returns_qs:
+            for item in ret.items.all():
+                returns_data.append(SimpleNamespace(
+                    dealer=ret.dealer,
+                    product=item.product,
+                    quantity=item.quantity,
+                    return_type='defective' if item.status == ReturnItem.Status.DEFECT else 'good',
+                    reason=item.comment or ret.general_comment or '',
+                    created_at=ret.created_at,
+                ))
         
         return self.render_pdf_with_qr(
             'reports/returns_report.html',
