@@ -95,7 +95,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
     <Modal
       open={true}
       onClose={onClose}
-      title={`${t('products.priceHistory.title') || 'Price History'} - ${productSku}`}
+      title={`${t('products.priceHistory.title') || 'Price History'} - ${productSku} (${productName})`}
       widthClass="max-w-4xl"
     >
       <div className="space-y-4">
