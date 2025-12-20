@@ -24,7 +24,7 @@ interface ProductPriceHistoryProps {
 
 const ProductPriceHistory = ({ productId, productSku, productName, onClose }: ProductPriceHistoryProps) => {
   const { t } = useTranslation();
-  const { hasRole } = useAuthStore();
+  const role = useAuthStore((state) => state.role);
   const [prices, setPrices] = useState<ProductPrice[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -35,7 +35,7 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
     valid_from: new Date().toISOString().split('T')[0],
   });
 
-  const canEdit = hasRole('admin') || hasRole('accountant');
+  const canEdit = role === 'admin' || role === 'accountant';
 
   const fetchPrices = async () => {
     try {
@@ -93,19 +93,10 @@ const ProductPriceHistory = ({ productId, productSku, productName, onClose }: Pr
 
   return (
     <Modal
-      isOpen={true}
+      open={true}
       onClose={onClose}
-      title={
-        <div>
-          <div className="text-xl font-semibold">
-            {t('products.priceHistory.title') || 'Price History'}
-          </div>
-          <div className="text-sm font-normal text-gray-600 mt-1">
-            {productSku} - {productName}
-          </div>
-        </div>
-      }
-      size="large"
+      title={`${t('products.priceHistory.title') || 'Price History'} - ${productSku}`}
+      widthClass="max-w-4xl"
     >
       <div className="space-y-4">
         {/* Add Price Button */}
