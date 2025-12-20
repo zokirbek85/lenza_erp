@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from core.utils.exporter import export_returns_to_excel
 from core.mixins.export_mixins import ExportMixin
 from users.permissions import IsAdmin, IsWarehouse
+from orders.models import OrderReturn
 
 from .models import InventoryAdjustment, ReturnedProduct
 from .serializers import (
@@ -77,10 +78,27 @@ class ReturnsReportPDFView(APIView, ExportMixin):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        returns = ReturnedProduct.objects.select_related('dealer', 'product').order_by('-created_at')
+        # Use OrderReturn instead of ReturnedProduct (new returns system)
+        returns = OrderReturn.objects.select_related(
+            'item__order__dealer', 
+            'item__product'
+        ).order_by('-created_at')
+        
+        # Transform to match template structure
+        returns_data = []
+        for ret in returns:
+            returns_data.append({
+                'dealer': ret.item.order.dealer if ret.item and ret.item.order else None,
+                'product': ret.item.product if ret.item else None,
+                'quantity': ret.quantity,
+                'return_type': 'defective' if ret.is_defect else 'good',
+                'reason': '',  # OrderReturn doesn't have reason field
+                'created_at': ret.created_at,
+            })
+        
         return self.render_pdf_with_qr(
             'reports/returns_report.html',
-            {'returns': returns},
+            {'returns': returns_data},
             filename_prefix='returns_report',
             request=request,
             doc_type='returns-report',
