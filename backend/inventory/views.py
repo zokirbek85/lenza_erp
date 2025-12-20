@@ -78,23 +78,25 @@ class ReturnsReportPDFView(APIView, ExportMixin):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from types import SimpleNamespace
+        
         # Use OrderReturn instead of ReturnedProduct (new returns system)
         returns = OrderReturn.objects.select_related(
             'item__order__dealer', 
             'item__product'
         ).order_by('-created_at')
         
-        # Transform to match template structure
+        # Transform to match template structure using SimpleNamespace for dot notation
         returns_data = []
         for ret in returns:
-            returns_data.append({
-                'dealer': ret.item.order.dealer if ret.item and ret.item.order else None,
-                'product': ret.item.product if ret.item else None,
-                'quantity': ret.quantity,
-                'return_type': 'defective' if ret.is_defect else 'good',
-                'reason': '',  # OrderReturn doesn't have reason field
-                'created_at': ret.created_at,
-            })
+            returns_data.append(SimpleNamespace(
+                dealer=ret.item.order.dealer if ret.item and ret.item.order else None,
+                product=ret.item.product if ret.item else None,
+                quantity=ret.quantity,
+                return_type='defective' if ret.is_defect else 'good',
+                reason='',  # OrderReturn doesn't have reason field
+                created_at=ret.created_at,
+            ))
         
         return self.render_pdf_with_qr(
             'reports/returns_report.html',
