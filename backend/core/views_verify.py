@@ -14,12 +14,17 @@ def verify_document(request, doc_type: str, doc_id: str):
         from orders.models import Order
     except Exception:
         Order = None
+    try:
+        from returns.models import Return
+    except Exception:
+        Return = None
     # Payment and Expense modules removed
     Payment = None
     Expense = None
 
     models = {
         "order": Order,
+        "returns-report": Return,
     }
 
     model = models.get(doc_type)
