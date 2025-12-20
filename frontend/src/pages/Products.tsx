@@ -1110,7 +1110,7 @@ const ProductsPage = () => {
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.brand?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{product.category?.name ?? '—'}</td>
                 {!isWarehouse && (
-                  <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.sell_price_usd)}</td>
+                  <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{formatCurrency(product.current_price ?? product.sell_price_usd)}</td>
                 )}
                 <td className="px-4 py-3">
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">

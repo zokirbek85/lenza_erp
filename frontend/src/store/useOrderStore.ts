@@ -7,6 +7,7 @@ export interface OrderProduct {
   id: number;
   name: string;
   sell_price_usd: number;
+  current_price?: number;
   stock_ok?: number;
   // stock_defect removed - order creation only uses good stock (stock_ok)
   total_stock?: number;

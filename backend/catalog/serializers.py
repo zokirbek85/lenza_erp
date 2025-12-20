@@ -85,6 +85,7 @@ class ProductSerializer(serializers.ModelSerializer):
     )
     total_stock = serializers.SerializerMethodField()
     availability_status = serializers.SerializerMethodField()
+    current_price = serializers.SerializerMethodField()
     stock_ok = serializers.DecimalField(
         max_digits=14,
         decimal_places=2,
@@ -114,6 +115,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'unit',
             'cost_usd',
             'sell_price_usd',
+            'current_price',
             'stock_ok',
             'stock_defect',
             'total_stock',
@@ -132,6 +134,15 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_availability_status(self, obj):
         return 'Not available' if obj.stock_ok <= 0 else 'Available'
+    
+    def get_current_price(self, obj):
+        """Get current price from ProductPrice history."""
+        try:
+            from django.utils import timezone
+            return float(ProductPrice.get_current_price(obj, currency='USD'))
+        except ValueError:
+            # If no price history, return sell_price_usd
+            return float(obj.sell_price_usd or Decimal('0'))
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

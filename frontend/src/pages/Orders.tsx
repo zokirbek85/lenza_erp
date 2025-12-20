@@ -417,7 +417,7 @@ const OrdersPage = () => {
     setPage(1);
   };
 
-  const handleSelectProduct = (value: string) => {
+  const handleSelectProduct = async (value: string) => {
     if (!value) {
       setSelectedProduct(null);
       return;
@@ -426,7 +426,22 @@ const OrdersPage = () => {
     if (product) {
       setSelectedProduct(product);
       setQuantityInput(DEFAULT_QTY);
-      setPriceInput(String(product.sell_price_usd ?? 0));
+      
+      // Use current_price from product object if available, otherwise fetch from API
+      if (product.current_price !== undefined && product.current_price !== null) {
+        setPriceInput(String(product.current_price));
+      } else {
+        // Fetch current price from ProductPrice history
+        try {
+          const response = await http.get(`/catalog/product-prices/current/${product.id}/`);
+          const currentPrice = response.data.price || product.sell_price_usd || 0;
+          setPriceInput(String(currentPrice));
+        } catch (error) {
+          // Fallback to product's sell_price_usd if API fails
+          console.warn('Failed to fetch current price, using sell_price_usd:', error);
+          setPriceInput(String(product.sell_price_usd ?? 0));
+        }
+      }
     }
   };
 
@@ -461,7 +476,10 @@ const OrdersPage = () => {
     });
     toast.success(t('orders.toast.itemAdded'));
     setQuantityInput(DEFAULT_QTY);
-    setPriceInput(String(selectedProduct.sell_price_usd ?? 0));
+    
+    // Keep the current price input (don't reset to sell_price_usd)
+    // This allows user to add multiple items with the same current price
+    setPriceInput(String(priceValue));
   };
 
   const handleItemQtyChange = (productId: number, qty: number) => {
