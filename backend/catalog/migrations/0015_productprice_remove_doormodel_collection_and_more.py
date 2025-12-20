@@ -5,6 +5,42 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def check_table_exists(schema_editor, table_name):
+    """Check if a table exists in the database."""
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = %s
+            );
+        """, [table_name])
+        return cursor.fetchone()[0]
+
+
+def safe_remove_field(apps, schema_editor, model_name, field_name):
+    """Safely remove a field only if the table exists."""
+    table_name = f"catalog_{model_name.lower()}"
+    if check_table_exists(schema_editor, table_name):
+        try:
+            model = apps.get_model('catalog', model_name)
+            field = model._meta.get_field(field_name)
+            schema_editor.remove_field(model, field)
+        except Exception as e:
+            print(f"Warning: Could not remove {model_name}.{field_name}: {e}")
+
+
+def safe_delete_model(apps, schema_editor, model_name):
+    """Safely delete a model only if the table exists."""
+    table_name = f"catalog_{model_name.lower()}"
+    if check_table_exists(schema_editor, table_name):
+        try:
+            model = apps.get_model('catalog', model_name)
+            schema_editor.delete_model(model)
+        except Exception as e:
+            print(f"Warning: Could not delete model {model_name}: {e}")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -28,29 +64,26 @@ class Migration(migrations.Migration):
                 'ordering': ('-valid_from',),
             },
         ),
-        migrations.RemoveField(
-            model_name='doormodel',
-            name='collection',
+        # Safe removal of fields - only if tables exist
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_remove_field(apps, schema_editor, 'DoorModel', 'collection'),
+            migrations.RunPython.noop,
         ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='collection',
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_remove_field(apps, schema_editor, 'ProductMeta', 'collection'),
+            migrations.RunPython.noop,
         ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='color',
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_remove_field(apps, schema_editor, 'ProductMeta', 'color'),
+            migrations.RunPython.noop,
         ),
-        migrations.AlterUniqueTogether(
-            name='doormodel',
-            unique_together=None,
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_remove_field(apps, schema_editor, 'ProductMeta', 'model'),
+            migrations.RunPython.noop,
         ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='model',
-        ),
-        migrations.RemoveField(
-            model_name='productmeta',
-            name='product',
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_remove_field(apps, schema_editor, 'ProductMeta', 'product'),
+            migrations.RunPython.noop,
         ),
         migrations.RenameIndex(
             model_name='inbound',
@@ -92,17 +125,22 @@ class Migration(migrations.Migration):
             name='product',
             field=models.ForeignKey(help_text='Product this price belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='price_history', to='catalog.product', verbose_name='Product'),
         ),
-        migrations.DeleteModel(
-            name='Collection',
+        # Safe deletion of models - only if tables exist
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_delete_model(apps, schema_editor, 'Collection'),
+            migrations.RunPython.noop,
         ),
-        migrations.DeleteModel(
-            name='DoorColor',
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_delete_model(apps, schema_editor, 'DoorColor'),
+            migrations.RunPython.noop,
         ),
-        migrations.DeleteModel(
-            name='DoorModel',
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_delete_model(apps, schema_editor, 'DoorModel'),
+            migrations.RunPython.noop,
         ),
-        migrations.DeleteModel(
-            name='ProductMeta',
+        migrations.RunPython(
+            lambda apps, schema_editor: safe_delete_model(apps, schema_editor, 'ProductMeta'),
+            migrations.RunPython.noop,
         ),
         migrations.AddIndex(
             model_name='productprice',
