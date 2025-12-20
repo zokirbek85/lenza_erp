@@ -518,10 +518,10 @@ class PublicVariantCatalogSerializer(serializers.ModelSerializer):
         return None
     
     def get_sizes(self, obj):
-        """List of available sizes (without stock quantities)"""
+        """List of available sizes with stock quantities"""
         size_stock = obj.get_size_stock()
-        # Return only sizes, no stock information
-        return [item['size'] for item in size_stock]
+        # Return sizes with stock quantities for visibility
+        return [{'size': item['size'], 'stock': item['stock']} for item in size_stock]
 
 
 class InboundItemSerializer(serializers.ModelSerializer):

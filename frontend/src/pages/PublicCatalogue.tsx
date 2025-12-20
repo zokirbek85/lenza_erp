@@ -3,6 +3,11 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+interface SizeStock {
+  size: string;
+  stock: number;
+}
+
 interface Variant {
   id: number;
   model: string;
@@ -11,7 +16,7 @@ interface Variant {
   door_type: string;
   door_type_display: string;
   image: string;
-  sizes: string[];
+  sizes: SizeStock[];
 }
 
 export default function PublicCatalogue() {
@@ -97,16 +102,19 @@ export default function PublicCatalogue() {
                   <span>{variant.door_type_display}</span>
                 </div>
 
-                {/* Sizes */}
+                {/* Sizes with Stock */}
                 {variant.sizes.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {variant.sizes.map((size, idx) => (
-                      <span
+                    {variant.sizes.map((item, idx) => (
+                      <div
                         key={idx}
-                        className="px-2 py-1 bg-[#232936] text-gray-200 text-xs rounded hover:bg-[#2A2D30] transition-colors"
+                        className="px-2 py-1 bg-[#232936] text-gray-200 text-xs rounded hover:bg-[#2A2D30] transition-colors flex flex-col items-center gap-0.5"
                       >
-                        {size}
-                      </span>
+                        <span className="font-medium">{item.size}</span>
+                        <span className="text-[10px] text-gray-400">
+                          {item.stock > 0 ? `${item.stock} dona` : 'Tugagan'}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 )}
