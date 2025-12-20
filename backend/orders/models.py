@@ -342,7 +342,21 @@ class OrderItem(models.Model):
         decimal_places=2,
         default=0,
         verbose_name="Price (USD)",
-        help_text="Unit price in USD"
+        help_text="Unit price in USD at the time of order (DEPRECATED - use price_at_time)"
+    )
+    price_at_time = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Price at time",
+        help_text="Unit price at the time of order creation (immutable)"
+    )
+    currency = models.CharField(
+        max_length=3,
+        default='USD',
+        verbose_name="Currency",
+        help_text="Currency used for this order item"
     )
     status = models.CharField(
         max_length=20,
@@ -363,7 +377,42 @@ class OrderItem(models.Model):
     @property
     def line_total_usd(self) -> Decimal:
         qty = self.qty or Decimal('0')
-        return (self.price_usd or Decimal('0')) * qty
+        # Use price_at_time if available, fallback to price_usd
+        price = self.price_at_time if self.price_at_time is not None else self.price_usd
+        return (price or Decimal('0')) * qty
+    
+    def get_effective_price(self) -> Decimal:
+        """
+        Get the effective price for this order item.
+        Uses price_at_time if available, otherwise price_usd.
+        """
+        return self.price_at_time if self.price_at_time is not None else (self.price_usd or Decimal('0'))
+    
+    def set_price_from_history(self, date=None):
+        """
+        Set price_at_time from ProductPrice history.
+        
+        Args:
+            date: Date to get price for. If None, uses order date or today.
+        """
+        from catalog.models import ProductPrice
+        
+        if date is None:
+            date = self.order.order_date.date() if hasattr(self.order, 'order_date') else timezone.now().date()
+        
+        try:
+            self.price_at_time = ProductPrice.get_price_for_date(
+                product=self.product,
+                date=date,
+                currency=self.currency
+            )
+        except ValueError as e:
+            # If no price found in history, use current product price as fallback
+            self.price_at_time = self.product.sell_price_usd
+            # Log warning
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Price history not found: {e}. Using product.sell_price_usd as fallback.")
 
 
 class OrderStatusLog(models.Model):

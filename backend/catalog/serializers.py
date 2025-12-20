@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from .models import (
     Brand, Category, DoorKitComponent, Inbound, InboundItem, Product,
-    ProductModel, ProductSKU, ProductVariant, Style
+    ProductModel, ProductPrice, ProductSKU, ProductVariant, Style
 )
 
 
@@ -604,3 +604,113 @@ class InboundCreateSerializer(serializers.ModelSerializer):
         
         return inbound
 
+
+# ============================================================================
+# PRODUCT PRICE HISTORY SERIALIZERS
+# ============================================================================
+
+class ProductPriceSerializer(serializers.ModelSerializer):
+    """Serializer for product price history."""
+    product_sku = serializers.CharField(source='product.sku', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = ProductPrice
+        fields = (
+            'id',
+            'product',
+            'product_sku',
+            'product_name',
+            'price',
+            'currency',
+            'valid_from',
+            'created_at',
+            'created_by',
+            'created_by_name',
+        )
+        read_only_fields = ('id', 'created_at', 'created_by', 'product_sku', 'product_name', 'created_by_name')
+    
+    def validate(self, attrs):
+        """
+        Check that valid_from doesn't overlap with existing prices for same product.
+        """
+        product = attrs.get('product')
+        valid_from = attrs.get('valid_from')
+        
+        if product and valid_from:
+            # Check for existing price on same date
+            existing = ProductPrice.objects.filter(
+                product=product,
+                valid_from=valid_from
+            )
+            
+            # Exclude current instance if updating
+            if self.instance:
+                existing = existing.exclude(pk=self.instance.pk)
+            
+            if existing.exists():
+                raise serializers.ValidationError({
+                    'valid_from': f'Price already exists for {valid_from}. Please choose a different date.'
+                })
+        
+        return attrs
+    
+    def create(self, validated_data):
+        """Set created_by from request user."""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+        return super().create(validated_data)
+
+
+class ProductPriceListSerializer(serializers.ModelSerializer):
+    """Simplified serializer for listing prices."""
+    created_by_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductPrice
+        fields = ('id', 'price', 'currency', 'valid_from', 'created_at', 'created_by_name')
+        read_only_fields = fields
+    
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return 'System'
+
+
+class ProductWithPriceHistorySerializer(serializers.ModelSerializer):
+    """Product serializer with embedded price history."""
+    brand = BrandSerializer(read_only=True)
+    category = CategorySerializer(read_only=True)
+    price_history = ProductPriceListSerializer(many=True, read_only=True)
+    current_price_usd = serializers.SerializerMethodField()
+    current_price_uzs = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Product
+        fields = (
+            'id',
+            'sku',
+            'name',
+            'brand',
+            'category',
+            'sell_price_usd',
+            'current_price_usd',
+            'current_price_uzs',
+            'price_history',
+        )
+    
+    def get_current_price_usd(self, obj):
+        """Get current effective price in USD."""
+        try:
+            return ProductPrice.get_current_price(obj, currency='USD')
+        except:
+            return obj.sell_price_usd
+    
+    def get_current_price_uzs(self, obj):
+        """Get current effective price in UZS."""
+        try:
+            return ProductPrice.get_current_price(obj, currency='UZS')
+        except:
+            return None

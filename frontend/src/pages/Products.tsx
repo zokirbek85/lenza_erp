@@ -10,6 +10,7 @@ import http from '../app/http';
 import Modal from '../components/Modal';
 import CollapsibleForm from '../components/CollapsibleForm';
 import ProductActions from '../components/products/ProductActions';
+import ProductPriceHistory from '../components/products/ProductPriceHistory';
 import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -98,6 +99,7 @@ const ProductsPage = () => {
   const [adjustSaving, setAdjustSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [priceHistoryProduct, setPriceHistoryProduct] = useState<Product | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -1137,13 +1139,16 @@ const ProductsPage = () => {
                       canEdit={canCreateOrEdit}
                       canDelete={canDelete}
                       canAdjust={canAdjustStock}
+                      canViewPrices={true}
                       onEdit={() => handleEdit(product)}
                       onDelete={() => setDeleteTarget(product)}
                       onAdjust={() => openAdjustModal(product)}
+                      onPriceHistory={() => setPriceHistoryProduct(product)}
                       labels={{
                         edit: t('actions.edit'),
                         delete: t('actions.delete'),
                         adjust: t('actions.update'),
+                        priceHistory: t('products.priceHistory') || 'Prices',
                       }}
                     />
                   </div>
@@ -1400,6 +1405,16 @@ const ProductsPage = () => {
           </div>
         )}
       </Modal>
+
+      {/* Price History Modal */}
+      {priceHistoryProduct && (
+        <ProductPriceHistory
+          productId={priceHistoryProduct.id}
+          productSku={priceHistoryProduct.sku}
+          productName={priceHistoryProduct.name}
+          onClose={() => setPriceHistoryProduct(null)}
+        />
+      )}
     </section>
   );
 };

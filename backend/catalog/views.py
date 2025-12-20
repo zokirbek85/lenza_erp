@@ -17,9 +17,10 @@ from core.permissions import IsAccountant, IsAdmin, IsOwner, IsSales, IsWarehous
 from core.mixins.export_mixins import ExportMixin
 from services.image_processing import process_product_image, delete_product_image, ImageProcessingError
 
-from .models import Brand, Category, Inbound, InboundItem, Product, Style
+from .models import Brand, Category, Inbound, InboundItem, Product, ProductPrice, Style
 from .serializers import BrandSerializer, CategorySerializer, ProductSerializer, CatalogProductSerializer, StyleSerializer
 from .serializers import InboundSerializer, InboundCreateSerializer, InboundItemSerializer
+from .serializers import ProductPriceSerializer, ProductPriceListSerializer, ProductWithPriceHistorySerializer
 from .utils.excel_tools import export_products_to_excel, export_products_to_excel_no_price, generate_import_template, import_products_from_excel
 
 
@@ -1601,3 +1602,144 @@ class InboundViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except InboundItem.DoesNotExist:
             raise ValidationError({'detail': 'Item not found in this inbound'})
+
+
+# ============================================================================
+# PRODUCT PRICE HISTORY VIEWS
+# ============================================================================
+
+class ProductPriceViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing product price history.
+    
+    Permissions:
+    - List/Retrieve: All authenticated users
+    - Create/Update/Delete: Admin or Accountant only
+    
+    Endpoints:
+    - GET /api/catalog/product-prices/ - List all prices
+    - GET /api/catalog/product-prices/?product=<id> - Prices for specific product
+    - POST /api/catalog/product-prices/ - Create new price
+    - GET /api/catalog/product-prices/<id>/ - Get specific price
+    - DELETE /api/catalog/product-prices/<id>/ - Delete price (admin only)
+    """
+    queryset = ProductPrice.objects.select_related('product', 'created_by').all()
+    serializer_class = ProductPriceSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_fields = ('product', 'currency')
+    ordering_fields = ('valid_from', 'created_at', 'price')
+    ordering = ('-valid_from',)
+    
+    def get_permissions(self):
+        """
+        Admin and Accountant can create/update/delete.
+        Others can only view.
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAdmin | IsAccountant]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by product
+        product_id = self.request.query_params.get('product')
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        
+        # Filter by date range
+        from_date = self.request.query_params.get('from_date')
+        to_date = self.request.query_params.get('to_date')
+        if from_date:
+            queryset = queryset.filter(valid_from__gte=from_date)
+        if to_date:
+            queryset = queryset.filter(valid_from__lte=to_date)
+        
+        return queryset
+    
+    @action(detail=False, methods=['get'], url_path='for-product/(?P<product_id>[^/.]+)')
+    def for_product(self, request, product_id=None):
+        """
+        Get all price history for a specific product.
+        GET /api/catalog/product-prices/for-product/<product_id>/
+        """
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        prices = self.get_queryset().filter(product=product)
+        serializer = ProductPriceListSerializer(prices, many=True)
+        
+        return Response({
+            'product': {
+                'id': product.id,
+                'sku': product.sku,
+                'name': product.name,
+            },
+            'prices': serializer.data
+        })
+    
+    @action(detail=False, methods=['get'], url_path='current/(?P<product_id>[^/.]+)')
+    def current_price(self, request, product_id=None):
+        """
+        Get current effective price for a product.
+        GET /api/catalog/product-prices/current/<product_id>/?currency=USD
+        """
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        currency = request.query_params.get('currency', 'USD')
+        
+        try:
+            price = ProductPrice.get_current_price(product, currency)
+            return Response({
+                'product_id': product.id,
+                'sku': product.sku,
+                'price': price,
+                'currency': currency,
+            })
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=False, methods=['post'], url_path='get-price-for-date')
+    def get_price_for_date(self, request):
+        """
+        Get price for a specific product on a specific date.
+        POST /api/catalog/product-prices/get-price-for-date/
+        Body: {"product_id": 1, "date": "2024-01-15", "currency": "USD"}
+        """
+        product_id = request.data.get('product_id')
+        date_str = request.data.get('date')
+        currency = request.data.get('currency', 'USD')
+        
+        if not product_id or not date_str:
+            return Response(
+                {'error': 'product_id and date are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from datetime import datetime
+            product = Product.objects.get(pk=product_id)
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            price = ProductPrice.get_price_for_date(product, date, currency)
+            
+            return Response({
+                'product_id': product.id,
+                'sku': product.sku,
+                'date': date_str,
+                'price': price,
+                'currency': currency,
+            })
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

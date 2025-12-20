@@ -1,6 +1,8 @@
 from decimal import Decimal
 
 from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from core.utils.barcodes import generate_barcode
 
@@ -609,3 +611,146 @@ class InboundItem(models.Model):
     def __str__(self) -> str:
         product_name = self.product.name if self.product else 'Unknown'
         return f"{product_name} x {self.quantity}"
+
+
+# ============================================================================
+# PRODUCT PRICE HISTORY (Time-based pricing)
+# ============================================================================
+
+class ProductPrice(models.Model):
+    """
+    Historical pricing model for products.
+    
+    Principles:
+    - Prices are never updated, only new records are inserted
+    - Each price has a valid_from date
+    - Price is selected based on operation date (immutable accounting)
+    - No overlapping valid_from dates for the same product
+    """
+    
+    class Currency(models.TextChoices):
+        USD = 'USD', 'USD'
+        UZS = 'UZS', 'UZS'
+    
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='price_history',
+        verbose_name="Product",
+        help_text="Product this price belongs to"
+    )
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Price",
+        help_text="Price amount"
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=Currency.choices,
+        default=Currency.USD,
+        verbose_name="Currency",
+        help_text="Currency of the price"
+    )
+    valid_from = models.DateField(
+        verbose_name="Valid from",
+        help_text="Date from which this price is effective"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created at",
+        help_text="When this price record was created"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='product_prices_created',
+        verbose_name="Created by",
+        help_text="User who created this price record"
+    )
+    
+    class Meta:
+        ordering = ('-valid_from',)
+        verbose_name = "Product Price"
+        verbose_name_plural = "Product Prices"
+        indexes = [
+            models.Index(fields=['product', '-valid_from']),
+            models.Index(fields=['valid_from']),
+        ]
+        # Ensure no duplicate valid_from for same product
+        unique_together = [('product', 'valid_from')]
+    
+    def __str__(self) -> str:
+        return f"{self.product.sku}: {self.price} {self.currency} (from {self.valid_from})"
+    
+    def clean(self):
+        """
+        Validate no overlapping dates for same product.
+        """
+        if self.product_id:
+            # Check for same date
+            existing = ProductPrice.objects.filter(
+                product=self.product,
+                valid_from=self.valid_from
+            )
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            
+            if existing.exists():
+                raise ValidationError({
+                    'valid_from': f'Price for {self.valid_from} already exists for this product.'
+                })
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    @staticmethod
+    def get_price_for_date(product, date, currency='USD'):
+        """
+        Get the effective price for a product on a specific date.
+        
+        Args:
+            product: Product instance
+            date: Date to get price for
+            currency: Currency (USD or UZS)
+        
+        Returns:
+            Decimal: Price amount
+        
+        Raises:
+            ValueError: If no price found for the date
+        """
+        price_record = ProductPrice.objects.filter(
+            product=product,
+            currency=currency,
+            valid_from__lte=date
+        ).order_by('-valid_from').first()
+        
+        if not price_record:
+            raise ValueError(
+                f"No price found for product {product.sku} on {date} in {currency}"
+            )
+        
+        return price_record.price
+    
+    @staticmethod
+    def get_current_price(product, currency='USD'):
+        """
+        Get the current price for a product.
+        
+        Args:
+            product: Product instance
+            currency: Currency (USD or UZS)
+        
+        Returns:
+            Decimal: Current price amount or None
+        """
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        try:
+            return ProductPrice.get_price_for_date(product, today, currency)
+        except ValueError:
+            return None

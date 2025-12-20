@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from catalog.models import Product
 from notifications.utils import push_global
@@ -62,6 +63,43 @@ def order_status_logging(sender, instance: Order, created, **kwargs):
 @receiver(post_save, sender=OrderItem)
 def recalc_totals_on_item_save(sender, instance: OrderItem, **kwargs):
     instance.order.recalculate_totals()
+
+
+@receiver(pre_save, sender=OrderItem)
+def set_price_from_history(sender, instance: OrderItem, **kwargs):
+    """
+    Automatically set price_at_time from ProductPrice history when creating new order item.
+    This ensures immutable pricing based on order date.
+    """
+    # Only set price if not already set (new item or price not specified)
+    if instance.price_at_time is None and instance.product_id:
+        try:
+            from catalog.models import ProductPrice
+            
+            # Get order date or use today
+            if hasattr(instance, 'order') and instance.order and hasattr(instance.order, 'order_date'):
+                date = instance.order.order_date.date()
+            else:
+                date = timezone.now().date()
+            
+            # Get price from history
+            instance.price_at_time = ProductPrice.get_price_for_date(
+                product=instance.product,
+                date=date,
+                currency=instance.currency
+            )
+        except ValueError:
+            # If no price history found, use product's current sell_price_usd as fallback
+            if hasattr(instance.product, 'sell_price_usd'):
+                instance.price_at_time = instance.product.sell_price_usd
+            else:
+                instance.price_at_time = Decimal('0.00')
+        except Exception as e:
+            # Log error and set to zero to prevent save failure
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to set price from history: {e}")
+            instance.price_at_time = Decimal('0.00')
 
 
 @receiver(post_delete, sender=OrderItem)
