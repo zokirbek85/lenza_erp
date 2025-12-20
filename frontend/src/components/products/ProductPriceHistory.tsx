@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import http from '../../app/http';
 import Modal from '../Modal';
@@ -23,7 +22,6 @@ interface ProductPriceHistoryProps {
 }
 
 const ProductPriceHistory = ({ productId, productSku, productName, onClose }: ProductPriceHistoryProps) => {
-  const { t } = useTranslation();
   const role = useAuthStore((state) => state.role);
   const [prices, setPrices] = useState<ProductPrice[]>([]);
   const [loading, setLoading] = useState(true);
