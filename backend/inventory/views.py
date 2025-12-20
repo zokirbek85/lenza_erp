@@ -79,24 +79,57 @@ class ReturnsReportPDFView(APIView, ExportMixin):
     def get(self, request):
         from types import SimpleNamespace
         from returns.models import Return, ReturnItem
+        from collections import defaultdict
+        from datetime import datetime
         
         # Use returns app (not orders.OrderReturn or inventory.ReturnedProduct)
         returns_qs = Return.objects.select_related('dealer').prefetch_related(
             'items__product'
         ).order_by('-created_at')
         
-        # Transform to match template structure using SimpleNamespace
-        returns_data = []
+        # Aggregate by dealer, product, date, and type
+        aggregated = defaultdict(lambda: {
+            'quantity': 0,
+            'reasons': set(),
+            'created_at': None,
+        })
+        
         for ret in returns_qs:
+            date_key = ret.created_at.date()  # Group by date only
             for item in ret.items.all():
-                returns_data.append(SimpleNamespace(
-                    dealer=ret.dealer,
-                    product=item.product,
-                    quantity=item.quantity,
-                    return_type='defective' if item.status == ReturnItem.Status.DEFECT else 'good',
-                    reason=item.comment or ret.general_comment or '',
-                    created_at=ret.created_at,
-                ))
+                key = (
+                    ret.dealer.id if ret.dealer else None,
+                    item.product.id if item.product else None,
+                    date_key,
+                    item.status
+                )
+                
+                aggregated[key]['quantity'] += item.quantity
+                aggregated[key]['dealer'] = ret.dealer
+                aggregated[key]['product'] = item.product
+                aggregated[key]['return_type'] = 'defective' if item.status == ReturnItem.Status.DEFECT else 'good'
+                if item.comment:
+                    aggregated[key]['reasons'].add(item.comment)
+                if ret.general_comment:
+                    aggregated[key]['reasons'].add(ret.general_comment)
+                if not aggregated[key]['created_at']:
+                    aggregated[key]['created_at'] = ret.created_at
+        
+        # Transform to list for template
+        returns_data = []
+        for data in aggregated.values():
+            reasons_text = '; '.join(data['reasons']) if data['reasons'] else ''
+            returns_data.append(SimpleNamespace(
+                dealer=data['dealer'],
+                product=data['product'],
+                quantity=data['quantity'],
+                return_type=data['return_type'],
+                reason=reasons_text,
+                created_at=data['created_at'],
+            ))
+        
+        # Sort by date descending
+        returns_data.sort(key=lambda x: x.created_at, reverse=True)
         
         return self.render_pdf_with_qr(
             'reports/returns_report.html',
