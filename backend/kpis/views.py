@@ -1143,8 +1143,11 @@ class ManagerKPIOverviewView(APIView):
         else:
             to_date = timezone.now().date()
         
-        # Get manager's current dealers
-        current_dealers = Dealer.objects.filter(manager_user=manager)
+        # Get manager's current dealers (only those included in KPI)
+        current_dealers = Dealer.objects.filter(
+            manager_user=manager,
+            include_in_manager_kpi=True
+        )
         dealer_ids = list(current_dealers.values_list('id', flat=True))
         
         # Check for manager replacements within the period
