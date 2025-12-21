@@ -663,7 +663,12 @@ class TopCategoriesAnalyticsView(APIView):
                 managed_dealers = Dealer.objects.filter(manager_user=user)
                 filters &= Q(order__dealer__in=managed_dealers)
             elif user.role == 'sales':
-                filters &= Q(order__created_by=user)
+                # Sales manager sees orders from their dealers (only those included in KPI)
+                managed_dealers = Dealer.objects.filter(
+                    manager_user=user,
+                    include_in_manager_kpi=True
+                )
+                filters &= Q(order__dealer__in=managed_dealers)
         
         # Step 1: Aggregate by category
         category_stats = (
@@ -934,8 +939,8 @@ class ProductTrendAnalyticsView(APIView):
             return Response({'data': [], 'error': str(e)}, status=200)
 
 
-class TopCategoriesAnalyticsView(APIView):
-    """Returns top product categories by sales revenue.
+class TopCategoriesSummaryView(APIView):
+    """Returns top product categories by sales revenue (summary only, without products).
     
     Query params: same as TopProductsAnalyticsView
     
