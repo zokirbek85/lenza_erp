@@ -522,7 +522,7 @@ export default function KPIPage() {
                     }}
                     className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 font-medium"
                   >
-                    📄 PDF Export
+                    📄 {t('pdfExport')}
                   </button>
                 )}
                 <button
