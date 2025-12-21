@@ -291,7 +291,7 @@ export default function KPIPage() {
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalSales')}</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">
-                ${kpiData.total_sales_usd.toLocaleString()}
+                ${kpiData.total_sales_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                 {kpiData.total_sales_uzs.toLocaleString()} {t('currency.uzs')}
@@ -307,7 +307,7 @@ export default function KPIPage() {
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalPayments')}</p>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">
-                ${kpiData.total_payments_usd.toLocaleString()}
+                ${kpiData.total_payments_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                 {kpiData.total_payments_uzs.toLocaleString()} {t('currency.uzs')}
@@ -344,7 +344,7 @@ export default function KPIPage() {
             <div>
               <p className="text-sm text-yellow-100">{t('bonus')} 🎉</p>
               <p className="text-3xl font-black text-white">
-                ${kpiData.bonus_usd.toLocaleString()}
+                ${kpiData.bonus_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="text-xs text-yellow-100 mt-1">
                 {kpiData.bonus_uzs.toLocaleString()} {t('currency.uzs')}
@@ -547,19 +547,19 @@ export default function KPIPage() {
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                       <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">{t('totalSales')}</p>
                       <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                        ${detailData.totals?.sales_usd?.toLocaleString() || 0}
+                        ${detailData.totals?.sales_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                       </p>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                       <p className="text-sm text-green-600 dark:text-green-400 font-medium">{t('totalPayments')}</p>
                       <p className="text-2xl font-bold text-green-900 dark:text-green-100">
-                        ${detailData.totals?.total_payment_usd?.toLocaleString() || 0}
+                        ${detailData.totals?.total_payment_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                       </p>
                     </div>
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
                       <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">{t('totalBonus')}</p>
                       <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
-                        ${detailData.totals?.kpi_usd?.toLocaleString() || 0}
+                        ${detailData.totals?.kpi_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                       </p>
                     </div>
                   </div>
@@ -601,22 +601,22 @@ export default function KPIPage() {
                                 {dealer.dealer_name}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
-                                ${dealer.sales_usd?.toLocaleString() || 0}
+                                ${dealer.sales_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
-                                ${dealer.payment_cash_usd?.toLocaleString() || 0}
+                                ${dealer.payment_cash_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
-                                ${dealer.payment_card_usd?.toLocaleString() || 0}
+                                ${dealer.payment_card_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">
-                                ${dealer.payment_bank_usd?.toLocaleString() || 0}
+                                ${dealer.payment_bank_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right font-semibold text-green-600 dark:text-green-400">
-                                ${dealer.total_payment_usd?.toLocaleString() || 0}
+                                ${dealer.total_payment_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right font-bold text-yellow-600 dark:text-yellow-400">
-                                ${dealer.bonus_usd?.toLocaleString() || 0}
+                                ${dealer.bonus_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                             </tr>
                           ))}
@@ -626,22 +626,22 @@ export default function KPIPage() {
                             <tr>
                               <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{t('total')}</td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.totals?.sales_usd?.toLocaleString() || 0}
+                                ${detailData.totals?.sales_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.totals?.payment_cash_usd?.toLocaleString() || 0}
+                                ${detailData.totals?.payment_cash_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.totals?.payment_card_usd?.toLocaleString() || 0}
+                                ${detailData.totals?.payment_card_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                                ${detailData.totals?.payment_bank_usd?.toLocaleString() || 0}
+                                ${detailData.totals?.payment_bank_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-green-600 dark:text-green-400">
-                                ${detailData.totals?.total_payment_usd?.toLocaleString() || 0}
+                                ${detailData.totals?.total_payment_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                               <td className="px-4 py-3 text-sm text-right text-yellow-600 dark:text-yellow-400">
-                                ${detailData.totals?.kpi_usd?.toLocaleString() || 0}
+                                ${detailData.totals?.kpi_usd?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                               </td>
                             </tr>
                           </tfoot>
