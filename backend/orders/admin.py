@@ -14,7 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('status', 'dealer')
     search_fields = ('display_no',)
     autocomplete_fields = ('dealer', 'created_by')
-    fields = ('display_no', 'dealer', 'status', 'value_date', 'created_by', 'notes')
+    fields = ('display_no', 'dealer', 'status', 'value_date', 'created_by', 'note')
     inlines = (OrderItemInline,)
 
 
