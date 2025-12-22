@@ -24,6 +24,7 @@ from orders.models import Order, OrderReturn
 from finance.models import FinanceTransaction
 from returns.models import Return
 from core.mixins.export_mixins import ExportMixin
+from services.reconciliation import get_reconciliation_data
 
 
 @api_view(['POST'])
@@ -285,3 +286,85 @@ class DealerRefundViewSet(viewsets.ReadOnlyModelViewSet):
         response = HttpResponse(pdf_content, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="refunds_{dealer.code}.pdf"'
         return response
+
+
+@api_view(['GET'])
+@permission_classes([IsDealerAuthenticated])
+def dealer_reconciliation(request):
+    """
+    Get reconciliation (akt sverka) data for authenticated dealer.
+    Query params: from_date, to_date (format: YYYY-MM-DD)
+    """
+    dealer = request.user  # This is the Dealer instance
+    from_date = request.query_params.get('from_date')
+    to_date = request.query_params.get('to_date')
+
+    # Create a mock user object for reconciliation service
+    # The service expects a user object with role attribute
+    class DealerUser:
+        def __init__(self, dealer):
+            self.dealer = dealer
+            self.is_superuser = False
+            self.role = 'dealer'  # Special role for dealers
+
+    mock_user = DealerUser(dealer)
+
+    try:
+        data = get_reconciliation_data(
+            dealer_id=dealer.id,
+            from_date=from_date,
+            to_date=to_date,
+            user=mock_user,
+            detailed=False
+        )
+        return Response(data)
+    except Exception as e:
+        return Response(
+            {'detail': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsDealerAuthenticated])
+def dealer_reconciliation_pdf(request):
+    """
+    Export reconciliation (akt sverka) as PDF for authenticated dealer.
+    Query params: from_date, to_date (format: YYYY-MM-DD)
+    """
+    dealer = request.user
+    from_date = request.query_params.get('from_date')
+    to_date = request.query_params.get('to_date')
+
+    class DealerUser:
+        def __init__(self, dealer):
+            self.dealer = dealer
+            self.is_superuser = False
+            self.role = 'dealer'
+
+    mock_user = DealerUser(dealer)
+
+    try:
+        data = get_reconciliation_data(
+            dealer_id=dealer.id,
+            from_date=from_date,
+            to_date=to_date,
+            user=mock_user,
+            detailed=False
+        )
+
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+
+        html_string = render_to_string('dealer_portal/reconciliation_pdf.html', data)
+        html = HTML(string=html_string)
+        pdf_content = html.write_pdf()
+
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="akt_sverka_{dealer.code}_{from_date}_{to_date}.pdf"'
+        return response
+    except Exception as e:
+        return Response(
+            {'detail': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )

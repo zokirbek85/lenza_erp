@@ -1,0 +1,274 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 20px;
+        }
+        body {
+            font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif;
+            font-size: 11px;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #66c0f4;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-weight: 700;
+            font-size: 18px;
+            color: #1a1a2e;
+        }
+        h1 {
+            text-align: center;
+            color: #1a1a2e;
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        .info-section {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 6px;
+        }
+        .info-label {
+            font-weight: 600;
+            width: 150px;
+            color: #555;
+        }
+        .balance-summary {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .balance-card {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .balance-card.opening {
+            border-left: 4px solid #3498db;
+        }
+        .balance-card.closing {
+            border-left: 4px solid #e74c3c;
+        }
+        .balance-label {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .balance-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        th {
+            background: #66c0f4;
+            color: white;
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 15px 0 8px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .totals-table {
+            margin-top: 15px;
+        }
+        .totals-table th {
+            background: #1a1a2e;
+        }
+        .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 9px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">LENZA ERP</div>
+        <div style="text-align: right; font-size: 10px; color: #666;">
+            <div>Diller Portal</div>
+            <div>{{ generated_at|date:"d.m.Y H:i" }}</div>
+        </div>
+    </div>
+
+    <h1>AKT SVERKA</h1>
+
+    <div class="info-section">
+        <div class="info-row">
+            <div class="info-label">Diller:</div>
+            <div>{{ dealer }} ({{ dealer_code }})</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Davr:</div>
+            <div>{{ period }}</div>
+        </div>
+    </div>
+
+    <div class="balance-summary">
+        <div class="balance-card opening">
+            <div class="balance-label">Boshlang'ich qoldiq</div>
+            <div class="balance-value">${{ opening_balance|floatformat:2 }}</div>
+        </div>
+        <div class="balance-card">
+            <div class="balance-label">Buyurtmalar</div>
+            <div class="balance-value" style="color: #e74c3c;">${{ totals.orders|floatformat:2 }}</div>
+        </div>
+        <div class="balance-card">
+            <div class="balance-label">To'lovlar</div>
+            <div class="balance-value" style="color: #10b981;">${{ totals.payments|floatformat:2 }}</div>
+        </div>
+        <div class="balance-card">
+            <div class="balance-label">Qaytarishlar</div>
+            <div class="balance-value" style="color: #f59e0b;">${{ totals.returns|floatformat:2 }}</div>
+        </div>
+        <div class="balance-card closing">
+            <div class="balance-label">Yakuniy qoldiq</div>
+            <div class="balance-value">${{ closing_balance|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    {% if orders %}
+    <div class="section-title">Buyurtmalar</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Sana</th>
+                <th>Buyurtma №</th>
+                <th>Summa (USD)</th>
+                <th>Kurs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.date|date:"d.m.Y" }}</td>
+                <td>{{ order.order_no }}</td>
+                <td>${{ order.amount_usd|floatformat:2 }}</td>
+                <td>{{ order.exchange_rate|floatformat:2|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if payments %}
+    <div class="section-title">To'lovlar</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Sana</th>
+                <th>To'lov turi</th>
+                <th>Summa (USD)</th>
+                <th>Kurs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.date|date:"d.m.Y" }}</td>
+                <td>{{ payment.method }}</td>
+                <td>${{ payment.amount_usd|floatformat:2 }}</td>
+                <td>{{ payment.exchange_rate|floatformat:2|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if returns %}
+    <div class="section-title">Qaytarishlar</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Sana</th>
+                <th>Buyurtma №</th>
+                <th>Summa (USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for return in returns %}
+            <tr>
+                <td>{{ return.date|date:"d.m.Y" }}</td>
+                <td>{{ return.order_no }}</td>
+                <td>${{ return.amount_usd|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <table class="totals-table">
+        <thead>
+            <tr>
+                <th>Ko'rsatkich</th>
+                <th>Summa (USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Boshlang'ich qoldiq</strong></td>
+                <td><strong>${{ opening_balance|floatformat:2 }}</strong></td>
+            </tr>
+            <tr style="background: #ffe5e5;">
+                <td>Buyurtmalar (+)</td>
+                <td>${{ totals.orders|floatformat:2 }}</td>
+            </tr>
+            <tr style="background: #e5ffe5;">
+                <td>To'lovlar (-)</td>
+                <td>${{ totals.payments|floatformat:2 }}</td>
+            </tr>
+            <tr style="background: #fff5e5;">
+                <td>Qaytarishlar (-)</td>
+                <td>${{ totals.returns|floatformat:2 }}</td>
+            </tr>
+            <tr style="background: #e5f5ff;">
+                <td><strong>Yakuniy qoldiq</strong></td>
+                <td><strong>${{ closing_balance|floatformat:2 }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Hujjat LENZA ERP tizimi orqali avtomatik yaratilgan</p>
+    </div>
+</body>
+</html>

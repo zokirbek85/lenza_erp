@@ -15,7 +15,7 @@ from finance.models import FinanceTransaction
 from returns.models import Return as ProductReturn
 from returns.models import ReturnItem as ProductReturnItem
 
-ALLOWED_ROLES = {'sales', 'accountant', 'owner', 'admin'}
+ALLOWED_ROLES = {'sales', 'accountant', 'owner', 'admin', 'dealer'}
 
 
 @dataclass

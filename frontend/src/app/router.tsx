@@ -47,6 +47,7 @@ import DealerOrders from '../pages/dealer-portal/DealerOrders';
 import DealerPayments from '../pages/dealer-portal/DealerPayments';
 import DealerReturns from '../pages/dealer-portal/DealerReturns';
 import DealerRefunds from '../pages/dealer-portal/DealerRefunds';
+import DealerReconciliation from '../pages/dealer-portal/DealerReconciliation';
 
 const router = createBrowserRouter([
   {
@@ -356,6 +357,10 @@ const router = createBrowserRouter([
       {
         path: 'refunds',
         element: <DealerRefunds />,
+      },
+      {
+        path: 'reconciliation',
+        element: <DealerReconciliation />,
       },
     ],
   },

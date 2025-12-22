@@ -18,6 +18,10 @@ urlpatterns = [
     path('logout/', views.dealer_logout, name='dealer-logout'),
     path('profile/', views.dealer_profile, name='dealer-profile'),
 
+    # Reconciliation (Akt Sverka)
+    path('reconciliation/', views.dealer_reconciliation, name='dealer-reconciliation'),
+    path('reconciliation/pdf/', views.dealer_reconciliation_pdf, name='dealer-reconciliation-pdf'),
+
     # API endpoints
     path('', include(router.urls)),
 ]

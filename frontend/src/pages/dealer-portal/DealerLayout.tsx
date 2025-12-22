@@ -8,6 +8,7 @@ import {
   RollbackOutlined,
   LogoutOutlined,
   UserOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -71,6 +72,11 @@ export default function DealerLayout() {
       key: '/dealer-portal/refunds',
       icon: <DollarOutlined />,
       label: 'Refundlar',
+    },
+    {
+      key: '/dealer-portal/reconciliation',
+      icon: <FileTextOutlined />,
+      label: 'Akt Sverka',
     },
   ];
 
