@@ -35,7 +35,8 @@
       "Bash(python manage.py collectstatic:*)",
       "Bash(python test_dealer_portal.py:*)",
       "Bash(iconv:*)",
-      "Bash(ssh root@vps00405.vps.ovh.ca:*)"
+      "Bash(ssh root@vps00405.vps.ovh.ca:*)",
+      "Bash(ssh root@vps-d0ce7b32.vps.ovh.net \"cd /root/lenza_erp && git pull origin main && docker-compose exec -T frontend npm run build && docker-compose restart backend\")"
     ],
     "deny": [],
     "ask": []
