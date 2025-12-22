@@ -319,7 +319,7 @@ export default function DealerReconciliation() {
               <Table
                 columns={orderColumns}
                 dataSource={data.orders}
-                rowKey={(record, index) => `order-${index}`}
+                rowKey={(_, index) => `order-${index}`}
                 pagination={false}
                 style={{ background: 'transparent' }}
               />
@@ -340,7 +340,7 @@ export default function DealerReconciliation() {
               <Table
                 columns={paymentColumns}
                 dataSource={data.payments}
-                rowKey={(record, index) => `payment-${index}`}
+                rowKey={(_, index) => `payment-${index}`}
                 pagination={false}
                 style={{ background: 'transparent' }}
               />
@@ -361,7 +361,7 @@ export default function DealerReconciliation() {
               <Table
                 columns={returnColumns}
                 dataSource={data.returns}
-                rowKey={(record, index) => `return-${index}`}
+                rowKey={(_, index) => `return-${index}`}
                 pagination={false}
                 style={{ background: 'transparent' }}
               />
