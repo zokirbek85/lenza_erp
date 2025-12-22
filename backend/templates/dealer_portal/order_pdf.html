@@ -144,7 +144,7 @@
             <tr>
                 <th>#</th>
                 <th>Mahsulot</th>
-                <th>SKU</th>
+                <th>Brand</th>
                 <th>Miqdor</th>
                 <th>Narx (USD)</th>
                 <th>Jami (USD)</th>
@@ -155,7 +155,7 @@
             <tr>
                 <td>{{ forloop.counter }}</td>
                 <td>{{ item.product.name }}</td>
-                <td>{{ item.product.sku }}</td>
+                <td>{{ item.product.brand.name|default:"-" }}</td>
                 <td>{{ item.qty|floatformat:2 }}</td>
                 <td>${{ item.price_at_time|default:item.price_usd|floatformat:2 }}</td>
                 <td>${{ item.line_total_usd|floatformat:2 }}</td>
