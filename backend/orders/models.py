@@ -35,7 +35,7 @@ class Order(models.Model):
     display_no = models.CharField(
         max_length=32,
         unique=True,
-        editable=False,
+        editable=True,
         blank=True,
         verbose_name="Order number",
         help_text="Auto-generated unique order display number"
