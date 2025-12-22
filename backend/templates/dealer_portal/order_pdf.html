@@ -1,0 +1,173 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body {
+            font-family: 'DejaVu Sans', 'Arial Unicode MS', Arial, sans-serif;
+            font-size: 12px;
+            margin: 30px;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #66c0f4;
+        }
+        .logo {
+            height: 50px;
+            margin-right: 15px;
+        }
+        .company-info {
+            flex: 1;
+        }
+        .company-name {
+            font-weight: 700;
+            font-size: 18px;
+            color: #1a1a2e;
+        }
+        .company-details {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+        h1 {
+            text-align: center;
+            color: #1a1a2e;
+            margin: 20px 0;
+            font-size: 20px;
+        }
+        .order-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .order-info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .order-info-label {
+            font-weight: 600;
+            width: 150px;
+            color: #555;
+        }
+        .order-info-value {
+            color: #1a1a2e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: #66c0f4;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .total-row {
+            background: #e8f4f8;
+            font-weight: 700;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #777;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .qr {
+            width: 100px;
+            height: 100px;
+            margin: 10px 0;
+        }
+        .verify-link {
+            color: #66c0f4;
+            text-decoration: none;
+            font-size: 9px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <div class="company-name">LENZA ERP</div>
+            <div class="company-details">Diller Portal | Buyurtma Hujjati</div>
+        </div>
+    </div>
+
+    <h1>BUYURTMA #{{ order.display_no }}</h1>
+
+    <div class="order-info">
+        <div class="order-info-row">
+            <div class="order-info-label">Diller:</div>
+            <div class="order-info-value">{{ dealer.name }} ({{ dealer.code }})</div>
+        </div>
+        <div class="order-info-row">
+            <div class="order-info-label">Sana:</div>
+            <div class="order-info-value">{{ order.value_date|date:"d.m.Y" }}</div>
+        </div>
+        <div class="order-info-row">
+            <div class="order-info-label">Status:</div>
+            <div class="order-info-value">{{ order.status }}</div>
+        </div>
+        <div class="order-info-row">
+            <div class="order-info-label">Yaratilgan:</div>
+            <div class="order-info-value">{{ order.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Mahsulot</th>
+                <th>SKU</th>
+                <th>Miqdor</th>
+                <th>Narx (USD)</th>
+                <th>Jami (USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.product.sku }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price_usd }}</td>
+                <td>${{ item.total_usd }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center;">Mahsulotlar yo'q</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right;">Jami:</td>
+                <td>${{ order.total_usd }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Hujjat <strong>LENZA ERP</strong> tizimi orqali yaratilgan</p>
+        <p>Haqiqiylikni tekshirish uchun QR kodni skanerlang:</p>
+        <img src="{{ qr_code }}" class="qr" alt="QR Code"/><br/>
+        <a href="{{ verify_url }}" class="verify-link">{{ verify_url }}</a>
+        <p style="margin-top: 15px;">Yaratilgan: {{ generated_at|date:"d.m.Y H:i" }}</p>
+    </div>
+</body>
+</html>

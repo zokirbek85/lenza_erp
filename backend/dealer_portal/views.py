@@ -23,6 +23,7 @@ from dealers.models import Dealer
 from orders.models import Order, OrderReturn
 from finance.models import FinanceTransaction
 from returns.models import Return
+from core.mixins.export_mixins import ExportMixin
 
 
 @api_view(['POST'])
@@ -59,13 +60,16 @@ def dealer_login(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsDealerAuthenticated])
+@permission_classes([AllowAny])
 def dealer_logout(request):
     """
     Dealer logout endpoint.
     Destroys session.
     """
-    request.session.flush()
+    try:
+        request.session.flush()
+    except Exception:
+        pass  # Ignore any session errors
     return Response({'message': 'Logout successful'})
 
 
@@ -80,7 +84,7 @@ def dealer_profile(request):
     return Response(serializer.data)
 
 
-class DealerOrderViewSet(viewsets.ReadOnlyModelViewSet):
+class DealerOrderViewSet(viewsets.ReadOnlyModelViewSet, ExportMixin):
     """
     ViewSet for dealer to view their orders.
     Read-only access with detail view and PDF export.
@@ -104,14 +108,20 @@ class DealerOrderViewSet(viewsets.ReadOnlyModelViewSet):
         """
         order = self.get_object()
 
-        # Import PDF generation function
-        from orders.views import generate_order_pdf
+        context = {
+            'order': order,
+            'dealer': order.dealer,
+            'items': order.items.all(),
+        }
 
-        pdf_content = generate_order_pdf(order)
-
-        response = HttpResponse(pdf_content, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="order_{order.display_no}.pdf"'
-        return response
+        return self.render_pdf_with_qr(
+            template_path='dealer_portal/order_pdf.html',
+            context=context,
+            filename_prefix=f'order_{order.display_no}',
+            request=request,
+            doc_type='order',
+            doc_id=order.id
+        )
 
 
 class DealerPaymentViewSet(viewsets.ReadOnlyModelViewSet):
