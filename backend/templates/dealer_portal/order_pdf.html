@@ -120,8 +120,18 @@
             <div class="order-info-value">{{ order.value_date|date:"d.m.Y" }}</div>
         </div>
         <div class="order-info-row">
-            <div class="order-info-label">Status:</div>
-            <div class="order-info-value">{{ order.status }}</div>
+            <div class="order-info-label">Holati:</div>
+            <div class="order-info-value">
+                {% if order.status == 'created' %}Yaratilgan
+                {% elif order.status == 'confirmed' %}Tasdiqlangan
+                {% elif order.status == 'packed' %}Qadoqlangan
+                {% elif order.status == 'shipped' %}Jo'natilgan
+                {% elif order.status == 'delivered' %}Yetkazilgan
+                {% elif order.status == 'cancelled' %}Bekor qilingan
+                {% elif order.status == 'returned' %}Qaytarilgan
+                {% else %}{{ order.status }}
+                {% endif %}
+            </div>
         </div>
         <div class="order-info-row">
             <div class="order-info-label">Yaratilgan:</div>
