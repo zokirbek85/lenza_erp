@@ -156,9 +156,9 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ item.product.name }}</td>
                 <td>{{ item.product.sku }}</td>
-                <td>{{ item.qty }}</td>
-                <td>${{ item.price_at_time|default:item.price_usd }}</td>
-                <td>${{ item.line_total_usd }}</td>
+                <td>{{ item.qty|floatformat:2 }}</td>
+                <td>${{ item.price_at_time|default:item.price_usd|floatformat:2 }}</td>
+                <td>${{ item.line_total_usd|floatformat:2 }}</td>
             </tr>
             {% empty %}
             <tr>
@@ -167,7 +167,7 @@
             {% endfor %}
             <tr class="total-row">
                 <td colspan="5" style="text-align: right;">Jami:</td>
-                <td>${{ order.total_usd }}</td>
+                <td>${{ order.total_usd|floatformat:2 }}</td>
             </tr>
         </tbody>
     </table>
