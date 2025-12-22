@@ -34,7 +34,8 @@
       "Bash(test:*)",
       "Bash(python manage.py collectstatic:*)",
       "Bash(python test_dealer_portal.py:*)",
-      "Bash(iconv:*)"
+      "Bash(iconv:*)",
+      "Bash(ssh root@vps00405.vps.ovh.ca:*)"
     ],
     "deny": [],
     "ask": []
