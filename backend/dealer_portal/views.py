@@ -94,9 +94,13 @@ class DealerOrderViewSet(viewsets.ReadOnlyModelViewSet, ExportMixin):
     authentication_classes = [DealerAuthentication]
 
     def get_queryset(self):
-        """Return only orders for the authenticated dealer."""
+        """Return only orders for the authenticated dealer, excluding cancelled orders."""
         dealer = self.request.user
-        return Order.objects.filter(dealer=dealer).prefetch_related(
+        return Order.objects.filter(
+            dealer=dealer
+        ).exclude(
+            status='cancelled'
+        ).prefetch_related(
             'items__product',
             'created_by'
         ).order_by('-created_at')
