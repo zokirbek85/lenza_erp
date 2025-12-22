@@ -243,6 +243,21 @@ class Dealer(models.Model):
         return password
 
     @property
+    def is_authenticated(self) -> bool:
+        """
+        Always return True for authenticated dealers.
+        This is required for Django middleware and DRF throttling.
+        """
+        return True
+
+    @property
+    def is_anonymous(self) -> bool:
+        """
+        Always return False for dealers (they are authenticated).
+        """
+        return False
+
+    @property
     def balance_usd(self) -> Decimal:
         """
         Calculate dealer balance in USD using balance service.
