@@ -39,6 +39,15 @@ import FinanceTransactions from '../pages/FinanceTransactions';
 import ExpenseCategoryManagement from '../pages/ExpenseCategoryManagement';
 import ProtectedRoute from '../auth/ProtectedRoute';
 
+// Dealer Portal
+import DealerLogin from '../pages/dealer-portal/DealerLogin';
+import DealerLayout from '../pages/dealer-portal/DealerLayout';
+import DealerDashboard from '../pages/dealer-portal/DealerDashboard';
+import DealerOrders from '../pages/dealer-portal/DealerOrders';
+import DealerPayments from '../pages/dealer-portal/DealerPayments';
+import DealerReturns from '../pages/dealer-portal/DealerReturns';
+import DealerRefunds from '../pages/dealer-portal/DealerRefunds';
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -314,6 +323,41 @@ const router = createBrowserRouter([
   {
     path: '/verify/reconciliation/:id',
     element: <VerifyReconciliationPage />,
+  },
+  // Dealer Portal Routes
+  {
+    path: '/dealer-portal/login',
+    element: <DealerLogin />,
+  },
+  {
+    path: '/dealer-portal',
+    element: <DealerLayout />,
+    children: [
+      {
+        index: true,
+        element: <DealerDashboard />,
+      },
+      {
+        path: 'dashboard',
+        element: <DealerDashboard />,
+      },
+      {
+        path: 'orders',
+        element: <DealerOrders />,
+      },
+      {
+        path: 'payments',
+        element: <DealerPayments />,
+      },
+      {
+        path: 'returns',
+        element: <DealerReturns />,
+      },
+      {
+        path: 'refunds',
+        element: <DealerRefunds />,
+      },
+    ],
   },
   {
     path: '*',
