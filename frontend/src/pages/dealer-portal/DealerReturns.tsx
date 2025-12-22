@@ -152,25 +152,45 @@ export default function DealerReturns() {
   ];
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={2}>Qaytarishlar</Title>
+    <div style={{
+      padding: 24,
+      background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+      minHeight: '100vh'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+        <Title level={2} style={{ color: '#fff', margin: 0 }}>Qaytarishlar</Title>
         <Button
           type="primary"
           icon={<DownloadOutlined />}
           onClick={downloadPDF}
+          style={{
+            background: 'linear-gradient(135deg, #66c0f4 0%, #4a9fd8 100%)',
+            border: 'none',
+            fontWeight: 600,
+            height: 40,
+            boxShadow: '0 4px 12px rgba(102, 192, 244, 0.3)'
+          }}
         >
           PDF yuklash
         </Button>
       </div>
 
-      <Tabs defaultActiveKey="1">
+      <Tabs
+        defaultActiveKey="1"
+        className="steam-tabs"
+      >
         <TabPane tab="Qaytarish hujjatlari" key="1">
           <Table
             columns={returnColumns}
             dataSource={returns}
             loading={loading}
             rowKey="id"
+            style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              borderRadius: 8,
+              overflow: 'hidden'
+            }}
+            className="steam-table"
           />
         </TabPane>
         <TabPane tab="Buyurtmadan qaytarishlar" key="2">
@@ -179,9 +199,51 @@ export default function DealerReturns() {
             dataSource={orderReturns}
             loading={loading}
             rowKey="id"
+            style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              borderRadius: 8,
+              overflow: 'hidden'
+            }}
+            className="steam-table"
           />
         </TabPane>
       </Tabs>
+
+      <style>{`
+        .steam-tabs .ant-tabs-nav {
+          margin-bottom: 24px;
+        }
+        .steam-tabs .ant-tabs-tab {
+          color: #8f98a0;
+          font-weight: 600;
+        }
+        .steam-tabs .ant-tabs-tab:hover {
+          color: #66c0f4;
+        }
+        .steam-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #66c0f4;
+        }
+        .steam-tabs .ant-tabs-ink-bar {
+          background: #66c0f4;
+        }
+        .steam-table .ant-table {
+          background: transparent;
+        }
+        .steam-table .ant-table-thead > tr > th {
+          background: #16213e;
+          color: #66c0f4;
+          border-bottom: 1px solid #2a3f5f;
+          font-weight: 600;
+        }
+        .steam-table .ant-table-tbody > tr > td {
+          background: transparent;
+          color: #c7d5e0;
+          border-bottom: 1px solid #2a3f5f;
+        }
+        .steam-table .ant-table-tbody > tr:hover > td {
+          background: rgba(102, 192, 244, 0.1);
+        }
+      `}</style>
     </div>
   );
 }

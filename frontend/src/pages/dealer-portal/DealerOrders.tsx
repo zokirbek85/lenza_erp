@@ -145,8 +145,12 @@ export default function DealerOrders() {
   ];
 
   return (
-    <div>
-      <Title level={2}>Buyurtmalar</Title>
+    <div style={{
+      padding: 24,
+      background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+      minHeight: '100vh'
+    }}>
+      <Title level={2} style={{ color: '#fff', marginBottom: 24 }}>Buyurtmalar</Title>
 
       <Table
         columns={columns}
@@ -157,7 +161,49 @@ export default function DealerOrders() {
           ...pagination,
           onChange: (page) => setPagination(prev => ({ ...prev, current: page })),
         }}
+        style={{
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          borderRadius: 8,
+          overflow: 'hidden'
+        }}
+        className="steam-table"
       />
+      <style>{`
+        .steam-table .ant-table {
+          background: transparent;
+        }
+        .steam-table .ant-table-thead > tr > th {
+          background: #16213e;
+          color: #66c0f4;
+          border-bottom: 1px solid #2a3f5f;
+          font-weight: 600;
+        }
+        .steam-table .ant-table-tbody > tr > td {
+          background: transparent;
+          color: #c7d5e0;
+          border-bottom: 1px solid #2a3f5f;
+        }
+        .steam-table .ant-table-tbody > tr:hover > td {
+          background: rgba(102, 192, 244, 0.1);
+        }
+        .steam-table .ant-pagination {
+          color: #c7d5e0;
+        }
+        .steam-table .ant-pagination-item {
+          background: #1a1a2e;
+          border: 1px solid #2a3f5f;
+        }
+        .steam-table .ant-pagination-item a {
+          color: #c7d5e0;
+        }
+        .steam-table .ant-pagination-item-active {
+          background: #66c0f4;
+          border-color: #66c0f4;
+        }
+        .steam-table .ant-pagination-item-active a {
+          color: #1a1a2e;
+        }
+      `}</style>
     </div>
   );
 }

@@ -75,24 +75,30 @@ export default function DealerLayout() {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh' }} className="steam-layout">
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         breakpoint="lg"
         collapsedWidth={80}
+        style={{
+          background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)',
+          borderRight: '1px solid #2a3f5f'
+        }}
       >
         <div style={{
           height: 64,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'white',
-          fontSize: collapsed ? 16 : 20,
+          color: '#66c0f4',
+          fontSize: collapsed ? 16 : 18,
           fontWeight: 'bold',
+          borderBottom: '1px solid #2a3f5f',
+          letterSpacing: '1px'
         }}>
-          {collapsed ? 'DP' : 'Diller Portal'}
+          {collapsed ? 'DP' : 'DILLER PORTAL'}
         </div>
 
         <Menu
@@ -101,41 +107,89 @@ export default function DealerLayout() {
           selectedKeys={[location.pathname]}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
+          style={{
+            background: 'transparent',
+            border: 'none'
+          }}
+          className="steam-menu"
         />
       </Sider>
 
-      <Layout>
+      <Layout style={{ background: 'transparent' }}>
         <Header style={{
-          background: '#fff',
-          padding: '0 24px',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          padding: '0 32px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          borderBottom: '1px solid #2a3f5f',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         }}>
-          <Title level={4} style={{ margin: 0 }}>
-            <UserOutlined /> {dealerName}
+          <Title level={4} style={{ margin: 0, color: '#c7d5e0', fontWeight: 500 }}>
+            <UserOutlined style={{ color: '#66c0f4', marginRight: 8 }} />
+            {dealerName}
           </Title>
 
           <Button
             type="text"
-            danger
             icon={<LogoutOutlined />}
             onClick={handleLogout}
+            style={{
+              color: '#e74c3c',
+              fontWeight: 600
+            }}
+            className="logout-btn"
           >
             Chiqish
           </Button>
         </Header>
 
         <Content style={{
-          margin: '24px 16px',
-          padding: 24,
-          background: '#fff',
+          margin: 0,
+          padding: 0,
+          background: 'transparent',
           minHeight: 280,
+          overflow: 'auto'
         }}>
           <Outlet />
         </Content>
       </Layout>
+
+      <style>{`
+        .steam-layout {
+          background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        }
+        .steam-menu .ant-menu-item {
+          color: #8f98a0;
+          margin: 4px 8px;
+          border-radius: 4px;
+          font-weight: 500;
+        }
+        .steam-menu .ant-menu-item:hover {
+          background: rgba(102, 192, 244, 0.15);
+          color: #66c0f4;
+        }
+        .steam-menu .ant-menu-item-selected {
+          background: linear-gradient(90deg, rgba(102, 192, 244, 0.25) 0%, rgba(102, 192, 244, 0.1) 100%);
+          color: #66c0f4;
+          border-left: 3px solid #66c0f4;
+        }
+        .steam-menu .ant-menu-item-icon {
+          color: inherit;
+        }
+        .logout-btn:hover {
+          background: rgba(231, 76, 60, 0.1);
+          color: #ff6b6b !important;
+        }
+        .ant-layout-sider-trigger {
+          background: #16213e;
+          border-top: 1px solid #2a3f5f;
+          color: #66c0f4;
+        }
+        .ant-layout-sider-trigger:hover {
+          background: #1a2a40;
+        }
+      `}</style>
     </Layout>
   );
 }
