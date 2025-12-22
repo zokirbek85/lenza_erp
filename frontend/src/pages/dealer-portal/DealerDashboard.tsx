@@ -133,7 +133,7 @@ export default function DealerDashboard() {
                   title={<span style={{ color: '#8f98a0' }}>Balans (UZS)</span>}
                   value={parseFloat(profile.balance_uzs)}
                   precision={2}
-                  prefix={<span style={{ fontSize: 32, fontWeight: 'bold' }}>сўм</span>}
+                  prefix={<span style={{ fontSize: 32, fontWeight: 'bold' }}>Ⓢ</span>}
                   valueStyle={{
                     color: parseFloat(profile.balance_uzs) > 0 ? '#e74c3c' : '#66c0f4',
                     fontSize: 32,
