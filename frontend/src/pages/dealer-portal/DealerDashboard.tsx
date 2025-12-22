@@ -4,7 +4,6 @@ import {
   DollarOutlined,
   ShoppingOutlined,
   RollbackOutlined,
-  MoneyCollectOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 
