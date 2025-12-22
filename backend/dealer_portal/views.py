@@ -138,7 +138,7 @@ class DealerPaymentViewSet(viewsets.ReadOnlyModelViewSet):
         dealer = self.request.user
         return FinanceTransaction.objects.filter(
             dealer=dealer,
-            type='INCOME'
+            type='income'
         ).select_related(
             'account',
             'created_by'
@@ -250,7 +250,7 @@ class DealerRefundViewSet(viewsets.ReadOnlyModelViewSet):
         dealer = self.request.user
         return FinanceTransaction.objects.filter(
             dealer=dealer,
-            type='DEALER_REFUND'
+            type='dealer_refund'
         ).select_related(
             'account',
             'created_by'
