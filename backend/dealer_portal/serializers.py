@@ -18,7 +18,12 @@ class DealerLoginSerializer(serializers.Serializer):
 class DealerProfileSerializer(serializers.ModelSerializer):
     """Serializer for dealer profile information."""
     balance_usd = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
-    balance_uzs = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    balance_uzs = serializers.DecimalField(
+        source='balance_uzs_current_rate',
+        max_digits=18,
+        decimal_places=2,
+        read_only=True
+    )
     region_name = serializers.CharField(source='region.name', read_only=True)
     manager_name = serializers.CharField(source='manager_user.get_full_name', read_only=True)
 
