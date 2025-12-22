@@ -135,6 +135,8 @@ router.register('public/catalog/variants', PublicVariantCatalogViewSet, basename
 router.register('user-manuals', UserManualViewSet, basename='user-manual')
 
 urlpatterns = [
+    # Dealer portal endpoints
+    path('api/dealer-portal/', include('dealer_portal.urls')),
     # Finance endpoints
     path('api/finance/', include('finance.urls')),
     path('admin/', admin.site.urls),

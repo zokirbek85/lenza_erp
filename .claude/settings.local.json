@@ -32,7 +32,9 @@
       "Bash(taskkill:*)",
       "Bash(dir:*)",
       "Bash(test:*)",
-      "Bash(python manage.py collectstatic:*)"
+      "Bash(python manage.py collectstatic:*)",
+      "Bash(python test_dealer_portal.py:*)",
+      "Bash(iconv:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,9 @@
 from decimal import Decimal
+import secrets
+import string
 
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.db.models import Sum, Q, F, Value, Case, When, DecimalField
 from django.db.models.functions import Coalesce
@@ -144,6 +147,29 @@ class Dealer(models.Model):
         verbose_name="Include in manager KPI",
         help_text="Whether this dealer's sales and payments should be included in manager KPI calculation"
     )
+
+    # Dealer portal login credentials
+    portal_username = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="Portal username",
+        help_text="Auto-generated username for dealer portal access"
+    )
+    portal_password = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        verbose_name="Portal password (hashed)",
+        help_text="Hashed password for dealer portal access"
+    )
+    portal_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Portal access enabled",
+        help_text="Whether this dealer can access the dealer portal"
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Created at",
@@ -171,6 +197,50 @@ class Dealer(models.Model):
 
     def __str__(self) -> str:
         return f"{self.code} - {self.name}"
+
+    def generate_portal_credentials(self) -> dict:
+        """
+        Generate username and password for dealer portal access.
+        Returns dict with 'username' and 'password' (plain text).
+        Password is automatically hashed before saving.
+        """
+        # Generate username from dealer code (clean and lowercase)
+        base_username = self.code.lower().replace(' ', '_').replace('-', '_')
+        username = base_username
+
+        # Ensure username is unique
+        counter = 1
+        while Dealer.objects.filter(portal_username=username).exclude(pk=self.pk).exists():
+            username = f"{base_username}_{counter}"
+            counter += 1
+
+        # Generate random password (12 characters: letters + digits)
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(secrets.choice(alphabet) for _ in range(12))
+
+        # Save credentials
+        self.portal_username = username
+        self.portal_password = make_password(password)
+        self.portal_enabled = True
+        self.save(update_fields=['portal_username', 'portal_password', 'portal_enabled'])
+
+        return {
+            'username': username,
+            'password': password  # Return plain password for one-time display
+        }
+
+    def reset_portal_password(self) -> str:
+        """
+        Reset dealer portal password.
+        Returns new password (plain text).
+        """
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(secrets.choice(alphabet) for _ in range(12))
+
+        self.portal_password = make_password(password)
+        self.save(update_fields=['portal_password'])
+
+        return password
 
     @property
     def balance_usd(self) -> Decimal:

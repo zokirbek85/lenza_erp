@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Refundlar Hisoboti - {{ dealer.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+        }
+        h1 {
+            text-align: center;
+            font-size: 16pt;
+            margin-bottom: 20px;
+        }
+        .header-info {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        .header-info p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #c53030;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #fff5f5;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fed7d7;
+            border: 2px solid #c53030;
+        }
+        .totals p {
+            font-size: 12pt;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>REFUNDLAR HISOBOTI</h1>
+
+    <div class="header-info">
+        <p><strong>Diller:</strong> {{ dealer.code }} - {{ dealer.name }}</p>
+        <p><strong>Manzil:</strong> {{ dealer.address }}</p>
+        <p><strong>Telefon:</strong> {{ dealer.phone }}</p>
+        <p><strong>Hisobot sanasi:</strong> {{ "now"|date:"d.m.Y H:i" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Sana</th>
+                <th>Summa</th>
+                <th>Valyuta</th>
+                <th>USD</th>
+                <th>UZS</th>
+                <th>Hisob</th>
+                <th>Izoh</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for refund in refunds %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ refund.date|date:"d.m.Y" }}</td>
+                <td class="text-right">{{ refund.amount|floatformat:2 }}</td>
+                <td>{{ refund.currency }}</td>
+                <td class="text-right">{{ refund.amount_usd|floatformat:2 }}</td>
+                <td class="text-right">{{ refund.amount_uzs|floatformat:2 }}</td>
+                <td>{{ refund.account.name }}</td>
+                <td>{{ refund.comment|default:"-" }}</td>
+                <td>{{ refund.get_status_display }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; color: #999;">Refundlar mavjud emas</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <p>Jami USD: {{ total_usd|floatformat:2 }}</p>
+        <p>Jami UZS: {{ total_uzs|floatformat:2 }}</p>
+    </div>
+</body>
+</html>

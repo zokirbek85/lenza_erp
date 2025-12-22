@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     'returns.apps.ReturnsConfig',
     'finance.apps.FinanceConfig',
+    'dealer_portal',
 ]
 
 MIDDLEWARE = [
