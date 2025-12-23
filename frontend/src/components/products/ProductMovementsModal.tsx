@@ -37,7 +37,7 @@ interface ProductMovementsModalProps {
   onClose: () => void;
 }
 
-export default function ProductMovementsModal({ productId, productName, onClose }: ProductMovementsModalProps) {
+export default function ProductMovementsModal({ productId, onClose }: ProductMovementsModalProps) {
   const [data, setData] = useState<MovementsData | null>(null);
   const [loading, setLoading] = useState(false);
 
