@@ -7,6 +7,7 @@ from orders.models import Order, OrderItem
 from finance.models import FinanceTransaction
 from returns.models import Return, ReturnItem
 from orders.models import OrderReturn
+from catalog.models import Product
 
 
 class DealerLoginSerializer(serializers.Serializer):
@@ -127,5 +128,19 @@ class OrderReturnSerializer(serializers.ModelSerializer):
             'id', 'order_display_no', 'product_name', 'product_sku',
             'quantity', 'is_defect', 'amount_usd', 'amount_uzs',
             'exchange_rate', 'processed_by_name', 'created_at'
+        ]
+        read_only_fields = fields
+
+
+class DealerProductSerializer(serializers.ModelSerializer):
+    """Serializer for products in dealer portal - read-only view."""
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    brand_name = serializers.CharField(source='brand.name', read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'sku', 'category_name', 'brand_name',
+            'stock_ok', 'unit'
         ]
         read_only_fields = fields

@@ -9,6 +9,7 @@ import {
   LogoutOutlined,
   UserOutlined,
   FileTextOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -52,6 +53,11 @@ export default function DealerLayout() {
       key: '/dealer-portal/dashboard',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
+    },
+    {
+      key: '/dealer-portal/products',
+      icon: <AppstoreOutlined />,
+      label: 'Mahsulotlar',
     },
     {
       key: '/dealer-portal/orders',

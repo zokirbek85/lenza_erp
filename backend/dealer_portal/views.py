@@ -16,13 +16,15 @@ from .serializers import (
     DealerOrderSerializer,
     DealerPaymentSerializer,
     DealerReturnSerializer,
-    OrderReturnSerializer
+    OrderReturnSerializer,
+    DealerProductSerializer
 )
 from .permissions import IsDealerAuthenticated
 from dealers.models import Dealer
 from orders.models import Order, OrderReturn
 from finance.models import FinanceTransaction
 from returns.models import Return
+from catalog.models import Product
 from core.mixins.export_mixins import ExportMixin
 from services.reconciliation import get_reconciliation_data
 
@@ -368,3 +370,19 @@ def dealer_reconciliation_pdf(request):
             {'detail': str(e)},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class DealerProductViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for dealer to view product catalog with stock information.
+    Read-only access, no prices or editing.
+    """
+    serializer_class = DealerProductSerializer
+    permission_classes = [IsDealerAuthenticated]
+    authentication_classes = [DealerAuthentication]
+    filterset_fields = ['category', 'brand']
+    search_fields = ['name', 'sku']
+
+    def get_queryset(self):
+        """Return all products with category and brand info."""
+        return Product.objects.select_related('category', 'brand').all().order_by('name')

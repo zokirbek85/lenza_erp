@@ -11,6 +11,7 @@ router.register(r'orders', views.DealerOrderViewSet, basename='dealer-orders')
 router.register(r'payments', views.DealerPaymentViewSet, basename='dealer-payments')
 router.register(r'returns', views.DealerReturnViewSet, basename='dealer-returns')
 router.register(r'refunds', views.DealerRefundViewSet, basename='dealer-refunds')
+router.register(r'products', views.DealerProductViewSet, basename='dealer-products')
 
 urlpatterns = [
     # Authentication
