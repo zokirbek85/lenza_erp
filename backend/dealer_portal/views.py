@@ -382,6 +382,7 @@ class DealerProductViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [DealerAuthentication]
     filterset_fields = ['category', 'brand']
     search_fields = ['name', 'sku']
+    pagination_class = None  # Disable pagination to return all products
 
     def get_queryset(self):
         """Return all products with category and brand info."""

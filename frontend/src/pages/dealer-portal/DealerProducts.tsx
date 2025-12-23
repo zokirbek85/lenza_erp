@@ -56,9 +56,8 @@ export default function DealerProducts() {
     try {
       const response = await axios.get('/api/dealer-portal/products/', {
         withCredentials: true,
-        params: { page_size: 10000 }
       });
-      const products = response.data.results || response.data;
+      const products = Array.isArray(response.data) ? response.data : (response.data.results || []);
       setAllProducts(products);
 
       // Extract unique categories
