@@ -24,10 +24,21 @@
         }
         
         .header {
-            text-align: center;
+            display: flex;
+            align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #1890ff;
+        }
+        
+        .header .logo {
+            height: 60px;
+            margin-right: 20px;
+        }
+        
+        .header .header-content {
+            flex: 1;
+            text-align: center;
         }
         
         .header h1 {
@@ -193,9 +204,12 @@
 </head>
 <body>
     <div class="header">
-        <h1>{{ title }}</h1>
-        <div class="brand-name">{{ brand_name }}</div>
-        <div class="meta">Дата: {{ export_date }}</div>
+        <img src="file:///{{ logo_path }}" class="logo" alt="LENZA Logo" />
+        <div class="header-content">
+            <h1>{{ title }}</h1>
+            <div class="brand-name">{{ brand_name }}</div>
+            <div class="meta">Дата: {{ export_date }}</div>
+        </div>
     </div>
     
     {% if view_mode == 'cards' %}

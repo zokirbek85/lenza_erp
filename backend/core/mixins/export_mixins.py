@@ -32,11 +32,18 @@ class ExportMixin:
         """
         Render PDF without QR code verification (for marketing documents)
         """
+        from django.conf import settings
+        import os
+        
+        # Add logo path to context
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        
         html = render_to_string(
             template_path,
             {
                 **context,
                 'generated_at': timezone.now(),
+                'logo_path': logo_path,
             },
         )
         HTML = get_weasyprint_html()
@@ -102,6 +109,11 @@ class ExportMixin:
                 verify_url = f"{base_url.rstrip('/')}{reverse('verify-document', args=[doc_type, doc_id])}"
         
         qr_code = self._build_qr_code(verify_url)
+        
+        # Add logo path to context
+        from django.conf import settings
+        import os
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         html = render_to_string(
             template_path,
@@ -110,6 +122,7 @@ class ExportMixin:
                 'verify_url': verify_url,
                 'qr_code': qr_code,
                 'generated_at': timezone.now(),
+                'logo_path': logo_path,
             },
         )
         HTML = get_weasyprint_html()

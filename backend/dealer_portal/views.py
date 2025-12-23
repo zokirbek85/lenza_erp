@@ -114,11 +114,17 @@ class DealerOrderViewSet(viewsets.ReadOnlyModelViewSet, ExportMixin):
         Export single order as PDF.
         """
         order = self.get_object()
+        
+        # Get logo path
+        from django.conf import settings
+        import os
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         context = {
             'order': order,
             'dealer': order.dealer,
             'items': order.items.all(),
+            'logo_path': logo_path,
         }
 
         return self.render_pdf_with_qr(
@@ -164,12 +170,16 @@ class DealerPaymentViewSet(viewsets.ReadOnlyModelViewSet):
         from weasyprint import HTML
         from django.conf import settings
         import os
+        
+        # Get logo path
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         context = {
             'dealer': dealer,
             'transactions': transactions,
             'total_usd': sum(t.amount_usd for t in transactions),
             'total_uzs': sum(t.amount_uzs for t in transactions),
+            'logo_path': logo_path,
         }
 
         html_string = render_to_string('dealer_portal/payments_report.html', context)
@@ -228,11 +238,17 @@ class DealerReturnViewSet(viewsets.ReadOnlyModelViewSet):
 
         from django.template.loader import render_to_string
         from weasyprint import HTML
+        from django.conf import settings
+        import os
+        
+        # Get logo path
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         context = {
             'dealer': dealer,
             'returns': returns,
             'order_returns': order_returns,
+            'logo_path': logo_path,
         }
 
         html_string = render_to_string('dealer_portal/returns_report.html', context)
@@ -273,12 +289,18 @@ class DealerRefundViewSet(viewsets.ReadOnlyModelViewSet):
 
         from django.template.loader import render_to_string
         from weasyprint import HTML
+        from django.conf import settings
+        import os
+        
+        # Get logo path
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         context = {
             'dealer': dealer,
             'refunds': refunds,
             'total_usd': sum(r.amount_usd for r in refunds),
             'total_uzs': sum(r.amount_uzs for r in refunds),
+            'logo_path': logo_path,
         }
 
         html_string = render_to_string('dealer_portal/refunds_report.html', context)
@@ -357,6 +379,12 @@ def dealer_reconciliation_pdf(request):
 
         from django.template.loader import render_to_string
         from weasyprint import HTML
+        from django.conf import settings
+        import os
+        
+        # Get logo path
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        data['logo_path'] = logo_path
 
         html_string = render_to_string('dealer_portal/reconciliation_pdf.html', data)
         html = HTML(string=html_string)

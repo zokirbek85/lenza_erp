@@ -13,6 +13,17 @@
             font-size: 10pt;
             line-height: 1.4;
         }
+        .header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #c53030;
+            margin-bottom: 20px;
+        }
+        .logo {
+            height: 60px;
+            margin-right: 20px;
+        }
         h1 {
             text-align: center;
             font-size: 16pt;
@@ -62,7 +73,10 @@
     </style>
 </head>
 <body>
-    <h1>REFUNDLAR HISOBOTI</h1>
+    <div class="header">
+        <img src="file:///{{ logo_path }}" class="logo" alt="LENZA Logo" />
+        <h1 style="margin: 0; flex: 1;">REFUNDLAR HISOBOTI</h1>
+    </div>
 
     <div class="header-info">
         <p><strong>Diller:</strong> {{ dealer.code }} - {{ dealer.name }}</p>
