@@ -27,7 +27,8 @@ interface Brand {
 }
 
 export default function DealerProducts() {
-  const [data, setData] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]); // Store all products
+  const [data, setData] = useState<Product[]>([]); // Displayed products
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -43,21 +44,23 @@ export default function DealerProducts() {
   });
 
   useEffect(() => {
-    loadCategories();
-    loadBrands();
+    loadAllProducts();
   }, []);
 
   useEffect(() => {
-    loadProducts();
-  }, [pagination.current, filters]);
+    filterAndPaginateProducts();
+  }, [pagination.current, filters, allProducts]);
 
-  const loadCategories = async () => {
+  const loadAllProducts = async () => {
+    setLoading(true);
     try {
       const response = await axios.get('/api/dealer-portal/products/', {
         withCredentials: true,
-        params: { page_size: 1000 }
+        params: { page_size: 10000 }
       });
       const products = response.data.results || response.data;
+      setAllProducts(products);
+
       // Extract unique categories
       const uniqueCategories = Array.from(
         new Map(
@@ -67,18 +70,7 @@ export default function DealerProducts() {
         ).values()
       ) as Category[];
       setCategories(uniqueCategories);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-    }
-  };
 
-  const loadBrands = async () => {
-    try {
-      const response = await axios.get('/api/dealer-portal/products/', {
-        withCredentials: true,
-        params: { page_size: 1000 }
-      });
-      const products = response.data.results || response.data;
       // Extract unique brands
       const uniqueBrands = Array.from(
         new Map(
@@ -88,45 +80,6 @@ export default function DealerProducts() {
         ).values()
       ) as Brand[];
       setBrands(uniqueBrands);
-    } catch (error) {
-      console.error('Failed to load brands:', error);
-    }
-  };
-
-  const loadProducts = async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, any> = {
-        page: pagination.current,
-        page_size: pagination.pageSize,
-      };
-
-      if (filters.search) {
-        params.search = filters.search;
-      }
-
-      const response = await axios.get('/api/dealer-portal/products/', {
-        params,
-        withCredentials: true,
-      });
-
-      let products = response.data.results || response.data;
-
-      // Client-side filtering for category and brand
-      if (filters.category) {
-        products = products.filter((p: Product) => p.category_name === filters.category);
-      }
-      if (filters.brand) {
-        products = products.filter((p: Product) => p.brand_name === filters.brand);
-      }
-
-      setData(products);
-      if (response.data.count) {
-        setPagination(prev => ({
-          ...prev,
-          total: products.length,
-        }));
-      }
     } catch (error: any) {
       message.error('Ma\'lumotlarni yuklashda xatolik');
       console.error(error);
@@ -135,7 +88,43 @@ export default function DealerProducts() {
     }
   };
 
-  const handleSearch = (value: string) => {
+  const filterAndPaginateProducts = () => {
+    let filtered = [...allProducts];
+
+    // Apply search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply category filter
+    if (filters.category) {
+      filtered = filtered.filter((p) => p.category_name === filters.category);
+    }
+
+    // Apply brand filter
+    if (filters.brand) {
+      filtered = filtered.filter((p) => p.brand_name === filters.brand);
+    }
+
+    // Apply pagination
+    const startIndex = (pagination.current - 1) * pagination.pageSize;
+    const endIndex = startIndex + pagination.pageSize;
+    const paginatedProducts = filtered.slice(startIndex, endIndex);
+
+    setData(paginatedProducts);
+    setPagination((prev) => ({
+      ...prev,
+      total: filtered.length,
+    }));
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setFilters(prev => ({ ...prev, search: value }));
     setPagination(prev => ({ ...prev, current: 1 }));
   };
@@ -225,7 +214,7 @@ export default function DealerProducts() {
             placeholder="Qidirish (nom, SKU)..."
             prefix={<SearchOutlined style={{ color: '#66c0f4' }} />}
             allowClear
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={handleSearch}
             style={{
               width: 300,
               background: '#0f1419',
