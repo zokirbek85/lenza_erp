@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Table, Tag, Spin, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
+import http from '../../app/http';
 import dayjs from 'dayjs';
 
 interface Movement {
@@ -52,9 +52,7 @@ export default function ProductMovementsModal({ productId, onClose }: ProductMov
 
     setLoading(true);
     try {
-      const response = await axios.get(`/api/products/${productId}/movements/`, {
-        withCredentials: true,
-      });
+      const response = await http.get(`/products/${productId}/movements/`);
       setData(response.data);
     } catch (error) {
       console.error('Failed to fetch movements:', error);
