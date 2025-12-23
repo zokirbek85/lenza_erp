@@ -52,7 +52,9 @@ export default function ProductMovementsModal({ productId, onClose }: ProductMov
 
     setLoading(true);
     try {
-      const response = await axios.get(`/api/products/${productId}/movements/`);
+      const response = await axios.get(`/api/products/${productId}/movements/`, {
+        withCredentials: true,
+      });
       setData(response.data);
     } catch (error) {
       console.error('Failed to fetch movements:', error);
