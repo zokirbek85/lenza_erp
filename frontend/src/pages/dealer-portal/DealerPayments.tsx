@@ -110,12 +110,12 @@ export default function DealerPayments() {
 
   return (
     <div style={{
-      padding: 24,
+      padding: 'clamp(12px, 3vw, 24px)',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       minHeight: '100vh'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-        <Title level={2} style={{ color: '#fff', margin: 0 }}>To'lovlar</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <Title level={2} style={{ color: '#fff', margin: 0, fontSize: 'clamp(20px, 4vw, 30px)' }}>To'lovlar</Title>
         <Button
           type="primary"
           icon={<DownloadOutlined />}
@@ -128,7 +128,8 @@ export default function DealerPayments() {
             boxShadow: '0 4px 12px rgba(102, 192, 244, 0.3)'
           }}
         >
-          Barchani PDF yuklash
+          <span className="pdf-button-text">Barchani PDF yuklash</span>
+          <span className="pdf-button-text-short" style={{ display: 'none' }}>PDF</span>
         </Button>
       </div>
 
@@ -137,6 +138,7 @@ export default function DealerPayments() {
         dataSource={data}
         loading={loading}
         rowKey="id"
+        scroll={{ x: 800 }}
         style={{
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           borderRadius: 8,
@@ -161,6 +163,15 @@ export default function DealerPayments() {
         }
         .steam-table .ant-table-tbody > tr:hover > td {
           background: rgba(102, 192, 244, 0.1);
+        }
+        
+        @media (max-width: 576px) {
+          .pdf-button-text {
+            display: none;
+          }
+          .pdf-button-text-short {
+            display: inline !important;
+          }
         }
       `}</style>
     </div>

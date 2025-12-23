@@ -68,11 +68,11 @@ export default function DealerDashboard() {
 
   return (
     <div style={{
-      padding: 24,
+      padding: 'clamp(12px, 3vw, 24px)',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       minHeight: '100vh'
     }}>
-      <Title level={2} style={{ color: '#fff', marginBottom: 24 }}>Dashboard</Title>
+      <Title level={2} style={{ color: '#fff', marginBottom: 24, fontSize: 'clamp(20px, 4vw, 30px)' }}>Dashboard</Title>
 
       {profile && (
         <>
@@ -99,7 +99,7 @@ export default function DealerDashboard() {
             </p>
           </Card>
 
-          <Row gutter={16}>
+          <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
               <Card
                 style={{
@@ -115,7 +115,7 @@ export default function DealerDashboard() {
                   prefix={<DollarOutlined />}
                   valueStyle={{
                     color: parseFloat(profile.balance_usd) > 0 ? '#e74c3c' : '#66c0f4',
-                    fontSize: 32,
+                    fontSize: 'clamp(24px, 5vw, 32px)',
                     fontWeight: 'bold'
                   }}
                 />
@@ -144,8 +144,8 @@ export default function DealerDashboard() {
             </Col>
           </Row>
 
-          <Row gutter={16} style={{ marginTop: 16 }}>
-            <Col xs={24} sm={8}>
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            <Col xs={24} sm={12} lg={8}>
               <Card
                 loading={loading}
                 style={{
@@ -160,11 +160,11 @@ export default function DealerDashboard() {
                   title={<span style={{ color: '#8f98a0' }}>Buyurtmalar</span>}
                   value={stats.orders_count}
                   prefix={<ShoppingOutlined style={{ color: '#66c0f4' }} />}
-                  valueStyle={{ color: '#c7d5e0', fontSize: 28, fontWeight: 'bold' }}
+                  valueStyle={{ color: '#c7d5e0', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={8}>
               <Card
                 loading={loading}
                 style={{
@@ -179,11 +179,11 @@ export default function DealerDashboard() {
                   title={<span style={{ color: '#8f98a0' }}>To'lovlar</span>}
                   value={stats.payments_count}
                   prefix={<DollarOutlined style={{ color: '#66c0f4' }} />}
-                  valueStyle={{ color: '#c7d5e0', fontSize: 28, fontWeight: 'bold' }}
+                  valueStyle={{ color: '#c7d5e0', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 'bold' }}
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={8}>
               <Card
                 loading={loading}
                 style={{

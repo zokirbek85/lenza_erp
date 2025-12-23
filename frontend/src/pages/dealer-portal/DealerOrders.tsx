@@ -146,11 +146,11 @@ export default function DealerOrders() {
 
   return (
     <div style={{
-      padding: 24,
+      padding: 'clamp(12px, 3vw, 24px)',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       minHeight: '100vh'
     }}>
-      <Title level={2} style={{ color: '#fff', marginBottom: 24 }}>Buyurtmalar</Title>
+      <Title level={2} style={{ color: '#fff', marginBottom: 24, fontSize: 'clamp(20px, 4vw, 30px)' }}>Buyurtmalar</Title>
 
       <Table
         columns={columns}
@@ -161,6 +161,7 @@ export default function DealerOrders() {
           ...pagination,
           onChange: (page) => setPagination(prev => ({ ...prev, current: page })),
         }}
+        scroll={{ x: 800 }}
         style={{
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           borderRadius: 8,

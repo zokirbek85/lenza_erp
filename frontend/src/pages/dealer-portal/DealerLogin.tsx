@@ -44,7 +44,8 @@ export default function DealerLogin() {
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      padding: '16px'
     }}>
       {/* Background pattern */}
       <div style={{

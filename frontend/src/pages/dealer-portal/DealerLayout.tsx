@@ -92,8 +92,8 @@ export default function DealerLayout() {
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        breakpoint="lg"
-        collapsedWidth={80}
+        breakpoint="md"
+        collapsedWidth={0}
         style={{
           background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)',
           borderRight: '1px solid #2a3f5f'
@@ -130,16 +130,16 @@ export default function DealerLayout() {
       <Layout style={{ background: 'transparent' }}>
         <Header style={{
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          padding: '0 32px',
+          padding: '0 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1px solid #2a3f5f',
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         }}>
-          <Title level={4} style={{ margin: 0, color: '#c7d5e0', fontWeight: 500 }}>
+          <Title level={4} style={{ margin: 0, color: '#c7d5e0', fontWeight: 500, fontSize: 'clamp(14px, 3vw, 20px)' }}>
             <UserOutlined style={{ color: '#66c0f4', marginRight: 8 }} />
-            {dealerName}
+            <span className="dealer-name-text">{dealerName}</span>
           </Title>
 
           <Button
@@ -148,11 +148,12 @@ export default function DealerLayout() {
             onClick={handleLogout}
             style={{
               color: '#e74c3c',
-              fontWeight: 600
+              fontWeight: 600,
+              padding: '4px 8px'
             }}
             className="logout-btn"
           >
-            Chiqish
+            <span className="logout-text">Chiqish</span>
           </Button>
         </Header>
 
@@ -197,6 +198,19 @@ export default function DealerLayout() {
           background: #16213e;
           border-top: 1px solid #2a3f5f;
           color: #66c0f4;
+        }
+        
+        @media (max-width: 576px) {
+          .dealer-name-text {
+            display: inline-block;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .logout-text {
+            display: none;
+          }
         }
         .ant-layout-sider-trigger:hover {
           background: #1a2a40;

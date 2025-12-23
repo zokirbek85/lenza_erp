@@ -110,12 +110,12 @@ export default function DealerRefunds() {
 
   return (
     <div style={{
-      padding: 24,
+      padding: 'clamp(12px, 3vw, 24px)',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       minHeight: '100vh'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-        <Title level={2} style={{ color: '#fff', margin: 0 }}>Refundlar</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <Title level={2} style={{ color: '#fff', margin: 0, fontSize: 'clamp(20px, 4vw, 30px)' }}>Refundlar</Title>
         <Button
           type="primary"
           icon={<DownloadOutlined />}
@@ -137,6 +137,7 @@ export default function DealerRefunds() {
         dataSource={data}
         loading={loading}
         rowKey="id"
+        scroll={{ x: 800 }}
         style={{
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           borderRadius: 8,
