@@ -33,8 +33,8 @@ export default function DealerProducts() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [filters, setFilters] = useState({
     search: '',
-    category: undefined as number | undefined,
-    brand: undefined as number | undefined,
+    category: undefined as string | undefined,
+    brand: undefined as string | undefined,
   });
   const [pagination, setPagination] = useState({
     current: 1,
@@ -53,10 +53,20 @@ export default function DealerProducts() {
 
   const loadCategories = async () => {
     try {
-      const response = await axios.get('/api/categories/', {
+      const response = await axios.get('/api/dealer-portal/products/', {
         withCredentials: true,
+        params: { page_size: 1000 }
       });
-      setCategories(response.data.results || response.data);
+      const products = response.data.results || response.data;
+      // Extract unique categories
+      const uniqueCategories = Array.from(
+        new Map(
+          products
+            .filter((p: Product) => p.category_name)
+            .map((p: Product) => [p.category_name, { id: p.id, name: p.category_name }])
+        ).values()
+      ) as Category[];
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error('Failed to load categories:', error);
     }
@@ -64,10 +74,20 @@ export default function DealerProducts() {
 
   const loadBrands = async () => {
     try {
-      const response = await axios.get('/api/brands/', {
+      const response = await axios.get('/api/dealer-portal/products/', {
         withCredentials: true,
+        params: { page_size: 1000 }
       });
-      setBrands(response.data.results || response.data);
+      const products = response.data.results || response.data;
+      // Extract unique brands
+      const uniqueBrands = Array.from(
+        new Map(
+          products
+            .filter((p: Product) => p.brand_name)
+            .map((p: Product) => [p.brand_name, { id: p.id, name: p.brand_name }])
+        ).values()
+      ) as Brand[];
+      setBrands(uniqueBrands);
     } catch (error) {
       console.error('Failed to load brands:', error);
     }
@@ -84,23 +104,27 @@ export default function DealerProducts() {
       if (filters.search) {
         params.search = filters.search;
       }
-      if (filters.category) {
-        params.category = filters.category;
-      }
-      if (filters.brand) {
-        params.brand = filters.brand;
-      }
 
       const response = await axios.get('/api/dealer-portal/products/', {
         params,
         withCredentials: true,
       });
 
-      setData(response.data.results || response.data);
+      let products = response.data.results || response.data;
+
+      // Client-side filtering for category and brand
+      if (filters.category) {
+        products = products.filter((p: Product) => p.category_name === filters.category);
+      }
+      if (filters.brand) {
+        products = products.filter((p: Product) => p.brand_name === filters.brand);
+      }
+
+      setData(products);
       if (response.data.count) {
         setPagination(prev => ({
           ...prev,
-          total: response.data.count,
+          total: products.length,
         }));
       }
     } catch (error: any) {
@@ -116,12 +140,12 @@ export default function DealerProducts() {
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleCategoryChange = (value: number | undefined) => {
+  const handleCategoryChange = (value: string | undefined) => {
     setFilters(prev => ({ ...prev, category: value }));
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleBrandChange = (value: number | undefined) => {
+  const handleBrandChange = (value: string | undefined) => {
     setFilters(prev => ({ ...prev, brand: value }));
     setPagination(prev => ({ ...prev, current: 1 }));
   };
@@ -137,11 +161,14 @@ export default function DealerProducts() {
       title: 'Mahsulot nomi',
       dataIndex: 'name',
       key: 'name',
-      render: (name: string, record: Product) => (
-        <span style={{ color: record.stock_ok <= 0 ? '#e74c3c' : '#c7d5e0' }}>
-          {name}
-        </span>
-      ),
+      render: (name: string, record: Product) => {
+        const stockValue = typeof record.stock_ok === 'number' ? record.stock_ok : parseFloat(record.stock_ok) || 0;
+        return (
+          <span style={{ color: stockValue <= 0 ? '#e74c3c' : '#c7d5e0' }}>
+            {name}
+          </span>
+        );
+      },
     },
     {
       title: 'Brand',
@@ -161,14 +188,17 @@ export default function DealerProducts() {
       key: 'stock_ok',
       width: 120,
       align: 'right',
-      render: (stock: number, record: Product) => (
-        <span style={{
-          color: stock <= 0 ? '#e74c3c' : '#52c41a',
-          fontWeight: 'bold'
-        }}>
-          {stock.toFixed(2)} {record.unit}
-        </span>
-      ),
+      render: (stock: number, record: Product) => {
+        const stockValue = typeof stock === 'number' ? stock : parseFloat(stock) || 0;
+        return (
+          <span style={{
+            color: stockValue <= 0 ? '#e74c3c' : '#52c41a',
+            fontWeight: 'bold'
+          }}>
+            {stockValue.toFixed(2)} {record.unit}
+          </span>
+        );
+      },
     },
   ];
 
@@ -208,20 +238,14 @@ export default function DealerProducts() {
             allowClear
             onChange={handleCategoryChange}
             style={{ width: 200 }}
-            options={[
-              { value: undefined, label: 'Barcha kategoriyalar' },
-              ...categories.map(c => ({ value: c.id, label: c.name }))
-            ]}
+            options={categories.map(c => ({ value: c.name, label: c.name }))}
           />
           <Select
             placeholder="Brand"
             allowClear
             onChange={handleBrandChange}
             style={{ width: 200 }}
-            options={[
-              { value: undefined, label: 'Barcha brandlar' },
-              ...brands.map(b => ({ value: b.id, label: b.name }))
-            ]}
+            options={brands.map(b => ({ value: b.name, label: b.name }))}
           />
         </div>
       </Card>
