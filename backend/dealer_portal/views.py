@@ -115,16 +115,23 @@ class DealerOrderViewSet(viewsets.ReadOnlyModelViewSet, ExportMixin):
         """
         order = self.get_object()
         
-        # Get logo path
+        # Get logo as base64
         from django.conf import settings
         import os
+        import base64
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
 
         context = {
             'order': order,
             'dealer': order.dealer,
             'items': order.items.all(),
-            'logo_path': logo_path,
+            'logo_path': logo_data_uri,
         }
 
         return self.render_pdf_with_qr(
@@ -170,16 +177,23 @@ class DealerPaymentViewSet(viewsets.ReadOnlyModelViewSet):
         from weasyprint import HTML
         from django.conf import settings
         import os
+        import base64
         
-        # Get logo path
+        # Get logo as base64
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
 
         context = {
             'dealer': dealer,
             'transactions': transactions,
             'total_usd': sum(t.amount_usd for t in transactions),
             'total_uzs': sum(t.amount_uzs for t in transactions),
-            'logo_path': logo_path,
+            'logo_path': logo_data_uri,
         }
 
         html_string = render_to_string('dealer_portal/payments_report.html', context)
@@ -233,15 +247,22 @@ class DealerReturnViewSet(viewsets.ReadOnlyModelViewSet):
         Export all dealer returns as PDF.
         """
         dealer = self.request.user
-        returns = self.get_queryset()
-        order_returns = OrderReturn.objects.filter(order__dealer=dealer)
-
-        from django.template.loader import render_to_string
-        from weasyprint import HTML
-        from django.conf import settings
-        import os
+        import base64
         
-        # Get logo path
+        # Get logo as base64
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
+
+        context = {
+            'dealer': dealer,
+            'returns': returns,
+            'order_returns': order_returns,
+            'logo_path': logo_data_uri
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         context = {
@@ -284,16 +305,23 @@ class DealerRefundViewSet(viewsets.ReadOnlyModelViewSet):
         """
         Export all dealer refunds as PDF.
         """
-        dealer = self.request.user
-        refunds = self.get_queryset()
-
-        from django.template.loader import render_to_string
-        from weasyprint import HTML
-        from django.conf import settings
-        import os
+        import base64
         
-        # Get logo path
+        # Get logo as base64
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
+
+        context = {
+            'dealer': dealer,
+            'refunds': refunds,
+            'total_usd': sum(r.amount_usd for r in refunds),
+            'total_uzs': sum(r.amount_uzs for r in refunds),
+            'logo_path': logo_data_uriettings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
 
         context = {
             'dealer': dealer,
@@ -367,10 +395,17 @@ def dealer_reconciliation_pdf(request):
             self.role = 'dealer'
 
     mock_user = DealerUser(dealer)
-
-    try:
-        data = get_reconciliation_data(
-            dealer_id=dealer.id,
+import base64
+        
+        # Get logo as base64
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
+        data['logo_path'] = logo_data_uri
             from_date=from_date,
             to_date=to_date,
             user=mock_user,

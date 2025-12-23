@@ -34,16 +34,23 @@ class ExportMixin:
         """
         from django.conf import settings
         import os
+        import base64
         
-        # Add logo path to context
+        # Add logo as base64 data URI to context
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
         
         html = render_to_string(
             template_path,
             {
                 **context,
                 'generated_at': timezone.now(),
-                'logo_path': logo_path,
+                'logo_path': logo_data_uri,
             },
         )
         HTML = get_weasyprint_html()
@@ -110,10 +117,17 @@ class ExportMixin:
         
         qr_code = self._build_qr_code(verify_url)
         
-        # Add logo path to context
+        # Add logo as base64 data URI to context
         from django.conf import settings
         import os
+        import base64
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logo-lenza-light.png')
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_base64 = base64.b64encode(f.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except:
+            logo_data_uri = ''
 
         html = render_to_string(
             template_path,
@@ -122,7 +136,7 @@ class ExportMixin:
                 'verify_url': verify_url,
                 'qr_code': qr_code,
                 'generated_at': timezone.now(),
-                'logo_path': logo_path,
+                'logo_path': logo_data_uri,
             },
         )
         HTML = get_weasyprint_html()
