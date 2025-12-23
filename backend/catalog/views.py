@@ -215,6 +215,132 @@ class ProductViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise ValidationError({'detail': f'Failed to remove image: {str(e)}'})
 
+    @action(detail=True, methods=['get'], url_path='movements')
+    def movements(self, request, pk=None):
+        """Get all inventory movements for this product."""
+        from orders.models import OrderItem, OrderReturn
+        from returns.models import ReturnItem
+        from inventory.models import InventoryAdjustment
+
+        product = self.get_object()
+        movements = []
+
+        # 1. Order Items (Outgoing - Sales)
+        order_items = OrderItem.objects.filter(
+            product=product,
+            order__status__in=['confirmed', 'packed', 'shipped', 'delivered']
+        ).select_related('order', 'order__dealer').order_by('-order__value_date')[:100]
+
+        for item in order_items:
+            movements.append({
+                'date': item.order.value_date.isoformat() if item.order.value_date else None,
+                'type': 'sale',
+                'type_label': 'Sotuv',
+                'quantity': float(item.qty),
+                'delta': -float(item.qty),  # negative for outgoing
+                'reference': f"Buyurtma #{item.order.display_no}",
+                'dealer': item.order.dealer.name if item.order.dealer else None,
+                'created_at': item.order.created_at.isoformat() if item.order.created_at else None,
+            })
+
+        # 2. Order Returns (Incoming)
+        order_returns = OrderReturn.objects.filter(
+            item__product=product
+        ).select_related('order', 'order__dealer').order_by('-created_at')[:100]
+
+        for ret in order_returns:
+            movements.append({
+                'date': ret.created_at.date().isoformat() if ret.created_at else None,
+                'type': 'order_return',
+                'type_label': 'Qaytarish (Buyurtma)',
+                'quantity': float(ret.quantity),
+                'delta': float(ret.quantity),  # positive for incoming
+                'reference': f"Buyurtma #{ret.order.display_no}" if ret.order else 'Qaytarish',
+                'dealer': ret.order.dealer.name if ret.order and ret.order.dealer else None,
+                'created_at': ret.created_at.isoformat() if ret.created_at else None,
+            })
+
+        # 3. Return Items from returns module (Incoming)
+        return_items = ReturnItem.objects.filter(
+            product=product
+        ).select_related('return_document', 'return_document__dealer').order_by('-return_document__created_at')[:100]
+
+        for item in return_items:
+            movements.append({
+                'date': item.return_document.created_at.date().isoformat() if item.return_document.created_at else None,
+                'type': 'return',
+                'type_label': 'Qaytarish (Inventar)',
+                'quantity': float(item.quantity),
+                'delta': float(item.quantity),  # positive for incoming
+                'reference': f"Qaytarish #{item.return_document.id}",
+                'dealer': item.return_document.dealer.name if item.return_document.dealer else None,
+                'status': item.status,
+                'created_at': item.return_document.created_at.isoformat() if item.return_document.created_at else None,
+            })
+
+        # 4. Inventory Adjustments (Audit corrections)
+        adjustments = InventoryAdjustment.objects.filter(
+            product=product
+        ).select_related('created_by').order_by('-date')[:100]
+
+        for adj in adjustments:
+            total_delta = adj.delta_ok + adj.delta_defect
+            if total_delta != 0:
+                movements.append({
+                    'date': adj.date.isoformat() if adj.date else None,
+                    'type': 'adjustment',
+                    'type_label': 'Tuzatish (Audit)',
+                    'quantity': abs(total_delta),
+                    'delta': total_delta,
+                    'reference': f"Audit - {adj.comment[:50] if adj.comment else 'Qoldiq tuzatish'}",
+                    'previous_ok': adj.previous_ok,
+                    'new_ok': adj.new_ok,
+                    'previous_defect': adj.previous_defect,
+                    'new_defect': adj.new_defect,
+                    'created_by': adj.created_by.get_full_name() if adj.created_by else None,
+                    'created_at': adj.created_at.isoformat() if adj.created_at else None,
+                })
+
+        # 5. Inbound receipts (Incoming - Warehouse receipts)
+        try:
+            inbound_items = InboundItem.objects.filter(
+                product=product,
+                inbound__status='confirmed'
+            ).select_related('inbound').order_by('-inbound__date')[:100]
+
+            for item in inbound_items:
+                movements.append({
+                    'date': item.inbound.date.isoformat() if item.inbound.date else None,
+                    'type': 'receipt',
+                    'type_label': 'Qabul',
+                    'quantity': item.quantity,
+                    'delta': item.quantity,  # positive for incoming
+                    'reference': f"Qabul #{item.inbound.id}" if item.inbound else 'Qabul',
+                    'created_at': item.inbound.created_at.isoformat() if item.inbound.created_at else None,
+                })
+        except:
+            pass  # In case InboundItem doesn't exist in all environments
+
+        # Sort by date descending
+        movements.sort(key=lambda x: x.get('created_at') or x.get('date') or '', reverse=True)
+
+        # Calculate running balance
+        current_stock = float(product.stock_ok)
+        for movement in movements:
+            movement['balance_after'] = current_stock
+            current_stock -= movement['delta']
+            movement['balance_before'] = current_stock
+
+        movements.reverse()  # Reverse to show oldest first with correct balances
+
+        return Response({
+            'product_id': product.id,
+            'product_name': product.name,
+            'current_stock_ok': float(product.stock_ok),
+            'current_stock_defect': float(product.stock_defect),
+            'movements': movements,
+        })
+
 
 class DealerProductsAPIView(APIView):
     """
