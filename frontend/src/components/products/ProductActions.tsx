@@ -5,10 +5,12 @@ type ProductActionsProps = {
   onDelete?: () => void;
   onAdjust?: () => void;
   onPriceHistory?: () => void;
+  onViewMovements?: () => void;
   canEdit: boolean;
   canDelete: boolean;
   canAdjust?: boolean;
   canViewPrices?: boolean;
+  canViewMovements?: boolean;
   disabled?: boolean;
   children?: ReactNode;
   labels?: {
@@ -16,6 +18,7 @@ type ProductActionsProps = {
     delete?: string;
     adjust?: string;
     priceHistory?: string;
+    movements?: string;
   };
 };
 
@@ -24,15 +27,17 @@ const ProductActions = ({
   onDelete,
   onAdjust,
   onPriceHistory,
+  onViewMovements,
   canEdit,
   canDelete,
   canAdjust = false,
   canViewPrices = false,
+  canViewMovements = false,
   disabled = false,
   children,
   labels,
 }: ProductActionsProps) => {
-  if (!canEdit && !canDelete && !canAdjust && !canViewPrices && !children) {
+  if (!canEdit && !canDelete && !canAdjust && !canViewPrices && !canViewMovements && !children) {
     return null;
   }
 
@@ -40,10 +45,20 @@ const ProductActions = ({
   const deleteLabel = labels?.delete ?? 'Delete';
   const adjustLabel = labels?.adjust ?? 'Update';
   const priceHistoryLabel = labels?.priceHistory ?? 'Prices';
+  const movementsLabel = labels?.movements ?? 'Movements';
 
   return (
     <div className="flex items-center justify-end gap-2">
       {children}
+      {canViewMovements && (
+        <button
+          className="text-sm font-semibold text-purple-600 hover:text-purple-800 disabled:cursor-not-allowed disabled:opacity-60 dark:text-purple-400"
+          onClick={onViewMovements}
+          disabled={disabled}
+        >
+          {movementsLabel}
+        </button>
+      )}
       {canViewPrices && (
         <button
           className="text-sm font-semibold text-blue-600 hover:text-blue-800 disabled:cursor-not-allowed disabled:opacity-60 dark:text-blue-400"

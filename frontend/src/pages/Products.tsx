@@ -11,6 +11,7 @@ import Modal from '../components/Modal';
 import CollapsibleForm from '../components/CollapsibleForm';
 import ProductActions from '../components/products/ProductActions';
 import ProductPriceHistory from '../components/products/ProductPriceHistory';
+import ProductMovementsModal from '../components/products/ProductMovementsModal';
 import FilterDrawer from '../components/responsive/filters/FilterDrawer';
 import FilterTrigger from '../components/responsive/filters/FilterTrigger';
 import { useIsMobile } from '../hooks/useIsMobile';
@@ -100,6 +101,7 @@ const ProductsPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [priceHistoryProduct, setPriceHistoryProduct] = useState<Product | null>(null);
+  const [movementsProduct, setMovementsProduct] = useState<{ id: number; name: string } | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -1140,15 +1142,18 @@ const ProductsPage = () => {
                       canDelete={canDelete}
                       canAdjust={canAdjustStock}
                       canViewPrices={true}
+                      canViewMovements={true}
                       onEdit={() => handleEdit(product)}
                       onDelete={() => setDeleteTarget(product)}
                       onAdjust={() => openAdjustModal(product)}
                       onPriceHistory={() => setPriceHistoryProduct(product)}
+                      onViewMovements={() => setMovementsProduct({ id: product.id, name: product.name })}
                       labels={{
                         edit: t('actions.edit'),
                         delete: t('actions.delete'),
                         adjust: t('actions.update'),
                         priceHistory: 'Prices',
+                        movements: 'Harakatlar',
                       }}
                     />
                   </div>
@@ -1413,6 +1418,15 @@ const ProductsPage = () => {
           productSku={priceHistoryProduct.sku}
           productName={priceHistoryProduct.name}
           onClose={() => setPriceHistoryProduct(null)}
+        />
+      )}
+
+      {/* Product Movements Modal */}
+      {movementsProduct && (
+        <ProductMovementsModal
+          productId={movementsProduct.id}
+          productName={movementsProduct.name}
+          onClose={() => setMovementsProduct(null)}
         />
       )}
     </section>
