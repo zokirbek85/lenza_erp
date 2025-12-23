@@ -216,10 +216,10 @@ class AuditImportService:
             
             # Validate Real Stock values
             try:
-                real_ok = int(real_ok) if real_ok is not None else None
-                real_defect = int(real_defect) if real_defect is not None else None
-            except (ValueError, TypeError):
-                results['errors'].append(f'Row {row_idx}: Real Stock values must be integers')
+                real_ok = Decimal(str(real_ok)) if real_ok is not None else None
+                real_defect = Decimal(str(real_defect)) if real_defect is not None else None
+            except (ValueError, TypeError, Exception):
+                results['errors'].append(f'Row {row_idx}: Real Stock values must be numbers')
                 continue
             
             # Skip if both values are None after conversion
@@ -266,8 +266,8 @@ class AuditImportService:
     def _process_single_product(
         cls,
         sku: str,
-        real_ok: int | None,
-        real_defect: int | None,
+        real_ok: Decimal | None,
+        real_defect: Decimal | None,
         user,
         audit_date: date,
         comment: str,
@@ -277,8 +277,8 @@ class AuditImportService:
         
         Args:
             sku: Product SKU
-            real_ok: Real stock OK from physical count
-            real_defect: Real stock defect from physical count
+            real_ok: Real stock OK from physical count (Decimal)
+            real_defect: Real stock defect from physical count (Decimal)
             user: User performing audit
             audit_date: Audit date
             comment: Optional comment
@@ -292,9 +292,9 @@ class AuditImportService:
         # Lock product row for update
         product = Product.objects.select_for_update().get(sku=sku)
         
-        # Get current stock values
-        previous_ok = int(product.stock_ok)
-        previous_defect = int(product.stock_defect)
+        # Get current stock values as Decimal
+        previous_ok = product.stock_ok
+        previous_defect = product.stock_defect
         
         # Use previous values if real values not provided
         new_ok = real_ok if real_ok is not None else previous_ok
@@ -309,8 +309,8 @@ class AuditImportService:
             return None
         
         # Update product stock with real values
-        product.stock_ok = Decimal(str(new_ok))
-        product.stock_defect = Decimal(str(new_defect))
+        product.stock_ok = new_ok
+        product.stock_defect = new_defect
         product.save(update_fields=['stock_ok', 'stock_defect', 'updated_at'])
         
         # Create adjustment record
