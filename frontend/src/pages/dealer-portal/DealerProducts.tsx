@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Table, Input, Select, Typography, Card, message } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Typography, Card, message, Button, InputNumber, Modal } from 'antd';
+import { SearchOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
+import { addToCart } from '../../api/dealer-cart';
+import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
@@ -14,6 +16,7 @@ interface Product {
   brand_name: string;
   stock_ok: number;
   unit: string;
+  price_usd: number;
 }
 
 interface Category {
@@ -27,6 +30,7 @@ interface Brand {
 }
 
 export default function DealerProducts() {
+  const navigate = useNavigate();
   const [allProducts, setAllProducts] = useState<Product[]>([]); // Store all products
   const [data, setData] = useState<Product[]>([]); // Displayed products
   const [loading, setLoading] = useState(false);
@@ -42,6 +46,12 @@ export default function DealerProducts() {
     pageSize: 20,
     total: 0,
   });
+
+  // Cart modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     loadAllProducts();
@@ -138,6 +148,33 @@ export default function DealerProducts() {
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
+  const handleOpenCartModal = (product: Product) => {
+    setSelectedProduct(product);
+    setQuantity(1);
+    setIsModalOpen(true);
+  };
+
+  const handleAddToCart = async () => {
+    if (!selectedProduct) return;
+
+    setAddingToCart(true);
+    try {
+      await addToCart({
+        product_id: selectedProduct.id,
+        quantity: quantity,
+      });
+      message.success(`${selectedProduct.name} savatchaga qo'shildi`);
+      setIsModalOpen(false);
+      setSelectedProduct(null);
+      setQuantity(1);
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || error.response?.data?.quantity || 'Xatolik yuz berdi';
+      message.error(errorMsg);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   const columns: ColumnsType<Product> = [
     {
       title: 'SKU',
@@ -188,6 +225,29 @@ export default function DealerProducts() {
         );
       },
     },
+    {
+      title: '',
+      key: 'action',
+      width: 150,
+      align: 'center',
+      render: (_: any, record: Product) => {
+        const stockValue = typeof record.stock_ok === 'number' ? record.stock_ok : parseFloat(record.stock_ok) || 0;
+        return (
+          <Button
+            type="primary"
+            icon={<ShoppingCartOutlined />}
+            onClick={() => handleOpenCartModal(record)}
+            disabled={stockValue <= 0}
+            style={{
+              background: stockValue <= 0 ? '#555' : '#66c0f4',
+              borderColor: stockValue <= 0 ? '#555' : '#66c0f4',
+            }}
+          >
+            Savatchaga
+          </Button>
+        );
+      },
+    },
   ];
 
   return (
@@ -198,6 +258,19 @@ export default function DealerProducts() {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
         <Title level={2} style={{ color: '#fff', margin: 0 }}>Mahsulotlar</Title>
+        <Button
+          type="primary"
+          size="large"
+          icon={<ShoppingCartOutlined />}
+          onClick={() => navigate('/dealer-portal/cart')}
+          style={{
+            background: '#66c0f4',
+            borderColor: '#66c0f4',
+            fontWeight: 'bold',
+          }}
+        >
+          Savatcha
+        </Button>
       </div>
 
       <Card
@@ -260,6 +333,54 @@ export default function DealerProducts() {
           scroll={{ x: 1000 }}
         />
       </Card>
+
+      {/* Add to Cart Modal */}
+      <Modal
+        title="Savatchaga qo'shish"
+        open={isModalOpen}
+        onOk={handleAddToCart}
+        onCancel={() => setIsModalOpen(false)}
+        confirmLoading={addingToCart}
+        okText="Qo'shish"
+        cancelText="Bekor qilish"
+        okButtonProps={{
+          style: { background: '#66c0f4', borderColor: '#66c0f4' }
+        }}
+      >
+        {selectedProduct && (
+          <div style={{ padding: '16px 0' }}>
+            <div style={{ marginBottom: 16 }}>
+              <strong>Mahsulot:</strong> {selectedProduct.name}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <strong>SKU:</strong> {selectedProduct.sku}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <strong>Mavjud:</strong> {selectedProduct.stock_ok} {selectedProduct.unit}
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <strong>Narx:</strong> ${selectedProduct.price_usd}
+            </div>
+            <div>
+              <strong>Miqdor:</strong>
+              <InputNumber
+                min={0.01}
+                max={selectedProduct.stock_ok}
+                step={1}
+                value={quantity}
+                onChange={(value) => setQuantity(value || 1)}
+                style={{ width: '100%', marginTop: 8 }}
+                addonAfter={selectedProduct.unit}
+              />
+            </div>
+            {quantity > 0 && (
+              <div style={{ marginTop: 16, fontSize: '16px', fontWeight: 'bold' }}>
+                Jami: ${(selectedProduct.price_usd * quantity).toFixed(2)}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <style>{`
         .steam-table .ant-card-body {

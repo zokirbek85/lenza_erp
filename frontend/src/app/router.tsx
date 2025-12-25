@@ -44,6 +44,7 @@ import DealerLogin from '../pages/dealer-portal/DealerLogin';
 import DealerLayout from '../pages/dealer-portal/DealerLayout';
 import DealerDashboard from '../pages/dealer-portal/DealerDashboard';
 import DealerProducts from '../pages/dealer-portal/DealerProducts';
+import DealerCart from '../pages/dealer-portal/DealerCart';
 import DealerOrders from '../pages/dealer-portal/DealerOrders';
 import DealerPayments from '../pages/dealer-portal/DealerPayments';
 import DealerReturns from '../pages/dealer-portal/DealerReturns';
@@ -346,6 +347,10 @@ const router = createBrowserRouter([
       {
         path: 'products',
         element: <DealerProducts />,
+      },
+      {
+        path: 'cart',
+        element: <DealerCart />,
       },
       {
         path: 'orders',
