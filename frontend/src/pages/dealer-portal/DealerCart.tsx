@@ -135,9 +135,9 @@ export default function DealerCart() {
       key: 'product_price',
       width: 120,
       align: 'right',
-      render: (price: number) => (
+      render: (price: number | string) => (
         <Text style={{ color: '#66c0f4', fontWeight: 'bold' }}>
-          ${price.toFixed(2)}
+          ${Number(price).toFixed(2)}
         </Text>
       ),
     },
@@ -164,9 +164,9 @@ export default function DealerCart() {
       key: 'subtotal',
       width: 120,
       align: 'right',
-      render: (subtotal: number) => (
+      render: (subtotal: number | string) => (
         <Text strong style={{ color: '#52c41a', fontSize: '16px' }}>
-          ${subtotal.toFixed(2)}
+          ${Number(subtotal).toFixed(2)}
         </Text>
       ),
     },
@@ -337,7 +337,7 @@ export default function DealerCart() {
                 </Text>
                 <br />
                 <Text strong style={{ color: '#66c0f4', fontSize: '20px' }}>
-                  {cart.total_quantity.toFixed(2)}
+                  {Number(cart.total_quantity).toFixed(2)}
                 </Text>
               </div>
               <div>
@@ -346,7 +346,7 @@ export default function DealerCart() {
                 </Text>
                 <br />
                 <Text strong style={{ color: '#52c41a', fontSize: '24px' }}>
-                  ${cart.total_amount.toFixed(2)}
+                  ${Number(cart.total_amount).toFixed(2)}
                 </Text>
               </div>
             </div>
@@ -372,7 +372,7 @@ export default function DealerCart() {
             <Text strong>Mahsulotlar soni:</Text> {cart?.total_items} ta
           </div>
           <div style={{ marginBottom: 16 }}>
-            <Text strong>Jami summa:</Text> ${cart?.total_amount.toFixed(2)}
+            <Text strong>Jami summa:</Text> ${cart?.total_amount ? Number(cart.total_amount).toFixed(2) : '0.00'}
           </div>
           <div>
             <Text strong>Izoh (ixtiyoriy):</Text>
