@@ -17,7 +17,10 @@ from .serializers import (
     DealerPaymentSerializer,
     DealerReturnSerializer,
     OrderReturnSerializer,
-    DealerProductSerializer
+    DealerProductSerializer,
+    DealerCartSerializer,
+    DealerCartItemSerializer,
+    AddToCartSerializer,
 )
 from .permissions import IsDealerAuthenticated
 from dealers.models import Dealer
@@ -677,7 +680,6 @@ class DealerCartItemViewSet(viewsets.ModelViewSet):
     ViewSet for managing individual cart items.
     Dealers can update quantity or remove items.
     """
-    from .serializers import DealerCartItemSerializer
     serializer_class = DealerCartItemSerializer
     permission_classes = [IsDealerAuthenticated]
     authentication_classes = [DealerAuthentication]
