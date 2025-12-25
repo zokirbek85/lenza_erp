@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Tag, Typography, message } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { Table, Button, Tag, Typography, message, Card, Row, Col } from 'antd';
+import { DownloadOutlined, CalendarOutlined, DollarOutlined, BankOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface Payment {
   id: number;
@@ -108,6 +108,60 @@ export default function DealerPayments() {
     },
   ];
 
+  // Mobile card render
+  const renderMobileCard = (payment: Payment) => (
+    <Card
+      key={payment.id}
+      style={{
+        marginBottom: 16,
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        border: '1px solid #2a3f5f',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+      }}
+      bodyStyle={{ padding: 'clamp(12px, 3vw, 16px)' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+        <div>
+          <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+            <BankOutlined /> {payment.account_name}
+          </Text>
+        </div>
+        <Tag color={payment.status === 'APPROVED' ? 'green' : 'orange'}>{payment.status}</Tag>
+      </div>
+
+      <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
+        <Col span={12}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>USD</Text>
+            <Text strong style={{ color: '#52c41a', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+              ${parseFloat(payment.amount_usd).toFixed(2)}
+            </Text>
+          </div>
+        </Col>
+        <Col span={12}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>UZS</Text>
+            <Text strong style={{ color: '#52c41a', fontSize: 'clamp(12px, 2.5vw, 14px)' }}>
+              {parseFloat(payment.amount_uzs).toLocaleString('uz-UZ')}
+            </Text>
+          </div>
+        </Col>
+      </Row>
+
+      {payment.comment && (
+        <div style={{ marginBottom: 8, padding: '6px 8px', background: '#0f1419', borderRadius: '4px', border: '1px solid #2a3f5f' }}>
+          <Text style={{ color: '#8f98a0', fontSize: '11px' }}>{payment.comment}</Text>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px dashed #2a3f5f' }}>
+        <Text style={{ color: '#8f98a0', fontSize: '12px' }}>
+          <CalendarOutlined /> {new Date(payment.date).toLocaleDateString('uz-UZ')}
+        </Text>
+      </div>
+    </Card>
+  );
+
   return (
     <div style={{
       padding: 'clamp(12px, 3vw, 24px)',
@@ -133,19 +187,43 @@ export default function DealerPayments() {
         </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-        rowKey="id"
-        scroll={{ x: 800 }}
-        style={{
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          borderRadius: 8,
-          overflow: 'hidden'
-        }}
-        className="steam-table"
-      />
+      {/* Desktop Table */}
+      <div className="desktop-view">
+        <Table
+          columns={columns}
+          dataSource={data}
+          loading={loading}
+          rowKey="id"
+          scroll={{ x: 800 }}
+          style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: 8,
+            overflow: 'hidden'
+          }}
+          className="steam-table"
+        />
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="mobile-view">
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#8f98a0' }}>
+            Loading...
+          </div>
+        ) : data.length === 0 ? (
+          <Card style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '1px solid #2a3f5f',
+            textAlign: 'center',
+            padding: '40px'
+          }}>
+            <Text style={{ color: '#8f98a0' }}>Ma'lumot topilmadi</Text>
+          </Card>
+        ) : (
+          data.map(renderMobileCard)
+        )}
+      </div>
+
       <style>{`
         .steam-table .ant-table {
           background: transparent;
@@ -165,6 +243,23 @@ export default function DealerPayments() {
           background: rgba(102, 192, 244, 0.1);
         }
         
+        /* Mobile/Desktop views */
+        .mobile-view {
+          display: none;
+        }
+        .desktop-view {
+          display: block;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-view {
+            display: block;
+          }
+          .desktop-view {
+            display: none;
+          }
+        }
+
         @media (max-width: 576px) {
           .pdf-button-text {
             display: none;
