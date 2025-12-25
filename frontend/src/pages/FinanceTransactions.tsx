@@ -342,24 +342,72 @@ export default function FinanceTransactions() {
     return labels[status] || status;
   };
 
-  const handleExportPDF = () => {
-    exportTransactionsToPDF(transactions, {
-      type: filters.type,
-      status: filters.status,
-      currency: filters.currency,
-      startDate: filters.date_from,
-      endDate: filters.date_to,
-    });
+  const handleExportPDF = async () => {
+    try {
+      setLoading(true);
+      // Fetch all transactions for export (not paginated)
+      const params = {
+        ...filters,
+        page: 1,
+        page_size: 999999, // Get all transactions
+      };
+      const response = await getFinanceTransactions(params);
+      const data = response.data as FinanceTransaction[] | { count: number; results: FinanceTransaction[] };
+
+      let allTransactions: FinanceTransaction[] = [];
+      if (data && typeof data === 'object' && !Array.isArray(data) && 'results' in data) {
+        allTransactions = data.results || [];
+      } else if (Array.isArray(data)) {
+        allTransactions = data;
+      }
+
+      exportTransactionsToPDF(allTransactions, {
+        type: filters.type,
+        status: filters.status,
+        currency: filters.currency,
+        startDate: filters.date_from,
+        endDate: filters.date_to,
+      });
+    } catch (err: any) {
+      message.error('Export failed');
+      console.error('Export error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleExportXLSX = () => {
-    exportTransactionsToXLSX(transactions, {
-      type: filters.type,
-      status: filters.status,
-      currency: filters.currency,
-      startDate: filters.date_from,
-      endDate: filters.date_to,
-    });
+  const handleExportXLSX = async () => {
+    try {
+      setLoading(true);
+      // Fetch all transactions for export (not paginated)
+      const params = {
+        ...filters,
+        page: 1,
+        page_size: 999999, // Get all transactions
+      };
+      const response = await getFinanceTransactions(params);
+      const data = response.data as FinanceTransaction[] | { count: number; results: FinanceTransaction[] };
+
+      let allTransactions: FinanceTransaction[] = [];
+      if (data && typeof data === 'object' && !Array.isArray(data) && 'results' in data) {
+        allTransactions = data.results || [];
+      } else if (Array.isArray(data)) {
+        allTransactions = data;
+      }
+
+      exportTransactionsToXLSX(allTransactions, {
+        type: filters.type,
+        status: filters.status,
+        currency: filters.currency,
+        startDate: filters.date_from,
+        endDate: filters.date_to,
+      });
+    } catch (err: any) {
+      message.error('Export failed');
+      console.error('Export error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const TransactionModal = () => {
