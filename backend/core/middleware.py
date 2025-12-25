@@ -32,7 +32,13 @@ def get_current_user():
 
 class AuditMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        user = request.user if request.user.is_authenticated else None
+        # Only set user if it's a User instance (not Dealer)
+        user = None
+        if request.user.is_authenticated:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            if isinstance(request.user, User):
+                user = request.user
         set_current_user(user)
         if request.method in WATCHED_METHODS:
             request._audit_payload = self._extract_payload(request)
@@ -68,8 +74,17 @@ class AuditMiddleware(MiddlewareMixin):
         if getattr(request, '_audit_logged', False):
             return
         snapshot = getattr(request, '_audit_payload', {})
+
+        # Only log if user is a User instance (not Dealer)
+        user = None
+        if request.user.is_authenticated:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            if isinstance(request.user, User):
+                user = request.user
+
         AuditLog.objects.create(
-            user=request.user if request.user.is_authenticated else None,
+            user=user,
             method=request.method,
             path=request.get_full_path()[:255],
             data_snapshot=snapshot if isinstance(snapshot, dict) else {'data': snapshot},
@@ -84,9 +99,11 @@ class UpdateLastSeenMiddleware(MiddlewareMixin):
     """
     def process_response(self, request, response):
         if request.user.is_authenticated:
-            # Update last_seen timestamp
-            # Using update() to avoid triggering signals and improve performance
+            # Only update for User instances (not Dealer)
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            User.objects.filter(pk=request.user.pk).update(last_seen=timezone.now())
+            if isinstance(request.user, User):
+                # Update last_seen timestamp
+                # Using update() to avoid triggering signals and improve performance
+                User.objects.filter(pk=request.user.pk).update(last_seen=timezone.now())
         return response
