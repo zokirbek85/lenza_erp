@@ -80,36 +80,43 @@ export default function FinanceTransactions() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {
         ...filters,
         page,
         page_size: pageSize,
       };
-      
+
       const response = await getFinanceTransactions(params);
       const data = response.data;
-      let items: FinanceTransaction[] = [];
-      let count = 0;
-      
-      if (Array.isArray(data)) {
-        items = data;
-        count = data.length;
-      } else if (data && typeof data === 'object') {
-        items = (data as any).results || (data as any).data || (data as any).items || [];
-        count = (data as any).count || items.length;
+
+      // DRF pagination format: { count, next, previous, results }
+      if (data && typeof data === 'object' && 'results' in data && 'count' in data) {
+        const validItems = data.results.filter((item): item is FinanceTransaction => {
+          return item !== null &&
+                 item !== undefined &&
+                 typeof item === 'object' &&
+                 'id' in item &&
+                 'amount' in item;
+        });
+        setTransactions(validItems);
+        setTotalCount(data.count);
+      } else if (Array.isArray(data)) {
+        // Fallback: array response (no pagination)
+        const validItems = data.filter((item): item is FinanceTransaction => {
+          return item !== null &&
+                 item !== undefined &&
+                 typeof item === 'object' &&
+                 'id' in item &&
+                 'amount' in item;
+        });
+        setTransactions(validItems);
+        setTotalCount(validItems.length);
+      } else {
+        // Unknown format
+        setTransactions([]);
+        setTotalCount(0);
       }
-      
-      const validItems = items.filter((item): item is FinanceTransaction => {
-        return item !== null && 
-               item !== undefined && 
-               typeof item === 'object' &&
-               'id' in item &&
-               'amount' in item;
-      });
-      
-      setTransactions(validItems);
-      setTotalCount(count);
     } catch (err: any) {
       console.error('Error loading transactions:', err);
       setError(err.response?.data?.detail || 'Failed to load transactions');
