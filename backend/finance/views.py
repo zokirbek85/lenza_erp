@@ -706,24 +706,29 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         categories = self.get_queryset()
-        
+
         stats = []
         for category in categories:
             # Get all expense transactions with this category
+            # Include EXPENSE, CURRENCY_EXCHANGE_OUT, and DEALER_REFUND
             transactions = FinanceTransaction.objects.filter(
-                type=FinanceTransaction.TransactionType.EXPENSE,
+                type__in=[
+                    FinanceTransaction.TransactionType.EXPENSE,
+                    FinanceTransaction.TransactionType.CURRENCY_EXCHANGE_OUT,
+                    FinanceTransaction.TransactionType.DEALER_REFUND,
+                ],
                 category=category.name,
                 status=FinanceTransaction.TransactionStatus.APPROVED
             )
-            
+
             total_uzs = transactions.filter(currency='UZS').aggregate(
                 total=Sum('amount')
             )['total'] or Decimal('0')
-            
+
             total_usd = transactions.filter(currency='USD').aggregate(
                 total=Sum('amount')
             )['total'] or Decimal('0')
-            
+
             stats.append({
                 'id': category.id,
                 'name': category.name,
@@ -733,10 +738,10 @@ class ExpenseCategoryViewSet(viewsets.ModelViewSet):
                 'total_uzs': float(total_uzs),
                 'total_usd': float(total_usd),
             })
-        
+
         # Sort by total expenses (UZS equivalent)
         stats.sort(key=lambda x: x['total_uzs'] + (x['total_usd'] * 12500), reverse=True)
-        
+
         return Response(stats)
 
 
