@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Input, Select, Typography, Card, message, Button, InputNumber, Modal, Row, Col, Tag } from 'antd';
-import { SearchOutlined, ShoppingCartOutlined, AppstoreOutlined, TagOutlined } from '@ant-design/icons';
+import { SearchOutlined, ShoppingCartOutlined, AppstoreOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 import { addToCart } from '../../api/dealer-cart';

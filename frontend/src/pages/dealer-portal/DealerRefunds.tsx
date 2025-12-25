@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Tag, Typography, message, Card, Row, Col } from 'antd';
-import { DownloadOutlined, CalendarOutlined, DollarOutlined, BankOutlined } from '@ant-design/icons';
+import { DownloadOutlined, CalendarOutlined, BankOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 
