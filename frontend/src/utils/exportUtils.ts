@@ -20,8 +20,19 @@ export const formatCurrency = (amount: number | undefined | null, currency: 'USD
 /**
  * Format date to readable string
  */
-export const formatDate = (date: string | Date): string => {
-  return new Date(date).toLocaleDateString('en-US', {
+export const formatDate = (date: string | Date, format: 'short' | 'excel' = 'short'): string => {
+  const d = new Date(date);
+
+  if (format === 'excel') {
+    // dd.mm.yyyy format for Excel
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+
+  // Default short format
+  return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -319,7 +330,7 @@ export const exportTransactionsToXLSX = (
   // Info Sheet
   const infoData: any[][] = [
     ['Finance Transactions Report'],
-    [`Generated on: ${formatDate(new Date())}`],
+    [`Generated on: ${formatDate(new Date(), 'excel')}`],
     [],
   ];
 
@@ -328,8 +339,8 @@ export const exportTransactionsToXLSX = (
     if (filters.type) infoData.push(['Type', filters.type]);
     if (filters.status) infoData.push(['Status', filters.status]);
     if (filters.currency) infoData.push(['Currency', filters.currency]);
-    if (filters.startDate) infoData.push(['From', formatDate(filters.startDate)]);
-    if (filters.endDate) infoData.push(['To', formatDate(filters.endDate)]);
+    if (filters.startDate) infoData.push(['From', formatDate(filters.startDate, 'excel')]);
+    if (filters.endDate) infoData.push(['To', formatDate(filters.endDate, 'excel')]);
     infoData.push([]);
   }
 
@@ -374,7 +385,7 @@ export const exportTransactionsToXLSX = (
       const exchangeRate = transaction.exchange_rate || '';
       
       return [
-        formatDate(transaction.date),
+        formatDate(transaction.date, 'excel'),
         transaction.type.replace('_', ' ').toUpperCase(),
         transaction.account_name || '',
         transaction.type === 'income'
