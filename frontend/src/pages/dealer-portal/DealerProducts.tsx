@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Table, Input, Select, Typography, Card, message, Button, InputNumber, Modal } from 'antd';
-import { SearchOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Typography, Card, message, Button, InputNumber, Modal, Row, Col, Tag } from 'antd';
+import { SearchOutlined, ShoppingCartOutlined, AppstoreOutlined, TagOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 import { addToCart } from '../../api/dealer-cart';
 import { useNavigate } from 'react-router-dom';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 interface Product {
   id: number;
@@ -250,6 +250,94 @@ export default function DealerProducts() {
     },
   ];
 
+  // Mobile card render
+  const renderMobileCard = (product: Product) => {
+    const stockValue = typeof product.stock_ok === 'number' ? product.stock_ok : parseFloat(product.stock_ok) || 0;
+    const isOutOfStock = stockValue <= 0;
+
+    return (
+      <Card
+        key={product.id}
+        style={{
+          marginBottom: 16,
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+          border: '1px solid #2a3f5f',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          opacity: isOutOfStock ? 0.6 : 1,
+        }}
+        bodyStyle={{ padding: 'clamp(12px, 3vw, 16px)' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+          <div style={{ flex: 1 }}>
+            <Text strong style={{ color: isOutOfStock ? '#e74c3c' : '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+              <AppstoreOutlined /> {product.name}
+            </Text>
+            <div>
+              <Text style={{ color: '#8f98a0', fontSize: '11px', display: 'block' }}>
+                SKU: {product.sku}
+              </Text>
+            </div>
+          </div>
+          <Tag color={isOutOfStock ? 'red' : 'green'}>
+            {isOutOfStock ? 'Tugagan' : 'Mavjud'}
+          </Tag>
+        </div>
+
+        <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
+          <Col span={12}>
+            <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+              <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>BRAND</Text>
+              <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(12px, 2.5vw, 14px)' }}>
+                {product.brand_name || '-'}
+              </Text>
+            </div>
+          </Col>
+          <Col span={12}>
+            <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+              <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>KATEGORIYA</Text>
+              <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(12px, 2.5vw, 14px)' }}>
+                {product.category_name || '-'}
+              </Text>
+            </div>
+          </Col>
+          <Col span={12}>
+            <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+              <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>QOLDIQ</Text>
+              <Text strong style={{ color: isOutOfStock ? '#e74c3c' : '#52c41a', fontSize: 'clamp(12px, 2.5vw, 14px)' }}>
+                {stockValue.toFixed(2)} {product.unit}
+              </Text>
+            </div>
+          </Col>
+          <Col span={12}>
+            <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+              <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>NARX</Text>
+              <Text strong style={{ color: '#52c41a', fontSize: 'clamp(12px, 2.5vw, 14px)' }}>
+                ${product.price_usd}
+              </Text>
+            </div>
+          </Col>
+        </Row>
+
+        <div style={{ paddingTop: 8, borderTop: '1px dashed #2a3f5f' }}>
+          <Button
+            type="primary"
+            block
+            icon={<ShoppingCartOutlined />}
+            onClick={() => handleOpenCartModal(product)}
+            disabled={isOutOfStock}
+            style={{
+              background: isOutOfStock ? '#555' : '#66c0f4',
+              borderColor: isOutOfStock ? '#555' : '#66c0f4',
+              fontWeight: 'bold',
+            }}
+          >
+            {isOutOfStock ? 'Tugagan' : 'Savatchaga qo\'shish'}
+          </Button>
+        </div>
+      </Card>
+    );
+  };
+
   return (
     <div style={{
       padding: 'clamp(12px, 3vw, 24px)',
@@ -312,28 +400,74 @@ export default function DealerProducts() {
         </div>
       </Card>
 
-      <Card
-        style={{
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          border: '1px solid #2a3f5f',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-        }}
-        className="steam-table"
-      >
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            ...pagination,
-            onChange: (page) => setPagination(prev => ({ ...prev, current: page })),
-            showSizeChanger: false,
-            showTotal: (total) => `Jami: ${total} ta mahsulot`,
+      {/* Desktop Table */}
+      <div className="desktop-view">
+        <Card
+          style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '1px solid #2a3f5f',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
           }}
-          scroll={{ x: 1000 }}
-        />
-      </Card>
+          className="steam-table"
+        >
+          <Table
+            columns={columns}
+            dataSource={data}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              ...pagination,
+              onChange: (page) => setPagination(prev => ({ ...prev, current: page })),
+              showSizeChanger: false,
+              showTotal: (total) => `Jami: ${total} ta mahsulot`,
+            }}
+            scroll={{ x: 1000 }}
+          />
+        </Card>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="mobile-view">
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#8f98a0' }}>
+            Loading...
+          </div>
+        ) : data.length === 0 ? (
+          <Card style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '1px solid #2a3f5f',
+            textAlign: 'center',
+            padding: '40px'
+          }}>
+            <Text style={{ color: '#8f98a0' }}>Ma'lumot topilmadi</Text>
+          </Card>
+        ) : (
+          <>
+            {data.map(renderMobileCard)}
+            {pagination.total > pagination.pageSize && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16, gap: 8 }}>
+                <Button
+                  onClick={() => setPagination(prev => ({ ...prev, current: Math.max(1, prev.current - 1) }))}
+                  disabled={pagination.current === 1}
+                  style={{ background: '#16213e', borderColor: '#2a3f5f', color: '#66c0f4' }}
+                >
+                  Oldingi
+                </Button>
+                <Text style={{ color: '#c7d5e0', lineHeight: '32px' }}>
+                  {pagination.current} / {Math.ceil(pagination.total / pagination.pageSize)}
+                </Text>
+                <Button
+                  onClick={() => setPagination(prev => ({ ...prev, current: Math.min(Math.ceil(pagination.total / pagination.pageSize), prev.current + 1) }))}
+                  disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
+                  style={{ background: '#16213e', borderColor: '#2a3f5f', color: '#66c0f4' }}
+                >
+                  Keyingi
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Add to Cart Modal */}
       <Modal
@@ -427,6 +561,23 @@ export default function DealerProducts() {
           background: #16213e;
           border-color: #2a3f5f;
           color: #66c0f4;
+        }
+
+        /* Mobile/Desktop views */
+        .mobile-view {
+          display: none;
+        }
+        .desktop-view {
+          display: block;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-view {
+            display: block;
+          }
+          .desktop-view {
+            display: none;
+          }
         }
 
         @media (max-width: 576px) {

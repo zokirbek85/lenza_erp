@@ -11,6 +11,8 @@ import {
   Empty,
   Modal,
   Input,
+  Row,
+  Col,
 } from 'antd';
 import {
   ShoppingCartOutlined,
@@ -18,6 +20,8 @@ import {
   ArrowLeftOutlined,
   SendOutlined,
   ClearOutlined,
+  AppstoreOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -193,6 +197,81 @@ export default function DealerCart() {
     },
   ];
 
+  // Mobile card render for cart items
+  const renderCartItemCard = (item: CartItem) => (
+    <Card
+      key={item.id}
+      style={{
+        marginBottom: 16,
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        border: '1px solid #2a3f5f',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+      }}
+      bodyStyle={{ padding: 'clamp(12px, 3vw, 16px)' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+        <div style={{ flex: 1 }}>
+          <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+            <AppstoreOutlined /> {item.product_name}
+          </Text>
+          <div>
+            <Text style={{ color: '#8f98a0', fontSize: '11px', display: 'block' }}>
+              SKU: {item.product_sku}
+            </Text>
+          </div>
+        </div>
+        <Popconfirm
+          title="O'chirish"
+          description="Mahsulotni savatchadan o'chirishni xohlaysizmi?"
+          onConfirm={() => handleRemoveItem(item.id)}
+          okText="Ha"
+          cancelText="Yo'q"
+        >
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            type="text"
+          />
+        </Popconfirm>
+      </div>
+
+      <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
+        <Col span={12}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>NARX</Text>
+            <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+              ${Number(item.product_price).toFixed(2)}
+            </Text>
+          </div>
+        </Col>
+        <Col span={12}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>JAMI</Text>
+            <Text strong style={{ color: '#52c41a', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+              ${Number(item.subtotal).toFixed(2)}
+            </Text>
+          </div>
+        </Col>
+      </Row>
+
+      <div style={{ paddingTop: 8, borderTop: '1px dashed #2a3f5f' }}>
+        <Text style={{ color: '#8f98a0', fontSize: '11px', display: 'block', marginBottom: 8 }}>
+          MIQDOR
+        </Text>
+        <InputNumber
+          min={0.01}
+          max={item.product_stock}
+          step={1}
+          value={item.quantity}
+          onChange={(value) => value && handleUpdateQuantity(item.id, value)}
+          addonAfter={item.product_unit}
+          style={{ width: '100%' }}
+        />
+      </div>
+    </Card>
+  );
+
   const isEmpty = !cart || cart.items.length === 0;
 
   return (
@@ -293,25 +372,38 @@ export default function DealerCart() {
         </Card>
       ) : (
         <>
-          {/* Cart Items Table */}
-          <Card
-            style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              border: '1px solid #2a3f5f',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-              marginBottom: 24,
-            }}
-            className="steam-table"
-          >
-            <Table
-              columns={columns}
-              dataSource={cart.items}
-              rowKey="id"
-              loading={loading}
-              pagination={false}
-              scroll={{ x: 800 }}
-            />
-          </Card>
+          {/* Desktop Cart Items Table */}
+          <div className="desktop-view">
+            <Card
+              style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                border: '1px solid #2a3f5f',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                marginBottom: 24,
+              }}
+              className="steam-table"
+            >
+              <Table
+                columns={columns}
+                dataSource={cart.items}
+                rowKey="id"
+                loading={loading}
+                pagination={false}
+                scroll={{ x: 800 }}
+              />
+            </Card>
+          </div>
+
+          {/* Mobile Cart Items */}
+          <div className="mobile-view" style={{ marginBottom: 24 }}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#8f98a0' }}>
+                Loading...
+              </div>
+            ) : (
+              cart.items.map(renderCartItemCard)
+            )}
+          </div>
 
           {/* Cart Summary */}
           <Card
@@ -412,6 +504,23 @@ export default function DealerCart() {
         }
         .steam-table .ant-table-tbody > tr:hover > td {
           background: rgba(102, 192, 244, 0.1);
+        }
+
+        /* Mobile/Desktop views */
+        .mobile-view {
+          display: none;
+        }
+        .desktop-view {
+          display: block;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-view {
+            display: block;
+          }
+          .desktop-view {
+            display: none;
+          }
         }
 
         @media (max-width: 576px) {

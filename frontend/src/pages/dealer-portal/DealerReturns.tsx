@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Typography, message, Tabs } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { Table, Button, Typography, message, Tabs, Card, Row, Col, Tag } from 'antd';
+import { DownloadOutlined, CalendarOutlined, DollarOutlined, FileTextOutlined, ShoppingOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
 interface Return {
@@ -151,6 +151,110 @@ export default function DealerReturns() {
     },
   ];
 
+  // Mobile card render for return documents
+  const renderReturnCard = (returnDoc: Return) => (
+    <Card
+      key={returnDoc.id}
+      style={{
+        marginBottom: 16,
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        border: '1px solid #2a3f5f',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+      }}
+      bodyStyle={{ padding: 'clamp(12px, 3vw, 16px)' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+        <div>
+          <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+            <FileTextOutlined /> Qaytarish #{returnDoc.id}
+          </Text>
+        </div>
+        <Tag color="orange">{returnDoc.status}</Tag>
+      </div>
+
+      <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
+        <Col span={24}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>JAMI SUMMA</Text>
+            <Text strong style={{ color: '#52c41a', fontSize: 'clamp(16px, 3.5vw, 18px)' }}>
+              ${parseFloat(returnDoc.total_sum).toFixed(2)}
+            </Text>
+          </div>
+        </Col>
+      </Row>
+
+      {returnDoc.general_comment && (
+        <div style={{ marginBottom: 8, padding: '6px 8px', background: '#0f1419', borderRadius: '4px', border: '1px solid #2a3f5f' }}>
+          <Text style={{ color: '#8f98a0', fontSize: '11px' }}>{returnDoc.general_comment}</Text>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px dashed #2a3f5f' }}>
+        <Text style={{ color: '#8f98a0', fontSize: '12px' }}>
+          <CalendarOutlined /> {new Date(returnDoc.created_at).toLocaleDateString('uz-UZ')}
+        </Text>
+      </div>
+    </Card>
+  );
+
+  // Mobile card render for order returns
+  const renderOrderReturnCard = (orderReturn: OrderReturn) => (
+    <Card
+      key={orderReturn.id}
+      style={{
+        marginBottom: 16,
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        border: '1px solid #2a3f5f',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+      }}
+      bodyStyle={{ padding: 'clamp(12px, 3vw, 16px)' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+        <div>
+          <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+            <ShoppingOutlined /> #{orderReturn.order_display_no}
+          </Text>
+          <div>
+            <Text style={{ color: '#8f98a0', fontSize: '11px', display: 'block' }}>
+              {orderReturn.product_name}
+            </Text>
+            <Text style={{ color: '#8f98a0', fontSize: '10px' }}>
+              SKU: {orderReturn.product_sku}
+            </Text>
+          </div>
+        </div>
+        <Tag color={orderReturn.is_defect ? 'red' : 'blue'}>
+          {orderReturn.is_defect ? 'Nuqsonli' : 'Normal'}
+        </Tag>
+      </div>
+
+      <Row gutter={[8, 8]} style={{ marginBottom: 12 }}>
+        <Col span={12}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>MIQDOR</Text>
+            <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+              {parseFloat(orderReturn.quantity).toFixed(0)}
+            </Text>
+          </div>
+        </Col>
+        <Col span={12}>
+          <div style={{ padding: '8px', background: '#0f1419', borderRadius: '6px', border: '1px solid #2a3f5f' }}>
+            <Text style={{ color: '#8f98a0', fontSize: '10px', display: 'block' }}>USD</Text>
+            <Text strong style={{ color: '#52c41a', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+              ${parseFloat(orderReturn.amount_usd).toFixed(2)}
+            </Text>
+          </div>
+        </Col>
+      </Row>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px dashed #2a3f5f' }}>
+        <Text style={{ color: '#8f98a0', fontSize: '12px' }}>
+          <CalendarOutlined /> {new Date(orderReturn.created_at).toLocaleDateString('uz-UZ')}
+        </Text>
+      </div>
+    </Card>
+  );
+
   return (
     <div style={{
       padding: 'clamp(12px, 3vw, 24px)',
@@ -180,34 +284,80 @@ export default function DealerReturns() {
         className="steam-tabs"
       >
         <TabPane tab="Qaytarish hujjatlari" key="1">
-          <Table
-            columns={returnColumns}
-            dataSource={returns}
-            loading={loading}
-            rowKey="id"
-            scroll={{ x: 600 }}
-            style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              borderRadius: 8,
-              overflow: 'hidden'
-            }}
-            className="steam-table"
-          />
+          {/* Desktop Table */}
+          <div className="desktop-view">
+            <Table
+              columns={returnColumns}
+              dataSource={returns}
+              loading={loading}
+              rowKey="id"
+              scroll={{ x: 600 }}
+              style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                borderRadius: 8,
+                overflow: 'hidden'
+              }}
+              className="steam-table"
+            />
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="mobile-view">
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#8f98a0' }}>
+                Loading...
+              </div>
+            ) : returns.length === 0 ? (
+              <Card style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                border: '1px solid #2a3f5f',
+                textAlign: 'center',
+                padding: '40px'
+              }}>
+                <Text style={{ color: '#8f98a0' }}>Ma'lumot topilmadi</Text>
+              </Card>
+            ) : (
+              returns.map(renderReturnCard)
+            )}
+          </div>
         </TabPane>
         <TabPane tab="Buyurtmadan qaytarishlar" key="2">
-          <Table
-            columns={orderReturnColumns}
-            dataSource={orderReturns}
-            loading={loading}
-            rowKey="id"
-            scroll={{ x: 800 }}
-            style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              borderRadius: 8,
-              overflow: 'hidden'
-            }}
-            className="steam-table"
-          />
+          {/* Desktop Table */}
+          <div className="desktop-view">
+            <Table
+              columns={orderReturnColumns}
+              dataSource={orderReturns}
+              loading={loading}
+              rowKey="id"
+              scroll={{ x: 800 }}
+              style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                borderRadius: 8,
+                overflow: 'hidden'
+              }}
+              className="steam-table"
+            />
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="mobile-view">
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#8f98a0' }}>
+                Loading...
+              </div>
+            ) : orderReturns.length === 0 ? (
+              <Card style={{
+                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                border: '1px solid #2a3f5f',
+                textAlign: 'center',
+                padding: '40px'
+              }}>
+                <Text style={{ color: '#8f98a0' }}>Ma'lumot topilmadi</Text>
+              </Card>
+            ) : (
+              orderReturns.map(renderOrderReturnCard)
+            )}
+          </div>
         </TabPane>
       </Tabs>
 
@@ -244,6 +394,23 @@ export default function DealerReturns() {
         }
         .steam-table .ant-table-tbody > tr:hover > td {
           background: rgba(102, 192, 244, 0.1);
+        }
+
+        /* Mobile/Desktop views */
+        .mobile-view {
+          display: none;
+        }
+        .desktop-view {
+          display: block;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-view {
+            display: block;
+          }
+          .desktop-view {
+            display: none;
+          }
         }
       `}</style>
     </div>
