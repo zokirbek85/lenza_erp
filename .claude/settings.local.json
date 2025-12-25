@@ -38,7 +38,9 @@
       "Bash(ssh root@vps00405.vps.ovh.ca:*)",
       "Bash(ssh root@vps-d0ce7b32.vps.ovh.net \"cd /root/lenza_erp && git pull origin main && docker-compose exec -T frontend npm run build && docker-compose restart backend\")",
       "Bash(ls:*)",
-      "Bash(./update.sh)"
+      "Bash(./update.sh)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: improve pagination data handling in finance transactions page\n\n- Fix TypeScript type issues with API response data\n- Properly handle DRF pagination format \\(count, results\\)\n- Add fallback for array response format\n- Ensure totalCount is correctly set from API response\n\nThis fixes the pagination visibility issue where all transactions \nwere not being displayed due to incorrect data handling.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []

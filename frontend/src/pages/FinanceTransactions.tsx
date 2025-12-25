@@ -88,10 +88,12 @@ export default function FinanceTransactions() {
       };
 
       const response = await getFinanceTransactions(params);
+      console.log('API Response:', response.data);
       const data = response.data as FinanceTransaction[] | { count: number; results: FinanceTransaction[] };
 
       // DRF pagination format: { count, next, previous, results }
       if (data && typeof data === 'object' && !Array.isArray(data) && 'results' in data && 'count' in data) {
+        console.log('Paginated data - count:', data.count, 'results:', data.results.length);
         const validItems = data.results.filter((item): item is FinanceTransaction => {
           return item !== null &&
                  item !== undefined &&

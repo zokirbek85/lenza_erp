@@ -157,12 +157,19 @@ class FinanceTransactionViewSet(viewsets.ModelViewSet):
         """Filter by permissions"""
         user = self.request.user
         role = getattr(user, 'role', None)
-        
+
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"FinanceTransaction queryset - User: {user.username}, Role: {role}, Is Superuser: {user.is_superuser}")
+
         # Admin, accountant, owner - barchasi
         if user.is_superuser or role in ['admin', 'accountant', 'owner']:
+            total_count = self.queryset.count()
+            logger.info(f"User has access - Total transactions: {total_count}")
             return self.queryset
-        
+
         # Sales manager - access yo'q (ular faqat create qilishi mumkin)
+        logger.warning(f"User {user.username} does not have access to view transactions")
         return self.queryset.none()
     
     def create(self, request, *args, **kwargs):
