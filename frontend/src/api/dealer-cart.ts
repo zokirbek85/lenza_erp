@@ -59,7 +59,7 @@ export const getCart = async (): Promise<Cart> => {
  * Add product to cart
  */
 export const addToCart = async (data: AddToCartRequest): Promise<{ message: string; cart: Cart }> => {
-  const response = await axios.post(`${BASE_URL}/cart/add-item/`, data, {
+  const response = await axios.post(`${BASE_URL}/cart/add_item/`, data, {
     withCredentials: true,
   });
   return response.data;
@@ -99,7 +99,7 @@ export const clearCart = async (): Promise<{ message: string }> => {
  * Submit cart as order
  */
 export const submitOrder = async (data: SubmitOrderRequest): Promise<SubmitOrderResponse> => {
-  const response = await axios.post(`${BASE_URL}/cart/submit-order/`, data, {
+  const response = await axios.post(`${BASE_URL}/cart/submit_order/`, data, {
     withCredentials: true,
   });
   return response.data;
