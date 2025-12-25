@@ -470,13 +470,13 @@ class DealerCartViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Return cart for current dealer."""
         from .models import DealerCart
-        dealer = self.request.user.dealer
+        dealer = self.request.user  # request.user is already a Dealer instance
         return DealerCart.objects.filter(dealer=dealer).prefetch_related('items__product')
 
     def get_object(self):
         """Get or create cart for current dealer."""
         from .models import DealerCart
-        dealer = self.request.user.dealer
+        dealer = self.request.user  # request.user is already a Dealer instance
         cart, created = DealerCart.objects.get_or_create(dealer=dealer)
         return cart
 
@@ -500,8 +500,8 @@ class DealerCartViewSet(viewsets.ModelViewSet):
         product_id = input_serializer.validated_data['product_id']
         quantity = input_serializer.validated_data['quantity']
 
-        # Get or create cart
-        dealer = request.user.dealer
+        # Get or create cart (request.user is already a Dealer instance)
+        dealer = request.user
         cart, _ = DealerCart.objects.get_or_create(dealer=dealer)
 
         # Get product
@@ -576,10 +576,10 @@ class DealerCartViewSet(viewsets.ModelViewSet):
                 # Get exchange rate
                 exchange_rate, rate_date = get_exchange_rate()
 
-                # Create order
+                # Create order (request.user is already a Dealer instance)
                 order = Order.objects.create(
-                    dealer=request.user.dealer,
-                    created_by=request.user,
+                    dealer=request.user,
+                    created_by=None,  # Dealer orders don't have a User creator
                     status=Order.Status.CREATED,
                     note=request.data.get('note', ''),
                     exchange_rate=exchange_rate,
@@ -607,7 +607,7 @@ class DealerCartViewSet(viewsets.ModelViewSet):
 
                 # Send Telegram notification to manager
                 try:
-                    self._send_telegram_notification(order, request.user.dealer)
+                    self._send_telegram_notification(order, request.user)  # request.user is already a Dealer
                 except Exception as e:
                     # Log error but don't fail the order creation
                     import logging
