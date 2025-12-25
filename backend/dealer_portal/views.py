@@ -450,3 +450,263 @@ class DealerProductViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return all products with category and brand info."""
         return Product.objects.select_related('category', 'brand').all().order_by('name')
+
+
+# ==================== CART VIEWS ====================
+
+class DealerCartViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for dealer shopping cart management.
+    Dealers can view cart, add/update/remove items, and submit orders.
+    """
+    serializer_class = DealerCartSerializer
+    permission_classes = [IsDealerAuthenticated]
+    authentication_classes = [DealerAuthentication]
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_queryset(self):
+        """Return cart for current dealer."""
+        from .models import DealerCart
+        dealer = self.request.user.dealer
+        return DealerCart.objects.filter(dealer=dealer).prefetch_related('items__product')
+
+    def get_object(self):
+        """Get or create cart for current dealer."""
+        from .models import DealerCart
+        dealer = self.request.user.dealer
+        cart, created = DealerCart.objects.get_or_create(dealer=dealer)
+        return cart
+
+    def list(self, request, *args, **kwargs):
+        """Get current dealer's cart."""
+        cart = self.get_object()
+        serializer = self.get_serializer(cart)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def add_item(self, request):
+        """Add product to cart or update quantity if already exists."""
+        from .models import DealerCart, DealerCartItem
+        from .serializers import AddToCartSerializer
+        from catalog.models import Product
+
+        # Validate input
+        input_serializer = AddToCartSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+
+        product_id = input_serializer.validated_data['product_id']
+        quantity = input_serializer.validated_data['quantity']
+
+        # Get or create cart
+        dealer = request.user.dealer
+        cart, _ = DealerCart.objects.get_or_create(dealer=dealer)
+
+        # Get product
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response(
+                {'error': 'Mahsulot topilmadi'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check if item already in cart
+        cart_item, created = DealerCartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            defaults={'quantity': quantity}
+        )
+
+        if not created:
+            # Update quantity if item already exists
+            cart_item.quantity += quantity
+            # Validate stock again
+            if product.stock_ok < cart_item.quantity:
+                return Response({
+                    'error': f"Omborda yetarli mahsulot yo'q. Mavjud: {product.stock_ok} {product.unit}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            cart_item.save()
+
+        # Return updated cart
+        cart_serializer = DealerCartSerializer(cart)
+        return Response({
+            'message': 'Mahsulot savatchaga qo\'shildi' if created else 'Miqdor yangilandi',
+            'cart': cart_serializer.data
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete'])
+    def clear(self, request):
+        """Clear all items from cart."""
+        cart = self.get_object()
+        cart.clear()
+        return Response({
+            'message': 'Savatcha tozalandi'
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def submit_order(self, request):
+        """Create order from cart items."""
+        from .models import DealerCart
+        from orders.models import Order, OrderItem
+        from catalog.models import Product
+        from django.db import transaction
+        from core.utils.currency import get_exchange_rate
+
+        cart = self.get_object()
+
+        # Validate cart has items
+        if not cart.items.exists():
+            return Response({
+                'error': 'Savatcha bo\'sh'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate all items have sufficient stock
+        for item in cart.items.all():
+            if item.product.stock_ok < item.quantity:
+                return Response({
+                    'error': f"{item.product.name}: Omborda yetarli mahsulot yo'q. Mavjud: {item.product.stock_ok} {item.product.unit}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create order atomically
+        try:
+            with transaction.atomic():
+                # Get exchange rate
+                exchange_rate, rate_date = get_exchange_rate()
+
+                # Create order
+                order = Order.objects.create(
+                    dealer=request.user.dealer,
+                    created_by=request.user,
+                    status=Order.Status.CREATED,
+                    note=request.data.get('note', ''),
+                    exchange_rate=exchange_rate,
+                    exchange_rate_date=rate_date
+                )
+
+                # Create order items from cart
+                for cart_item in cart.items.all():
+                    OrderItem.objects.create(
+                        order=order,
+                        product=cart_item.product,
+                        qty=cart_item.quantity,
+                        price_usd=cart_item.product.price_usd,
+                        price_at_time=cart_item.product.price_usd,
+                        currency='USD',
+                        status=OrderItem.ItemStatus.RESERVED
+                    )
+
+                # Recalculate order totals
+                order.recalculate_totals()
+                order.save()
+
+                # Clear cart
+                cart.clear()
+
+                # Send Telegram notification to manager
+                try:
+                    self._send_telegram_notification(order, request.user.dealer)
+                except Exception as e:
+                    # Log error but don't fail the order creation
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send Telegram notification: {e}")
+
+                return Response({
+                    'message': 'Buyurtma muvaffaqiyatli yaratildi',
+                    'order_id': order.id,
+                    'order_number': order.display_no
+                }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                'error': f'Buyurtma yaratishda xatolik: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def _send_telegram_notification(self, order, dealer):
+        """Send Telegram notification to manager about new order."""
+        import requests
+        import os
+
+        # Get bot token and chat ID from settings/env
+        bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+
+        # Get manager's telegram chat ID
+        if dealer.manager_user and hasattr(dealer.manager_user, 'telegram_chat_id'):
+            chat_id = dealer.manager_user.telegram_chat_id
+        else:
+            # Fallback to group chat
+            chat_id = os.getenv('TELEGRAM_MANAGER_CHAT_ID')
+
+        if not bot_token or not chat_id:
+            return  # Telegram not configured
+
+        # Format message
+        items_text = "\n".join([
+            f"  • {item.product.name} - {item.qty} {item.product.unit} x ${item.price_usd} = ${item.qty * item.price_usd}"
+            for item in order.items.all()
+        ])
+
+        message = f"""
+🆕 YANGI BUYURTMA
+
+📦 Buyurtma: #{order.display_no}
+👤 Diler: {dealer.name}
+📅 Sana: {order.created_at.strftime('%d.%m.%Y %H:%M')}
+
+📋 Mahsulotlar:
+{items_text}
+
+💰 Jami: ${order.total_usd}
+
+Buyurtmani tasdiqlash uchun tizimga kiring:
+https://erp.lenza.uz/orders
+        """.strip()
+
+        # Send message
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = {
+            'chat_id': chat_id,
+            'text': message,
+            'parse_mode': 'HTML'
+        }
+        requests.post(url, json=data, timeout=5)
+
+
+class DealerCartItemViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing individual cart items.
+    Dealers can update quantity or remove items.
+    """
+    from .serializers import DealerCartItemSerializer
+    serializer_class = DealerCartItemSerializer
+    permission_classes = [IsDealerAuthenticated]
+    authentication_classes = [DealerAuthentication]
+    http_method_names = ['patch', 'delete']
+
+    def get_queryset(self):
+        """Return cart items for current dealer."""
+        from .models import DealerCartItem
+        dealer = self.request.user.dealer
+        return DealerCartItem.objects.filter(cart__dealer=dealer).select_related('product')
+
+    def partial_update(self, request, *args, **kwargs):
+        """Update item quantity."""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            'message': 'Miqdor yangilandi',
+            'item': serializer.data
+        })
+
+    def destroy(self, request, *args, **kwargs):
+        """Remove item from cart."""
+        instance = self.get_object()
+        product_name = instance.product.name
+        instance.delete()
+
+        return Response({
+            'message': f'{product_name} savatchadan o\'chirildi'
+        }, status=status.HTTP_200_OK)
