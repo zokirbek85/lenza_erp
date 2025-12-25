@@ -169,30 +169,30 @@ export default function DealerReconciliation() {
 
   return (
     <div style={{
-      padding: 24,
+      padding: 'clamp(12px, 3vw, 24px)',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       minHeight: '100vh'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-        <Title level={2} style={{ color: '#fff', margin: 0 }}>Akt Sverka</Title>
+      <div style={{ marginBottom: 'clamp(16px, 3vw, 24px)' }}>
+        <Title level={2} style={{ color: '#fff', margin: 0, fontSize: 'clamp(18px, 4vw, 30px)' }}>Akt Sverka</Title>
       </div>
 
       <Card
         style={{
-          marginBottom: 24,
+          marginBottom: 'clamp(16px, 3vw, 24px)',
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           border: '1px solid #2a3f5f',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
         }}
       >
-        <Space size="middle" style={{ width: '100%', justifyContent: 'space-between' }}>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }} className="reconciliation-controls">
           <RangePicker
             value={dateRange}
             onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs])}
             format="DD.MM.YYYY"
-            style={{ width: 300 }}
+            style={{ width: '100%', maxWidth: 300 }}
           />
-          <Space>
+          <Space wrap>
             <Button
               type="primary"
               icon={<FileTextOutlined />}

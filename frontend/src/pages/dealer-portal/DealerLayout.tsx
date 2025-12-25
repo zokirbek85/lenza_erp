@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Button, Typography, message } from 'antd';
+import { Layout, Menu, Button, Typography, message, Drawer } from 'antd';
 import {
   DashboardOutlined,
   ShoppingOutlined,
@@ -11,6 +11,7 @@ import {
   FileTextOutlined,
   AppstoreOutlined,
   ShoppingCartOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -20,6 +21,7 @@ const { Title } = Typography;
 export default function DealerLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [dealerName, setDealerName] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -94,16 +96,18 @@ export default function DealerLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }} className="steam-layout">
+      {/* Desktop Sider - hidden on mobile */}
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
-        breakpoint="md"
+        breakpoint="lg"
         collapsedWidth={0}
         style={{
           background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)',
           borderRight: '1px solid #2a3f5f'
         }}
+        className="desktop-sider"
       >
         <div style={{
           height: 64,
@@ -136,13 +140,29 @@ export default function DealerLayout() {
       <Layout style={{ background: 'transparent' }}>
         <Header style={{
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          padding: '0 16px',
+          padding: '0 clamp(12px, 3vw, 16px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: '1px solid #2a3f5f',
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
         }}>
+          {/* Mobile menu button */}
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={() => setMobileMenuOpen(true)}
+            style={{
+              color: '#66c0f4',
+              fontSize: '20px',
+              padding: '4px 8px',
+            }}
+            className="mobile-menu-btn"
+          />
+
           <Title level={4} style={{ margin: 0, color: '#c7d5e0', fontWeight: 500, fontSize: 'clamp(14px, 3vw, 20px)' }}>
             <UserOutlined style={{ color: '#66c0f4', marginRight: 8 }} />
             <span className="dealer-name-text">{dealerName}</span>
@@ -173,6 +193,45 @@ export default function DealerLayout() {
           <Outlet />
         </Content>
       </Layout>
+
+      {/* Mobile Navigation Drawer */}
+      <Drawer
+        title={
+          <div style={{ color: '#66c0f4', fontSize: '18px', fontWeight: 'bold' }}>
+            DILLER PORTAL
+          </div>
+        }
+        placement="left"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        className="mobile-drawer"
+        styles={{
+          header: {
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderBottom: '1px solid #2a3f5f',
+          },
+          body: {
+            background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)',
+            padding: 0,
+          },
+        }}
+      >
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          onClick={({ key }) => {
+            navigate(key);
+            setMobileMenuOpen(false);
+          }}
+          style={{
+            background: 'transparent',
+            border: 'none'
+          }}
+          className="steam-menu"
+        />
+      </Drawer>
 
       <style>{`
         .steam-layout {
@@ -205,11 +264,30 @@ export default function DealerLayout() {
           border-top: 1px solid #2a3f5f;
           color: #66c0f4;
         }
-        
+
+        /* Desktop sider - hide on mobile */
+        .desktop-sider {
+          display: block;
+        }
+
+        /* Mobile menu button - hide on desktop */
+        .mobile-menu-btn {
+          display: none;
+        }
+
+        @media (max-width: 991px) {
+          .desktop-sider {
+            display: none !important;
+          }
+          .mobile-menu-btn {
+            display: inline-flex !important;
+          }
+        }
+
         @media (max-width: 576px) {
           .dealer-name-text {
             display: inline-block;
-            max-width: 150px;
+            max-width: 120px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -218,8 +296,17 @@ export default function DealerLayout() {
             display: none;
           }
         }
+
         .ant-layout-sider-trigger:hover {
           background: #1a2a40;
+        }
+
+        /* Mobile drawer styling */
+        .mobile-drawer .ant-drawer-close {
+          color: #66c0f4;
+        }
+        .mobile-drawer .ant-drawer-close:hover {
+          color: #fff;
         }
       `}</style>
     </Layout>

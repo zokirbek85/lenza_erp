@@ -198,14 +198,14 @@ export default function DealerCart() {
   return (
     <div
       style={{
-        padding: 24,
+        padding: 'clamp(12px, 3vw, 24px)',
         background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
         minHeight: '100vh',
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ marginBottom: 'clamp(16px, 3vw, 24px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)', marginBottom: 16 }}>
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate('/dealer-portal/products')}
@@ -215,14 +215,14 @@ export default function DealerCart() {
               color: '#66c0f4',
             }}
           >
-            Orqaga
+            <span className="btn-text">Orqaga</span>
           </Button>
-          <Title level={2} style={{ color: '#fff', margin: 0 }}>
+          <Title level={2} style={{ color: '#fff', margin: 0, fontSize: 'clamp(18px, 4vw, 30px)' }}>
             <ShoppingCartOutlined /> Savatcha
           </Title>
         </div>
         {!isEmpty && (
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 12px)', flexWrap: 'wrap' }}>
             <Popconfirm
               title="Tozalash"
               description="Barcha mahsulotlarni savatchadan o'chirmoqchimisiz?"
@@ -239,7 +239,7 @@ export default function DealerCart() {
                   color: '#fff',
                 }}
               >
-                Tozalash
+                <span className="btn-text">Tozalash</span>
               </Button>
             </Popconfirm>
             <Button
@@ -321,31 +321,31 @@ export default function DealerCart() {
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 40 }}>
-              <div>
-                <Text style={{ color: '#c7d5e0', fontSize: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'clamp(12px, 3vw, 40px)', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1 1 auto', minWidth: '100px', textAlign: 'center' }}>
+                <Text style={{ color: '#c7d5e0', fontSize: 'clamp(12px, 2.5vw, 16px)' }}>
                   Mahsulotlar soni:
                 </Text>
                 <br />
-                <Text strong style={{ color: '#66c0f4', fontSize: '20px' }}>
+                <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(16px, 3.5vw, 20px)' }}>
                   {cart.total_items} ta
                 </Text>
               </div>
-              <div>
-                <Text style={{ color: '#c7d5e0', fontSize: '16px' }}>
+              <div style={{ flex: '1 1 auto', minWidth: '100px', textAlign: 'center' }}>
+                <Text style={{ color: '#c7d5e0', fontSize: 'clamp(12px, 2.5vw, 16px)' }}>
                   Jami miqdor:
                 </Text>
                 <br />
-                <Text strong style={{ color: '#66c0f4', fontSize: '20px' }}>
+                <Text strong style={{ color: '#66c0f4', fontSize: 'clamp(16px, 3.5vw, 20px)' }}>
                   {Number(cart.total_quantity).toFixed(2)}
                 </Text>
               </div>
-              <div>
-                <Text style={{ color: '#c7d5e0', fontSize: '16px' }}>
+              <div style={{ flex: '1 1 auto', minWidth: '100px', textAlign: 'center' }}>
+                <Text style={{ color: '#c7d5e0', fontSize: 'clamp(12px, 2.5vw, 16px)' }}>
                   Jami summa:
                 </Text>
                 <br />
-                <Text strong style={{ color: '#52c41a', fontSize: '24px' }}>
+                <Text strong style={{ color: '#52c41a', fontSize: 'clamp(18px, 4vw, 24px)' }}>
                   ${Number(cart.total_amount).toFixed(2)}
                 </Text>
               </div>
@@ -400,14 +400,24 @@ export default function DealerCart() {
           color: #66c0f4;
           border-bottom: 1px solid #2a3f5f;
           font-weight: 600;
+          font-size: clamp(12px, 2.5vw, 14px);
+          padding: clamp(8px, 2vw, 16px);
         }
         .steam-table .ant-table-tbody > tr > td {
           background: transparent;
           color: #c7d5e0;
           border-bottom: 1px solid #2a3f5f;
+          font-size: clamp(11px, 2.5vw, 14px);
+          padding: clamp(8px, 2vw, 16px);
         }
         .steam-table .ant-table-tbody > tr:hover > td {
           background: rgba(102, 192, 244, 0.1);
+        }
+
+        @media (max-width: 576px) {
+          .btn-text {
+            display: none;
+          }
         }
       `}</style>
     </div>

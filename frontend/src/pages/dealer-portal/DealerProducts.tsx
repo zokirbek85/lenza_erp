@@ -252,12 +252,12 @@ export default function DealerProducts() {
 
   return (
     <div style={{
-      padding: 24,
+      padding: 'clamp(12px, 3vw, 24px)',
       background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
       minHeight: '100vh'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
-        <Title level={2} style={{ color: '#fff', margin: 0 }}>Mahsulotlar</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(16px, 3vw, 24px)', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <Title level={2} style={{ color: '#fff', margin: 0, fontSize: 'clamp(18px, 4vw, 30px)' }}>Mahsulotlar</Title>
         <Button
           type="primary"
           size="large"
@@ -269,26 +269,27 @@ export default function DealerProducts() {
             fontWeight: 'bold',
           }}
         >
-          Savatcha
+          <span className="btn-text">Savatcha</span>
         </Button>
       </div>
 
       <Card
         style={{
-          marginBottom: 24,
+          marginBottom: 'clamp(16px, 3vw, 24px)',
           background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
           border: '1px solid #2a3f5f',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
         }}
       >
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 16px)', flexWrap: 'wrap' }}>
           <Input
             placeholder="Qidirish (nom, SKU)..."
             prefix={<SearchOutlined style={{ color: '#66c0f4' }} />}
             allowClear
             onChange={handleSearch}
             style={{
-              width: 300,
+              flex: '1 1 250px',
+              minWidth: '200px',
               background: '#0f1419',
               borderColor: '#2a3f5f',
               color: '#c7d5e0'
@@ -298,14 +299,14 @@ export default function DealerProducts() {
             placeholder="Kategoriya"
             allowClear
             onChange={handleCategoryChange}
-            style={{ width: 200 }}
+            style={{ flex: '1 1 180px', minWidth: '150px' }}
             options={categories.map(c => ({ value: c.name, label: c.name }))}
           />
           <Select
             placeholder="Brand"
             allowClear
             onChange={handleBrandChange}
-            style={{ width: 200 }}
+            style={{ flex: '1 1 180px', minWidth: '150px' }}
             options={brands.map(b => ({ value: b.name, label: b.name }))}
           />
         </div>
@@ -394,11 +395,15 @@ export default function DealerProducts() {
           color: #66c0f4;
           border-bottom: 1px solid #2a3f5f;
           font-weight: 600;
+          font-size: clamp(12px, 2.5vw, 14px);
+          padding: clamp(8px, 2vw, 16px);
         }
         .steam-table .ant-table-tbody > tr > td {
           background: transparent;
           color: #c7d5e0;
           border-bottom: 1px solid #2a3f5f;
+          font-size: clamp(11px, 2.5vw, 14px);
+          padding: clamp(8px, 2vw, 16px);
         }
         .steam-table .ant-table-tbody > tr:hover > td {
           background: rgba(102, 192, 244, 0.1);
@@ -422,6 +427,12 @@ export default function DealerProducts() {
           background: #16213e;
           border-color: #2a3f5f;
           color: #66c0f4;
+        }
+
+        @media (max-width: 576px) {
+          .btn-text {
+            display: none;
+          }
         }
       `}</style>
     </div>
