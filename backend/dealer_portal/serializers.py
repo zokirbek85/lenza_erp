@@ -136,6 +136,12 @@ class DealerProductSerializer(serializers.ModelSerializer):
     """Serializer for products in dealer portal - read-only view."""
     category_name = serializers.CharField(source='category.name', read_only=True)
     brand_name = serializers.CharField(source='brand.name', read_only=True)
+    price_usd = serializers.DecimalField(
+        source='sell_price_usd',
+        max_digits=12,
+        decimal_places=2,
+        read_only=True
+    )
 
     class Meta:
         model = Product
@@ -154,7 +160,7 @@ class DealerCartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_sku = serializers.CharField(source='product.sku', read_only=True)
     product_price = serializers.DecimalField(
-        source='product.price_usd',
+        source='product.sell_price_usd',
         max_digits=12,
         decimal_places=2,
         read_only=True

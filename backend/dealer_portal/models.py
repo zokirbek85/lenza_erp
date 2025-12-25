@@ -95,4 +95,4 @@ class DealerCartItem(models.Model):
 
     def get_subtotal(self):
         """Calculate subtotal for this item (quantity * price)"""
-        return self.quantity * self.product.price_usd
+        return self.quantity * self.product.sell_price_usd
