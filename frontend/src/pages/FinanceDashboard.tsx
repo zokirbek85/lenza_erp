@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { getCashSummary } from '../api/finance';
-import type { CashSummary, FinanceAccount } from '../types/finance';
+import { getCashSummary, getExpenseCategoryStatistics } from '../api/finance';
+import type { CashSummary, FinanceAccount, ExpenseCategoryStatistics } from '../types/finance';
 import AddIncomeModal from '../components/finance/AddIncomeModal';
 import AddExpenseModal from '../components/finance/AddExpenseModal';
 import AccountModal from '../components/finance/AccountModal';
@@ -14,6 +14,7 @@ import { exportFinanceDashboardToPDF, exportFinanceDashboardToXLSX } from '../ut
 export default function FinanceDashboard() {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<CashSummary | null>(null);
+  const [expenseStats, setExpenseStats] = useState<ExpenseCategoryStatistics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
@@ -26,6 +27,7 @@ export default function FinanceDashboard() {
 
   useEffect(() => {
     loadSummary();
+    loadExpenseStats();
   }, []);
 
   const loadSummary = async () => {
@@ -44,6 +46,15 @@ export default function FinanceDashboard() {
       setError(err.response?.data?.detail || 'Failed to load cash summary');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadExpenseStats = async () => {
+    try {
+      const response = await getExpenseCategoryStatistics();
+      setExpenseStats(response.data);
+    } catch (err: any) {
+      console.error('Failed to load expense statistics:', err);
     }
   };
 
@@ -74,6 +85,7 @@ export default function FinanceDashboard() {
 
   const handleTransactionSuccess = () => {
     loadSummary(); // Refresh dashboard data
+    loadExpenseStats(); // Refresh expense statistics
   };
 
   const handleExportPDF = () => {
@@ -430,6 +442,83 @@ export default function FinanceDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Expense Statistics Table */}
+      {expenseStats.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mt-8">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Chiqimlar Statistikasi
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Kategoriya
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Operatsiyalar soni
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Jami USD
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Jami UZS
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {expenseStats.map((stat) => (
+                  <tr key={stat.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xl"
+                          style={{ backgroundColor: stat.color }}
+                        >
+                          {stat.icon}
+                        </div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {stat.name}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
+                        {stat.transaction_count}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400 font-semibold">
+                      ${formatNumber(stat.total_usd)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400 font-semibold">
+                      {formatNumber(stat.total_uzs)} UZS
+                    </td>
+                  </tr>
+                ))}
+                <tr className="bg-gray-100 dark:bg-gray-900/50 font-bold">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    JAMI
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-200">
+                      {expenseStats.reduce((sum, stat) => sum + stat.transaction_count, 0)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-700 dark:text-red-300">
+                    ${formatNumber(expenseStats.reduce((sum, stat) => sum + stat.total_usd, 0))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-700 dark:text-red-300">
+                    {formatNumber(expenseStats.reduce((sum, stat) => sum + stat.total_uzs, 0))} UZS
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <AddIncomeModal
