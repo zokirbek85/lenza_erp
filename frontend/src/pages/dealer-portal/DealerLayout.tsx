@@ -10,6 +10,7 @@ import {
   UserOutlined,
   FileTextOutlined,
   AppstoreOutlined,
+  ShoppingCartOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -58,6 +59,11 @@ export default function DealerLayout() {
       key: '/dealer-portal/products',
       icon: <AppstoreOutlined />,
       label: 'Mahsulotlar',
+    },
+    {
+      key: '/dealer-portal/cart',
+      icon: <ShoppingCartOutlined />,
+      label: 'Savatcha',
     },
     {
       key: '/dealer-portal/orders',
