@@ -592,8 +592,8 @@ class DealerCartViewSet(viewsets.ModelViewSet):
                         order=order,
                         product=cart_item.product,
                         qty=cart_item.quantity,
-                        price_usd=cart_item.product.price_usd,
-                        price_at_time=cart_item.product.price_usd,
+                        price_usd=cart_item.product.sell_price_usd,
+                        price_at_time=cart_item.product.sell_price_usd,
                         currency='USD',
                         status=OrderItem.ItemStatus.RESERVED
                     )
